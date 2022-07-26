@@ -23,11 +23,13 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         events_stmt = (
             select(EventModel, StreamModel.version)
             .join(StreamModel, EventModel.stream_id == StreamModel.uuid)
-            .order_by(EventModel.created_at)
+            .order_by(EventModel.id)
         )
         if stream_ids:
             events_stmt = events_stmt.filter(EventModel.stream_id.in_(stream_ids))
 
+        # TODO: verify if it's a good idea, probably it would be better to have cursor-based
+        # pagination via event.uuid mapped to id.
         for event in self._session.execute(events_stmt).yield_per(10_000).scalars():
             yield RawEventDict(
                 uuid=event.uuid,
