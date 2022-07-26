@@ -1,1 +1,1 @@
-# python-event-sourcerer
+# Python Event Sourcery
