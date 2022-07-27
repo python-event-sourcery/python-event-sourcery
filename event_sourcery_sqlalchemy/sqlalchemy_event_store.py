@@ -21,23 +21,28 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
 
     def iter(self, *stream_ids: StreamId) -> Iterator[RawEventDict]:
         events_stmt = (
-            select(EventModel, StreamModel.version)
-            .join(StreamModel, EventModel.stream_id == StreamModel.uuid)
+            select(EventModel)
             .order_by(EventModel.id)
+            .limit(100)
         )
         if stream_ids:
             events_stmt = events_stmt.filter(EventModel.stream_id.in_(stream_ids))
 
-        # TODO: verify if it's a good idea, probably it would be better to have cursor-based
-        # pagination via event.uuid mapped to id.
-        for event in self._session.execute(events_stmt).yield_per(10_000).scalars():
-            yield RawEventDict(
-                uuid=event.uuid,
-                stream_id=event.stream_id,
-                created_at=event.created_at,
-                name=event.name,
-                data=event.data,
-            )
+        last_id = 0
+        while True:
+            stmt = events_stmt.filter(EventModel.id > last_id)
+            events = self._session.execute(stmt).scalars().all()
+            if not events:
+                break
+            last_id = events[-1].id
+            for event in events:
+                yield RawEventDict(
+                    uuid=event.uuid,
+                    stream_id=event.stream_id,
+                    created_at=event.created_at,
+                    name=event.name,
+                    data=event.data,
+                )
 
     def fetch_events(self, stream_id: StreamId) -> Tuple[list[RawEventDict], int]:
         events_stmt = (

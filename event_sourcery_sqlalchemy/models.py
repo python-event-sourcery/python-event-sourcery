@@ -25,7 +25,7 @@ class Event(Base):
     stream_id = Column(GUID(), nullable=False, index=True)
     name = Column(String(50), nullable=False)
     data = Column(JSONB(), nullable=False)
-    created_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, index=True)
 
 
 class Snapshot(Base):
