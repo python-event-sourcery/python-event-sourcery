@@ -4,6 +4,7 @@ from typing import Iterator, Optional, Type, TypeVar
 from event_sourcery.event import Event
 from event_sourcery.event_registry import BaseEventCls
 from event_sourcery.event_stream import EventStream
+from event_sourcery.raw_event_dict import RawEventDict
 from event_sourcery.serde import Serde
 from event_sourcery.storage_strategy import StorageStrategy
 from event_sourcery.stream_id import StreamId
@@ -43,19 +44,22 @@ class EventStore(abc.ABC):
         if not events:
             raise EventStore.NotFound
 
-        deserialized_events = [
-            self._serde.deserialize(
-                event=event,
-                event_type=self._event_registry.type_for_name(event["name"]),
-            )
-            for event in events
-        ]
+        deserialized_events = self._deserialize_events(events)
 
         return EventStream(
             uuid=stream_id,
             events=deserialized_events,
             version=stream_version,
         )
+
+    def _deserialize_events(self, events: list[RawEventDict]) -> list[Event]:
+        return [
+            self._serde.deserialize(
+                event=event,
+                event_type=self._event_registry.type_for_name(event["name"]),
+            )
+            for event in events
+        ]
 
     def append_to_stream(
         self, stream_id: StreamId, events: list[Event], expected_version: int = 0
@@ -67,7 +71,18 @@ class EventStore(abc.ABC):
             stream_id=stream_id, expected_version=expected_version
         )
 
-        serialized_events = [
+        serialized_events = self._serialize_events(events, stream_id)
+        self._storage_strategy.insert_events(serialized_events)
+
+        # TODO: make it more robust per subscriber?
+        for subscriber in self._sync_subscribers:
+            for event in events:
+                subscriber.handle(event)
+
+    def _serialize_events(
+        self, events: list[Event], stream_id: StreamId
+    ) -> list[RawEventDict]:
+        return [
             self._serde.serialize(
                 event=event,
                 stream_id=stream_id,
@@ -75,12 +90,6 @@ class EventStore(abc.ABC):
             )
             for event in events
         ]
-        self._storage_strategy.insert_events(serialized_events)
-
-        # TODO: make it more robust per subscriber?
-        for subscriber in self._sync_subscribers:
-            for event in events:
-                subscriber.handle(event)
 
     def iter(self, *streams_ids: StreamId) -> Iterator[Event]:
         events_iterator = self._storage_strategy.iter(*streams_ids)
