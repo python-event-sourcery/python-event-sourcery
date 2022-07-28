@@ -6,7 +6,7 @@ import pytest
 
 from event_sourcery.event import Event
 from event_sourcery.event_store import EventStore
-from event_sourcery.sync_projection import SyncProjection
+from event_sourcery.subscriber import Subscriber
 from event_sourcery_pydantic.event import Event as BaseEvent
 from event_sourcery_pydantic.serde import PydanticSerde
 from event_sourcery_sqlalchemy.sqlalchemy_event_store import (
@@ -52,12 +52,12 @@ def test_save_retrieve(storage_strategy: SqlAlchemyStorageStrategy) -> None:
 
 
 def test_synchronous_subscriber(storage_strategy: SqlAlchemyStorageStrategy) -> None:
-    subscriber = Mock(spec_set=SyncProjection)
+    subscriber = Mock(spec_set=Subscriber)
     store = EventStore(
         serde=PydanticSerde(),
         storage_strategy=storage_strategy,
         event_base_class=BaseEvent,
-        sync_projections=[subscriber],
+        subscribers=[subscriber],
     )
     stream_id = uuid4()
     event = SomeEvent(
@@ -67,7 +67,7 @@ def test_synchronous_subscriber(storage_strategy: SqlAlchemyStorageStrategy) -> 
     )
     store.append_to_stream(stream_id=stream_id, events=[event])
 
-    subscriber.handle.assert_called_once_with(event)
+    subscriber.assert_called_once_with(event)
 
 
 class Snapshot(BaseEvent):
@@ -75,12 +75,10 @@ class Snapshot(BaseEvent):
 
 
 def test_handles_snapshots(storage_strategy: SqlAlchemyStorageStrategy) -> None:
-    subscriber = Mock(spec_set=SyncProjection)
     store = EventStore(
         serde=PydanticSerde(),
         storage_strategy=storage_strategy,
         event_base_class=BaseEvent,
-        sync_projections=[subscriber],
     )
     stream_id = uuid4()
     event = SomeEvent(
@@ -182,7 +180,7 @@ def test_iterates_over_all_streams(event_store: EventStore) -> None:
 
 
 @pytest.fixture()
-def event_store(storage_strategy: SqlAlchemyStorageStrategy) -> None:
+def event_store(storage_strategy: SqlAlchemyStorageStrategy) -> EventStore:
     return EventStore(
         serde=PydanticSerde(),
         storage_strategy=storage_strategy,

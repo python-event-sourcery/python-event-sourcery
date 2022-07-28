@@ -8,7 +8,7 @@ from event_sourcery.raw_event_dict import RawEventDict
 from event_sourcery.serde import Serde
 from event_sourcery.storage_strategy import StorageStrategy
 from event_sourcery.stream_id import StreamId
-from event_sourcery.sync_projection import SyncProjection
+from event_sourcery.subscriber import Subscriber
 
 TAggregate = TypeVar("TAggregate")
 
@@ -19,15 +19,15 @@ class EventStore(abc.ABC):
         serde: Serde,
         storage_strategy: StorageStrategy,
         event_base_class: Type[BaseEventCls],
-        sync_projections: Optional[list[SyncProjection]] = None,
+        subscribers: Optional[list[Subscriber]] = None,
     ) -> None:
-        if sync_projections is None:
-            sync_projections = []
+        if subscribers is None:
+            subscribers = []
 
         self._serde = serde
         self._storage_strategy = storage_strategy
         self._event_registry = event_base_class.__registry__
-        self._sync_subscribers = sync_projections
+        self._subscribers = subscribers
 
     class NotFound(Exception):
         pass
@@ -75,9 +75,9 @@ class EventStore(abc.ABC):
         self._storage_strategy.insert_events(serialized_events)
 
         # TODO: make it more robust per subscriber?
-        for subscriber in self._sync_subscribers:
+        for subscriber in self._subscribers:
             for event in events:
-                subscriber.handle(event)
+                subscriber(event)
 
     def _serialize_events(
         self, events: list[Event], stream_id: StreamId
