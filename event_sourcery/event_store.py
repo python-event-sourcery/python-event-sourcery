@@ -44,15 +44,6 @@ class EventStore(abc.ABC):
             version=stream_version,
         )
 
-    def _deserialize_events(self, events: list[RawEventDict]) -> list[Event]:
-        return [
-            self._serde.deserialize(
-                event=event,
-                event_type=self._event_registry.type_for_name(event["name"]),
-            )
-            for event in events
-        ]
-
     def append_to_stream(
         self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
     ) -> None:
@@ -71,18 +62,6 @@ class EventStore(abc.ABC):
             for event in events:
                 subscriber(event)
 
-    def _serialize_events(
-        self, events: Sequence[Event], stream_id: StreamId
-    ) -> list[RawEventDict]:
-        return [
-            self._serde.serialize(
-                event=event,
-                stream_id=stream_id,
-                name=self._event_registry.name_for_type(type(event)),
-            )
-            for event in events
-        ]
-
     def iter(self, *streams_ids: StreamId) -> Iterator[Event]:
         events_iterator = self._storage_strategy.iter(*streams_ids)
         for event in events_iterator:
@@ -97,3 +76,24 @@ class EventStore(abc.ABC):
             name=self._event_registry.name_for_type(type(snapshot)),
         )
         self._storage_strategy.save_snapshot(serialized)
+
+    def _deserialize_events(self, events: list[RawEventDict]) -> list[Event]:
+        return [
+            self._serde.deserialize(
+                event=event,
+                event_type=self._event_registry.type_for_name(event["name"]),
+            )
+            for event in events
+        ]
+
+    def _serialize_events(
+        self, events: Sequence[Event], stream_id: StreamId
+    ) -> list[RawEventDict]:
+        return [
+            self._serde.serialize(
+                event=event,
+                stream_id=stream_id,
+                name=self._event_registry.name_for_type(type(event)),
+            )
+            for event in events
+        ]
