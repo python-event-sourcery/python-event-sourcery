@@ -39,7 +39,7 @@ class EventStore(abc.ABC):
             version=stream_version,
         )
 
-    def append_to_stream(
+    def append(
         self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
     ) -> None:
         if not events:
