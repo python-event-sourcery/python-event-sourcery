@@ -6,7 +6,7 @@ import pytest
 
 from event_sourcery.event import Event
 from event_sourcery.event_store import EventStore
-from event_sourcery.exceptions import ConcurrentStreamWriteError
+from event_sourcery.exceptions import ConcurrentStreamWriteError, NotFound
 from event_sourcery.subscriber import Subscriber
 from event_sourcery_pydantic.event import Event as BaseEvent
 from event_sourcery_pydantic.serde import PydanticSerde
@@ -171,6 +171,26 @@ def test_iterates_over_all_streams(event_store: EventStore) -> None:
     events = list(event_store.iter())
 
     assert events == all_events
+
+
+def test_loading_not_existing_stream_raises_not_found(event_store: EventStore) -> None:
+    with pytest.raises(NotFound):
+        event_store.load_stream(stream_id=uuid4())
+
+
+def test_removes_stream(event_store: EventStore) -> None:
+    stream_id = uuid4()
+    event = SomeEvent(
+        uuid=uuid4(),
+        created_at=datetime.now(),
+        first_name="Test1",
+    )
+    event_store.append_to_stream(stream_id=stream_id, events=[event])
+
+    event_store.delete_stream(stream_id)
+
+    with pytest.raises(NotFound):
+        event_store.load_stream(stream_id)
 
 
 def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None:

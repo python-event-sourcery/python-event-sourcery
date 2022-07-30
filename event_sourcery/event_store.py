@@ -4,7 +4,7 @@ from typing import Iterator, Optional, Sequence, Type, TypeVar
 from event_sourcery.event import Event
 from event_sourcery.event_registry import BaseEventCls
 from event_sourcery.event_stream import EventStream
-from event_sourcery.exceptions import NoEventsToAppend, NotFound
+from event_sourcery.exceptions import NoEventsToAppend
 from event_sourcery.raw_event_dict import RawEventDict
 from event_sourcery.serde import Serde
 from event_sourcery.storage_strategy import StorageStrategy
@@ -32,12 +32,7 @@ class EventStore(abc.ABC):
 
     def load_stream(self, stream_id: StreamId) -> EventStream:
         events, stream_version = self._storage_strategy.fetch_events(stream_id)
-
-        if not events:
-            raise NotFound
-
         deserialized_events = self._deserialize_events(events)
-
         return EventStream(
             uuid=stream_id,
             events=deserialized_events,
@@ -68,6 +63,9 @@ class EventStore(abc.ABC):
             yield self._serde.deserialize(
                 event, self._event_registry.type_for_name(event["name"])
             )
+
+    def delete_stream(self, stream_id: StreamId) -> None:
+        self._storage_strategy.delete_stream(stream_id)
 
     def save_snapshot(self, stream_id: StreamId, snapshot: Event) -> None:
         serialized = self._serde.serialize(

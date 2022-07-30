@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from typing import Iterator, Tuple, Union
 
-from sqlalchemy import insert, select, update
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from event_sourcery.exceptions import ConcurrentStreamWriteError
+from event_sourcery.exceptions import ConcurrentStreamWriteError, NotFound
 from event_sourcery.raw_event_dict import RawEventDict
 from event_sourcery.storage_strategy import StorageStrategy
 from event_sourcery.stream_id import StreamId
@@ -66,6 +66,9 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             events = [[latest_snapshot, stream_version]] + self._session.execute(
                 events_stmt
             ).all()
+
+        if not events:
+            raise NotFound
 
         raw_dict_events = [
             RawEventDict(
@@ -129,3 +132,13 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             "data": snapshot_as_dict["data"],
         }
         self._session.execute(insert(SnapshotModel), [row])
+
+    def delete_stream(self, stream_id: StreamId) -> None:
+        delete_events_stmt = delete(EventModel).where(
+            EventModel.stream_id == str(stream_id)
+        )
+        self._session.execute(delete_events_stmt)
+        delete_stream_stmt = delete(StreamModel).where(
+            StreamModel.uuid == str(stream_id)
+        )
+        self._session.execute(delete_stream_stmt)
