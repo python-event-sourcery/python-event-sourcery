@@ -4,6 +4,7 @@ from typing import Iterator, Optional, Sequence, Type, TypeVar
 from event_sourcery.event import Event
 from event_sourcery.event_registry import BaseEventCls
 from event_sourcery.event_stream import EventStream
+from event_sourcery.exceptions import NoEventsToAppend, NotFound
 from event_sourcery.raw_event_dict import RawEventDict
 from event_sourcery.serde import Serde
 from event_sourcery.storage_strategy import StorageStrategy
@@ -29,20 +30,11 @@ class EventStore(abc.ABC):
         self._event_registry = event_base_class.__registry__
         self._subscribers = subscribers
 
-    class NotFound(Exception):
-        pass
-
-    class NoEventsToAppend(Exception):
-        pass
-
-    class ConcurrentStreamWriteError(RuntimeError):
-        pass
-
     def load_stream(self, stream_id: StreamId) -> EventStream:
         events, stream_version = self._storage_strategy.fetch_events(stream_id)
 
         if not events:
-            raise EventStore.NotFound
+            raise NotFound
 
         deserialized_events = self._deserialize_events(events)
 
@@ -65,7 +57,7 @@ class EventStore(abc.ABC):
         self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
     ) -> None:
         if not events:
-            raise EventStore.NoEventsToAppend
+            raise NoEventsToAppend
 
         self._storage_strategy.ensure_stream(
             stream_id=stream_id, expected_version=expected_version

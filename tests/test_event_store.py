@@ -6,6 +6,7 @@ import pytest
 
 from event_sourcery.event import Event
 from event_sourcery.event_store import EventStore
+from event_sourcery.exceptions import ConcurrentStreamWriteError
 from event_sourcery.subscriber import Subscriber
 from event_sourcery_pydantic.event import Event as BaseEvent
 from event_sourcery_pydantic.serde import PydanticSerde
@@ -117,7 +118,7 @@ def test_concurrency_error(storage_strategy: SqlAlchemyStorageStrategy) -> None:
         first_name="Test",
     )
 
-    with pytest.raises(EventStore.ConcurrentStreamWriteError):
+    with pytest.raises(ConcurrentStreamWriteError):
         store.append_to_stream(stream_id=stream_id, events=[event], expected_version=10)
 
 

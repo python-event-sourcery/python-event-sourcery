@@ -6,7 +6,7 @@ from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store import EventStore
+from event_sourcery.exceptions import ConcurrentStreamWriteError
 from event_sourcery.raw_event_dict import RawEventDict
 from event_sourcery.storage_strategy import StorageStrategy
 from event_sourcery.stream_id import StreamId
@@ -102,7 +102,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             result = self._session.execute(stmt)
 
             if result.rowcount != 1:  # optimistic lock failed
-                raise EventStore.ConcurrentStreamWriteError
+                raise ConcurrentStreamWriteError
 
     def insert_events(self, events: list[RawEventDict]) -> None:
         rows = []
