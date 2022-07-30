@@ -20,15 +20,15 @@ class EventStore(abc.ABC):
         serde: Serde,
         storage_strategy: StorageStrategy,
         event_base_class: Type[BaseEventCls],
-        subscribers: Optional[list[Subscriber]] = None,
+        subscriptions: Optional[dict[Type[Event], list[Subscriber]]] = None,
     ) -> None:
-        if subscribers is None:
-            subscribers = []
+        if subscriptions is None:
+            subscriptions = {}
 
         self._serde = serde
         self._storage_strategy = storage_strategy
         self._event_registry = event_base_class.__registry__
-        self._subscribers = subscribers
+        self._subscriptions = subscriptions
 
     def load_stream(self, stream_id: StreamId) -> EventStream:
         events, stream_version = self._storage_strategy.fetch_events(stream_id)
@@ -53,9 +53,13 @@ class EventStore(abc.ABC):
         self._storage_strategy.insert_events(serialized_events)
 
         # TODO: make it more robust per subscriber?
-        for subscriber in self._subscribers:
-            for event in events:
+        for event in events:
+            for subscriber in self._subscriptions.get(type(event), []):
                 subscriber(event)
+
+            catch_all_subscribers = self._subscriptions.get(Event, [])  # type: ignore
+            for catch_all_subscriber in catch_all_subscribers:
+                catch_all_subscriber(event)
 
     def iter(self, *streams_ids: StreamId) -> Iterator[Event]:
         events_iterator = self._storage_strategy.iter(*streams_ids)

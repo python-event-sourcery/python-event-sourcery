@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 from uuid import uuid4
 
 import pytest
@@ -17,6 +17,10 @@ class SomeEvent(BaseEvent):
     first_name: str
 
 
+class AnotherEvent(BaseEvent):
+    last_name: str
+
+
 def test_save_retrieve(storage_strategy: SqlAlchemyStorageStrategy) -> None:
     store = EventStore(
         serde=PydanticSerde(),
@@ -33,19 +37,41 @@ def test_save_retrieve(storage_strategy: SqlAlchemyStorageStrategy) -> None:
     assert stream.events == events
 
 
-def test_synchronous_subscriber(storage_strategy: SqlAlchemyStorageStrategy) -> None:
+def test_synchronous_subscriber_gets_called(
+    event_store_factory: EventStoreFactoryCallable,
+) -> None:
     subscriber = Mock(spec_set=Subscriber)
-    store = EventStore(
-        serde=PydanticSerde(),
-        storage_strategy=storage_strategy,
-        event_base_class=BaseEvent,
-        subscribers=[subscriber],
+    store = event_store_factory(
+        subscriptions={
+            SomeEvent: [subscriber],
+        },
     )
     stream_id = uuid4()
     event = SomeEvent(first_name="Test")
+
     store.append(stream_id=stream_id, events=[event])
 
     subscriber.assert_called_once_with(event)
+
+
+def test_synchronous_subscriber_of_all_events_gets_called(
+    event_store_factory: EventStoreFactoryCallable,
+) -> None:
+    catch_all_subscriber = Mock(spec_set=Subscriber)
+    store = event_store_factory(
+        subscriptions={
+            Event: [catch_all_subscriber],
+        },
+    )
+    stream_id = uuid4()
+    events = [
+        SomeEvent(first_name="John"),
+        AnotherEvent(last_name="Doe"),
+    ]
+
+    store.append(stream_id=stream_id, events=events)
+
+    catch_all_subscriber.assert_has_calls([call(event) for event in events])
 
 
 class Snapshot(BaseEvent):
@@ -173,7 +199,7 @@ def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None
             case _:
                 pass
 
-    event_store = event_store_factory(subscribers=[project])
+    event_store = event_store_factory(subscriptions={Credit: [project]})
     event_store.append(stream_id=uuid4(), events=events)
 
     assert total == 11
