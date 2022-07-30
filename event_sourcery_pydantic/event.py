@@ -1,15 +1,15 @@
 from datetime import datetime
 from typing import Any, ClassVar
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from event_sourcery.event_registry import EventRegistry
 
 
 class Event(BaseModel):
-    uuid: UUID
-    created_at: datetime
+    uuid: UUID = Field(default_factory=uuid4)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
     __registry__: ClassVar = EventRegistry()
 

@@ -25,13 +25,7 @@ def test_save_retrieve(storage_strategy: SqlAlchemyStorageStrategy) -> None:
         event_base_class=BaseEvent,
     )
     stream_uuid = uuid4()
-    events: list[Event] = [
-        SomeEvent(
-            uuid=uuid4(),
-            created_at=datetime.now(),
-            first_name="Test",
-        )
-    ]
+    events: list[Event] = [SomeEvent(first_name="Test")]
     store.append_to_stream(stream_id=stream_uuid, events=events)
     stream = store.load_stream(stream_uuid)
 
@@ -49,11 +43,7 @@ def test_synchronous_subscriber(storage_strategy: SqlAlchemyStorageStrategy) -> 
         subscribers=[subscriber],
     )
     stream_id = uuid4()
-    event = SomeEvent(
-        uuid=uuid4(),
-        created_at=datetime.now(),
-        first_name="Test",
-    )
+    event = SomeEvent(first_name="Test")
     store.append_to_stream(stream_id=stream_id, events=[event])
 
     subscriber.assert_called_once_with(event)
@@ -70,16 +60,9 @@ def test_handles_snapshots(storage_strategy: SqlAlchemyStorageStrategy) -> None:
         event_base_class=BaseEvent,
     )
     stream_id = uuid4()
-    event = SomeEvent(
-        uuid=uuid4(),
-        created_at=datetime.now(),
-        first_name="Test",
-    )
+    event = SomeEvent(first_name="Test")
     store.append_to_stream(stream_id=stream_id, events=[event])
-    snapshot = Snapshot(
-        uuid=uuid4(),
-        created_at=datetime.now(),
-    )
+    snapshot = Snapshot()
     store.save_snapshot(stream_id=stream_id, snapshot=snapshot)
 
     stream = store.load_stream(stream_id=stream_id)
@@ -112,11 +95,7 @@ def test_concurrency_error(storage_strategy: SqlAlchemyStorageStrategy) -> None:
         event_base_class=BaseEvent,
     )
     stream_id = uuid4()
-    event = SomeEvent(
-        uuid=uuid4(),
-        created_at=datetime.now(),
-        first_name="Test",
-    )
+    event = SomeEvent(first_name="Test")
 
     with pytest.raises(ConcurrentStreamWriteError):
         store.append_to_stream(stream_id=stream_id, events=[event], expected_version=10)
@@ -124,11 +103,7 @@ def test_concurrency_error(storage_strategy: SqlAlchemyStorageStrategy) -> None:
 
 def test_iterates_over_one_stream(event_store: EventStore) -> None:
     stream_id = uuid4()
-    event = SomeEvent(
-        uuid=uuid4(),
-        created_at=datetime.now(),
-        first_name="Test",
-    )
+    event = SomeEvent(first_name="Test")
     event_store.append_to_stream(stream_id=stream_id, events=[event])
 
     events = list(event_store.iter(stream_id))
@@ -137,18 +112,10 @@ def test_iterates_over_one_stream(event_store: EventStore) -> None:
 
 def test_iterates_over_two_streams(event_store: EventStore) -> None:
     stream_id = uuid4()
-    event = SomeEvent(
-        uuid=uuid4(),
-        created_at=datetime.now(),
-        first_name="Test1",
-    )
+    event = SomeEvent(first_name="Test1")
     event_store.append_to_stream(stream_id=stream_id, events=[event])
     another_stream_id = uuid4()
-    another_event = SomeEvent(
-        uuid=uuid4(),
-        created_at=datetime.now(),
-        first_name="Test1",
-    )
+    another_event = SomeEvent(first_name="Test1")
     event_store.append_to_stream(stream_id=another_stream_id, events=[another_event])
 
     events = list(event_store.iter(stream_id, another_stream_id))
@@ -160,11 +127,7 @@ def test_iterates_over_all_streams(event_store: EventStore) -> None:
     all_events = []
     for _ in range(5):
         stream_id = uuid4()
-        event = SomeEvent(
-            uuid=uuid4(),
-            created_at=datetime.now(),
-            first_name="Test1",
-        )
+        event = SomeEvent(first_name="Test1")
         all_events.append(event)
         event_store.append_to_stream(stream_id=stream_id, events=[event])
 
@@ -180,11 +143,7 @@ def test_loading_not_existing_stream_raises_not_found(event_store: EventStore) -
 
 def test_removes_stream(event_store: EventStore) -> None:
     stream_id = uuid4()
-    event = SomeEvent(
-        uuid=uuid4(),
-        created_at=datetime.now(),
-        first_name="Test1",
-    )
+    event = SomeEvent(first_name="Test1")
     event_store.append_to_stream(stream_id=stream_id, events=[event])
 
     event_store.delete_stream(stream_id)
@@ -198,10 +157,10 @@ def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None
         amount: int
 
     events = [
-        Credit(uuid=uuid4(), created_at=datetime.now(), amount=1),
-        Credit(uuid=uuid4(), created_at=datetime.now(), amount=2),
-        Credit(uuid=uuid4(), created_at=datetime.now(), amount=3),
-        Credit(uuid=uuid4(), created_at=datetime.now(), amount=5),
+        Credit(amount=1),
+        Credit(amount=2),
+        Credit(amount=3),
+        Credit(amount=5),
     ]
 
     total = 0
