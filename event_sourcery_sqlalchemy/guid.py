@@ -35,12 +35,11 @@ class GUID(TypeDecorator):
                 # hexstring
                 return "%.32x" % value.int
 
-    def process_result_value(
-        self, value: Any, dialect: Any
-    ) -> Optional[uuid.UUID]:
+    def process_result_value(self, value: Any, dialect: Any) -> Optional[uuid.UUID]:
         if value is None:
             return value
         else:
-            if not isinstance(value, uuid.UUID):
-                value = uuid.UUID(value)
-            return value
+            if isinstance(value, uuid.UUID):
+                return value
+            else:
+                return uuid.UUID(value)

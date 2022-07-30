@@ -20,11 +20,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
     _session: Session
 
     def iter(self, *stream_ids: StreamId) -> Iterator[RawEventDict]:
-        events_stmt = (
-            select(EventModel)
-            .order_by(EventModel.id)
-            .limit(100)
-        )
+        events_stmt = select(EventModel).order_by(EventModel.id).limit(100)
         if stream_ids:
             events_stmt = events_stmt.filter(EventModel.stream_id.in_(stream_ids))
 
@@ -51,7 +47,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             .filter(EventModel.stream_id == stream_id)
             .order_by(EventModel.created_at)
         )
-        events: list[Union[EventModel, SnapshotModel]]
+        events: list[Tuple[Union[EventModel, SnapshotModel], int]]
         try:
             snapshot_stmt = (
                 select(SnapshotModel, StreamModel.version)
@@ -60,9 +56,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 .order_by(SnapshotModel.created_at.desc())
                 .limit(1)
             )
-            latest_snapshot, stream_version = (
-                self._session.execute(snapshot_stmt).one()
-            )
+            latest_snapshot, stream_version = self._session.execute(snapshot_stmt).one()
         except NoResultFound:
             events = self._session.execute(events_stmt).all()
         else:
@@ -80,22 +74,31 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 created_at=event.created_at,
                 name=event.name,
                 data=event.data,
-            ) for event, stream_version in events
+            )
+            for event, stream_version in events
         ]
         return raw_dict_events, events[-1][1]
 
     def ensure_stream(self, stream_id: StreamId, expected_version: int) -> None:
-        ensure_stream_stmt = postgresql_insert(StreamModel).values(
-            uuid=stream_id,
-            version=1,
-        ).on_conflict_do_nothing()
+        ensure_stream_stmt = (
+            postgresql_insert(StreamModel)
+            .values(
+                uuid=stream_id,
+                version=1,
+            )
+            .on_conflict_do_nothing()
+        )
         self._session.execute(ensure_stream_stmt)
 
         if expected_version:
-            stmt = update(StreamModel).where(
-                StreamModel.uuid == stream_id,
-                StreamModel.version == expected_version
-            ).values(version=StreamModel.version + 1)
+            stmt = (
+                update(StreamModel)
+                .where(
+                    StreamModel.uuid == stream_id,
+                    StreamModel.version == expected_version,
+                )
+                .values(version=StreamModel.version + 1)
+            )
             result = self._session.execute(stmt)
 
             if result.rowcount != 1:  # optimistic lock failed

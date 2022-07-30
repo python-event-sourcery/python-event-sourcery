@@ -1,5 +1,5 @@
 import abc
-from typing import Iterator, Optional, Type, TypeVar
+from typing import Iterator, Optional, Sequence, Type, TypeVar
 
 from event_sourcery.event import Event
 from event_sourcery.event_registry import BaseEventCls
@@ -62,7 +62,7 @@ class EventStore(abc.ABC):
         ]
 
     def append_to_stream(
-        self, stream_id: StreamId, events: list[Event], expected_version: int = 0
+        self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
     ) -> None:
         if not events:
             raise EventStore.NoEventsToAppend
@@ -80,7 +80,7 @@ class EventStore(abc.ABC):
                 subscriber(event)
 
     def _serialize_events(
-        self, events: list[Event], stream_id: StreamId
+        self, events: Sequence[Event], stream_id: StreamId
     ) -> list[RawEventDict]:
         return [
             self._serde.serialize(

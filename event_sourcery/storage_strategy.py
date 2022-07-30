@@ -23,5 +23,5 @@ class StorageStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def ensure_stream(self, stream_id: StreamId, expected_version):
+    def ensure_stream(self, stream_id: StreamId, expected_version: int) -> None:
         pass

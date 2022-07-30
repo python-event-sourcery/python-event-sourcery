@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, DateTime, String, Integer
+from sqlalchemy import BigInteger, Column, DateTime, Integer, String
 from sqlalchemy.orm import as_declarative
 
 from event_sourcery_sqlalchemy.guid import GUID

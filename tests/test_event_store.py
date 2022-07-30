@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Callable, Any
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -10,24 +9,12 @@ from event_sourcery.event_store import EventStore
 from event_sourcery.subscriber import Subscriber
 from event_sourcery_pydantic.event import Event as BaseEvent
 from event_sourcery_pydantic.serde import PydanticSerde
-from event_sourcery_sqlalchemy.sqlalchemy_event_store import (
-    SqlAlchemyStorageStrategy,
-)
+from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageStrategy
+from tests.conftest import EventStoreFactoryCallable
 
 
 class SomeEvent(BaseEvent):
     first_name: str
-
-
-@pytest.fixture()
-def storage_strategy() -> SqlAlchemyStorageStrategy:
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import Session
-    from event_sourcery_sqlalchemy.models import Base
-    engine = create_engine("sqlite://")
-    Base.metadata.create_all(bind=engine)
-    session = Session(bind=engine)
-    return SqlAlchemyStorageStrategy(session)
 
 
 def test_save_retrieve(storage_strategy: SqlAlchemyStorageStrategy) -> None:
@@ -112,7 +99,8 @@ def test_detects_duplicated_events_class_names() -> None:
         pass
 
     with pytest.raises(Exception):
-        class EventToBeDuplicated(BaseEvent):
+
+        class EventToBeDuplicated(BaseEvent):  # type: ignore  # noqa: F811
             last_name: str
 
 
@@ -184,7 +172,7 @@ def test_iterates_over_all_streams(event_store: EventStore) -> None:
     assert events == all_events
 
 
-def test_sync_projection(event_store_factory: Callable[[], EventStore]) -> None:
+def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None:
     class Credit(BaseEvent):
         amount: int
 
@@ -197,28 +185,16 @@ def test_sync_projection(event_store_factory: Callable[[], EventStore]) -> None:
 
     total = 0
 
-    def project(event: Credit) -> None:
+    def project(event: Event) -> None:
         nonlocal total
-        total += event.amount
+
+        match event:
+            case Credit():
+                total += event.amount
+            case _:
+                pass
 
     event_store = event_store_factory(subscribers=[project])
     event_store.append_to_stream(stream_id=uuid4(), events=events)
 
     assert total == 11
-
-
-@pytest.fixture()
-def event_store_factory(storage_strategy: SqlAlchemyStorageStrategy) -> Callable[[], EventStore]:
-    def _callable(**kwargs) -> EventStore:
-        return EventStore(
-            serde=PydanticSerde(),
-            storage_strategy=storage_strategy,
-            event_base_class=BaseEvent,
-            **kwargs,
-        )
-    return _callable
-
-
-@pytest.fixture()
-def event_store(event_store_factory: Callable[[], EventStore]) -> EventStore:
-    return event_store_factory()
