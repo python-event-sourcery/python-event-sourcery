@@ -2,13 +2,12 @@ from datetime import datetime
 from typing import Any, ClassVar, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Extra, Field
 
 from event_sourcery.event_registry import EventRegistry
 
 
-class Metadata(BaseModel):
-    # TODO: whether model this as a dict, or allow extra fields via pydantic config
+class Metadata(BaseModel, extra=Extra.allow):
     correlation_id: Optional[UUID]
     causation_id: Optional[UUID]
 
