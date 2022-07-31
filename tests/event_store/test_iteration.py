@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from event_sourcery.event_store import EventStore
-from tests.event_store.events import SomeEvent
+from tests.events import SomeEvent
 
 
 def test_iterates_over_one_stream(event_store: EventStore) -> None:

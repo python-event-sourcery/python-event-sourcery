@@ -36,3 +36,12 @@ class Snapshot(Base):
     name = Column(String(50), nullable=False)
     data = Column(JSONB(), nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False)
+
+
+class OutboxEntry(Base):
+    __tablename__ = "event_sourcery_outbox_entries"
+
+    id = Column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    data = Column(JSONB(), nullable=False)
+    tries_left = Column(Integer(), nullable=False, server_default="3")

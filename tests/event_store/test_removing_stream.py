@@ -4,7 +4,7 @@ import pytest
 
 from event_sourcery.event_store import EventStore
 from event_sourcery.exceptions import NotFound
-from tests.event_store.events import SomeEvent
+from tests.events import SomeEvent
 
 
 def test_removes_stream(event_store: EventStore) -> None:

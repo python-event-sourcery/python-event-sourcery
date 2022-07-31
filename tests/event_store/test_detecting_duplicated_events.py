@@ -1,7 +1,7 @@
 import pytest
 
 from event_sourcery.event_store import EventStore
-from tests.event_store.events import BaseEvent
+from tests.events import BaseEvent
 
 
 @pytest.mark.skip()

@@ -61,6 +61,17 @@ class EventStore(abc.ABC):
             for catch_all_subscriber in catch_all_subscribers:
                 catch_all_subscriber(event)
 
+    def publish(
+        self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
+    ) -> None:
+        self.append(
+            stream_id=stream_id, events=events, expected_version=expected_version
+        )
+        serialized_events = self._serialize_events(
+            events, stream_id
+        )  # this happens twice, should be optimized away
+        self._storage_strategy.put_into_outbox(serialized_events)
+
     def iter(self, *streams_ids: StreamId) -> Iterator[Event]:
         events_iterator = self._storage_strategy.iter(*streams_ids)
         for event in events_iterator:

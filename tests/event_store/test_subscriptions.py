@@ -4,7 +4,7 @@ from uuid import uuid4
 from event_sourcery.event import Event
 from event_sourcery.subscriber import Subscriber
 from tests.conftest import EventStoreFactoryCallable
-from tests.event_store.events import AnotherEvent, BaseEvent, SomeEvent
+from tests.events import AnotherEvent, BaseEvent, SomeEvent
 
 
 def test_synchronous_subscriber_gets_called(

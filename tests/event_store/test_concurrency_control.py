@@ -4,7 +4,7 @@ import pytest
 
 from event_sourcery.event_store import EventStore
 from event_sourcery.exceptions import ConcurrentStreamWriteError
-from tests.event_store.events import SomeEvent
+from tests.events import SomeEvent
 
 
 def test_concurrency_error(event_store: EventStore) -> None:
