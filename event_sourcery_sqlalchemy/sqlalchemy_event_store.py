@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterator, Tuple, Union, cast
+from typing import Callable, Iterator, Tuple, Union, cast
 
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete
+from sqlalchemy import event as sa_event
+from sqlalchemy import insert, select, update
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
@@ -179,3 +181,6 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
     def remove_from_outbox(self, entry_id: EntryId) -> None:
         entry = self._session.query(OutboxEntry).get(entry_id)
         self._session.delete(entry)
+
+    def run_after_commit(self, callback: Callable[[], None]) -> None:
+        sa_event.listen(self._session, "after_commit", lambda _session: callback())

@@ -1,6 +1,9 @@
 from unittest.mock import Mock, call
 from uuid import uuid4
 
+from sqlalchemy.orm import Session
+
+from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.interfaces.event import Event
 from event_sourcery.interfaces.subscriber import Subscriber
 from tests.conftest import EventStoreFactoryCallable
@@ -70,3 +73,22 @@ def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None
     event_store.append(stream_id=uuid4(), events=events)
 
     assert total == 11
+
+
+def test_after_commit_subscriber_gets_called_after_tx_is_committed(
+    event_store_factory: EventStoreFactoryCallable,
+    session: Session,
+) -> None:
+    subscriber_mock = Mock(Subscriber)
+    event_store = event_store_factory(
+        subscriptions={SomeEvent: [AfterCommit(subscriber_mock)]}
+    )
+    event = SomeEvent(first_name="Test")
+
+    event_store.append(stream_id=uuid4(), events=[event])
+
+    subscriber_mock.assert_not_called()
+
+    session.commit()
+
+    subscriber_mock.assert_called_once_with(event)

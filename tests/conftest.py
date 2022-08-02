@@ -1,6 +1,8 @@
 from typing import Any, Optional, Protocol, Type, cast
 
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.event import Event
@@ -38,13 +40,14 @@ def event_store(event_store_factory: EventStoreFactoryCallable) -> EventStore:
 
 
 @pytest.fixture()
-def storage_strategy() -> SqlAlchemyStorageStrategy:
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import Session
-
+def session() -> Session:
     from event_sourcery_sqlalchemy.models import Base
 
     engine = create_engine("sqlite://")
     Base.metadata.create_all(bind=engine)  # type: ignore
-    session = Session(bind=engine)
+    return Session(bind=engine)
+
+
+@pytest.fixture()
+def storage_strategy(session: Session) -> SqlAlchemyStorageStrategy:
     return SqlAlchemyStorageStrategy(session)

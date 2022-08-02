@@ -1,6 +1,7 @@
 import abc
 from typing import Iterator, Optional, Sequence, Type, TypeVar
 
+from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.dto.event_stream import EventStream
 from event_sourcery.dto.raw_event_dict import RawEventDict
 from event_sourcery.event_registry import BaseEventCls
@@ -57,7 +58,10 @@ class EventStore(abc.ABC):
             # Shall we support async subscribers here?
             # Shall we support after-commit-subscribers?
             for subscriber in self._subscriptions.get(type(event), []):
-                subscriber(event)
+                if isinstance(subscriber, AfterCommit):
+                    self._storage_strategy.run_after_commit(lambda: subscriber(event))
+                else:
+                    subscriber(event)
 
             catch_all_subscribers = self._subscriptions.get(Event, [])  # type: ignore
             for catch_all_subscriber in catch_all_subscribers:
@@ -70,11 +74,10 @@ class EventStore(abc.ABC):
             stream_id=stream_id, events=events, expected_version=expected_version
         )
         # this happens twice, should be optimized away
-        serialized_events = self._serialize_events(
-            events, stream_id
-        )
+        serialized_events = self._serialize_events(events, stream_id)
 
-        # Rethink. Should it be always putting into outbox once we have async subscribers?
+        # Rethink. Should it be always putting into outbox
+        # once we have async subscribers?
         self._storage_strategy.put_into_outbox(serialized_events)
 
     def iter(self, *streams_ids: StreamId) -> Iterator[Event]:
