@@ -4,6 +4,11 @@ version = "0.0.1"
 description = ""
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
+packages = [
+    { include = "event_sourcery" },
+    { include = "event_sourcery_pydantic" },
+    { include = "event_sourcery_sqlalchemy" },
+]
 
 [tool.poetry.dependencies]
 python = "3.10"
