@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from event_sourcery.event import Event
+from event_sourcery.interfaces.event import Event
 
 
 @dataclass(frozen=True)

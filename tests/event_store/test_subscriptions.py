@@ -1,8 +1,8 @@
 from unittest.mock import Mock, call
 from uuid import uuid4
 
-from event_sourcery.event import Event
-from event_sourcery.subscriber import Subscriber
+from event_sourcery.interfaces.event import Event
+from event_sourcery.interfaces.subscriber import Subscriber
 from tests.conftest import EventStoreFactoryCallable
 from tests.events import AnotherEvent, BaseEvent, SomeEvent
 

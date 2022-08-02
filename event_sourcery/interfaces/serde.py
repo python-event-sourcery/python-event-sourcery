@@ -1,9 +1,9 @@
 import abc
 from typing import Type
 
-from event_sourcery.event import Event
-from event_sourcery.raw_event_dict import RawEventDict
-from event_sourcery.stream_id import StreamId
+from event_sourcery.interfaces.event import Event
+from event_sourcery.dto.raw_event_dict import RawEventDict
+from event_sourcery.types.stream_id import StreamId
 
 
 class Serde(abc.ABC):

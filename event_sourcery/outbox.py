@@ -1,10 +1,10 @@
 import abc
 from typing import Callable, Type
 
-from event_sourcery.event import Event
+from event_sourcery.interfaces.event import Event
 from event_sourcery.event_registry import BaseEventCls
-from event_sourcery.serde import Serde
-from event_sourcery.storage_strategy import StorageStrategy
+from event_sourcery.interfaces.serde import Serde
+from event_sourcery.interfaces.storage_strategy import StorageStrategy
 
 
 class Outbox(abc.ABC):

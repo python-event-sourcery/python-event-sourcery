@@ -1,8 +1,8 @@
 import abc
 from typing import Iterator, Tuple
 
-from event_sourcery.raw_event_dict import RawEventDict
-from event_sourcery.stream_id import StreamId
+from event_sourcery.dto.raw_event_dict import RawEventDict
+from event_sourcery.types.stream_id import StreamId
 
 EntryId = int
 

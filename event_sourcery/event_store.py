@@ -1,15 +1,15 @@
 import abc
 from typing import Iterator, Optional, Sequence, Type, TypeVar
 
-from event_sourcery.event import Event
+from event_sourcery.interfaces.event import Event
 from event_sourcery.event_registry import BaseEventCls
-from event_sourcery.event_stream import EventStream
+from event_sourcery.dto.event_stream import EventStream
 from event_sourcery.exceptions import NoEventsToAppend
-from event_sourcery.raw_event_dict import RawEventDict
-from event_sourcery.serde import Serde
-from event_sourcery.storage_strategy import StorageStrategy
-from event_sourcery.stream_id import StreamId
-from event_sourcery.subscriber import Subscriber
+from event_sourcery.dto.raw_event_dict import RawEventDict
+from event_sourcery.interfaces.serde import Serde
+from event_sourcery.interfaces.storage_strategy import StorageStrategy
+from event_sourcery.types.stream_id import StreamId
+from event_sourcery.interfaces.subscriber import Subscriber
 
 TAggregate = TypeVar("TAggregate")
 

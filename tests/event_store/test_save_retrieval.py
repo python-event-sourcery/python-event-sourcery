@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery.event import Event
+from event_sourcery.interfaces.event import Event
 from event_sourcery.event_store import EventStore
 from event_sourcery.exceptions import NotFound
 from tests.events import SomeEvent

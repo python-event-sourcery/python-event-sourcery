@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from event_sourcery.event import Event
+from event_sourcery.interfaces.event import Event
 
 
 class Subscriber(Protocol):

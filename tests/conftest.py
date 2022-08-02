@@ -2,9 +2,9 @@ from typing import Any, Optional, Protocol, Type, cast
 
 import pytest
 
-from event_sourcery.event import Event
+from event_sourcery.interfaces.event import Event
 from event_sourcery.event_store import EventStore
-from event_sourcery.subscriber import Subscriber
+from event_sourcery.interfaces.subscriber import Subscriber
 from event_sourcery_pydantic.event import Event as BaseEvent
 from event_sourcery_pydantic.serde import PydanticSerde
 from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageStrategy

@@ -5,7 +5,7 @@ import pytest
 
 from event_sourcery.event_store import EventStore
 from event_sourcery.outbox import Outbox
-from event_sourcery.storage_strategy import StorageStrategy
+from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery_pydantic.event import Event
 from event_sourcery_pydantic.serde import PydanticSerde
 from tests.events import SomeEvent

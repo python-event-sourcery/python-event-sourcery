@@ -1,7 +1,7 @@
 from collections import Counter
 from typing import ClassVar, Protocol, Type
 
-from event_sourcery.event import Event
+from event_sourcery.interfaces.event import Event
 
 
 class EventRegistry:

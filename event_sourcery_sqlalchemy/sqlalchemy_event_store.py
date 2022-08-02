@@ -8,9 +8,9 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 from event_sourcery.exceptions import ConcurrentStreamWriteError, NotFound
-from event_sourcery.raw_event_dict import RawEventDict
-from event_sourcery.storage_strategy import EntryId, StorageStrategy
-from event_sourcery.stream_id import StreamId
+from event_sourcery.dto.raw_event_dict import RawEventDict
+from event_sourcery.interfaces.storage_strategy import EntryId, StorageStrategy
+from event_sourcery.types.stream_id import StreamId
 from event_sourcery_sqlalchemy.models import Event as EventModel
 from event_sourcery_sqlalchemy.models import OutboxEntry
 from event_sourcery_sqlalchemy.models import Snapshot as SnapshotModel
