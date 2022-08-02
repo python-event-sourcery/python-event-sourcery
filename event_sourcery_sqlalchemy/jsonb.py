@@ -25,5 +25,7 @@ class JSONB(TypeDecorator):
     def process_result_value(self, value: Any, dialect: Any) -> Optional[Any]:
         if value is None:
             return value
+        elif dialect.name == "postgresql":
+            return value
         else:
             return json.loads(value)
