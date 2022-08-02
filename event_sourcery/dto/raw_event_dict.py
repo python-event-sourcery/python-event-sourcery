@@ -9,3 +9,4 @@ class RawEventDict(TypedDict):
     created_at: datetime
     name: str
     data: dict
+    metadata: dict

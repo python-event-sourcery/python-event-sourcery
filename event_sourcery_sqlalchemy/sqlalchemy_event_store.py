@@ -42,6 +42,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                     created_at=event.created_at,
                     name=event.name,
                     data=event.data,
+                    metadata=event.event_metadata,
                 )
 
     def fetch_events(self, stream_id: StreamId) -> Tuple[list[RawEventDict], int]:
@@ -81,6 +82,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 created_at=event.created_at,
                 name=event.name,
                 data=event.data,
+                metadata=event.event_metadata,
             )
             for event, stream_version in events
         ]
@@ -121,6 +123,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                     "created_at": event["created_at"],
                     "name": event["name"],
                     "data": event["data"],
+                    "event_metadata": event["metadata"],
                 }
             )
 
@@ -134,6 +137,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             "created_at": snapshot_as_dict.pop("created_at"),
             "name": snapshot_as_dict.pop("name"),
             "data": snapshot_as_dict["data"],
+            "event_metadata": snapshot_as_dict["metadata"],
         }
         self._session.execute(insert(SnapshotModel), [row])
 
