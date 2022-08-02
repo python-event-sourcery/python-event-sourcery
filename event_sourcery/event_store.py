@@ -54,6 +54,8 @@ class EventStore(abc.ABC):
 
         # TODO: make it more robust per subscriber?
         for event in events:
+            # Shall we support async subscribers here?
+            # Shall we support after-commit-subscribers?
             for subscriber in self._subscriptions.get(type(event), []):
                 subscriber(event)
 
@@ -67,9 +69,12 @@ class EventStore(abc.ABC):
         self.append(
             stream_id=stream_id, events=events, expected_version=expected_version
         )
+        # this happens twice, should be optimized away
         serialized_events = self._serialize_events(
             events, stream_id
-        )  # this happens twice, should be optimized away
+        )
+
+        # Rethink. Should it be always putting into outbox once we have async subscribers?
         self._storage_strategy.put_into_outbox(serialized_events)
 
     def iter(self, *streams_ids: StreamId) -> Iterator[Event]:
