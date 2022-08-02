@@ -2,8 +2,8 @@ from typing import Type, cast
 
 from pydantic import BaseModel
 
-from event_sourcery.interfaces.event import Event
 from event_sourcery.dto.raw_event_dict import RawEventDict
+from event_sourcery.interfaces.event import Event
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.types.stream_id import StreamId
 

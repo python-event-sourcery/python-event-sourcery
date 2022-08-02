@@ -1,8 +1,8 @@
 import abc
 from typing import Callable, Type
 
-from event_sourcery.interfaces.event import Event
 from event_sourcery.event_registry import BaseEventCls
+from event_sourcery.interfaces.event import Event
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 
