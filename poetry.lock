@@ -288,7 +288,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10"
-content-hash = "9791179178ef02090ad2669bb372f3dc65327c895c0e532ac45aa0bb6c6f0d9d"
+content-hash = "46d4e1402df43fd924ffc7612ec92a39054320ba9d3eaa449c0c4769c924416a"
 
 [metadata.files]
 bandit = [

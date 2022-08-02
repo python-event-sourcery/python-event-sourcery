@@ -1,14 +1,14 @@
 [tool.poetry]
-name = "python-event-sourcerer"
-version = "1.0.0"
+name = "python-event-sourcery"
+version = "0.0.1"
 description = ""
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
 python = "3.10"
-pydantic = "^1.9.1"
-SQLAlchemy = "^1.4.39"
+pydantic = "^1.9"
+SQLAlchemy = "^1.4"
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"
