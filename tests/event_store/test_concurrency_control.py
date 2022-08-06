@@ -13,3 +13,18 @@ def test_concurrency_error(event_store: EventStore) -> None:
 
     with pytest.raises(ConcurrentStreamWriteError):
         event_store.append(stream_id=stream_id, events=[event], expected_version=10)
+
+
+def test_does_not_raise_concurrency_error_if_no_one_bumped_up_version(
+    event_store: EventStore,
+) -> None:
+    stream_id = uuid4()
+    event = SomeEvent(first_name="Test")
+    event_store.append(stream_id=stream_id, events=[event])
+    stream = event_store.load_stream(stream_id=stream_id)
+    try:
+        event_store.append(
+            stream_id=stream_id, events=[event], expected_version=stream.version
+        )
+    except ConcurrentStreamWriteError:
+        pytest.fail("Should NOT raise an exception!")
