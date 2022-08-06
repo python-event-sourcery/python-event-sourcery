@@ -1,23 +1,25 @@
+from typing import Type
+
 from sqlalchemy import BigInteger, Column, DateTime, Integer, String
-from sqlalchemy.orm import as_declarative
+from sqlalchemy.ext.declarative import instrument_declarative
 
 from event_sourcery_sqlalchemy.guid import GUID
 from event_sourcery_sqlalchemy.jsonb import JSONB
 
 
-@as_declarative()  # TODO: How to get external Base? Or how to extend existing one?
-class Base:
-    pass
+def configure_models(base: Type) -> None:
+    for model_cls in (Stream, Event, Snapshot, OutboxEntry):
+        instrument_declarative(model_cls, {}, base.metadata)
 
 
-class Stream(Base):
+class Stream:
     __tablename__ = "event_sourcery_streams"
 
     uuid = Column(GUID(), primary_key=True)
     version = Column(BigInteger(), nullable=False)
 
 
-class Event(Base):
+class Event:
     __tablename__ = "event_sourcery_events"
 
     id = Column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
@@ -29,7 +31,7 @@ class Event(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, index=True)
 
 
-class Snapshot(Base):
+class Snapshot:
     __tablename__ = "event_sourcery_snapshots"
 
     uuid = Column(GUID, primary_key=True)
@@ -40,7 +42,7 @@ class Snapshot(Base):
     created_at = Column(DateTime(timezone=True), nullable=False)
 
 
-class OutboxEntry(Base):
+class OutboxEntry:
     __tablename__ = "event_sourcery_outbox_entries"
 
     id = Column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)

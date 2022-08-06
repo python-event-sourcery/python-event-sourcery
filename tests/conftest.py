@@ -39,12 +39,25 @@ def event_store(event_store_factory: EventStoreFactoryCallable) -> EventStore:
     return event_store_factory()
 
 
-@pytest.fixture()
-def session() -> Session:
-    from event_sourcery_sqlalchemy.models import Base
+@pytest.fixture(scope="session")
+def declarative_base() -> object:
+    from sqlalchemy.ext.declarative import as_declarative
 
+    from event_sourcery_sqlalchemy.models import configure_models
+
+    @as_declarative()
+    class Base:
+        pass
+
+    configure_models(Base)
+
+    return Base
+
+
+@pytest.fixture()
+def session(declarative_base: object) -> Session:
     engine = create_engine("sqlite://")
-    Base.metadata.create_all(bind=engine)  # type: ignore
+    declarative_base.metadata.create_all(bind=engine)  # type: ignore
     return Session(bind=engine)
 
 
