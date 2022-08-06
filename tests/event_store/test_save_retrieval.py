@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from event_sourcery.event_store import EventStore
-from event_sourcery.exceptions import NotFound
+from event_sourcery.exceptions import NoEventsToAppend, NotFound
 from event_sourcery.interfaces.event import Event
 from tests.events import NastyEventWithJsonUnfriendlyTypes, SomeEvent
 
@@ -50,3 +50,8 @@ def test_is_able_to_handle_non_trivial_formats(event_store: EventStore) -> None:
     stream = event_store.load_stream(stream_id=stream_id)
 
     assert stream.events == [an_event]
+
+
+def test_raises_exception_for_empty_stream(event_store: EventStore) -> None:
+    with pytest.raises(NoEventsToAppend):
+        event_store.append(stream_id=uuid4(), events=[])

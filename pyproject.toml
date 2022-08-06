@@ -22,6 +22,27 @@ flake8 = "^4.0.1"
 bandit = "^1.7.4"
 mypy = "^0.971"
 pytest = "^7.1.2"
+pytest-cov = "^3.0.0"
+
+[tool.pytest]
+addopts = ""
+
+[tool.coverage.run]
+branch = true
+source = [
+    "event_sourcery",
+    "event_sourcery_pydantic",
+    "event_sourcery_sqlalchemy",
+]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "pass",
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
