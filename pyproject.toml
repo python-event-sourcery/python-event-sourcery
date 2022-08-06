@@ -42,6 +42,7 @@ skip_covered = true
 exclude_lines = [
     "pragma: no cover",
     "pass",
+    "NotImplementedError",
 ]
 
 [build-system]
