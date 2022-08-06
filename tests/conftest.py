@@ -1,9 +1,10 @@
-from typing import Any, Optional, Protocol, Type, cast
+from typing import Any, Protocol, Type, cast
 
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from event_sourcery.event_registry import BaseEventCls, EventRegistry
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.event import Event
 from event_sourcery.interfaces.subscriber import Subscriber
@@ -13,8 +14,13 @@ from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageSt
 
 
 class EventStoreFactoryCallable(Protocol):
+    GUARD: object = object()
+
     def __call__(
-        self, subscriptions: Optional[dict[Type[Event], list[Subscriber]]] = None
+        self,
+        subscriptions: dict[Type[Event], list[Subscriber]] | None | object = GUARD,
+        event_base_class: Type[BaseEventCls] | None | object = GUARD,
+        event_registry: EventRegistry | None | object = GUARD,
     ) -> EventStore:
         pass
 
@@ -23,13 +29,19 @@ class EventStoreFactoryCallable(Protocol):
 def event_store_factory(
     storage_strategy: SqlAlchemyStorageStrategy,
 ) -> EventStoreFactoryCallable:
+    defaults = dict(
+        serde=PydanticSerde(),
+        storage_strategy=storage_strategy,
+        event_base_class=BaseEvent,
+    )
+
     def _callable(**kwargs: Any) -> EventStore:
-        return EventStore(
-            serde=PydanticSerde(),
-            storage_strategy=storage_strategy,
-            event_base_class=BaseEvent,
-            **kwargs,
-        )
+        arguments = defaults.copy()
+        for key, value in kwargs.items():
+            if value is not EventStoreFactoryCallable.GUARD:
+                arguments[key] = value
+
+        return EventStore(**arguments)  # type: ignore
 
     return cast(EventStoreFactoryCallable, _callable)
 

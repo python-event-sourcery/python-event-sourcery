@@ -1,11 +1,11 @@
 import abc
-from typing import Iterator, Optional, Sequence, Type, TypeVar
+from typing import Iterator, Sequence, Type, TypeVar
 
 from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.dto.event_stream import EventStream
 from event_sourcery.dto.raw_event_dict import RawEventDict
-from event_sourcery.event_registry import BaseEventCls
-from event_sourcery.exceptions import NoEventsToAppend
+from event_sourcery.event_registry import BaseEventCls, EventRegistry
+from event_sourcery.exceptions import Misconfiguration, NoEventsToAppend
 from event_sourcery.interfaces.event import Event
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
@@ -20,15 +20,27 @@ class EventStore(abc.ABC):
         self,
         serde: Serde,
         storage_strategy: StorageStrategy,
-        event_base_class: Type[BaseEventCls],
-        subscriptions: Optional[dict[Type[Event], list[Subscriber]]] = None,
+        event_base_class: Type[BaseEventCls] | None = None,
+        event_registry: EventRegistry | None = None,
+        subscriptions: dict[Type[Event], list[Subscriber]] | None = None,
     ) -> None:
+        if event_base_class is not None and event_registry is not None:
+            raise Misconfiguration(
+                "You can specify only one of `event_base_class` or `event_registry`"
+            )
+
         if subscriptions is None:
             subscriptions = {}
 
+        if event_base_class is not None:
+            self._event_registry = event_base_class.__registry__
+        elif event_registry is not None:
+            self._event_registry = event_registry
+        else:  # not possible
+            pass
+
         self._serde = serde
         self._storage_strategy = storage_strategy
-        self._event_registry = event_base_class.__registry__
         self._subscriptions = subscriptions
 
     def load_stream(self, stream_id: StreamId) -> EventStream:

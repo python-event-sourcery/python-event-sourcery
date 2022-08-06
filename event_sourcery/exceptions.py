@@ -12,3 +12,7 @@ class NoEventsToAppend(EventStoreException):
 
 class ConcurrentStreamWriteError(EventStoreException):
     pass
+
+
+class Misconfiguration(EventStoreException):
+    pass
