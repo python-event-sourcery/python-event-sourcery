@@ -1,7 +1,26 @@
-site_name: Python Event Sourcery
+site_name: Event Sourcery
 theme:
   name: material
   palette:
     primary: deep purple
 repo_url: https://github.com/Enforcer/python-event-sourcery/
 repo_name: Enforcer/python-event-sourcery
+nav:
+    - 'Event Sourcery': 'index.md'
+    - 'Basics': 'basics.md'
+    - 'Features': 'features.md'
+    - 'Tutorial - Event-Driven Architecture':
+        - 'Event-Driven Architecture - Intro': 'tutorial_eda/index.md'
+    - 'Tutorial - Event Sourcing':
+        - 'Event Sourcing - Intro': 'tutorial_event_sourcing/index.md'
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - tables
