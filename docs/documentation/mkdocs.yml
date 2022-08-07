@@ -1,0 +1,7 @@
+site_name: Python Event Sourcery
+theme:
+  name: material
+  palette:
+    primary: deep purple
+repo_url: https://github.com/Enforcer/python-event-sourcery/
+repo_name: Enforcer/python-event-sourcery
