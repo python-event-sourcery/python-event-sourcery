@@ -12,6 +12,14 @@ _Under heavy development_
 
 ---
 
+## Installation
+
+```bash
+pip install python-event-sourcery
+```
+
+---
+
 ## Easy to setup
 Just configure your `EventStore` instance (or a factory) and call `configure_models` once. Examples below.
 
@@ -24,12 +32,15 @@ Although one can easily start with a library, the latter is very customizable an
 ---
 
 ## Use cases & features
-- Event-driven applications (in the same process)
-- CQRS - synchronous projections
-- Event Sourcing with snapshots
-- Event Store - storage for evens
-- Outbox pattern
-- Concurrency control with optimistic locking
+Until full documentation is available, you can follow tests
+
+- Event-driven applications (in the same process) [tests](https://github.com/Enforcer/python-event-sourcery/blob/master/tests/event_store/test_subscriptions.py)
+- CQRS - synchronous projections [tests](https://github.com/Enforcer/python-event-sourcery/blob/master/tests/event_store/test_subscriptions.py#L50)
+- Event Sourcing [tests](https://github.com/Enforcer/python-event-sourcery/blob/master/tests/repository/test_aggregate_context_manager.py)
+- Snapshots (for Event Sourcing) [tests](https://github.com/Enforcer/python-event-sourcery/blob/master/tests/event_store/test_snapshots.py)
+- Event Store - storage for events [tests](https://github.com/Enforcer/python-event-sourcery/blob/master/tests/event_store/test_save_retrieval.py)
+- Outbox pattern [tests](https://github.com/Enforcer/python-event-sourcery/blob/master/tests/outbox/test_outbox.py)
+- Concurrency control with optimistic locking [tests](https://github.com/Enforcer/python-event-sourcery/blob/master/tests/event_store/test_concurrency_control.py)
 
 ---
 
