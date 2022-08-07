@@ -12,6 +12,10 @@ _Under heavy development_
 
 ---
 
+Documentation: https://enforcer.github.io/python-event-sourcery/
+
+---
+
 ## Installation
 
 ```bash
