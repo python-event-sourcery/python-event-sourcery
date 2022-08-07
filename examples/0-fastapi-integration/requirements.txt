@@ -1,0 +1,4 @@
+python-event-sourcery
+sqlalchemy
+psycopg2-binary
+fastapi[all]
