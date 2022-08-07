@@ -117,6 +117,24 @@ while True:
     time.sleep(5)
 ```
 
+Regarding the simpler variant - that is monorepo app, running in a single process - Event Sourcery has a system of synchronous subscriptions.
+
+Simply saying, we can set up callbacks that will be triggered once a certain event is saved.
+
+```python
+store = get_event_store(
+    session=session,
+    subscriptions={
+        UserRegistered: [lambda event: send_email(event.email)],
+    },
+)
+stream_id = uuid4()
+event = UserRegistered(email="test@example.com")
+
+store.append(stream_id=stream_id, events=[event])
+# here, callback runs and email gets sent!
+```
+
 ## What is Event Sourcing?
 
 Recall any entity/model/being from a piece of software you recently worked on. Let's consider e-commerce `Order`. It might hold current status (new, confirmed, shipped, etc) and summaries – total price, shipping and taxes. 
