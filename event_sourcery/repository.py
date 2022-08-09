@@ -22,7 +22,8 @@ class Repository(Generic[TAggregate]):
     @contextmanager
     def new(self, stream_id: StreamId) -> Iterator[TAggregate]:
         changes: list[Event] = []  # To be mutated inside aggregate
-        aggregate = self._aggregate_cls(
+        aggregate = self._aggregate_cls()
+        aggregate.__restore_aggregate_state__(
             past_events=[], changes=changes, stream_id=stream_id
         )
         yield aggregate
@@ -34,8 +35,9 @@ class Repository(Generic[TAggregate]):
     def aggregate(self, stream_id: StreamId) -> Iterator[TAggregate]:
         stream = self._event_store.load_stream(stream_id)
         changes: list[Event] = []  # To be mutated inside aggregate
-        aggregate = self._aggregate_cls(
-            past_events=stream.events, changes=changes, stream_id=stream_id
+        aggregate = self._aggregate_cls()
+        aggregate.__restore_aggregate_state__(
+            past_events=[], changes=changes, stream_id=stream_id
         )
         yield aggregate
         self._event_store.append(

@@ -5,7 +5,7 @@ from event_sourcery.types.stream_id import StreamId
 
 
 class Aggregate:
-    def __init__(
+    def __restore_aggregate_state__(
         self, past_events: list[Event], changes: list[Event], stream_id: StreamId
     ) -> None:
         for event in past_events:

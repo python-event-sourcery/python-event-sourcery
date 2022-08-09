@@ -6,7 +6,6 @@ from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.event import Event
 from event_sourcery.repository import Repository
-from event_sourcery.types.stream_id import StreamId
 from event_sourcery_pydantic.event import Event as BaseEvent
 
 
@@ -25,12 +24,8 @@ class LightSwitch(Aggregate):
     class AlreadyTurnedOff(Exception):
         pass
 
-    def __init__(
-        self, past_events: list[Event], changes: list[Event], stream_id: StreamId
-    ) -> None:
+    def __init__(self) -> None:
         self._shines = False
-
-        super().__init__(past_events, changes, stream_id)
 
     def _apply(self, event: Event) -> None:
         match event:
@@ -53,7 +48,10 @@ class LightSwitch(Aggregate):
 
 def test_light_switch_aggregate_logs_events() -> None:
     changes: list[Event] = []
-    switch = LightSwitch(past_events=[], changes=changes, stream_id=uuid4())
+    switch = LightSwitch()
+    switch.__restore_aggregate_state__(
+        past_events=[], changes=changes, stream_id=uuid4()
+    )
     switch.turn_on()
     switch.turn_off()
 
@@ -63,7 +61,8 @@ def test_light_switch_aggregate_logs_events() -> None:
 
 
 def test_light_switch_cannot_be_turned_on_twice() -> None:
-    switch = LightSwitch(past_events=[], changes=[], stream_id=uuid4())
+    switch = LightSwitch()
+    switch.__restore_aggregate_state__(past_events=[], changes=[], stream_id=uuid4())
     switch.turn_on()
 
     with pytest.raises(LightSwitch.AlreadyTurnedOn):
@@ -71,7 +70,10 @@ def test_light_switch_cannot_be_turned_on_twice() -> None:
 
 
 def test_light_switch_cannot_be_turned_off_twice() -> None:
-    switch = LightSwitch(past_events=[TurnedOn()], changes=[], stream_id=uuid4())
+    switch = LightSwitch()
+    switch.__restore_aggregate_state__(
+        past_events=[TurnedOn()], changes=[], stream_id=uuid4()
+    )
     switch.turn_off()
 
     with pytest.raises(LightSwitch.AlreadyTurnedOff):
