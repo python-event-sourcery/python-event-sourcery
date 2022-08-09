@@ -12,5 +12,7 @@ class Serde(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def serialize(self, event: Event, stream_id: StreamId, name: str) -> RawEventDict:
+    def serialize(
+        self, event: Event, stream_id: StreamId, name: str, version: int
+    ) -> RawEventDict:
         pass

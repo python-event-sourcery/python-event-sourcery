@@ -14,16 +14,20 @@ class PydanticSerde(Serde):
         data = cast(Mapping, event_as_dict.pop("data"))
         return cast(Event, event_type(**event_as_dict, **data))
 
-    def serialize(self, event: Event, stream_id: StreamId, name: str) -> RawEventDict:
+    def serialize(
+        self, event: Event, stream_id: StreamId, name: str, version: int
+    ) -> RawEventDict:
         model = cast(PydanticEvent, event)
         as_dict = json.loads(  # json dumps and loads? It's moronic
-            model.json(exclude={"uuid", "created_at"})
+            model.json(exclude={"uuid", "created_at", "version"})
         )
+        metadata = as_dict.pop("metadata")
         return RawEventDict(
             uuid=model.uuid,
             stream_id=stream_id,
             created_at=model.created_at,
+            version=model.version or version,
             name=name,
             data=as_dict,
-            metadata=as_dict.pop("metadata"),
+            metadata=metadata,
         )

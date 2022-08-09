@@ -9,8 +9,10 @@ def test_iterates_over_one_stream(event_store: EventStore) -> None:
     event = SomeEvent(first_name="Test")
     event_store.append(stream_id=stream_id, events=[event])
 
-    events = list(event_store.iter(stream_id))
-    assert events == [event]
+    read_events = list(event_store.iter(stream_id))
+
+    versioned_event = event.copy(update={"version": 1})
+    assert read_events == [versioned_event]
 
 
 def test_iterates_over_two_streams(event_store: EventStore) -> None:
@@ -21,9 +23,13 @@ def test_iterates_over_two_streams(event_store: EventStore) -> None:
     another_event = SomeEvent(first_name="Test1")
     event_store.append(stream_id=another_stream_id, events=[another_event])
 
-    events = list(event_store.iter(stream_id, another_stream_id))
+    read_events = list(event_store.iter(stream_id, another_stream_id))
 
-    assert events == [event, another_event]
+    versioned_events = [
+        event.copy(update={"version": 1}),
+        another_event.copy(update={"version": 1}),
+    ]
+    assert read_events == versioned_events
 
 
 def test_iterates_over_all_streams(event_store: EventStore) -> None:
@@ -34,6 +40,7 @@ def test_iterates_over_all_streams(event_store: EventStore) -> None:
         all_events.append(event)
         event_store.append(stream_id=stream_id, events=[event])
 
-    events = list(event_store.iter())
+    read_events = list(event_store.iter())
 
-    assert events == all_events
+    versioned_events = [event.copy(update={"version": 1}) for event in all_events]
+    assert read_events == versioned_events

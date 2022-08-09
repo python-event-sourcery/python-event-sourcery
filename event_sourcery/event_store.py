@@ -62,7 +62,7 @@ class EventStore(abc.ABC):
             stream_id=stream_id, expected_version=expected_version
         )
 
-        serialized_events = self._serialize_events(events, stream_id)
+        serialized_events = self._serialize_events(events, stream_id, expected_version)
         self._storage_strategy.insert_events(serialized_events)
 
         # TODO: make it more robust per subscriber?
@@ -86,7 +86,7 @@ class EventStore(abc.ABC):
             stream_id=stream_id, events=events, expected_version=expected_version
         )
         # this happens twice, should be optimized away
-        serialized_events = self._serialize_events(events, stream_id)
+        serialized_events = self._serialize_events(events, stream_id, expected_version)
 
         # Rethink. Should it be always putting into outbox
         # once we have async subscribers?
@@ -102,11 +102,12 @@ class EventStore(abc.ABC):
     def delete_stream(self, stream_id: StreamId) -> None:
         self._storage_strategy.delete_stream(stream_id)
 
-    def save_snapshot(self, stream_id: StreamId, snapshot: Event) -> None:
+    def save_snapshot(self, stream_id: StreamId, snapshot: Event, version: int) -> None:
         serialized = self._serde.serialize(
             event=snapshot,
             stream_id=stream_id,
             name=self._event_registry.name_for_type(type(snapshot)),
+            version=version,
         )
         self._storage_strategy.save_snapshot(serialized)
 
@@ -120,13 +121,14 @@ class EventStore(abc.ABC):
         ]
 
     def _serialize_events(
-        self, events: Sequence[Event], stream_id: StreamId
+        self, events: Sequence[Event], stream_id: StreamId, expected_stream_version: int
     ) -> list[RawEventDict]:
         return [
             self._serde.serialize(
                 event=event,
                 stream_id=stream_id,
                 name=self._event_registry.name_for_type(type(event)),
+                version=version,
             )
-            for event in events
+            for version, event in enumerate(events, start=expected_stream_version + 1)
         ]

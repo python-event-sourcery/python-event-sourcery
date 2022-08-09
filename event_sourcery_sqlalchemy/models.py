@@ -1,6 +1,6 @@
 from typing import Type
 
-from sqlalchemy import BigInteger, Column, DateTime, Integer, String
+from sqlalchemy import BigInteger, Column, DateTime, Index, Integer, String
 from sqlalchemy.ext.declarative import instrument_declarative
 
 from event_sourcery_sqlalchemy.guid import GUID
@@ -21,8 +21,17 @@ class Stream:
 
 class Event:
     __tablename__ = "event_sourcery_events"
+    __table_args__ = (
+        Index(
+            "ix_events_stream_id_version",
+            "stream_id",
+            "version",
+            unique=True,
+        ),
+    )
 
     id = Column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
+    version = Column(Integer(), nullable=False)
     uuid = Column(GUID(), index=True, unique=True)
     stream_id = Column(GUID(), nullable=False, index=True)
     name = Column(String(50), nullable=False)
@@ -35,6 +44,7 @@ class Snapshot:
     __tablename__ = "event_sourcery_snapshots"
 
     uuid = Column(GUID, primary_key=True)
+    version = Column(Integer(), nullable=False)
     stream_id = Column(GUID(), nullable=False, index=True)
     name = Column(String(50), nullable=False)
     data = Column(JSONB(), nullable=False)

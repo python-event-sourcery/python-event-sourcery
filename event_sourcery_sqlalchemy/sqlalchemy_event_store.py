@@ -40,6 +40,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                     uuid=event.uuid,
                     stream_id=event.stream_id,
                     created_at=event.created_at,
+                    version=event.version,
                     name=event.name,
                     data=event.data,
                     metadata=event.event_metadata,
@@ -80,6 +81,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 uuid=event.uuid,
                 stream_id=event.stream_id,
                 created_at=event.created_at,
+                version=event.version,
                 name=event.name,
                 data=event.data,
                 metadata=event.event_metadata,
@@ -124,6 +126,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                     "name": event["name"],
                     "data": event["data"],
                     "event_metadata": event["metadata"],
+                    "version": event["version"],
                 }
             )
 
@@ -135,6 +138,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             "uuid": snapshot_as_dict.pop("uuid"),
             "stream_id": snapshot_as_dict.pop("stream_id"),
             "created_at": snapshot_as_dict.pop("created_at"),
+            "version": snapshot_as_dict.pop("version"),
             "name": snapshot_as_dict.pop("name"),
             "data": snapshot_as_dict["data"],
             "event_metadata": snapshot_as_dict["metadata"],

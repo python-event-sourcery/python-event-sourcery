@@ -31,12 +31,13 @@ def test_can_work_with_custom_events_with_custom_registry(
     class SomeDummyEvent(BaseModel):
         uuid: UUID = Field(default_factory=uuid4)
         created_at: datetime = Field(default_factory=datetime.utcnow)
+        version: int
         metadata: Metadata = Field(default_factory=Metadata)
 
     event_store = event_store_factory(event_base_class=None, event_registry=registry)
 
     stream_id = uuid4()
-    event_store.append(stream_id=stream_id, events=[SomeDummyEvent()])
+    event_store.append(stream_id=stream_id, events=[SomeDummyEvent(version=1)])
 
     stream = event_store.load_stream(stream_id=stream_id)
     assert isinstance(stream.events[0], SomeDummyEvent)

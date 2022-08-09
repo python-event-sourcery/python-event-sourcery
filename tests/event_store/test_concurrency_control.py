@@ -24,7 +24,6 @@ def test_does_not_raise_concurrency_error_if_no_one_bumped_up_version(
     stream = event_store.load_stream(stream_id=stream_id)
     another_event = SomeEvent(first_name="TestTwo")
     try:
-
         event_store.append(
             stream_id=stream_id, events=[another_event], expected_version=stream.version
         )
