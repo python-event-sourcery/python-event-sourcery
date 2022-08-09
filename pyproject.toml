@@ -11,7 +11,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<4.0"
 pydantic = "^1.9"
 SQLAlchemy = "^1.4"
 
