@@ -4,12 +4,14 @@ __all__ = [
     "Event",
     "get_outbox",
     "Repository",
+    "Aggregate",
 ]
 
 from typing import Callable, Type
 
 from sqlalchemy.orm import Session
 
+from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.event import Event as EventProtocol
 from event_sourcery.interfaces.subscriber import Subscriber
