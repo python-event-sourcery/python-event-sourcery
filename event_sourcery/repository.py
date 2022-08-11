@@ -3,7 +3,6 @@ from typing import Generic, Iterator, Type, TypeVar
 
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
-from event_sourcery.interfaces.event import Event
 from event_sourcery.types.stream_id import StreamId
 
 TAggregate = TypeVar("TAggregate", bound=Aggregate)
@@ -19,27 +18,24 @@ class Repository(Generic[TAggregate]):
     class NotFound(Exception):
         pass
 
-    @contextmanager
-    def new(self, stream_id: StreamId) -> Iterator[TAggregate]:
-        changes: list[Event] = []  # To be mutated inside aggregate
-        aggregate = self._aggregate_cls()
-        aggregate.__restore_aggregate_state__(
-            past_events=[], changes=changes, stream_id=stream_id
-        )
-        yield aggregate
-        self._event_store.append(
-            stream_id=stream_id, events=changes, expected_version=0  # new aggregate
-        )
+    def load(self, stream_id: StreamId) -> TAggregate:
+        aggregate = object.__new__(self._aggregate_cls)
+        Aggregate.__init__(aggregate)
+        stream = self._event_store.load_stream(stream_id)
+        for event in stream.events:
+            aggregate.__rehydrate__(event)
+        return aggregate
+
+    def save(self, aggregate: TAggregate, stream_id: StreamId) -> None:
+        with aggregate.__persisting_changes__() as events:
+            self._event_store.append(
+                stream_id=stream_id,
+                events=list(events),
+                expected_version=aggregate.__version__,
+            )
 
     @contextmanager
     def aggregate(self, stream_id: StreamId) -> Iterator[TAggregate]:
-        stream = self._event_store.load_stream(stream_id)
-        changes: list[Event] = []  # To be mutated inside aggregate
-        aggregate = self._aggregate_cls()
-        aggregate.__restore_aggregate_state__(
-            past_events=[], changes=changes, stream_id=stream_id
-        )
+        aggregate = self.load(stream_id)
         yield aggregate
-        self._event_store.append(
-            stream_id=stream_id, events=changes, expected_version=stream.version
-        )
+        self.save(aggregate, stream_id)

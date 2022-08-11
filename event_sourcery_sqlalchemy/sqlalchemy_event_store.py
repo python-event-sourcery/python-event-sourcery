@@ -67,7 +67,9 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             events = self._session.execute(events_stmt).all()
         else:
             events_stmt = events_stmt.filter(
-                EventModel.created_at > latest_snapshot.created_at
+                # TODO: order by version
+                EventModel.created_at
+                > latest_snapshot.created_at
             )
             events = [[latest_snapshot, stream_version]] + self._session.execute(
                 events_stmt
