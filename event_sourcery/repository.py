@@ -39,3 +39,14 @@ class Repository(Generic[TAggregate]):
         aggregate = self.load(stream_id)
         yield aggregate
         self.save(aggregate, stream_id)
+
+    def load_up(self, aggregate: TAggregate, stream_id: StreamId) -> None:
+        # protocode, would have to implement that ability in EventStore first
+        events = [
+            event
+            for event in self._event_store.iter(stream_id)
+            if event.version > aggregate.__version__
+        ]
+        for event in events:
+            aggregate.__rehydrate__(event)
+        # TODO: that should fail if aggregate's state is not clean (has pending events)
