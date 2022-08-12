@@ -25,6 +25,7 @@ class LightSwitch(Aggregate):
         pass
 
     def __init__(self) -> None:
+        super().__init__()
         self._shines = False
 
     def _apply(self, event: Event) -> None:
@@ -47,22 +48,19 @@ class LightSwitch(Aggregate):
 
 
 def test_light_switch_aggregate_logs_events() -> None:
-    changes: list[Event] = []
     switch = LightSwitch()
-    switch.__restore_aggregate_state__(
-        past_events=[], changes=changes, stream_id=uuid4()
-    )
     switch.turn_on()
     switch.turn_off()
 
-    assert len(changes) == 2
-    assert isinstance(changes[0], TurnedOn)
-    assert isinstance(changes[1], TurnedOff)
+    with switch.__persisting_changes__() as changes:
+        events = list(changes)
+    assert len(events) == 2
+    assert isinstance(events[0], TurnedOn)
+    assert isinstance(events[1], TurnedOff)
 
 
 def test_light_switch_cannot_be_turned_on_twice() -> None:
     switch = LightSwitch()
-    switch.__restore_aggregate_state__(past_events=[], changes=[], stream_id=uuid4())
     switch.turn_on()
 
     with pytest.raises(LightSwitch.AlreadyTurnedOn):
@@ -71,9 +69,7 @@ def test_light_switch_cannot_be_turned_on_twice() -> None:
 
 def test_light_switch_cannot_be_turned_off_twice() -> None:
     switch = LightSwitch()
-    switch.__restore_aggregate_state__(
-        past_events=[TurnedOn()], changes=[], stream_id=uuid4()
-    )
+    switch.__rehydrate__(TurnedOn(version=1))
     switch.turn_off()
 
     with pytest.raises(LightSwitch.AlreadyTurnedOff):
@@ -85,20 +81,13 @@ def repo(event_store: EventStore) -> Repository[LightSwitch]:
     return Repository[LightSwitch](event_store, LightSwitch)
 
 
-def test_stream_id_gets_assigned_to_aggregate(repo: Repository[LightSwitch]) -> None:
-    stream_id = uuid4()
-    with repo.new(stream_id=stream_id) as switch:
-        switch.turn_on()
-
-        assert switch.id == stream_id
-
-
 def test_light_switch_changes_are_preserved_by_repository(
     repo: Repository[LightSwitch],
 ) -> None:
     stream_id = uuid4()
-    with repo.new(stream_id=stream_id) as switch:
-        switch.turn_on()
+    switch = LightSwitch()
+    switch.turn_on()
+    repo.save(switch, stream_id)
 
     with repo.aggregate(stream_id=stream_id) as switch_second_incarnation:
         try:

@@ -1,27 +1,37 @@
-from typing import Any, Type
+from contextlib import contextmanager
+from typing import Any, Iterator, Type
 
 from event_sourcery.interfaces.event import Event
-from event_sourcery.types.stream_id import StreamId
 
 
 class Aggregate:
-    def __restore_aggregate_state__(
-        self, past_events: list[Event], changes: list[Event], stream_id: StreamId
-    ) -> None:
-        for event in past_events:
-            self._apply(event)
+    def __init__(self) -> None:
+        self.__version = 0
+        self.__changes: list[Event] = []
 
-        self.__changes = changes
-        self.__stream_id = stream_id
+    def __rehydrate__(self, event: Event) -> None:
+        self._apply(event)
+        self.__version = event.version
+
+    @contextmanager
+    def __persisting_changes__(self) -> Iterator[Iterator[Event]]:
+        yield iter(self.__changes)
+        self.__version = self.__changes[-1].version
+        self.__changes = []
 
     @property
-    def id(self) -> StreamId:
-        return self.__stream_id
+    def __version__(self) -> int:
+        return self.__version
 
     def _apply(self, event: Event) -> None:
         raise NotImplementedError()
 
     def _event(self, event_cls: Type[Event], **kwargs: Any) -> None:
-        event = event_cls(**kwargs)
+        if self.__changes:
+            next_version = self.__changes[-1].version + 1
+        else:
+            next_version = self.__version + 1
+
+        event = event_cls(version=next_version, **kwargs)
         self._apply(event)
         self.__changes.append(event)
