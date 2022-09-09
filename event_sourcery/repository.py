@@ -21,8 +21,8 @@ class Repository(Generic[TAggregate]):
     def load(self, stream_id: StreamId) -> TAggregate:
         aggregate = object.__new__(self._aggregate_cls)
         Aggregate.__init__(aggregate)
-        stream = self._event_store.load_stream(stream_id)
-        for event in stream.events:
+        events = self._event_store.load_stream(stream_id)
+        for event in events:
             aggregate.__rehydrate__(event)
         return aggregate
 

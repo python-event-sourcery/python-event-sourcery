@@ -12,11 +12,9 @@ def test_save_retrieve(event_store: EventStore) -> None:
     stream_uuid = uuid4()
     events = [SomeEvent(first_name="Test")]
     event_store.append(stream_id=stream_uuid, events=events)
-    stream = event_store.load_stream(stream_uuid)
+    loaded_events = event_store.load_stream(stream_uuid)
 
-    assert stream.uuid == stream_uuid
-    assert stream.version == 1
-    assert stream.events == [events[0].copy(update={"version": 1})]
+    assert loaded_events == [events[0].copy(update={"version": 1})]
 
 
 def test_loading_not_existing_stream_raises_not_found(event_store: EventStore) -> None:
@@ -31,9 +29,9 @@ def test_stores_retrieves_metadata(event_store: EventStore) -> None:
     stream_id = uuid4()
 
     event_store.append(stream_id=stream_id, events=[an_event])
-    stream = event_store.load_stream(stream_id=stream_id)
+    events = event_store.load_stream(stream_id=stream_id)
 
-    assert stream.events == [an_event.copy(update={"version": 1})]
+    assert events == [an_event.copy(update={"version": 1})]
 
 
 def test_is_able_to_handle_non_trivial_formats(event_store: EventStore) -> None:
@@ -46,9 +44,9 @@ def test_is_able_to_handle_non_trivial_formats(event_store: EventStore) -> None:
     stream_id = uuid4()
 
     event_store.append(stream_id=stream_id, events=[an_event])
-    stream = event_store.load_stream(stream_id=stream_id)
+    events = event_store.load_stream(stream_id=stream_id)
 
-    assert stream.events == [an_event.copy(update={"version": 1})]
+    assert events == [an_event.copy(update={"version": 1})]
 
 
 def test_raises_exception_for_empty_stream(event_store: EventStore) -> None:

@@ -44,34 +44,30 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                     metadata=event.event_metadata,
                 )
 
-    def fetch_events(self, stream_id: StreamId) -> Tuple[list[RawEventDict], int]:
+    def fetch_events(self, stream_id: StreamId) -> list[RawEventDict]:
         events_stmt = (
-            select(EventModel, StreamModel.version)
-            .join(StreamModel, EventModel.stream_id == StreamModel.uuid)
+            select(EventModel)
             .filter(EventModel.stream_id == stream_id)
-            .order_by(EventModel.created_at)
+            .order_by(EventModel.version.desc())
         )
-        events: list[Tuple[Union[EventModel, SnapshotModel], int]]
+        events: list[Union[EventModel, SnapshotModel]]
         try:
             snapshot_stmt = (
-                select(SnapshotModel, StreamModel.version)
-                .join(StreamModel, SnapshotModel.stream_id == StreamModel.uuid)
+                select(SnapshotModel)
                 .filter(SnapshotModel.stream_id == stream_id)
                 .order_by(SnapshotModel.created_at.desc())
                 .limit(1)
             )
-            latest_snapshot, stream_version = self._session.execute(snapshot_stmt).one()
+            latest_snapshot = self._session.execute(snapshot_stmt).scalars().one()
         except NoResultFound:
-            events = self._session.execute(events_stmt).all()
+            events = self._session.execute(events_stmt).scalars().all()
         else:
             events_stmt = events_stmt.filter(
-                # TODO: order by version
-                EventModel.created_at
-                > latest_snapshot.created_at
+                EventModel.version > latest_snapshot.version
             )
-            events = [[latest_snapshot, stream_version]] + self._session.execute(
+            events = [latest_snapshot] + self._session.execute(
                 events_stmt
-            ).all()
+            ).scalars().all()
 
         if not events:
             raise NotFound
@@ -86,9 +82,9 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 data=event.data,
                 metadata=event.event_metadata,
             )
-            for event, stream_version in events
+            for event in events
         ]
-        return raw_dict_events, events[-1][1]
+        return raw_dict_events
 
     def ensure_stream(self, stream_id: StreamId, expected_version: int) -> None:
         ensure_stream_stmt = (
