@@ -45,8 +45,10 @@ class EventStore(abc.ABC):
         self._outbox_storage_strategy = outbox_storage_strategy
         self._subscriptions = subscriptions
 
-    def load_stream(self, stream_id: StreamId) -> list[Event]:
-        events = self._storage_strategy.fetch_events(stream_id)
+    def load_stream(
+        self, stream_id: StreamId, start: int | None = None, stop: int | None = None
+    ) -> list[Event]:
+        events = self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
         return self._deserialize_events(events)
 
     def append(

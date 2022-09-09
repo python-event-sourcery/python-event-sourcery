@@ -44,12 +44,20 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                     metadata=event.event_metadata,
                 )
 
-    def fetch_events(self, stream_id: StreamId) -> list[RawEventDict]:
+    def fetch_events(
+        self, stream_id: StreamId, start: int | None = None, stop: int | None = None
+    ) -> list[RawEventDict]:
         events_stmt = (
             select(EventModel)
             .filter(EventModel.stream_id == stream_id)
             .order_by(EventModel.version)
         )
+        if start is not None:
+            events_stmt = events_stmt.filter(EventModel.version >= start)
+
+        if stop is not None:
+            events_stmt = events_stmt.filter(EventModel.version < stop)
+
         events: list[Union[EventModel, SnapshotModel]]
         try:
             snapshot_stmt = (
@@ -58,6 +66,12 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 .order_by(SnapshotModel.created_at.desc())
                 .limit(1)
             )
+            if start is not None:
+                snapshot_stmt = snapshot_stmt.filter(SnapshotModel.version >= start)
+
+            if stop is not None:
+                snapshot_stmt = snapshot_stmt.filter(SnapshotModel.version < stop)
+
             latest_snapshot = self._session.execute(snapshot_stmt).scalars().one()
         except NoResultFound:
             events = self._session.execute(events_stmt).scalars().all()

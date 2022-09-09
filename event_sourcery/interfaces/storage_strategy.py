@@ -7,7 +7,9 @@ from event_sourcery.types.stream_id import StreamId
 
 class StorageStrategy(abc.ABC):
     @abc.abstractmethod
-    def fetch_events(self, stream_id: StreamId) -> list[RawEventDict]:
+    def fetch_events(
+        self, stream_id: StreamId, start: int | None = None, stop: int | None = None
+    ) -> list[RawEventDict]:
         pass
 
     @abc.abstractmethod

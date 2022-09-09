@@ -17,6 +17,25 @@ def test_save_retrieve(event_store: EventStore) -> None:
     assert loaded_events == [events[0].copy(update={"version": 1})]
 
 
+def test_save_retrieve_part_of_stream(event_store: EventStore) -> None:
+    stream_uuid = uuid4()
+    events = [
+        SomeEvent(first_name="Testing"),
+        SomeEvent(first_name="is"),
+        SomeEvent(first_name="a"),
+        SomeEvent(first_name="good"),
+        SomeEvent(first_name="thing"),
+    ]
+    event_store.append(stream_id=stream_uuid, events=events)
+    loaded_events = event_store.load_stream(stream_uuid, start=2, stop=5)
+
+    assert loaded_events == [
+        events[1].copy(update={"version": 2}),
+        events[2].copy(update={"version": 3}),
+        events[3].copy(update={"version": 4}),
+    ]
+
+
 def test_loading_not_existing_stream_returns_empty_list(
     event_store: EventStore,
 ) -> None:
