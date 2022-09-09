@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Iterator, Tuple, Union
+from typing import Callable, Iterator, Union
 
 from sqlalchemy import delete
 from sqlalchemy import event as sa_event

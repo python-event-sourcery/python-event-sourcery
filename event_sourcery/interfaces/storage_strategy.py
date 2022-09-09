@@ -1,5 +1,5 @@
 import abc
-from typing import Callable, Iterator, Tuple
+from typing import Callable, Iterator
 
 from event_sourcery.dto.raw_event_dict import RawEventDict
 from event_sourcery.types.stream_id import StreamId
