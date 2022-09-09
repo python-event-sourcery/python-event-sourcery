@@ -48,7 +48,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         events_stmt = (
             select(EventModel)
             .filter(EventModel.stream_id == stream_id)
-            .order_by(EventModel.version.desc())
+            .order_by(EventModel.version)
         )
         events: list[Union[EventModel, SnapshotModel]]
         try:
