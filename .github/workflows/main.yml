@@ -1,4 +1,4 @@
-name: Implementing The Clean Architecture checks
+name: Lint & tests
 
 on:
   push:
