@@ -11,6 +11,7 @@ from event_sourcery.interfaces.subscriber import Subscriber
 from event_sourcery_pydantic.event import Event as BaseEvent
 from event_sourcery_pydantic.serde import PydanticSerde
 from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageStrategy
+from event_sourcery_sqlalchemy.sqlalchemy_outbox import SqlAlchemyOutboxStorageStrategy
 
 
 class EventStoreFactoryCallable(Protocol):
@@ -28,11 +29,13 @@ class EventStoreFactoryCallable(Protocol):
 @pytest.fixture()
 def event_store_factory(
     storage_strategy: SqlAlchemyStorageStrategy,
+    outbox_storage_strategy: SqlAlchemyOutboxStorageStrategy,
 ) -> EventStoreFactoryCallable:
     defaults = dict(
         serde=PydanticSerde(),
         storage_strategy=storage_strategy,
         event_base_class=BaseEvent,
+        outbox_storage_strategy=outbox_storage_strategy,
     )
 
     def _callable(**kwargs: Any) -> EventStore:
@@ -76,3 +79,8 @@ def session(declarative_base: object) -> Session:
 @pytest.fixture()
 def storage_strategy(session: Session) -> SqlAlchemyStorageStrategy:
     return SqlAlchemyStorageStrategy(session)
+
+
+@pytest.fixture()
+def outbox_storage_strategy(session: Session) -> SqlAlchemyOutboxStorageStrategy:
+    return SqlAlchemyOutboxStorageStrategy(session)

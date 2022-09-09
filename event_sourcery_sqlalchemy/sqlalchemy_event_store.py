@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Callable, Iterator, Tuple, Union, cast
+from typing import Callable, Iterator, Tuple, Union
 
 from sqlalchemy import delete
 from sqlalchemy import event as sa_event
@@ -11,10 +10,9 @@ from sqlalchemy.orm import Session
 
 from event_sourcery.dto.raw_event_dict import RawEventDict
 from event_sourcery.exceptions import ConcurrentStreamWriteError, NotFound
-from event_sourcery.interfaces.storage_strategy import EntryId, StorageStrategy
+from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.types.stream_id import StreamId
 from event_sourcery_sqlalchemy.models import Event as EventModel
-from event_sourcery_sqlalchemy.models import OutboxEntry
 from event_sourcery_sqlalchemy.models import Snapshot as SnapshotModel
 from event_sourcery_sqlalchemy.models import Stream as StreamModel
 
@@ -156,41 +154,6 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             StreamModel.uuid == str(stream_id)
         )
         self._session.execute(delete_stream_stmt)
-
-    def put_into_outbox(self, events: list[RawEventDict]) -> None:
-        rows = []
-        for event in events:
-            as_dict = dict(event)
-            created_at = cast(datetime, as_dict["created_at"])
-            as_dict["created_at"] = created_at.isoformat()
-            as_dict["uuid"] = str(as_dict["uuid"])
-            as_dict["stream_id"] = str(as_dict["stream_id"])
-            rows.append(
-                {
-                    "created_at": datetime.utcnow(),
-                    "data": as_dict,
-                }
-            )
-        self._session.execute(insert(OutboxEntry), rows)
-
-    def outbox_entries(self, limit: int) -> Iterator[Tuple[EntryId, RawEventDict]]:
-        stmt = (
-            select(OutboxEntry)
-            .filter(OutboxEntry.tries_left > 0)
-            .order_by(OutboxEntry.id)
-            .limit(limit)
-            .with_for_update(skip_locked=True)
-        )
-        entries = self._session.execute(stmt).scalars().all()
-        return ((entry.id, entry.data) for entry in entries)
-
-    def decrease_tries_left(self, entry_id: EntryId) -> None:
-        entry = self._session.query(OutboxEntry).get(entry_id)
-        entry.tries_left -= 1
-
-    def remove_from_outbox(self, entry_id: EntryId) -> None:
-        entry = self._session.query(OutboxEntry).get(entry_id)
-        self._session.delete(entry)
 
     def run_after_commit(self, callback: Callable[[], None]) -> None:
         sa_event.listen(self._session, "after_commit", lambda _session: callback())

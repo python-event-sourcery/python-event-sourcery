@@ -7,6 +7,7 @@ from event_sourcery.dto.raw_event_dict import RawEventDict
 from event_sourcery.event_registry import BaseEventCls, EventRegistry
 from event_sourcery.exceptions import Misconfiguration, NoEventsToAppend
 from event_sourcery.interfaces.event import Event
+from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.interfaces.subscriber import Subscriber
@@ -20,6 +21,7 @@ class EventStore(abc.ABC):
         self,
         serde: Serde,
         storage_strategy: StorageStrategy,
+        outbox_storage_strategy: OutboxStorageStrategy,
         event_base_class: Type[BaseEventCls] | None = None,
         event_registry: EventRegistry | None = None,
         subscriptions: dict[Type[Event], list[Subscriber]] | None = None,
@@ -41,6 +43,7 @@ class EventStore(abc.ABC):
 
         self._serde = serde
         self._storage_strategy = storage_strategy
+        self._outbox_storage_strategy = outbox_storage_strategy
         self._subscriptions = subscriptions
 
     def load_stream(self, stream_id: StreamId) -> EventStream:
@@ -90,7 +93,7 @@ class EventStore(abc.ABC):
 
         # Rethink. Should it be always putting into outbox
         # once we have async subscribers?
-        self._storage_strategy.put_into_outbox(serialized_events)
+        self._outbox_storage_strategy.put_into_outbox(serialized_events)
 
     def iter(self, *streams_ids: StreamId) -> Iterator[Event]:
         events_iterator = self._storage_strategy.iter(*streams_ids)

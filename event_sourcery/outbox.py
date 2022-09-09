@@ -3,8 +3,8 @@ from typing import Callable, Type
 
 from event_sourcery.event_registry import BaseEventCls
 from event_sourcery.interfaces.event import Event
+from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.serde import Serde
-from event_sourcery.interfaces.storage_strategy import StorageStrategy
 
 
 class Outbox(abc.ABC):
@@ -13,7 +13,7 @@ class Outbox(abc.ABC):
     def __init__(
         self,
         serde: Serde,
-        storage_strategy: StorageStrategy,
+        storage_strategy: OutboxStorageStrategy,
         event_base_class: Type[BaseEventCls],
         publisher: Callable[[Event], None],
     ) -> None:
