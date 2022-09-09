@@ -1,0 +1,44 @@
+name: Lint & tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+    
+env:
+  PYTHON_VERSION: "3.10"
+  POETRY_VERSION: "1.2.0"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Cache Poetry cache
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pypoetry
+        key: poetry-cache-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ env.POETRY_VERSION }}
+    - name: Cache Packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.local
+        key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}-${{ hashFiles('.github/workflows/*.yml') }}
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install deps
+      run: |
+        python -m pip install --upgrade pip poetry==1.2.0
+        poetry install
+    - name: Run linters
+      run: |
+        poetry run make lint
+    - name: Test with pytest
+      run: |
+        poetry run pytest
