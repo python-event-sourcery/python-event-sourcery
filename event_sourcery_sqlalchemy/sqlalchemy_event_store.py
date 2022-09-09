@@ -9,7 +9,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 from event_sourcery.dto.raw_event_dict import RawEventDict
-from event_sourcery.exceptions import ConcurrentStreamWriteError, NotFound
+from event_sourcery.exceptions import ConcurrentStreamWriteError
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.types.stream_id import StreamId
 from event_sourcery_sqlalchemy.models import Event as EventModel
@@ -70,7 +70,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             ).scalars().all()
 
         if not events:
-            raise NotFound
+            return []
 
         raw_dict_events = [
             RawEventDict(
