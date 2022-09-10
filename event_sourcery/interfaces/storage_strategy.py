@@ -1,5 +1,5 @@
 import abc
-from typing import Callable, Iterator, Tuple
+from typing import Callable, Iterator
 
 from event_sourcery.dto.raw_event_dict import RawEventDict
 from event_sourcery.types.stream_id import StreamId
@@ -7,7 +7,9 @@ from event_sourcery.types.stream_id import StreamId
 
 class StorageStrategy(abc.ABC):
     @abc.abstractmethod
-    def fetch_events(self, stream_id: StreamId) -> Tuple[list[RawEventDict], int]:
+    def fetch_events(
+        self, stream_id: StreamId, start: int | None = None, stop: int | None = None
+    ) -> list[RawEventDict]:
         pass
 
     @abc.abstractmethod

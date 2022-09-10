@@ -39,5 +39,5 @@ def test_can_work_with_custom_events_with_custom_registry(
     stream_id = uuid4()
     event_store.append(stream_id=stream_id, events=[SomeDummyEvent(version=1)])
 
-    stream = event_store.load_stream(stream_id=stream_id)
-    assert isinstance(stream.events[0], SomeDummyEvent)
+    events = event_store.load_stream(stream_id=stream_id)
+    assert isinstance(events[0], SomeDummyEvent)

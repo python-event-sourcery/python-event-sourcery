@@ -15,7 +15,5 @@ def test_handles_snapshots(event_store: EventStore) -> None:
     snapshot = Snapshot()
     event_store.save_snapshot(stream_id=stream_id, snapshot=snapshot, version=1)
 
-    stream = event_store.load_stream(stream_id=stream_id)
-    assert stream.uuid == stream_id
-    assert stream.events == [snapshot.copy(update={"version": 1})]
-    assert stream.version == 1
+    events = event_store.load_stream(stream_id=stream_id)
+    assert events == [snapshot.copy(update={"version": 1})]

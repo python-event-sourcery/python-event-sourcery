@@ -2,7 +2,6 @@ import abc
 from typing import Iterator, Sequence, Type, TypeVar
 
 from event_sourcery.after_commit_subscriber import AfterCommit
-from event_sourcery.dto.event_stream import EventStream
 from event_sourcery.dto.raw_event_dict import RawEventDict
 from event_sourcery.event_registry import BaseEventCls, EventRegistry
 from event_sourcery.exceptions import Misconfiguration, NoEventsToAppend
@@ -46,14 +45,11 @@ class EventStore(abc.ABC):
         self._outbox_storage_strategy = outbox_storage_strategy
         self._subscriptions = subscriptions
 
-    def load_stream(self, stream_id: StreamId) -> EventStream:
-        events, stream_version = self._storage_strategy.fetch_events(stream_id)
-        deserialized_events = self._deserialize_events(events)
-        return EventStream(
-            uuid=stream_id,
-            events=deserialized_events,
-            version=stream_version,
-        )
+    def load_stream(
+        self, stream_id: StreamId, start: int | None = None, stop: int | None = None
+    ) -> list[Event]:
+        events = self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
+        return self._deserialize_events(events)
 
     def append(
         self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
