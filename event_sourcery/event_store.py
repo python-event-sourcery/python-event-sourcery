@@ -54,20 +54,19 @@ class EventStore(abc.ABC):
     def append(
         self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
     ) -> None:
-        if not events:
-            raise NoEventsToAppend
-
-        self._storage_strategy.ensure_stream(
-            stream_id=stream_id, expected_version=expected_version
+        self._append(
+            stream_id=stream_id, events=events, expected_version=expected_version
         )
 
-        serialized_events = self._serialize_events(events, stream_id, expected_version)
-        self._storage_strategy.insert_events(serialized_events)
+    def publish(
+        self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
+    ) -> None:
+        serialized_events = self._append(
+            stream_id=stream_id, events=events, expected_version=expected_version
+        )
 
         # TODO: make it more robust per subscriber?
         for event in events:
-            # Shall we support async subscribers here?
-            # Shall we support after-commit-subscribers?
             for subscriber in self._subscriptions.get(type(event), []):
                 if isinstance(subscriber, AfterCommit):
                     self._storage_strategy.run_after_commit(lambda: subscriber(event))
@@ -78,18 +77,20 @@ class EventStore(abc.ABC):
             for catch_all_subscriber in catch_all_subscribers:
                 catch_all_subscriber(event)
 
-    def publish(
-        self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
-    ) -> None:
-        self.append(
-            stream_id=stream_id, events=events, expected_version=expected_version
-        )
-        # this happens twice, should be optimized away
-        serialized_events = self._serialize_events(events, stream_id, expected_version)
-
-        # Rethink. Should it be always putting into outbox
-        # once we have async subscribers?
         self._outbox_storage_strategy.put_into_outbox(serialized_events)
+
+    def _append(
+        self, stream_id: StreamId, events: Sequence[Event], expected_version: int
+    ) -> list[RawEventDict]:
+        if not events:
+            raise NoEventsToAppend
+
+        self._storage_strategy.ensure_stream(
+            stream_id=stream_id, expected_version=expected_version
+        )
+        serialized_events = self._serialize_events(events, stream_id, expected_version)
+        self._storage_strategy.insert_events(serialized_events)
+        return serialized_events
 
     def iter(self, *streams_ids: StreamId) -> Iterator[Event]:
         events_iterator = self._storage_strategy.iter(*streams_ids)
