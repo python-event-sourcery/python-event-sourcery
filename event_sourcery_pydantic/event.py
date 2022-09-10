@@ -1,11 +1,12 @@
 from datetime import datetime
-from typing import Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Optional, cast
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Extra, Field
 
 from event_sourcery.event_registry import EventRegistry
 from event_sourcery.interfaces.event import AUTO_VERSION
+from event_sourcery.interfaces.event import Event as EventProto
 
 
 class Metadata(BaseModel, extra=Extra.allow):
@@ -23,3 +24,8 @@ class Event(BaseModel):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         cls.__registry__.add(cls)
+
+
+if TYPE_CHECKING:
+    # for PyCharm to kindly consider pydantic-based Event compatible with EventProto
+    Event = cast(EventProto, Event)  # type: ignore
