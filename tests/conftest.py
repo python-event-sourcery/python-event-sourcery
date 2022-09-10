@@ -95,7 +95,7 @@ def session(engine: Engine) -> Iterator[Session]:
     session.close()
 
 
-@pytest.fixture(params=["sqlite://", "postgresql://es:es@postgres/es"])
+@pytest.fixture(params=["sqlite://", "postgresql://es:es@localhost/es"])
 def engine(request: SubRequest, declarative_base: DeclarativeBase) -> Iterator[Engine]:
     engine = create_engine(request.param, future=True)
     try:
