@@ -1,10 +1,9 @@
 import pytest
 
-from event_sourcery.event_store import EventStore
 from tests.events import BaseEvent
 
 
-def test_detects_duplicated_events_class_names(event_store: EventStore) -> None:
+def test_detects_duplicated_events_class_names() -> None:
     class EventToBeDuplicated(BaseEvent):
         pass
 

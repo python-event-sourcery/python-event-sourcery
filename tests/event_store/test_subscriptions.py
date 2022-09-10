@@ -47,10 +47,11 @@ def test_synchronous_subscriber_of_all_events_gets_called(
     catch_all_subscriber.assert_has_calls([call(event) for event in events])
 
 
-def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None:
-    class Credit(BaseEvent):
-        amount: int
+class Credit(BaseEvent):
+    amount: int
 
+
+def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None:
     events = [
         Credit(amount=1),
         Credit(amount=2),
