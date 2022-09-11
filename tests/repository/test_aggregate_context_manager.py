@@ -1,3 +1,4 @@
+from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
@@ -7,6 +8,7 @@ from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.event import Event
 from event_sourcery.repository import Repository
 from event_sourcery_pydantic.event import Event as BaseEvent
+from tests.conftest import EventStoreFactoryCallable
 
 
 class TurnedOn(BaseEvent):
@@ -76,11 +78,6 @@ def test_light_switch_cannot_be_turned_off_twice() -> None:
         switch.turn_off()
 
 
-@pytest.fixture()
-def repo(event_store: EventStore) -> Repository[LightSwitch]:
-    return Repository[LightSwitch](event_store, LightSwitch)
-
-
 def test_light_switch_changes_are_preserved_by_repository(
     repo: Repository[LightSwitch],
 ) -> None:
@@ -95,3 +92,23 @@ def test_light_switch_changes_are_preserved_by_repository(
         except LightSwitch.AlreadyTurnedOn:
             # o mon Dieu, I made a mistake!
             switch_second_incarnation.turn_off()
+
+
+def test_repository_publishes_events(
+    event_store_factory: EventStoreFactoryCallable,
+) -> None:
+    catch_all_subscriber = Mock()
+    event_store = event_store_factory(subscriptions={Event: [catch_all_subscriber]})
+    repo: Repository[LightSwitch] = Repository[LightSwitch](event_store, LightSwitch)
+    switch = LightSwitch()
+    switch.turn_on()
+    switch.turn_off()
+
+    repo.save(aggregate=switch, stream_id=uuid4())
+
+    assert catch_all_subscriber.call_count == 2
+
+
+@pytest.fixture()
+def repo(event_store: EventStore) -> Repository[LightSwitch]:
+    return Repository[LightSwitch](event_store, LightSwitch)

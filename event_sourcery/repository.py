@@ -28,7 +28,7 @@ class Repository(Generic[TAggregate]):
 
     def save(self, aggregate: TAggregate, stream_id: StreamId) -> None:
         with aggregate.__persisting_changes__() as events:
-            self._event_store.append(
+            self._event_store.publish(
                 stream_id=stream_id,
                 events=list(events),
                 expected_version=aggregate.__version__,
