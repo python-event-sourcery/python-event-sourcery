@@ -26,5 +26,9 @@ class CannotUseExpectedVersionForStreamCreatedWithAnyVersioning(EventStoreExcept
     pass
 
 
+class CannotUseAutoVersioningForStreamCreatedWithAnyVersioning(EventStoreException):
+    pass
+
+
 class CannotUseAnyVersioningForStreamCreatedWithOtherVersioning(EventStoreException):
     pass

@@ -13,6 +13,7 @@ from event_sourcery.dto.raw_event_dict import RawEventDict
 from event_sourcery.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     CannotUseAnyVersioningForStreamCreatedWithOtherVersioning,
+    CannotUseAutoVersioningForStreamCreatedWithAnyVersioning,
     CannotUseExpectedVersionForStreamCreatedWithAnyVersioning,
     ConcurrentStreamWriteError,
 )
@@ -157,6 +158,8 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             raise CannotUseExpectedVersionForStreamCreatedWithAnyVersioning()
         elif stream.version is not None and versioning.version_for_new_stream is None:
             raise CannotUseAnyVersioningForStreamCreatedWithOtherVersioning()
+        elif stream.version is None and versioning.version_for_new_stream is not None:
+            raise CannotUseAutoVersioningForStreamCreatedWithAnyVersioning()
 
         assert stream_id is not None
         return stream_id, stream.version
