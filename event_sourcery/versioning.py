@@ -90,7 +90,7 @@ class AutoVersioning(VersioningStrategy):
             return self._events_to_append
 
 
-class AnyVersioning(VersioningStrategy):
+class NoVersioning(VersioningStrategy):
     @property
     def version_for_new_stream(self) -> int | None:
         return None
@@ -108,14 +108,14 @@ class AnyVersioning(VersioningStrategy):
 
 
 AUTO_VERSION = Versioning("AUTO_VERSION")
-ANY_VERSION = Versioning("ANY_VERSION")
+NO_VERSION = Versioning("ANY_VERSION")
 
 
 def build_versioning_strategy(
     expected_version: int | Versioning, events_to_append: int
 ) -> VersioningStrategy:
-    if expected_version is ANY_VERSION:
-        return AnyVersioning()
+    if expected_version is NO_VERSION:
+        return NoVersioning()
     elif expected_version is AUTO_VERSION:
         return AutoVersioning(events_to_append)
     elif isinstance(expected_version, int):

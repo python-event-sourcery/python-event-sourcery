@@ -15,7 +15,7 @@ from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.interfaces.subscriber import Subscriber
 from event_sourcery.types.stream_id import StreamId
-from event_sourcery.versioning import ANY_VERSION, Versioning, build_versioning_strategy
+from event_sourcery.versioning import NO_VERSION, Versioning, build_versioning_strategy
 
 TAggregate = TypeVar("TAggregate")
 
@@ -67,7 +67,7 @@ class EventStore(abc.ABC):
         events: Sequence[Event],
         stream_id: StreamId | None = None,
         stream_name: str | None = None,
-        expected_version: int | Versioning = ANY_VERSION,
+        expected_version: int | Versioning = NO_VERSION,
     ) -> None:
         self._append(
             stream_id=stream_id,
@@ -81,7 +81,7 @@ class EventStore(abc.ABC):
         events: Sequence[Event],
         stream_id: StreamId | None = None,
         stream_name: str | None = None,
-        expected_version: int | Versioning = ANY_VERSION,
+        expected_version: int | Versioning = NO_VERSION,
     ) -> None:
         serialized_events = self._append(
             stream_id=stream_id,
