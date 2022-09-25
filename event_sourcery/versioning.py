@@ -11,6 +11,10 @@ class Versioning:
         return f"<Versioning {self._name}>"
 
 
+AUTO_VERSION = Versioning("AUTO_VERSION")
+ANY_VERSION = Versioning("ANY_VERSION")
+
+
 class VersioningStrategy(abc.ABC):
     @property
     @abc.abstractmethod
@@ -107,14 +111,10 @@ class NoVersioning(VersioningStrategy):
         return None
 
 
-AUTO_VERSION = Versioning("AUTO_VERSION")
-NO_VERSION = Versioning("ANY_VERSION")
-
-
 def build_versioning_strategy(
     expected_version: int | Versioning, events_to_append: int
 ) -> VersioningStrategy:
-    if expected_version is NO_VERSION:
+    if expected_version is ANY_VERSION:
         return NoVersioning()
     elif expected_version is AUTO_VERSION:
         return AutoVersioning(events_to_append)
