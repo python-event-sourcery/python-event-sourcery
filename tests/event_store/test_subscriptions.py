@@ -1,11 +1,13 @@
+from typing import cast
 from unittest.mock import Mock, call
 from uuid import uuid4
 
 from sqlalchemy.orm import Session
 
 from event_sourcery.after_commit_subscriber import AfterCommit
-from event_sourcery.interfaces.event import Event
+from event_sourcery.interfaces.event import Event, Envelope as EnvelopeProto
 from event_sourcery.interfaces.subscriber import Subscriber
+from event_sourcery_pydantic.event import Envelope
 from tests.conftest import EventStoreFactoryCallable
 from tests.events import AnotherEvent, BaseEvent, SomeEvent
 
@@ -20,7 +22,7 @@ def test_synchronous_subscriber_gets_called(
         },
     )
     stream_id = uuid4()
-    event = SomeEvent(first_name="Test")
+    event = Envelope[SomeEvent](event=SomeEvent(first_name="Test"), version=1)
 
     store.publish(stream_id=stream_id, events=[event])
 
@@ -38,8 +40,8 @@ def test_synchronous_subscriber_of_all_events_gets_called(
     )
     stream_id = uuid4()
     events = [
-        SomeEvent(first_name="John"),
-        AnotherEvent(last_name="Doe"),
+        Envelope[SomeEvent](event=SomeEvent(first_name="John"), version=1),
+        Envelope[AnotherEvent](event=AnotherEvent(last_name="Doe"), version=2),
     ]
 
     store.publish(stream_id=stream_id, events=events)
@@ -53,20 +55,20 @@ class Credit(BaseEvent):
 
 def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None:
     events = [
-        Credit(amount=1),
-        Credit(amount=2),
-        Credit(amount=3),
-        Credit(amount=5),
+        Envelope[Credit](event=Credit(amount=1), version=1),
+        Envelope[Credit](event=Credit(amount=2), version=2),
+        Envelope[Credit](event=Credit(amount=3), version=3),
+        Envelope[Credit](event=Credit(amount=5), version=4),
     ]
 
     total = 0
 
-    def project(event: Event) -> None:
+    def project(envelope: EnvelopeProto[Event]) -> None:
         nonlocal total
 
-        match event:
+        match envelope.event:
             case Credit():
-                total += event.amount
+                total += cast(Credit, envelope.event).amount
             case _:
                 pass
 
@@ -84,7 +86,7 @@ def test_after_commit_subscriber_gets_called_after_tx_is_committed(
     event_store = event_store_factory(
         subscriptions={SomeEvent: [AfterCommit(subscriber_mock)]}
     )
-    event = SomeEvent(first_name="Test")
+    event = Envelope[SomeEvent](event=SomeEvent(first_name="Test"), version=1)
 
     event_store.publish(stream_id=uuid4(), events=[event])
 

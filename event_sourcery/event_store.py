@@ -5,7 +5,7 @@ from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.dto.raw_event_dict import RawEventDict
 from event_sourcery.event_registry import BaseEventCls, EventRegistry
 from event_sourcery.exceptions import Misconfiguration, NoEventsToAppend
-from event_sourcery.interfaces.event import Event
+from event_sourcery.interfaces.event import Event, Envelope
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
@@ -47,19 +47,19 @@ class EventStore(abc.ABC):
 
     def load_stream(
         self, stream_id: StreamId, start: int | None = None, stop: int | None = None
-    ) -> list[Event]:
+    ) -> list[Envelope]:
         events = self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
         return self._deserialize_events(events)
 
     def append(
-        self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
+        self, stream_id: StreamId, events: Sequence[Envelope], expected_version: int = 0
     ) -> None:
         self._append(
             stream_id=stream_id, events=events, expected_version=expected_version
         )
 
     def publish(
-        self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
+        self, stream_id: StreamId, events: Sequence[Envelope], expected_version: int = 0
     ) -> None:
         serialized_events = self._append(
             stream_id=stream_id, events=events, expected_version=expected_version
@@ -67,7 +67,7 @@ class EventStore(abc.ABC):
 
         # TODO: make it more robust per subscriber?
         for event in events:
-            for subscriber in self._subscriptions.get(type(event), []):
+            for subscriber in self._subscriptions.get(type(event.event), []):
                 if isinstance(subscriber, AfterCommit):
                     self._storage_strategy.run_after_commit(lambda: subscriber(event))
                 else:
@@ -80,7 +80,7 @@ class EventStore(abc.ABC):
         self._outbox_storage_strategy.put_into_outbox(serialized_events)
 
     def _append(
-        self, stream_id: StreamId, events: Sequence[Event], expected_version: int
+        self, stream_id: StreamId, events: Sequence[Envelope], expected_version: int
     ) -> list[RawEventDict]:
         if not events:
             raise NoEventsToAppend
@@ -102,16 +102,16 @@ class EventStore(abc.ABC):
     def delete_stream(self, stream_id: StreamId) -> None:
         self._storage_strategy.delete_stream(stream_id)
 
-    def save_snapshot(self, stream_id: StreamId, snapshot: Event, version: int) -> None:
+    def save_snapshot(self, stream_id: StreamId, snapshot: Envelope, version: int) -> None:
         serialized = self._serde.serialize(
             event=snapshot,
             stream_id=stream_id,
-            name=self._event_registry.name_for_type(type(snapshot)),
+            name=self._event_registry.name_for_type(type(snapshot.event)),
             version=version,
         )
         self._storage_strategy.save_snapshot(serialized)
 
-    def _deserialize_events(self, events: list[RawEventDict]) -> list[Event]:
+    def _deserialize_events(self, events: list[RawEventDict]) -> list[Envelope]:
         return [
             self._serde.deserialize(
                 event=event,
@@ -121,13 +121,13 @@ class EventStore(abc.ABC):
         ]
 
     def _serialize_events(
-        self, events: Sequence[Event], stream_id: StreamId, expected_stream_version: int
+        self, events: Sequence[Envelope], stream_id: StreamId, expected_stream_version: int
     ) -> list[RawEventDict]:
         return [
             self._serde.serialize(
                 event=event,
                 stream_id=stream_id,
-                name=self._event_registry.name_for_type(type(event)),
+                name=self._event_registry.name_for_type(type(event.event)),
                 version=version,
             )
             for version, event in enumerate(events, start=expected_stream_version + 1)

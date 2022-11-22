@@ -1,22 +1,29 @@
+import inspect
 from datetime import datetime
-from typing import Final, Optional, Protocol
+from typing import Optional, Protocol, TypeVar, ClassVar, Type, Any
 from uuid import UUID
 
 
-class Metadata(Protocol):
-    correlation_id: Optional[UUID]
-    causation_id: Optional[UUID]
-
-
-AUTO_VERSION: Final = 0
+def event_name(cls: Type) -> str:
+    event_module = inspect.getmodule(cls)
+    return f'{event_module.__name__}.{cls.__qualname__}'
 
 
 class Event(Protocol):
+    name: ClassVar[str]
+
+
+TEvent = TypeVar('TEvent', bound=Event)
+
+
+class Metadata(Protocol):
+    correlation_id: Optional[UUID] = None
+    causation_id: Optional[UUID] = None
+
+
+class Envelope(Protocol[TEvent]):
+    event: TEvent
+    version: int
     uuid: UUID
     created_at: datetime
-    version: int = AUTO_VERSION
-
-    @property
-    def metadata(self) -> Metadata:
-        # https://mypy.readthedocs.io/en/latest/common_issues.html#covariant-subtyping-of-mutable-protocol-members-is-rejected
-        raise NotImplementedError  # pragma: no cover
+    metadata: Metadata

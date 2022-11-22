@@ -5,12 +5,13 @@ import pytest
 
 from event_sourcery.event_store import EventStore
 from event_sourcery.exceptions import NoEventsToAppend
+from event_sourcery_pydantic.event import Envelope
 from tests.events import NastyEventWithJsonUnfriendlyTypes, SomeEvent
 
 
 def test_save_retrieve(event_store: EventStore) -> None:
     stream_uuid = uuid4()
-    events = [SomeEvent(first_name="Test")]
+    events = [Envelope[SomeEvent](event=SomeEvent(first_name="Test"), version=1)]
     event_store.append(stream_id=stream_uuid, events=events)
     loaded_events = event_store.load_stream(stream_uuid)
 
@@ -20,11 +21,11 @@ def test_save_retrieve(event_store: EventStore) -> None:
 def test_save_retrieve_part_of_stream(event_store: EventStore) -> None:
     stream_uuid = uuid4()
     events = [
-        SomeEvent(first_name="Testing"),
-        SomeEvent(first_name="is"),
-        SomeEvent(first_name="a"),
-        SomeEvent(first_name="good"),
-        SomeEvent(first_name="thing"),
+        Envelope[SomeEvent](event=SomeEvent(first_name="Testing"), version=1),
+        Envelope[SomeEvent](event=SomeEvent(first_name="is"), version=2),
+        Envelope[SomeEvent](event=SomeEvent(first_name="a"), version=3),
+        Envelope[SomeEvent](event=SomeEvent(first_name="good"), version=4),
+        Envelope[SomeEvent](event=SomeEvent(first_name="thing"), version=5),
     ]
     event_store.append(stream_id=stream_uuid, events=events)
     loaded_events = event_store.load_stream(stream_uuid, start=2, stop=5)
@@ -43,8 +44,11 @@ def test_loading_not_existing_stream_returns_empty_list(
 
 
 def test_stores_retrieves_metadata(event_store: EventStore) -> None:
-    an_event = SomeEvent(
-        first_name="Luke", metadata={"correlation_id": uuid4(), "ip": "127.0.0.1"}
+    an_event = Envelope[SomeEvent](
+        event=SomeEvent(
+            first_name="Luke", metadata={"correlation_id": uuid4(), "ip": "127.0.0.1"}
+        ),
+        version=1,
     )
     stream_id = uuid4()
 
@@ -55,18 +59,21 @@ def test_stores_retrieves_metadata(event_store: EventStore) -> None:
 
 
 def test_is_able_to_handle_non_trivial_formats(event_store: EventStore) -> None:
-    an_event = NastyEventWithJsonUnfriendlyTypes(
-        uuid=uuid4(),
-        a_datetime=datetime.now(tz=timezone.utc),
-        second_datetime=datetime.utcnow(),
-        a_date=date.today(),
+    an_event = Envelope[NastyEventWithJsonUnfriendlyTypes](
+        event=NastyEventWithJsonUnfriendlyTypes(
+            uuid=uuid4(),
+            a_datetime=datetime.now(tz=timezone.utc),
+            second_datetime=datetime.utcnow(),
+            a_date=date.today(),
+        ),
+        version=1,
     )
     stream_id = uuid4()
 
     event_store.append(stream_id=stream_id, events=[an_event])
     events = event_store.load_stream(stream_id=stream_id)
 
-    assert events == [an_event.copy(update={"version": 1})]
+    assert events == [an_event]
 
 
 def test_raises_exception_for_empty_stream(event_store: EventStore) -> None:

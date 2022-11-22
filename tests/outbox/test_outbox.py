@@ -6,7 +6,7 @@ import pytest
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.outbox import Outbox
-from event_sourcery_pydantic.event import Event
+from event_sourcery_pydantic.event import Event, Envelope
 from event_sourcery_pydantic.serde import PydanticSerde
 from tests.events import SomeEvent
 
@@ -29,7 +29,7 @@ def outbox(outbox_storage_strategy: OutboxStorageStrategy, publisher: Mock) -> O
 def test_calls_publisher(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
-    an_event = SomeEvent(first_name="John")
+    an_event = Envelope[SomeEvent](event=SomeEvent(first_name="John"), version=1)
     event_store.publish(stream_id=uuid4(), events=[an_event])
 
     outbox.run_once()
@@ -40,7 +40,7 @@ def test_calls_publisher(
 def test_sends_only_once_in_case_of_success(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
-    an_event = SomeEvent(first_name="John")
+    an_event = Envelope[SomeEvent](event=SomeEvent(first_name="John"), version=1)
     event_store.publish(stream_id=uuid4(), events=[an_event])
 
     for _ in range(2):
@@ -52,7 +52,7 @@ def test_sends_only_once_in_case_of_success(
 def test_tries_to_send_up_to_three_times(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
-    an_event = SomeEvent(first_name="John")
+    an_event = Envelope[SomeEvent](event=SomeEvent(first_name="John"), version=1)
     event_store.publish(stream_id=uuid4(), events=[an_event])
     publisher.side_effect = ValueError
 
