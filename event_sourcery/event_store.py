@@ -1,11 +1,13 @@
 import abc
+from datetime import datetime
 from typing import Iterator, Sequence, Type, TypeVar
+from uuid import UUID
 
 from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.dto.raw_event_dict import RawEventDict
 from event_sourcery.event_registry import BaseEventCls, EventRegistry
 from event_sourcery.exceptions import Misconfiguration, NoEventsToAppend
-from event_sourcery.interfaces.event import Event, Envelope
+from event_sourcery.interfaces.event import Envelope, TEvent, Metadata
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
@@ -23,7 +25,7 @@ class EventStore(abc.ABC):
         outbox_storage_strategy: OutboxStorageStrategy,
         event_base_class: Type[BaseEventCls] | None = None,
         event_registry: EventRegistry | None = None,
-        subscriptions: dict[Type[Event], list[Subscriber]] | None = None,
+        subscriptions: dict[Type[TEvent], list[Subscriber]] | None = None,
     ) -> None:
         if event_base_class is not None and event_registry is not None:
             raise Misconfiguration(
@@ -44,6 +46,17 @@ class EventStore(abc.ABC):
         self._storage_strategy = storage_strategy
         self._outbox_storage_strategy = outbox_storage_strategy
         self._subscriptions = subscriptions
+
+    def emit(
+            self,
+            stream_id: StreamId,
+            event: TEvent,
+            version: int | None = None,
+            uuid: UUID | None = None,
+            created_at: datetime | None = None,
+            metadata: Metadata | None = None,
+    ) -> None:
+        pass
 
     def load_stream(
         self, stream_id: StreamId, start: int | None = None, stop: int | None = None
@@ -73,7 +86,7 @@ class EventStore(abc.ABC):
                 else:
                     subscriber(event)
 
-            catch_all_subscribers = self._subscriptions.get(Event, [])  # type: ignore
+            catch_all_subscribers = self._subscriptions.get(TEvent, [])  # type: ignore
             for catch_all_subscriber in catch_all_subscribers:
                 catch_all_subscriber(event)
 
@@ -92,7 +105,7 @@ class EventStore(abc.ABC):
         self._storage_strategy.insert_events(serialized_events)
         return serialized_events
 
-    def iter(self, *streams_ids: StreamId) -> Iterator[Event]:
+    def iter(self, *streams_ids: StreamId) -> Iterator[TEvent]:
         events_iterator = self._storage_strategy.iter(*streams_ids)
         for event in events_iterator:
             yield self._serde.deserialize(

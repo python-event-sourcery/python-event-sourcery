@@ -1,8 +1,6 @@
 from typing import Protocol, TypeVar
 
-from event_sourcery.interfaces.event import Event, Envelope
-
-TEvent = TypeVar("TEvent", bound=Event)
+from event_sourcery.interfaces.event import TEvent, Envelope
 
 
 class Subscriber(Protocol[TEvent]):

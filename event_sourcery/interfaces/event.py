@@ -1,6 +1,6 @@
 import inspect
 from datetime import datetime
-from typing import Optional, Protocol, TypeVar, ClassVar, Type, Any
+from typing import Protocol, TypeVar, Type
 from uuid import UUID
 
 
@@ -9,16 +9,12 @@ def event_name(cls: Type) -> str:
     return f'{event_module.__name__}.{cls.__qualname__}'
 
 
-class Event(Protocol):
-    name: ClassVar[str]
-
-
-TEvent = TypeVar('TEvent', bound=Event)
+TEvent = TypeVar('TEvent')
 
 
 class Metadata(Protocol):
-    correlation_id: Optional[UUID] = None
-    causation_id: Optional[UUID] = None
+    correlation_id: UUID | None
+    causation_id: UUID | None
 
 
 class Envelope(Protocol[TEvent]):

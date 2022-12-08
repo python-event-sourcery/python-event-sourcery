@@ -5,9 +5,9 @@ import pytest
 
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
-from event_sourcery.interfaces.event import Event
-from event_sourcery.repository import Repository
+from event_sourcery.interfaces.event import TEvent
 from event_sourcery_pydantic.event import Event as BaseEvent
+from event_sourcery_pydantic.repository import Repository
 from tests.conftest import EventStoreFactoryCallable
 
 
@@ -30,7 +30,7 @@ class LightSwitch(Aggregate):
         super().__init__()
         self._shines = False
 
-    def __apply__(self, event: Event) -> None:
+    def __apply__(self, event: TEvent) -> None:
         match event:
             case TurnedOn():
                 self._shines = True
@@ -97,7 +97,7 @@ def test_repository_publishes_events(
     event_store_factory: EventStoreFactoryCallable,
 ) -> None:
     catch_all_subscriber = Mock()
-    event_store = event_store_factory(subscriptions={Event: [catch_all_subscriber]})
+    event_store = event_store_factory(subscriptions={TEvent: [catch_all_subscriber]})
     repo: Repository[LightSwitch] = Repository[LightSwitch](event_store)
 
     with repo.aggregate(uuid4(), LightSwitch()) as switch:

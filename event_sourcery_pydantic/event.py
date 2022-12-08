@@ -7,7 +7,7 @@ from pydantic.generics import GenericModel
 
 from event_sourcery.event_registry import EventRegistry
 from event_sourcery.interfaces.event import (
-    Event as EventProto,
+    TEvent,
     Envelope as EnvelopeProto,
     Metadata as MetadataProto,
     event_name,
@@ -27,9 +27,6 @@ class Event(BaseModel):
         cls.__registry__.add(cls)
 
 
-TEvent = TypeVar('TEvent', bound=Event)
-
-
 class Envelope(GenericModel, Generic[TEvent]):
     event: TEvent
     version: int
@@ -40,6 +37,6 @@ class Envelope(GenericModel, Generic[TEvent]):
 
 if TYPE_CHECKING:
     # for PyCharm to kindly consider pydantic-based Event compatible with EventProto
-    Event = cast(EventProto, Event)  # type: ignore
+    TEvent = cast(EventProto, TEvent)  # type: ignore
     Envelope = cast(EnvelopeProto, Envelope)  # type: ignore
     Metadata = cast(MetadataProto, Metadata)  # type: ignore

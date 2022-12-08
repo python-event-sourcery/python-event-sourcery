@@ -1,15 +1,15 @@
 from contextlib import contextmanager
-from typing import Generic, Iterator, TypeVar
+from typing import Iterator, TypeVar, Protocol
 
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
-from event_sourcery.interfaces.event import Envelope
+from event_sourcery.interfaces.event import Envelope, TEvent
 from event_sourcery.types.stream_id import StreamId
 
 TAggregate = TypeVar("TAggregate", bound=Aggregate)
 
 
-class Repository(Generic[TAggregate]):
+class Repository(Protocol[TAggregate]):
     def __init__(self, event_store: EventStore) -> None:
         self._event_store = event_store
 
@@ -31,10 +31,13 @@ class Repository(Generic[TAggregate]):
             self._event_store.publish(
                 stream_id=stream_id,
                 events=[
-                    Envelope[event.__class__](event=event, version=version)
+                    self._envelop(event, version)
                     for version, event in enumerate(events, start=start_from)
                 ]
             )
+
+    def _envelop(self, event: TEvent, version: int) -> Envelope[TEvent]:
+        raise NotImplementedError
 
     @contextmanager
     def aggregate(
