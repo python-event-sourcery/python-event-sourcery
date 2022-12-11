@@ -1,18 +1,18 @@
 import abc
 from typing import Iterator, Tuple
 
-from event_sourcery.dto.raw_event_dict import RawEventDict
+from event_sourcery.dto import RawEvent
 
 EntryId = int
 
 
 class OutboxStorageStrategy(abc.ABC):
     @abc.abstractmethod
-    def put_into_outbox(self, events: list[RawEventDict]) -> None:
+    def put_into_outbox(self, events: list[RawEvent]) -> None:
         pass
 
     @abc.abstractmethod
-    def outbox_entries(self, limit: int) -> Iterator[Tuple[EntryId, RawEventDict]]:
+    def outbox_entries(self, limit: int) -> Iterator[Tuple[EntryId, RawEvent]]:
         pass
 
     @abc.abstractmethod

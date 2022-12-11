@@ -1,10 +1,8 @@
 import abc
-from datetime import datetime
 from typing import Iterator, Sequence, Type, TypeVar
-from uuid import UUID
 
 from event_sourcery.after_commit_subscriber import AfterCommit
-from event_sourcery.dto.raw_event_dict import RawEventDict
+from event_sourcery.dto import RawEvent
 from event_sourcery.event_registry import BaseEventCls, EventRegistry
 from event_sourcery.exceptions import Misconfiguration, NoEventsToAppend
 from event_sourcery.interfaces.event import Envelope, TEvent, Metadata
@@ -47,17 +45,6 @@ class EventStore(abc.ABC):
         self._outbox_storage_strategy = outbox_storage_strategy
         self._subscriptions = subscriptions
 
-    def emit(
-            self,
-            stream_id: StreamId,
-            event: TEvent,
-            version: int | None = None,
-            uuid: UUID | None = None,
-            created_at: datetime | None = None,
-            metadata: Metadata | None = None,
-    ) -> None:
-        pass
-
     def load_stream(
         self, stream_id: StreamId, start: int | None = None, stop: int | None = None
     ) -> list[Envelope]:
@@ -94,7 +81,7 @@ class EventStore(abc.ABC):
 
     def _append(
         self, stream_id: StreamId, events: Sequence[Envelope], expected_version: int
-    ) -> list[RawEventDict]:
+    ) -> list[RawEvent]:
         if not events:
             raise NoEventsToAppend
 
@@ -124,7 +111,7 @@ class EventStore(abc.ABC):
         )
         self._storage_strategy.save_snapshot(serialized)
 
-    def _deserialize_events(self, events: list[RawEventDict]) -> list[Envelope]:
+    def _deserialize_events(self, events: list[RawEvent]) -> list[Envelope]:
         return [
             self._serde.deserialize(
                 event=event,
@@ -135,7 +122,7 @@ class EventStore(abc.ABC):
 
     def _serialize_events(
         self, events: Sequence[Envelope], stream_id: StreamId, expected_stream_version: int
-    ) -> list[RawEventDict]:
+    ) -> list[RawEvent]:
         return [
             self._serde.serialize(
                 event=event,

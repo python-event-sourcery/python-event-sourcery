@@ -5,7 +5,7 @@ from typing import Iterator, Tuple, cast
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
-from event_sourcery.dto.raw_event_dict import RawEventDict
+from event_sourcery.dto import RawEvent
 from event_sourcery.interfaces.outbox_storage_strategy import (
     EntryId,
     OutboxStorageStrategy,
@@ -17,7 +17,7 @@ from event_sourcery_sqlalchemy.models import OutboxEntry
 class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
     _session: Session
 
-    def put_into_outbox(self, events: list[RawEventDict]) -> None:
+    def put_into_outbox(self, events: list[RawEvent]) -> None:
         rows = []
         for event in events:
             as_dict = dict(event)
@@ -33,7 +33,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
             )
         self._session.execute(insert(OutboxEntry), rows)
 
-    def outbox_entries(self, limit: int) -> Iterator[Tuple[EntryId, RawEventDict]]:
+    def outbox_entries(self, limit: int) -> Iterator[Tuple[EntryId, RawEvent]]:
         stmt = (
             select(OutboxEntry)
             .filter(OutboxEntry.tries_left > 0)

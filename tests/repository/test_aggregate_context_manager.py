@@ -3,11 +3,12 @@ from uuid import uuid4
 
 import pytest
 
+from event_sourcery import Repository
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.event import TEvent
 from event_sourcery_pydantic.event import Event as BaseEvent
-from event_sourcery_pydantic.repository import Repository
+from event_sourcery_pydantic.serde import PydanticMarmot as Marmot
 from tests.conftest import EventStoreFactoryCallable
 
 
@@ -98,7 +99,7 @@ def test_repository_publishes_events(
 ) -> None:
     catch_all_subscriber = Mock()
     event_store = event_store_factory(subscriptions={TEvent: [catch_all_subscriber]})
-    repo: Repository[LightSwitch] = Repository[LightSwitch](event_store)
+    repo: Repository[LightSwitch] = Repository[LightSwitch](event_store, Marmot())
 
     with repo.aggregate(uuid4(), LightSwitch()) as switch:
         switch.turn_on()
@@ -109,4 +110,4 @@ def test_repository_publishes_events(
 
 @pytest.fixture()
 def repo(event_store: EventStore) -> Repository[LightSwitch]:
-    return Repository[LightSwitch](event_store)
+    return Repository[LightSwitch](event_store, Marmot())

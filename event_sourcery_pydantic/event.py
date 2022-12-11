@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Optional, cast, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Optional, cast, Generic
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Extra, Field

@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from event_sourcery.dto.raw_event_dict import RawEventDict
+from event_sourcery.dto import RawEvent
 from event_sourcery.exceptions import ConcurrentStreamWriteError
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.types.stream_id import StreamId
@@ -21,7 +21,7 @@ from event_sourcery_sqlalchemy.models import Stream as StreamModel
 class SqlAlchemyStorageStrategy(StorageStrategy):
     _session: Session
 
-    def iter(self, *stream_ids: StreamId) -> Iterator[RawEventDict]:
+    def iter(self, *stream_ids: StreamId) -> Iterator[RawEvent]:
         events_stmt = select(EventModel).order_by(EventModel.id).limit(100)
         if stream_ids:
             events_stmt = events_stmt.filter(EventModel.stream_id.in_(stream_ids))
@@ -34,7 +34,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 break
             last_id = events[-1].id
             for event in events:
-                yield RawEventDict(
+                yield RawEvent(
                     uuid=event.uuid,
                     stream_id=event.stream_id,
                     created_at=event.created_at,
@@ -46,7 +46,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
 
     def fetch_events(
         self, stream_id: StreamId, start: int | None = None, stop: int | None = None
-    ) -> list[RawEventDict]:
+    ) -> list[RawEvent]:
         events_stmt = (
             select(EventModel)
             .filter(EventModel.stream_id == stream_id)
@@ -87,7 +87,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             return []
 
         raw_dict_events = [
-            RawEventDict(
+            RawEvent(
                 uuid=event.uuid,
                 stream_id=event.stream_id,
                 created_at=event.created_at,
@@ -125,7 +125,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             if result.rowcount != 1:  # optimistic lock failed
                 raise ConcurrentStreamWriteError
 
-    def insert_events(self, events: list[RawEventDict]) -> None:
+    def insert_events(self, events: list[RawEvent]) -> None:
         rows = []
         for event in events:
             rows.append(
@@ -142,7 +142,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
 
         self._session.execute(insert(EventModel), rows)
 
-    def save_snapshot(self, snapshot: RawEventDict) -> None:
+    def save_snapshot(self, snapshot: RawEvent) -> None:
         snapshot_as_dict = dict(snapshot)
         row = {
             "uuid": snapshot_as_dict.pop("uuid"),

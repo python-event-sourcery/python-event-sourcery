@@ -3,7 +3,7 @@ from typing import TypedDict
 from uuid import UUID
 
 
-class RawEventDict(TypedDict):
+class RawEvent(TypedDict):
     uuid: UUID
     stream_id: UUID
     created_at: datetime

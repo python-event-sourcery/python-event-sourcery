@@ -1,17 +1,18 @@
 from contextlib import contextmanager
-from typing import Iterator, TypeVar, Protocol
+from typing import Iterator, TypeVar, Generic
 
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
-from event_sourcery.interfaces.event import Envelope, TEvent
+from event_sourcery.interfaces.serde import Marmot
 from event_sourcery.types.stream_id import StreamId
 
 TAggregate = TypeVar("TAggregate", bound=Aggregate)
 
 
-class Repository(Protocol[TAggregate]):
-    def __init__(self, event_store: EventStore) -> None:
+class Repository(Generic[TAggregate]):
+    def __init__(self, event_store: EventStore, marmot: Marmot) -> None:
         self._event_store = event_store
+        self._marmot = marmot
 
     def _load(self, stream_id: StreamId, aggregate: TAggregate) -> int:
         stream = self._event_store.load_stream(stream_id)
@@ -31,13 +32,10 @@ class Repository(Protocol[TAggregate]):
             self._event_store.publish(
                 stream_id=stream_id,
                 events=[
-                    self._envelop(event, version)
+                    self._marmot.wrap(event, version)
                     for version, event in enumerate(events, start=start_from)
                 ]
             )
-
-    def _envelop(self, event: TEvent, version: int) -> Envelope[TEvent]:
-        raise NotImplementedError
 
     @contextmanager
     def aggregate(
