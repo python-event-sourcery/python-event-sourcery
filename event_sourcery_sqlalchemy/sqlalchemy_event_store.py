@@ -41,7 +41,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                     version=event.version,
                     name=event.name,
                     data=event.data,
-                    metadata=event.event_metadata,
+                    context=event.event_context,
                 )
 
     def fetch_events(
@@ -94,7 +94,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 version=event.version,
                 name=event.name,
                 data=event.data,
-                metadata=event.event_metadata,
+                context=event.event_context,
             )
             for event in events
         ]
@@ -135,7 +135,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                     "created_at": event["created_at"],
                     "name": event["name"],
                     "data": event["data"],
-                    "event_metadata": event["metadata"],
+                    "event_context": event["context"],
                     "version": event["version"],
                 }
             )
@@ -151,7 +151,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             "version": snapshot_as_dict.pop("version"),
             "name": snapshot_as_dict.pop("name"),
             "data": snapshot_as_dict["data"],
-            "event_metadata": snapshot_as_dict["metadata"],
+            "event_context": snapshot_as_dict["context"],
         }
         self._session.execute(insert(SnapshotModel), [row])
 

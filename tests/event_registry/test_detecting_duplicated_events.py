@@ -12,7 +12,4 @@ def test_detects_duplicates_from_custom_registry() -> None:
         pass
 
     with pytest.raises(Exception):
-
-        @registry.add
-        class AnotherDuplicate(BaseEvent):  # type: ignore  # noqa: F811
-            pass
+        registry.add(AnotherDuplicate)

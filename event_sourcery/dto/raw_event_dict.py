@@ -10,4 +10,4 @@ class RawEvent(TypedDict):
     version: int
     name: str
     data: dict
-    metadata: dict
+    context: dict

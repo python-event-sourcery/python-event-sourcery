@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from event_sourcery.event_registry import EventRegistry
 from event_sourcery.exceptions import Misconfiguration
-from event_sourcery_pydantic.event import Event, Envelope
+from event_sourcery_pydantic.event import Event, Metadata
 from tests.conftest import EventStoreFactoryCallable
 
 
@@ -36,7 +36,7 @@ def test_can_work_with_custom_events_with_custom_registry(
     stream_id = uuid4()
     event_store.append(
         stream_id=stream_id,
-        events=[Envelope[SomeDummyEvent](event=SomeDummyEvent(), version=1)],
+        events=[Metadata[SomeDummyEvent](event=SomeDummyEvent(), version=1)],
     )
 
     events = event_store.load_stream(stream_id=stream_id)
