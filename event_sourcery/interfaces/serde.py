@@ -2,13 +2,15 @@ import abc
 from typing import Type
 
 from event_sourcery.dto import RawEvent
-from event_sourcery.interfaces.event import TEvent, Metadata
+from event_sourcery.interfaces.event import Metadata, TEvent
 from event_sourcery.types.stream_id import StreamId
 
 
 class Serde(abc.ABC):
     @abc.abstractmethod
-    def deserialize(self, event: RawEvent, event_type: Type[TEvent]) -> Metadata[TEvent]:
+    def deserialize(
+        self, event: RawEvent, event_type: Type[TEvent]
+    ) -> Metadata[TEvent]:
         pass
 
     @abc.abstractmethod

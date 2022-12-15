@@ -6,7 +6,7 @@ from event_sourcery.interfaces.event import TEvent
 
 def event_name(cls: Type) -> str:
     event_module = inspect.getmodule(cls)
-    return f'{event_module.__name__}.{cls.__qualname__}'
+    return f"{event_module.__name__}.{cls.__qualname__}"
 
 
 class EventRegistry:

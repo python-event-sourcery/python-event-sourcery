@@ -1,18 +1,21 @@
 from datetime import datetime
-from typing import Protocol, TypeVar
-from uuid import UUID
+from typing import Generic, TypeVar
+from uuid import UUID, uuid4
 
-TEvent = TypeVar('TEvent')
+from pydantic import BaseModel, Extra, Field
+from pydantic.generics import GenericModel
 
-
-class Context(Protocol):
-    correlation_id: UUID | None
-    causation_id: UUID | None
+TEvent = TypeVar("TEvent")
 
 
-class Metadata(Protocol[TEvent]):
+class Context(BaseModel, extra=Extra.allow):
+    correlation_id: UUID | None = None
+    causation_id: UUID | None = None
+
+
+class Metadata(GenericModel, Generic[TEvent]):
     event: TEvent
     version: int
-    uuid: UUID
-    created_at: datetime
-    context: Context
+    uuid: UUID = Field(default_factory=uuid4)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    context: Context = Field(default_factory=Context)

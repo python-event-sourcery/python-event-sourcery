@@ -5,7 +5,8 @@ from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.dto import RawEvent
 from event_sourcery.event_registry import BaseEventCls, EventRegistry
 from event_sourcery.exceptions import Misconfiguration, NoEventsToAppend
-from event_sourcery.interfaces.event import Metadata, TEvent, Context
+from event_sourcery.interfaces.base_event import Event
+from event_sourcery.interfaces.event import Metadata, TEvent
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
@@ -73,7 +74,7 @@ class EventStore(abc.ABC):
                 else:
                     subscriber(event)
 
-            catch_all_subscribers = self._subscriptions.get(TEvent, [])  # type: ignore
+            catch_all_subscribers = self._subscriptions.get(Event, [])  # type: ignore
             for catch_all_subscriber in catch_all_subscribers:
                 catch_all_subscriber(event)
 
@@ -102,7 +103,9 @@ class EventStore(abc.ABC):
     def delete_stream(self, stream_id: StreamId) -> None:
         self._storage_strategy.delete_stream(stream_id)
 
-    def save_snapshot(self, stream_id: StreamId, snapshot: Metadata, version: int) -> None:
+    def save_snapshot(
+        self, stream_id: StreamId, snapshot: Metadata, version: int
+    ) -> None:
         serialized = self._serde.serialize(
             event=snapshot,
             stream_id=stream_id,
@@ -121,7 +124,10 @@ class EventStore(abc.ABC):
         ]
 
     def _serialize_events(
-        self, events: Sequence[Metadata], stream_id: StreamId, expected_stream_version: int
+        self,
+        events: Sequence[Metadata],
+        stream_id: StreamId,
+        expected_stream_version: int,
     ) -> list[RawEvent]:
         return [
             self._serde.serialize(

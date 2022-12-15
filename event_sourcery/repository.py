@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Iterator, TypeVar, Generic
+from typing import Generic, Iterator, TypeVar
 
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
@@ -34,7 +34,7 @@ class Repository(Generic[TAggregate]):
                 events=[
                     self._marmot.wrap(event, version)
                     for version, event in enumerate(events, start=start_from)
-                ]
+                ],
             )
 
     @contextmanager

@@ -7,13 +7,13 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
+from event_sourcery import Event
 from event_sourcery.event_registry import BaseEventCls, EventRegistry
 from event_sourcery.event_store import EventStore
-from event_sourcery.interfaces.event import TEvent
+from event_sourcery.interfaces.base_event import Event as BaseEvent
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.interfaces.subscriber import Subscriber
-from event_sourcery_pydantic.event import Event as BaseEvent
 from event_sourcery_pydantic.serde import PydanticSerde
 from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageStrategy
 from event_sourcery_sqlalchemy.sqlalchemy_outbox import SqlAlchemyOutboxStorageStrategy
@@ -24,7 +24,7 @@ class EventStoreFactoryCallable(Protocol):
 
     def __call__(
         self,
-        subscriptions: dict[Type[TEvent], list[Subscriber]] | None | object = GUARD,
+        subscriptions: dict[Type[Event], list[Subscriber]] | None | object = GUARD,
         event_base_class: Type[BaseEventCls] | None | object = GUARD,
         event_registry: EventRegistry | None | object = GUARD,
     ) -> EventStore:

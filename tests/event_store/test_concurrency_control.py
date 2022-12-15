@@ -2,9 +2,9 @@ from uuid import uuid4
 
 import pytest
 
+from event_sourcery import Metadata
 from event_sourcery.event_store import EventStore
 from event_sourcery.exceptions import ConcurrentStreamWriteError
-from event_sourcery_pydantic.event import Metadata
 from tests.events import SomeEvent
 
 

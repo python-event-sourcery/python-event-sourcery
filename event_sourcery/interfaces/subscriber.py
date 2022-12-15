@@ -1,6 +1,6 @@
 from typing import Protocol, TypeVar
 
-from event_sourcery.interfaces.event import TEvent, Metadata
+from event_sourcery.interfaces.event import Metadata, TEvent
 
 
 class Subscriber(Protocol[TEvent]):

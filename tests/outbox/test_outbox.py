@@ -3,10 +3,10 @@ from uuid import uuid4
 
 import pytest
 
+from event_sourcery import Event, Metadata
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.outbox import Outbox
-from event_sourcery_pydantic.event import Event, Metadata
 from event_sourcery_pydantic.serde import PydanticSerde
 from tests.events import SomeEvent
 

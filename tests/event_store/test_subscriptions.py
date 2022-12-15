@@ -4,12 +4,11 @@ from uuid import uuid4
 
 from sqlalchemy.orm import Session
 
+from event_sourcery import Event, Metadata
 from event_sourcery.after_commit_subscriber import AfterCommit
-from event_sourcery.interfaces.event import TEvent, Metadata as EnvelopeProto
 from event_sourcery.interfaces.subscriber import Subscriber
-from event_sourcery_pydantic.event import Metadata
 from tests.conftest import EventStoreFactoryCallable
-from tests.events import AnotherEvent, BaseEvent, SomeEvent
+from tests.events import AnotherEvent, SomeEvent
 
 
 def test_synchronous_subscriber_gets_called(
@@ -35,7 +34,7 @@ def test_synchronous_subscriber_of_all_events_gets_called(
     catch_all_subscriber = Mock(spec_set=Subscriber)
     store = event_store_factory(
         subscriptions={
-            TEvent: [catch_all_subscriber],
+            Event: [catch_all_subscriber],
         },
     )
     stream_id = uuid4()
@@ -49,7 +48,7 @@ def test_synchronous_subscriber_of_all_events_gets_called(
     catch_all_subscriber.assert_has_calls([call(event) for event in events])
 
 
-class Credit(BaseEvent):
+class Credit(Event):
     amount: int
 
 
@@ -63,7 +62,7 @@ def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None
 
     total = 0
 
-    def project(envelope: EnvelopeProto[TEvent]) -> None:
+    def project(envelope: Metadata[Event]) -> None:
         nonlocal total
 
         match envelope.event:

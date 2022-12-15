@@ -2,10 +2,10 @@ import json
 from typing import Mapping, Type, cast
 
 from event_sourcery.dto import RawEvent
-from event_sourcery.interfaces.event import TEvent
-from event_sourcery.interfaces.serde import Serde, Marmot
+from event_sourcery.interfaces.base_event import Event
+from event_sourcery.interfaces.event import Metadata, TEvent
+from event_sourcery.interfaces.serde import Marmot, Serde
 from event_sourcery.types.stream_id import StreamId
-from event_sourcery_pydantic.event import Event, Metadata
 
 
 class PydanticSerde(Serde):
@@ -17,7 +17,11 @@ class PydanticSerde(Serde):
         return Metadata[event_type](**event_as_dict, event=event_type(**data))
 
     def serialize(
-        self, event: Metadata, stream_id: StreamId, name: str, version: int,
+        self,
+        event: Metadata,
+        stream_id: StreamId,
+        name: str,
+        version: int,
     ) -> RawEvent:
         model = cast(Event, event.event)
         return RawEvent(

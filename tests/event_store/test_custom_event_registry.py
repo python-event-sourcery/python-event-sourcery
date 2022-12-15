@@ -4,9 +4,9 @@ from uuid import uuid4
 import pytest
 from pydantic import BaseModel
 
+from event_sourcery import Event, Metadata
 from event_sourcery.event_registry import EventRegistry
 from event_sourcery.exceptions import Misconfiguration
-from event_sourcery_pydantic.event import Event, Metadata
 from tests.conftest import EventStoreFactoryCallable
 
 
