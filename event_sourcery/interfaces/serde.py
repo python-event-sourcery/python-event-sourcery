@@ -18,9 +18,3 @@ class Serde(abc.ABC):
         self, event: Metadata[TEvent], stream_id: StreamId, name: str, version: int
     ) -> RawEvent:
         pass
-
-
-class Marmot(abc.ABC):
-    @abc.abstractmethod
-    def wrap(self, event: TEvent, version: int) -> Metadata[TEvent]:
-        pass

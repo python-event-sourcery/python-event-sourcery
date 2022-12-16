@@ -3,8 +3,8 @@ from typing import Mapping, Type, cast
 
 from event_sourcery.dto import RawEvent
 from event_sourcery.interfaces.base_event import Event
-from event_sourcery.interfaces.event import Metadata, TEvent
-from event_sourcery.interfaces.serde import Marmot, Serde
+from event_sourcery.interfaces.event import Metadata
+from event_sourcery.interfaces.serde import Serde
 from event_sourcery.types.stream_id import StreamId
 
 
@@ -33,8 +33,3 @@ class PydanticSerde(Serde):
             data=json.loads(model.json()),  # json dumps and loads? It's moronic
             context=json.loads(event.context.json()),
         )
-
-
-class PydanticMarmot(Marmot):
-    def wrap(self, event: TEvent, version: int) -> Metadata[TEvent]:
-        return Metadata[type(event)](event=event, version=version)
