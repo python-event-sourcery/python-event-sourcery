@@ -1,4 +1,4 @@
-from typing import Protocol, TypeVar
+from typing import Protocol
 
 from event_sourcery.interfaces.event import Metadata, TEvent
 

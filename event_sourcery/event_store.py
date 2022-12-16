@@ -4,7 +4,7 @@ from typing import Iterator, Sequence, Type, TypeVar
 
 from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.dto import RawEvent
-from event_sourcery.event_registry import BaseEventCls, EventRegistry
+from event_sourcery.event_registry import EventRegistry
 from event_sourcery.exceptions import Misconfiguration, NoEventsToAppend
 from event_sourcery.interfaces.base_event import Event
 from event_sourcery.interfaces.event import Metadata, TEvent
@@ -23,7 +23,7 @@ class EventStore(abc.ABC):
         serde: Serde,
         storage_strategy: StorageStrategy,
         outbox_storage_strategy: OutboxStorageStrategy,
-        event_base_class: Type[BaseEventCls] | None = None,
+        event_base_class: Type[Event] | None = None,
         event_registry: EventRegistry | None = None,
         subscriptions: dict[Type[TEvent], list[Subscriber]] | None = None,
     ) -> None:
@@ -120,7 +120,7 @@ class EventStore(abc.ABC):
         self._storage_strategy.insert_events(serialized_events)
         return serialized_events
 
-    def iter(self, *streams_ids: StreamId) -> Iterator[TEvent]:
+    def iter(self, *streams_ids: StreamId) -> Iterator[Metadata]:
         events_iterator = self._storage_strategy.iter(*streams_ids)
         for event in events_iterator:
             yield self._serde.deserialize(

@@ -49,7 +49,7 @@ def get_event_store(
     )
 
 
-def get_outbox(session: Session, publisher: Callable[[EventProtocol], None]) -> Outbox:
+def get_outbox(session: Session, publisher: Callable[[Metadata], None]) -> Outbox:
     return Outbox(
         serde=PydanticSerde(),
         storage_strategy=SqlAlchemyOutboxStorageStrategy(session),

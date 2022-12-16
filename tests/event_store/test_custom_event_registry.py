@@ -27,7 +27,7 @@ def test_can_work_with_custom_events_with_custom_registry(
     event_store_factory: EventStoreFactoryCallable,
     registry: EventRegistry,
 ) -> None:
-    @registry.add
+    @registry.add  # type: ignore
     class SomeDummyEvent(BaseModel):
         name: ClassVar[str] = "SomeDummyEvent"
 
@@ -35,7 +35,7 @@ def test_can_work_with_custom_events_with_custom_registry(
 
     stream_id = uuid4()
     event_store.append(
-        Metadata[SomeDummyEvent](event=SomeDummyEvent(), version=1),
+        Metadata[SomeDummyEvent](event=SomeDummyEvent(), version=1),  # type: ignore
         stream_id=stream_id,
     )
 

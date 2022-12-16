@@ -1,8 +1,8 @@
 import abc
 from typing import Callable, Type
 
-from event_sourcery.event_registry import BaseEventCls
-from event_sourcery.interfaces.event import TEvent
+from event_sourcery.interfaces.base_event import Event
+from event_sourcery.interfaces.event import Metadata
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.serde import Serde
 
@@ -14,8 +14,8 @@ class Outbox(abc.ABC):
         self,
         serde: Serde,
         storage_strategy: OutboxStorageStrategy,
-        event_base_class: Type[BaseEventCls],
-        publisher: Callable[[TEvent], None],
+        event_base_class: Type[Event],
+        publisher: Callable[[Metadata], None],
     ) -> None:
         self._serde = serde
         self._storage_strategy = storage_strategy

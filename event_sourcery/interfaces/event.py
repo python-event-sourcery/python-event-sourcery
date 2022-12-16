@@ -5,7 +5,9 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Extra, Field
 from pydantic.generics import GenericModel
 
-TEvent = TypeVar("TEvent")
+from event_sourcery.interfaces.base_event import Event
+
+TEvent = TypeVar("TEvent", bound=Event)
 
 
 class Context(BaseModel, extra=Extra.allow):
@@ -22,4 +24,4 @@ class Metadata(GenericModel, Generic[TEvent]):
 
     @classmethod
     def wrap(cls, event: TEvent, version: int) -> "Metadata[TEvent]":
-        return Metadata[type(event)](event=event, version=version)
+        return Metadata[TEvent](event=event, version=version)

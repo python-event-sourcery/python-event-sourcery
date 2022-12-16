@@ -14,7 +14,10 @@ class PydanticSerde(Serde):
         del event_as_dict["stream_id"]
         del event_as_dict["name"]
         data = cast(Mapping, event_as_dict.pop("data"))
-        return Metadata[event_type](**event_as_dict, event=event_type(**data))
+        return Metadata[event_type](  # type: ignore
+            **event_as_dict,
+            event=event_type(**data),
+        )
 
     def serialize(
         self,
