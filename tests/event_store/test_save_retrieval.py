@@ -1,11 +1,8 @@
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
-import pytest
-
 from event_sourcery import Metadata
 from event_sourcery.event_store import EventStore
-from event_sourcery.exceptions import NoEventsToAppend
 from tests.events import NastyEventWithJsonUnfriendlyTypes, SomeEvent
 
 
@@ -74,3 +71,14 @@ def test_is_able_to_handle_non_trivial_formats(event_store: EventStore) -> None:
     events = event_store.load_stream(stream_id=stream_id)
 
     assert events == [an_event]
+
+
+def test_is_able_to_handle_events_without_metadata(event_store: EventStore) -> None:
+    an_event = SomeEvent(first_name="Luke")
+    stream_id = uuid4()
+
+    event_store.append(an_event, stream_id=stream_id)
+    events = event_store.load_stream(stream_id=stream_id)
+
+    assert len(events) == 1
+    assert events[0].event == an_event

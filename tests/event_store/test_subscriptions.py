@@ -28,6 +28,23 @@ def test_synchronous_subscriber_gets_called(
     subscriber.assert_called_once_with(event)
 
 
+def test_is_able_to_handle_events_without_metadata(event_store_factory: EventStoreFactoryCallable) -> None:
+    subscriber = Mock(spec_set=Subscriber)
+    store = event_store_factory(
+        subscriptions={
+            SomeEvent: [subscriber],
+        },
+    )
+    stream_id = uuid4()
+    event = SomeEvent(first_name="Test")
+
+    store.publish(event, stream_id=stream_id)
+
+    subscriber.assert_called_once()
+    event_called_with = subscriber.mock_calls[0].args[0].event
+    assert event_called_with == event
+
+
 def test_synchronous_subscriber_of_all_events_gets_called(
     event_store_factory: EventStoreFactoryCallable,
 ) -> None:

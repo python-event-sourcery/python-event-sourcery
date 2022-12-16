@@ -1,4 +1,5 @@
 import abc
+from functools import singledispatchmethod
 from typing import Iterator, Sequence, Type, TypeVar
 
 from event_sourcery.after_commit_subscriber import AfterCommit
@@ -52,6 +53,7 @@ class EventStore(abc.ABC):
         events = self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
         return self._deserialize_events(events)
 
+    @singledispatchmethod
     def append(
         self, *events: Metadata, stream_id: StreamId, expected_version: int = 0
     ) -> None:
@@ -59,6 +61,12 @@ class EventStore(abc.ABC):
             stream_id=stream_id, events=events, expected_version=expected_version
         )
 
+    @append.register
+    def _append_events(self, *events: Event, stream_id: StreamId, expected_version: int = 0) -> None:
+        wrapped_events = [self._wrap(event, version) for version, event in enumerate(events, start=expected_version + 1)]
+        self.append(*wrapped_events, stream_id=stream_id, expected_version=expected_version)
+
+    @singledispatchmethod
     def publish(
         self, *events: Metadata, stream_id: StreamId, expected_version: int = 0
     ) -> None:
@@ -79,6 +87,15 @@ class EventStore(abc.ABC):
                 catch_all_subscriber(event)
 
         self._outbox_storage_strategy.put_into_outbox(serialized_events)
+
+    @publish.register
+    def _publish_events(self, *events: Event, stream_id: StreamId, expected_version: int = 0) -> None:
+        wrapped_events = [self._wrap(event, version) for version, event in enumerate(events, start=expected_version + 1)]
+        self.publish(*wrapped_events, stream_id=stream_id, expected_version=expected_version)
+
+    @staticmethod
+    def _wrap(event: TEvent, version: int) -> Metadata[TEvent]:
+        return Metadata[type(event)](event=event, version=version)
 
     def _append(
         self, stream_id: StreamId, events: Sequence[Metadata], expected_version: int
