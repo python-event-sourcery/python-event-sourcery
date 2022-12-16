@@ -35,8 +35,8 @@ def test_can_work_with_custom_events_with_custom_registry(
 
     stream_id = uuid4()
     event_store.append(
+        Metadata[SomeDummyEvent](event=SomeDummyEvent(), version=1),
         stream_id=stream_id,
-        events=[Metadata[SomeDummyEvent](event=SomeDummyEvent(), version=1)],
     )
 
     events = event_store.load_stream(stream_id=stream_id)

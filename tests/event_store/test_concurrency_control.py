@@ -13,7 +13,7 @@ def test_concurrency_error(event_store: EventStore) -> None:
     event = Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1)
 
     with pytest.raises(ConcurrentStreamWriteError):
-        event_store.append(stream_id=stream_id, events=[event], expected_version=10)
+        event_store.append(event, stream_id=stream_id, expected_version=10)
 
 
 def test_does_not_raise_concurrency_error_if_no_one_bumped_up_version(
@@ -21,13 +21,13 @@ def test_does_not_raise_concurrency_error_if_no_one_bumped_up_version(
 ) -> None:
     stream_id = uuid4()
     first = Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1)
-    event_store.append(stream_id=stream_id, events=[first])
+    event_store.append(first, stream_id=stream_id)
     events = event_store.load_stream(stream_id=stream_id)
     second = Metadata[SomeEvent](event=SomeEvent(first_name="TestTwo"), version=2)
     try:
         event_store.append(
+            second,
             stream_id=stream_id,
-            events=[second],
             expected_version=events[-1].version,
         )
     except ConcurrentStreamWriteError:

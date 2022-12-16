@@ -8,7 +8,7 @@ from tests.events import SomeEvent
 def test_iterates_over_one_stream(event_store: EventStore) -> None:
     stream_id = uuid4()
     event = Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1)
-    event_store.append(stream_id=stream_id, events=[event])
+    event_store.append(event, stream_id=stream_id)
 
     read_events = list(event_store.iter(stream_id))
 
@@ -18,10 +18,10 @@ def test_iterates_over_one_stream(event_store: EventStore) -> None:
 def test_iterates_over_two_streams(event_store: EventStore) -> None:
     stream_id = uuid4()
     event = Metadata[SomeEvent](event=SomeEvent(first_name="Test1"), version=1)
-    event_store.append(stream_id=stream_id, events=[event])
+    event_store.append(event, stream_id=stream_id)
     another_stream_id = uuid4()
     another_event = Metadata[SomeEvent](event=SomeEvent(first_name="Test1"), version=1)
-    event_store.append(stream_id=another_stream_id, events=[another_event])
+    event_store.append(another_event, stream_id=another_stream_id)
 
     read_events = list(event_store.iter(stream_id, another_stream_id))
 
@@ -38,7 +38,7 @@ def test_iterates_over_all_streams(event_store: EventStore) -> None:
         stream_id = uuid4()
         event = Metadata[SomeEvent](event=SomeEvent(first_name="Test1"), version=1)
         all_events.append(event)
-        event_store.append(stream_id=stream_id, events=[event])
+        event_store.append(event, stream_id=stream_id)
 
     read_events = list(event_store.iter())
 

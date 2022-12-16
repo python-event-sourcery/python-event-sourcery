@@ -23,7 +23,7 @@ def test_synchronous_subscriber_gets_called(
     stream_id = uuid4()
     event = Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1)
 
-    store.publish(stream_id=stream_id, events=[event])
+    store.publish(event, stream_id=stream_id)
 
     subscriber.assert_called_once_with(event)
 
@@ -43,7 +43,7 @@ def test_synchronous_subscriber_of_all_events_gets_called(
         Metadata[AnotherEvent](event=AnotherEvent(last_name="Doe"), version=2),
     ]
 
-    store.publish(stream_id=stream_id, events=events)
+    store.publish(*events, stream_id=stream_id)
 
     catch_all_subscriber.assert_has_calls([call(event) for event in events])
 
@@ -72,7 +72,7 @@ def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None
                 pass
 
     event_store = event_store_factory(subscriptions={Credit: [project]})
-    event_store.publish(stream_id=uuid4(), events=events)
+    event_store.publish(*events, stream_id=uuid4())
 
     assert total == 11
 
@@ -87,7 +87,7 @@ def test_after_commit_subscriber_gets_called_after_tx_is_committed(
     )
     event = Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1)
 
-    event_store.publish(stream_id=uuid4(), events=[event])
+    event_store.publish(event, stream_id=uuid4())
 
     subscriber_mock.assert_not_called()
 

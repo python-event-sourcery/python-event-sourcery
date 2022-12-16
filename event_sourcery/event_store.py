@@ -53,14 +53,14 @@ class EventStore(abc.ABC):
         return self._deserialize_events(events)
 
     def append(
-        self, stream_id: StreamId, events: Sequence[Metadata], expected_version: int = 0
+        self, *events: Metadata, stream_id: StreamId, expected_version: int = 0
     ) -> None:
         self._append(
             stream_id=stream_id, events=events, expected_version=expected_version
         )
 
     def publish(
-        self, stream_id: StreamId, events: Sequence[Metadata], expected_version: int = 0
+        self, *events: Metadata, stream_id: StreamId, expected_version: int = 0
     ) -> None:
         serialized_events = self._append(
             stream_id=stream_id, events=events, expected_version=expected_version

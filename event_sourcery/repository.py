@@ -43,11 +43,11 @@ class Repository(Generic[TAggregate]):
         with aggregate.__persisting_changes__() as events:
             start_from = old_version + 1
             self._event_store.publish(
-                stream_id=stream_id,
-                events=[
+                *[
                     self._wrap(event, version)
                     for version, event in enumerate(events, start=start_from)
                 ],
+                stream_id=stream_id,
             )
 
     def _wrap(self, event: TEvent, version) -> Metadata[TEvent]:

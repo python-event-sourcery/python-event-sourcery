@@ -30,7 +30,7 @@ def test_calls_publisher(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
     an_event = Metadata[SomeEvent](event=SomeEvent(first_name="John"), version=1)
-    event_store.publish(stream_id=uuid4(), events=[an_event])
+    event_store.publish(an_event, stream_id=uuid4())
 
     outbox.run_once()
 
@@ -41,7 +41,7 @@ def test_sends_only_once_in_case_of_success(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
     an_event = Metadata[SomeEvent](event=SomeEvent(first_name="John"), version=1)
-    event_store.publish(stream_id=uuid4(), events=[an_event])
+    event_store.publish(an_event, stream_id=uuid4())
 
     for _ in range(2):
         outbox.run_once()
@@ -53,7 +53,7 @@ def test_tries_to_send_up_to_three_times(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
     an_event = Metadata[SomeEvent](event=SomeEvent(first_name="John"), version=1)
-    event_store.publish(stream_id=uuid4(), events=[an_event])
+    event_store.publish(an_event, stream_id=uuid4())
     publisher.side_effect = ValueError
 
     for _ in range(4):

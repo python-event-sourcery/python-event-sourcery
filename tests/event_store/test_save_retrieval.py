@@ -12,7 +12,7 @@ from tests.events import NastyEventWithJsonUnfriendlyTypes, SomeEvent
 def test_save_retrieve(event_store: EventStore) -> None:
     stream_uuid = uuid4()
     events = [Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1)]
-    event_store.append(stream_id=stream_uuid, events=events)
+    event_store.append(*events, stream_id=stream_uuid)
     loaded_events = event_store.load_stream(stream_uuid)
 
     assert loaded_events == [events[0].copy(update={"version": 1})]
@@ -27,7 +27,7 @@ def test_save_retrieve_part_of_stream(event_store: EventStore) -> None:
         Metadata[SomeEvent](event=SomeEvent(first_name="good"), version=4),
         Metadata[SomeEvent](event=SomeEvent(first_name="thing"), version=5),
     ]
-    event_store.append(stream_id=stream_uuid, events=events)
+    event_store.append(*events, stream_id=stream_uuid)
     loaded_events = event_store.load_stream(stream_uuid, start=2, stop=5)
 
     assert loaded_events == [
@@ -52,7 +52,7 @@ def test_stores_retrieves_metadata(event_store: EventStore) -> None:
     )
     stream_id = uuid4()
 
-    event_store.append(stream_id=stream_id, events=[an_event])
+    event_store.append(an_event, stream_id=stream_id)
     events = event_store.load_stream(stream_id=stream_id)
 
     assert events == [an_event.copy(update={"version": 1})]
@@ -70,12 +70,7 @@ def test_is_able_to_handle_non_trivial_formats(event_store: EventStore) -> None:
     )
     stream_id = uuid4()
 
-    event_store.append(stream_id=stream_id, events=[an_event])
+    event_store.append(an_event, stream_id=stream_id)
     events = event_store.load_stream(stream_id=stream_id)
 
     assert events == [an_event]
-
-
-def test_raises_exception_for_empty_stream(event_store: EventStore) -> None:
-    with pytest.raises(NoEventsToAppend):
-        event_store.append(stream_id=uuid4(), events=[])
