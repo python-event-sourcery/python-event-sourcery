@@ -1,10 +1,10 @@
 from contextlib import contextmanager
 from typing import Generic, Iterator, TypeVar
 
-from event_sourcery.interfaces.base_event import Event
-from event_sourcery.interfaces.event import Metadata
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
+from event_sourcery.interfaces.base_event import Event
+from event_sourcery.interfaces.event import Metadata
 from event_sourcery.types.stream_id import StreamId
 
 TAggregate = TypeVar("TAggregate", bound=Aggregate)
@@ -50,4 +50,3 @@ class Repository(Generic[TAggregate]):
                 stream_id=stream_id,
                 expected_version=old_version,
             )
-

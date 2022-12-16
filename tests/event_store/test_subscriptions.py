@@ -28,7 +28,9 @@ def test_synchronous_subscriber_gets_called(
     subscriber.assert_called_once_with(event)
 
 
-def test_is_able_to_handle_events_without_metadata(event_store_factory: EventStoreFactoryCallable) -> None:
+def test_is_able_to_handle_events_without_metadata(
+    event_store_factory: EventStoreFactoryCallable,
+) -> None:
     subscriber = Mock(spec_set=Subscriber)
     store = event_store_factory(
         subscriptions={
