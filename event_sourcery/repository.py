@@ -44,12 +44,10 @@ class Repository(Generic[TAggregate]):
             start_from = old_version + 1
             self._event_store.publish(
                 *[
-                    self._wrap(event, version)
+                    Metadata.wrap(event, version)
                     for version, event in enumerate(events, start=start_from)
                 ],
                 stream_id=stream_id,
                 expected_version=old_version,
             )
 
-    def _wrap(self, event: TEvent, version) -> Metadata[TEvent]:
-        return Metadata[type(event)](event=event, version=version)

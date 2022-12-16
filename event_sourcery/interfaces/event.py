@@ -19,3 +19,7 @@ class Metadata(GenericModel, Generic[TEvent]):
     uuid: UUID = Field(default_factory=uuid4)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     context: Context = Field(default_factory=Context)
+
+    @classmethod
+    def wrap(cls, event: TEvent, version: int) -> "Metadata[TEvent]":
+        return Metadata[type(event)](event=event, version=version)

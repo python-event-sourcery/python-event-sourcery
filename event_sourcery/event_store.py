@@ -63,7 +63,7 @@ class EventStore(abc.ABC):
 
     @append.register
     def _append_events(self, *events: Event, stream_id: StreamId, expected_version: int = 0) -> None:
-        wrapped_events = [self._wrap(event, version) for version, event in enumerate(events, start=expected_version + 1)]
+        wrapped_events = [Metadata.wrap(event, version) for version, event in enumerate(events, start=expected_version + 1)]
         self.append(*wrapped_events, stream_id=stream_id, expected_version=expected_version)
 
     @singledispatchmethod
@@ -90,12 +90,8 @@ class EventStore(abc.ABC):
 
     @publish.register
     def _publish_events(self, *events: Event, stream_id: StreamId, expected_version: int = 0) -> None:
-        wrapped_events = [self._wrap(event, version) for version, event in enumerate(events, start=expected_version + 1)]
+        wrapped_events = [Metadata.wrap(event, version) for version, event in enumerate(events, start=expected_version + 1)]
         self.publish(*wrapped_events, stream_id=stream_id, expected_version=expected_version)
-
-    @staticmethod
-    def _wrap(event: TEvent, version: int) -> Metadata[TEvent]:
-        return Metadata[type(event)](event=event, version=version)
 
     def _append(
         self, stream_id: StreamId, events: Sequence[Metadata], expected_version: int
