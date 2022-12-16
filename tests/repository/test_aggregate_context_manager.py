@@ -6,6 +6,7 @@ import pytest
 from event_sourcery import Event, Repository
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
+from event_sourcery.exceptions import ConcurrentStreamWriteError
 from tests.conftest import EventStoreFactoryCallable
 
 
@@ -45,6 +46,10 @@ class LightSwitch(Aggregate):
             raise LightSwitch.AlreadyTurnedOff
 
         self._emit(TurnedOff())
+
+    @property
+    def shines(self) -> bool:
+        return self._shines
 
 
 def test_light_switch_aggregate_logs_events() -> None:
@@ -89,6 +94,22 @@ def test_light_switch_changes_are_preserved_by_repository(
         except LightSwitch.AlreadyTurnedOn:
             # o mon Dieu, I made a mistake!
             switch_second_incarnation.turn_off()
+
+
+def test_repository_supports_optimistic_locking(
+    repo: Repository[LightSwitch],
+) -> None:
+    stream_id = uuid4()
+    with repo.aggregate(stream_id, LightSwitch()) as switch_first_incarnation:
+        switch_first_incarnation.turn_on()
+
+    with pytest.raises(ConcurrentStreamWriteError):
+        with repo.aggregate(stream_id, LightSwitch()) as switch_second_incarnation:
+            with repo.aggregate(stream_id, LightSwitch()) as switch_third_incarnation:
+                switch_second_incarnation.turn_off()
+                switch_third_incarnation.turn_off()
+
+    assert not switch_second_incarnation.shines
 
 
 def test_repository_publishes_events(

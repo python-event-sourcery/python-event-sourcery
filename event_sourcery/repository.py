@@ -48,6 +48,7 @@ class Repository(Generic[TAggregate]):
                     for version, event in enumerate(events, start=start_from)
                 ],
                 stream_id=stream_id,
+                expected_version=old_version,
             )
 
     def _wrap(self, event: TEvent, version) -> Metadata[TEvent]:
