@@ -6,7 +6,7 @@ Event-driven applications and Event Sourcing in Python made simpler.
 ```python
 event = EventSourceryIsBorn()
 
-event_store.publish(stream_id=stream_id, events=[event])
+event_store.publish(event, stream_id=stream_id)
 ```
 
 _Under heavy development_
@@ -116,7 +116,7 @@ def subscribe(
     # Create an event
     event = CustomerSubscribed(plan_id=1, model="yearly")
     # Put it in the event store!
-    event_store.append(stream_id=uuid4(), events=[event])
+    event_store.append(event, stream_id=uuid4())
     session.commit()
 
 ```

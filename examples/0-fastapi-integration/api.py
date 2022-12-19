@@ -59,5 +59,5 @@ def subscribe(
     # Create an event
     event = CustomerSubscribed(plan_id=1, model="yearly")
     # Put it in the event store!
-    event_store.append(stream_id=uuid4(), events=[event])
+    event_store.append(event, stream_id=uuid4())
     session.commit()
