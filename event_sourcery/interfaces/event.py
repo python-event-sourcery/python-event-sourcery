@@ -1,25 +1,27 @@
 from datetime import datetime
-from typing import Any, Final, Optional, Protocol
-from uuid import UUID
+from typing import Generic, TypeVar
+from uuid import UUID, uuid4
+
+from pydantic import BaseModel, Extra, Field
+from pydantic.generics import GenericModel
+
+from event_sourcery.interfaces.base_event import Event
+
+TEvent = TypeVar("TEvent", bound=Event)
 
 
-class Metadata(Protocol):
-    correlation_id: Optional[UUID]
-    causation_id: Optional[UUID]
+class Context(BaseModel, extra=Extra.allow):
+    correlation_id: UUID | None = None
+    causation_id: UUID | None = None
 
 
-AUTO_VERSION: Final = 0
+class Metadata(GenericModel, Generic[TEvent]):
+    event: TEvent
+    version: int
+    uuid: UUID = Field(default_factory=uuid4)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    context: Context = Field(default_factory=Context)
 
-
-class Event(Protocol):
-    uuid: UUID
-    created_at: datetime
-    version: int = AUTO_VERSION
-
-    def __init__(self, **kwargs: Any) -> None:
-        ...  # pragma: no cover
-
-    @property
-    def metadata(self) -> Metadata:
-        # https://mypy.readthedocs.io/en/latest/common_issues.html#covariant-subtyping-of-mutable-protocol-members-is-rejected
-        ...  # pragma: no cover
+    @classmethod
+    def wrap(cls, event: TEvent, version: int) -> "Metadata[TEvent]":
+        return Metadata[TEvent](event=event, version=version)

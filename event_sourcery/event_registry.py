@@ -1,27 +1,40 @@
-from typing import ClassVar, Protocol, Type
+import inspect
+from typing import TYPE_CHECKING, Type
 
-from event_sourcery.interfaces.event import Event
+if TYPE_CHECKING:
+    from event_sourcery.interfaces.base_event import Event
+
+
+class ClassModuleUnavailable(Exception):
+    pass
+
+
+def event_name(cls: Type) -> str:
+    event_module = inspect.getmodule(cls)
+    if event_module is None:
+        raise ClassModuleUnavailable
+    return f"{event_module.__name__}.{cls.__qualname__}"
 
 
 class EventRegistry:
     def __init__(self) -> None:
-        self._types_to_names: dict[Type[Event], str] = {}
-        self._names_to_types: dict[str, Type[Event]] = {}
+        self._types_to_names: dict[Type["Event"], str] = {}
+        self._names_to_types: dict[str, Type["Event"]] = {}
 
-    def add(self, event: Type[Event]) -> Type[Event]:
-        if event.__name__ in self._types_to_names.values():
-            raise Exception(f"Duplicated Event name detected! {event.__name__}")
+    def add(self, event: Type["Event"]) -> Type["Event"]:
+        if event in self._types_to_names:
+            raise Exception(f"Duplicated Event detected! {event}")
 
-        self._types_to_names[event] = event.__name__
-        self._names_to_types[event.__name__] = event
+        name = event_name(event)
+        if name in self._names_to_types:
+            raise Exception(f"Duplicated Event name detected! {name}")
+
+        self._types_to_names[event] = name
+        self._names_to_types[name] = event
         return event  # for use as a decorator
 
-    def type_for_name(self, name: str) -> Type[Event]:
+    def type_for_name(self, name: str) -> Type["Event"]:
         return self._names_to_types[name]
 
-    def name_for_type(self, event: Type[Event]) -> str:
+    def name_for_type(self, event: Type["Event"]) -> str:
         return self._types_to_names[event]
-
-
-class BaseEventCls(Protocol):
-    __registry__: ClassVar[EventRegistry]

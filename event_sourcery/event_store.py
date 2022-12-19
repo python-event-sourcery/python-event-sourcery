@@ -1,11 +1,13 @@
 import abc
+from functools import singledispatchmethod
 from typing import Iterator, Sequence, Type, TypeVar
 
 from event_sourcery.after_commit_subscriber import AfterCommit
-from event_sourcery.dto.raw_event_dict import RawEventDict
-from event_sourcery.event_registry import BaseEventCls, EventRegistry
+from event_sourcery.dto import RawEvent
+from event_sourcery.event_registry import EventRegistry
 from event_sourcery.exceptions import Misconfiguration, NoEventsToAppend
-from event_sourcery.interfaces.event import Event
+from event_sourcery.interfaces.base_event import Event
+from event_sourcery.interfaces.event import Metadata, TEvent
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
@@ -21,9 +23,9 @@ class EventStore(abc.ABC):
         serde: Serde,
         storage_strategy: StorageStrategy,
         outbox_storage_strategy: OutboxStorageStrategy,
-        event_base_class: Type[BaseEventCls] | None = None,
+        event_base_class: Type[Event] | None = None,
         event_registry: EventRegistry | None = None,
-        subscriptions: dict[Type[Event], list[Subscriber]] | None = None,
+        subscriptions: dict[Type[TEvent], list[Subscriber]] | None = None,
     ) -> None:
         if event_base_class is not None and event_registry is not None:
             raise Misconfiguration(
@@ -47,19 +49,33 @@ class EventStore(abc.ABC):
 
     def load_stream(
         self, stream_id: StreamId, start: int | None = None, stop: int | None = None
-    ) -> list[Event]:
+    ) -> list[Metadata]:
         events = self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
         return self._deserialize_events(events)
 
+    @singledispatchmethod
     def append(
-        self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
+        self, *events: Metadata, stream_id: StreamId, expected_version: int = 0
     ) -> None:
         self._append(
             stream_id=stream_id, events=events, expected_version=expected_version
         )
 
+    @append.register
+    def _append_events(
+        self, *events: Event, stream_id: StreamId, expected_version: int = 0
+    ) -> None:
+        wrapped_events = [
+            Metadata.wrap(event, version)
+            for version, event in enumerate(events, start=expected_version + 1)
+        ]
+        self.append(
+            *wrapped_events, stream_id=stream_id, expected_version=expected_version
+        )
+
+    @singledispatchmethod
     def publish(
-        self, stream_id: StreamId, events: Sequence[Event], expected_version: int = 0
+        self, *events: Metadata, stream_id: StreamId, expected_version: int = 0
     ) -> None:
         serialized_events = self._append(
             stream_id=stream_id, events=events, expected_version=expected_version
@@ -67,7 +83,7 @@ class EventStore(abc.ABC):
 
         # TODO: make it more robust per subscriber?
         for event in events:
-            for subscriber in self._subscriptions.get(type(event), []):
+            for subscriber in self._subscriptions.get(type(event.event), []):
                 if isinstance(subscriber, AfterCommit):
                     self._storage_strategy.run_after_commit(lambda: subscriber(event))
                 else:
@@ -79,9 +95,21 @@ class EventStore(abc.ABC):
 
         self._outbox_storage_strategy.put_into_outbox(serialized_events)
 
+    @publish.register
+    def _publish_events(
+        self, *events: Event, stream_id: StreamId, expected_version: int = 0
+    ) -> None:
+        wrapped_events = [
+            Metadata.wrap(event, version)
+            for version, event in enumerate(events, start=expected_version + 1)
+        ]
+        self.publish(
+            *wrapped_events, stream_id=stream_id, expected_version=expected_version
+        )
+
     def _append(
-        self, stream_id: StreamId, events: Sequence[Event], expected_version: int
-    ) -> list[RawEventDict]:
+        self, stream_id: StreamId, events: Sequence[Metadata], expected_version: int
+    ) -> list[RawEvent]:
         if not events:
             raise NoEventsToAppend
 
@@ -92,7 +120,7 @@ class EventStore(abc.ABC):
         self._storage_strategy.insert_events(serialized_events)
         return serialized_events
 
-    def iter(self, *streams_ids: StreamId) -> Iterator[Event]:
+    def iter(self, *streams_ids: StreamId) -> Iterator[Metadata]:
         events_iterator = self._storage_strategy.iter(*streams_ids)
         for event in events_iterator:
             yield self._serde.deserialize(
@@ -102,16 +130,18 @@ class EventStore(abc.ABC):
     def delete_stream(self, stream_id: StreamId) -> None:
         self._storage_strategy.delete_stream(stream_id)
 
-    def save_snapshot(self, stream_id: StreamId, snapshot: Event, version: int) -> None:
+    def save_snapshot(
+        self, stream_id: StreamId, snapshot: Metadata, version: int
+    ) -> None:
         serialized = self._serde.serialize(
             event=snapshot,
             stream_id=stream_id,
-            name=self._event_registry.name_for_type(type(snapshot)),
+            name=self._event_registry.name_for_type(type(snapshot.event)),
             version=version,
         )
         self._storage_strategy.save_snapshot(serialized)
 
-    def _deserialize_events(self, events: list[RawEventDict]) -> list[Event]:
+    def _deserialize_events(self, events: list[RawEvent]) -> list[Metadata]:
         return [
             self._serde.deserialize(
                 event=event,
@@ -121,13 +151,16 @@ class EventStore(abc.ABC):
         ]
 
     def _serialize_events(
-        self, events: Sequence[Event], stream_id: StreamId, expected_stream_version: int
-    ) -> list[RawEventDict]:
+        self,
+        events: Sequence[Metadata],
+        stream_id: StreamId,
+        expected_stream_version: int,
+    ) -> list[RawEvent]:
         return [
             self._serde.serialize(
                 event=event,
                 stream_id=stream_id,
-                name=self._event_registry.name_for_type(type(event)),
+                name=self._event_registry.name_for_type(type(event.event)),
                 version=version,
             )
             for version, event in enumerate(events, start=expected_stream_version + 1)

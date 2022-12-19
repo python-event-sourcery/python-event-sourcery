@@ -1,6 +1,6 @@
 from typing import Iterator, Tuple
 
-from event_sourcery.dto.raw_event_dict import RawEventDict
+from event_sourcery.dto import RawEvent
 from event_sourcery.interfaces.outbox_storage_strategy import (
     EntryId,
     OutboxStorageStrategy,
@@ -8,10 +8,10 @@ from event_sourcery.interfaces.outbox_storage_strategy import (
 
 
 class DummyOutboxStorageStrategy(OutboxStorageStrategy):
-    def put_into_outbox(self, events: list[RawEventDict]) -> None:
+    def put_into_outbox(self, events: list[RawEvent]) -> None:
         pass
 
-    def outbox_entries(self, limit: int) -> Iterator[Tuple[EntryId, RawEventDict]]:
+    def outbox_entries(self, limit: int) -> Iterator[Tuple[EntryId, RawEvent]]:
         return iter([])
 
     def decrease_tries_left(self, entry_id: EntryId) -> None:

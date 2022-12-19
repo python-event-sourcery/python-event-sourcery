@@ -3,19 +3,18 @@ from uuid import uuid4
 
 import pytest
 
+from event_sourcery import Event, Repository
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
-from event_sourcery.interfaces.event import Event
-from event_sourcery.repository import Repository
-from event_sourcery_pydantic.event import Event as BaseEvent
+from event_sourcery.exceptions import ConcurrentStreamWriteError
 from tests.conftest import EventStoreFactoryCallable
 
 
-class TurnedOn(BaseEvent):
+class TurnedOn(Event):
     pass
 
 
-class TurnedOff(BaseEvent):
+class TurnedOff(Event):
     pass
 
 
@@ -30,23 +29,27 @@ class LightSwitch(Aggregate):
         super().__init__()
         self._shines = False
 
-    def _apply(self, event: Event) -> None:
+    def __apply__(self, event: Event) -> None:
         match event:
-            case TurnedOn() as event:
+            case TurnedOn():
                 self._shines = True
-            case TurnedOff() as event:
+            case TurnedOff():
                 self._shines = False
 
     def turn_on(self) -> None:
         if self._shines:
             raise LightSwitch.AlreadyTurnedOn
-        self._event(TurnedOn)
+        self._emit(TurnedOn())
 
     def turn_off(self) -> None:
         if not self._shines:
             raise LightSwitch.AlreadyTurnedOff
 
-        self._event(TurnedOff)
+        self._emit(TurnedOff())
+
+    @property
+    def shines(self) -> bool:
+        return self._shines
 
 
 def test_light_switch_aggregate_logs_events() -> None:
@@ -71,7 +74,7 @@ def test_light_switch_cannot_be_turned_on_twice() -> None:
 
 def test_light_switch_cannot_be_turned_off_twice() -> None:
     switch = LightSwitch()
-    switch.__rehydrate__(TurnedOn(version=1))
+    switch.turn_on()
     switch.turn_off()
 
     with pytest.raises(LightSwitch.AlreadyTurnedOff):
@@ -82,11 +85,10 @@ def test_light_switch_changes_are_preserved_by_repository(
     repo: Repository[LightSwitch],
 ) -> None:
     stream_id = uuid4()
-    switch = LightSwitch()
-    switch.turn_on()
-    repo.save(switch, stream_id)
+    with repo.aggregate(stream_id, LightSwitch()) as switch_first_incarnation:
+        switch_first_incarnation.turn_on()
 
-    with repo.aggregate(stream_id=stream_id) as switch_second_incarnation:
+    with repo.aggregate(stream_id, LightSwitch()) as switch_second_incarnation:
         try:
             switch_second_incarnation.turn_on()
         except LightSwitch.AlreadyTurnedOn:
@@ -94,21 +96,36 @@ def test_light_switch_changes_are_preserved_by_repository(
             switch_second_incarnation.turn_off()
 
 
+def test_repository_supports_optimistic_locking(
+    repo: Repository[LightSwitch],
+) -> None:
+    stream_id = uuid4()
+    with repo.aggregate(stream_id, LightSwitch()) as switch_first_incarnation:
+        switch_first_incarnation.turn_on()
+
+    with pytest.raises(ConcurrentStreamWriteError):
+        with repo.aggregate(stream_id, LightSwitch()) as switch_second_incarnation:
+            with repo.aggregate(stream_id, LightSwitch()) as switch_third_incarnation:
+                switch_second_incarnation.turn_off()
+                switch_third_incarnation.turn_off()
+
+    assert not switch_second_incarnation.shines
+
+
 def test_repository_publishes_events(
     event_store_factory: EventStoreFactoryCallable,
 ) -> None:
     catch_all_subscriber = Mock()
     event_store = event_store_factory(subscriptions={Event: [catch_all_subscriber]})
-    repo: Repository[LightSwitch] = Repository[LightSwitch](event_store, LightSwitch)
-    switch = LightSwitch()
-    switch.turn_on()
-    switch.turn_off()
+    repo: Repository[LightSwitch] = Repository[LightSwitch](event_store)
 
-    repo.save(aggregate=switch, stream_id=uuid4())
+    with repo.aggregate(uuid4(), LightSwitch()) as switch:
+        switch.turn_on()
+        switch.turn_off()
 
     assert catch_all_subscriber.call_count == 2
 
 
 @pytest.fixture()
 def repo(event_store: EventStore) -> Repository[LightSwitch]:
-    return Repository[LightSwitch](event_store, LightSwitch)
+    return Repository[LightSwitch](event_store)

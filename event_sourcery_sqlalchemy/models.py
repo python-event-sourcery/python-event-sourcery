@@ -34,9 +34,9 @@ class Event:
     version = Column(Integer(), nullable=False)
     uuid = Column(GUID(), index=True, unique=True)
     stream_id = Column(GUID(), nullable=False, index=True)
-    name = Column(String(50), nullable=False)
+    name = Column(String(200), nullable=False)
     data = Column(JSONB(), nullable=False)
-    event_metadata = Column(JSONB(), nullable=False)
+    event_context = Column(JSONB(), nullable=False)
     created_at = Column(DateTime(), nullable=False, index=True)
 
 
@@ -48,7 +48,7 @@ class Snapshot:
     stream_id = Column(GUID(), nullable=False, index=True)
     name = Column(String(50), nullable=False)
     data = Column(JSONB(), nullable=False)
-    event_metadata = Column(JSONB(), nullable=False)
+    event_context = Column(JSONB(), nullable=False)
     created_at = Column(DateTime(), nullable=False)
 
 

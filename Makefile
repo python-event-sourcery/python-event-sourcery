@@ -1,5 +1,5 @@
 
-.phony: linkt
+.phony: lint
 lint:
 	isort event_sourcery/ event_sourcery_pydantic/ event_sourcery_sqlalchemy/ tests/
 	black event_sourcery/ event_sourcery_pydantic/ event_sourcery_sqlalchemy/ tests/
