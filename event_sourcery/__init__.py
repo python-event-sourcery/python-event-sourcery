@@ -35,6 +35,7 @@ def get_event_store(
     session: Session,
     subscriptions: dict[Type[EventProtocol], list[Subscriber]] | None = None,
     with_outbox: bool = True,
+    outbox_filterer: Callable[[Event], bool] = lambda _: True,
 ) -> EventStore:
     outbox_storage: OutboxStorageStrategy
     if with_outbox:
@@ -48,6 +49,7 @@ def get_event_store(
         outbox_storage_strategy=outbox_storage,
         event_base_class=Event,
         subscriptions=subscriptions,
+        outbox_filterer=outbox_filterer,
     )
 
 

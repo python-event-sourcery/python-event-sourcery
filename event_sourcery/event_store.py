@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Iterator, Sequence, Type, TypeVar, cast
+from typing import Callable, Iterator, Sequence, Type, TypeVar, cast
 
 from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.dto import RawEvent
@@ -26,6 +26,7 @@ class EventStore:
         event_base_class: Type[Event] | None = None,
         event_registry: EventRegistry | None = None,
         subscriptions: dict[Type[TEvent], list[Subscriber]] | None = None,
+        outbox_filterer: Callable[[Event], bool] = lambda _: True,
     ) -> None:
         if event_base_class is not None and event_registry is not None:
             raise Misconfiguration(
@@ -46,6 +47,7 @@ class EventStore:
         self._storage_strategy = storage_strategy
         self._outbox_storage_strategy = outbox_storage_strategy
         self._subscriptions = subscriptions
+        self._outbox_filterer = outbox_filterer
 
     def load_stream(
         self, stream_id: StreamId, start: int | None = None, stop: int | None = None
@@ -105,7 +107,12 @@ class EventStore:
         )
 
         self._notify(events)
-        self._outbox_storage_strategy.put_into_outbox(serialized_events)
+        events_to_put_into_outbox = [
+            serialized_event
+            for serialized_event, event in zip(serialized_events, events)
+            if self._outbox_filterer(event.event)
+        ]
+        self._outbox_storage_strategy.put_into_outbox(events_to_put_into_outbox)
 
     def _notify(self, events: Sequence[Metadata]) -> None:
         for event in events:
