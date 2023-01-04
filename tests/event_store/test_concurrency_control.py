@@ -16,6 +16,27 @@ def test_concurrency_error(event_store: EventStore) -> None:
         event_store.append(event, stream_id=stream_id, expected_version=10)
 
 
+def test_does_not_raise_concurrency_error_if_adding_two_events_at_a_time(
+    event_store: EventStore,
+) -> None:
+    stream_id = uuid4()
+    events_part_one = [
+        Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1),
+        Metadata[SomeEvent](event=SomeEvent(first_name="Another"), version=2),
+    ]
+    event_store.append(*events_part_one, stream_id=stream_id, expected_version=0)
+
+    try:
+        event_store.append(
+            Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=3),
+            Metadata[SomeEvent](event=SomeEvent(first_name="Another"), version=4),
+            stream_id=stream_id,
+            expected_version=2,
+        )
+    except ConcurrentStreamWriteError:
+        pytest.fail("Should NOT raise an exception!")
+
+
 def test_does_not_raise_concurrency_error_if_no_one_bumped_up_version(
     event_store: EventStore,
 ) -> None:

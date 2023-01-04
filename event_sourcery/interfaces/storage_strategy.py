@@ -3,6 +3,7 @@ from typing import Callable, Iterator
 
 from event_sourcery.dto import RawEvent
 from event_sourcery.types.stream_id import StreamId
+from event_sourcery.versioning import Versioning
 
 
 class StorageStrategy(abc.ABC):
@@ -25,7 +26,11 @@ class StorageStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def ensure_stream(self, stream_id: StreamId, expected_version: int) -> None:
+    def ensure_stream(
+        self,
+        stream_id: StreamId,
+        versioning: Versioning,
+    ) -> None:
         pass
 
     @abc.abstractmethod

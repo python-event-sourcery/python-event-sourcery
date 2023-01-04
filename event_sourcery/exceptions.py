@@ -12,3 +12,15 @@ class ConcurrentStreamWriteError(EventStoreException):
 
 class Misconfiguration(EventStoreException):
     pass
+
+
+class VersioningMismatch(EventStoreException):
+    pass
+
+
+class ExpectedVersionUsedOnVersionlessStream(VersioningMismatch):
+    pass
+
+
+class NoExpectedVersionGivenOnVersionedStream(VersioningMismatch):
+    pass
