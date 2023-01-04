@@ -24,14 +24,13 @@ class PydanticSerde(Serde):
         event: Metadata,
         stream_id: StreamId,
         name: str,
-        version: int,
     ) -> RawEvent:
         model = cast(Event, event.event)
         return RawEvent(
             uuid=event.uuid,
             stream_id=stream_id,
             created_at=event.created_at,
-            version=event.version or version,
+            version=event.version,
             name=name,
             data=json.loads(model.json()),  # json dumps and loads? It's moronic
             context=json.loads(event.context.json()),

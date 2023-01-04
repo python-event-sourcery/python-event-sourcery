@@ -14,6 +14,9 @@ class Serde(abc.ABC):
 
     @abc.abstractmethod
     def serialize(
-        self, event: Metadata[Event], stream_id: StreamId, name: str, version: int
+        self,
+        event: Metadata[Event],
+        stream_id: StreamId,
+        name: str,
     ) -> RawEvent:
         pass

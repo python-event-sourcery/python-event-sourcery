@@ -14,7 +14,7 @@ def test_handles_snapshots(event_store: EventStore) -> None:
     event = Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1)
     event_store.append(event, stream_id=stream_id)
     snapshot = Metadata[Snapshot](event=Snapshot(), version=1)
-    event_store.save_snapshot(stream_id=stream_id, snapshot=snapshot, version=1)
+    event_store.save_snapshot(stream_id=stream_id, snapshot=snapshot)
 
     events = event_store.load_stream(stream_id=stream_id)
     assert events == [snapshot]

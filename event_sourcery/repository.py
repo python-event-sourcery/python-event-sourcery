@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Generic, Iterator, TypeVar
+from typing import Generic, Iterator, TypeVar, cast
 
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
@@ -29,10 +29,12 @@ class Repository(Generic[TAggregate]):
 
     def _load(self, stream_id: StreamId, aggregate: TAggregate) -> int:
         stream = self._event_store.load_stream(stream_id)
+        last_version = 0
         for envelope in stream:
             aggregate.__apply__(envelope.event)
-            return envelope.version
-        return 0
+            last_version = cast(int, envelope.version)
+
+        return last_version
 
     def _save(
         self,

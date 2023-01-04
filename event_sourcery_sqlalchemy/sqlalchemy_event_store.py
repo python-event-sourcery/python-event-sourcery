@@ -12,6 +12,7 @@ from event_sourcery.dto import RawEvent
 from event_sourcery.exceptions import ConcurrentStreamWriteError
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.types.stream_id import StreamId
+from event_sourcery.versioning import NO_VERSIONING, Versioning
 from event_sourcery_sqlalchemy.models import Event as EventModel
 from event_sourcery_sqlalchemy.models import Snapshot as SnapshotModel
 from event_sourcery_sqlalchemy.models import Stream as StreamModel
@@ -100,25 +101,38 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         ]
         return raw_dict_events
 
-    def ensure_stream(self, stream_id: StreamId, expected_version: int) -> None:
+    def ensure_stream(
+        self,
+        stream_id: StreamId,
+        versioning: Versioning,
+    ) -> None:
+        initial_version = versioning.initial_version
+
         ensure_stream_stmt = (
             postgresql_insert(StreamModel)
             .values(
                 uuid=stream_id,
-                version=1,
+                version=initial_version,
             )
             .on_conflict_do_nothing()
         )
         self._session.execute(ensure_stream_stmt)
+        stream_version = (
+            self._session.query(StreamModel.version)
+            .filter(StreamModel.uuid == stream_id)
+            .scalar()
+        )
 
-        if expected_version:
+        versioning.validate_if_compatible(stream_version)
+
+        if versioning.expected_version and versioning is not NO_VERSIONING:
             stmt = (
                 update(StreamModel)
                 .where(
                     StreamModel.uuid == stream_id,
-                    StreamModel.version == expected_version,
+                    StreamModel.version == versioning.expected_version,
                 )
-                .values(version=StreamModel.version + 1)
+                .values(version=versioning.initial_version)
             )
             result = self._session.execute(stmt)
 

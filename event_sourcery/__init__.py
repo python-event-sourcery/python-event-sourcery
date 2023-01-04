@@ -7,6 +7,7 @@ __all__ = [
     "Aggregate",
     "Metadata",
     "Context",
+    "NO_VERSIONING",
 ]
 
 from typing import Callable, Type
@@ -23,6 +24,7 @@ from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrat
 from event_sourcery.interfaces.subscriber import Subscriber
 from event_sourcery.outbox import Outbox
 from event_sourcery.repository import Repository
+from event_sourcery.versioning import NO_VERSIONING
 from event_sourcery_pydantic.serde import PydanticSerde
 from event_sourcery_sqlalchemy.models import configure_models
 from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageStrategy
