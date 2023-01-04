@@ -1,7 +1,7 @@
 import json
 from typing import Any, Optional
 
-from sqlalchemy.dialects.postgresql import JSONB as PostgresJSONB
+from sqlalchemy.dialects.postgresql import JSONB as POSTGRES_JSONB
 from sqlalchemy.types import Text, TypeDecorator
 
 
@@ -10,7 +10,7 @@ class JSONB(TypeDecorator):
 
     def load_dialect_impl(self, dialect: Any) -> Any:
         if dialect.name == "postgresql":
-            return dialect.type_descriptor(PostgresJSONB())
+            return dialect.type_descriptor(POSTGRES_JSONB())
         else:
             return dialect.type_descriptor(Text())
 
