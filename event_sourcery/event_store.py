@@ -1,4 +1,3 @@
-import abc
 from functools import singledispatchmethod
 from typing import Iterator, Sequence, Type, TypeVar
 
@@ -17,7 +16,7 @@ from event_sourcery.types.stream_id import StreamId
 TAggregate = TypeVar("TAggregate")
 
 
-class EventStore(abc.ABC):
+class EventStore:
     def __init__(
         self,
         serde: Serde,
