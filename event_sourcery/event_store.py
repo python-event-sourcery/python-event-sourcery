@@ -104,7 +104,10 @@ class EventStore:
             stream_id=stream_id, events=events, expected_version=expected_version
         )
 
-        # TODO: make it more robust per subscriber?
+        self._notify(events)
+        self._outbox_storage_strategy.put_into_outbox(serialized_events)
+
+    def _notify(self, events: Sequence[Metadata]) -> None:
         for event in events:
             for subscriber in self._subscriptions.get(type(event.event), []):
                 if isinstance(subscriber, AfterCommit):
@@ -115,8 +118,6 @@ class EventStore:
             catch_all_subscribers = self._subscriptions.get(Event, [])  # type: ignore
             for catch_all_subscriber in catch_all_subscribers:
                 catch_all_subscriber(event)
-
-        self._outbox_storage_strategy.put_into_outbox(serialized_events)
 
     @publish.register
     def _publish_events(
