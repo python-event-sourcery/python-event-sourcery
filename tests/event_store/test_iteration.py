@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from event_sourcery import Metadata
 from event_sourcery.event_store import EventStore
-from tests.events import SomeEvent
+from tests.events import AnotherEvent, SomeEvent
 
 
 def test_iterates_over_one_stream(event_store: EventStore) -> None:
@@ -10,7 +10,7 @@ def test_iterates_over_one_stream(event_store: EventStore) -> None:
     event = Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1)
     event_store.append(event, stream_id=stream_id)
 
-    read_events = list(event_store.iter(stream_id))
+    read_events = list(event_store.iter(streams_ids=[stream_id]))
 
     assert read_events == [event]
 
@@ -23,7 +23,7 @@ def test_iterates_over_two_streams(event_store: EventStore) -> None:
     another_event = Metadata[SomeEvent](event=SomeEvent(first_name="Test1"), version=1)
     event_store.append(another_event, stream_id=another_stream_id)
 
-    read_events = list(event_store.iter(stream_id, another_stream_id))
+    read_events = list(event_store.iter(streams_ids=[stream_id, another_stream_id]))
 
     versioned_events = [
         event,
@@ -43,3 +43,14 @@ def test_iterates_over_all_streams(event_store: EventStore) -> None:
     read_events = list(event_store.iter())
 
     assert read_events == all_events
+
+
+def test_iterates_over_specified_events(event_store: EventStore) -> None:
+    stream_id = uuid4()
+    events = SomeEvent(first_name="Test1"), AnotherEvent(last_name="Test1")
+    event_store.append(*events, stream_id=stream_id)
+
+    read_events = list(event_store.iter(events=[SomeEvent]))
+
+    assert len(read_events) == 1
+    assert type(read_events[0].event) == SomeEvent

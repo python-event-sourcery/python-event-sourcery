@@ -158,8 +158,21 @@ class EventStore:
         self._storage_strategy.insert_events(serialized_events)
         return serialized_events
 
-    def iter(self, *streams_ids: StreamId) -> Iterator[Metadata]:
-        events_iterator = self._storage_strategy.iter(*streams_ids)
+    def iter(
+        self,
+        streams_ids: list[StreamId] | None = None,
+        events: list[Type[Event]] | None = None,
+    ) -> Iterator[Metadata]:
+        if streams_ids is None:
+            streams_ids = []
+
+        if events is None:
+            events = []
+
+        events_names = [self._event_registry.name_for_type(event) for event in events]
+        events_iterator = self._storage_strategy.iter(
+            streams_ids=streams_ids, events_names=events_names
+        )
         for event in events_iterator:
             yield self._serde.deserialize(
                 event, self._event_registry.type_for_name(event["name"])

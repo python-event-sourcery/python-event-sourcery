@@ -22,10 +22,15 @@ from event_sourcery_sqlalchemy.models import Stream as StreamModel
 class SqlAlchemyStorageStrategy(StorageStrategy):
     _session: Session
 
-    def iter(self, *stream_ids: StreamId) -> Iterator[RawEvent]:
+    def iter(
+        self, streams_ids: list[StreamId], events_names: list[str]
+    ) -> Iterator[RawEvent]:
         events_stmt = select(EventModel).order_by(EventModel.id).limit(100)
-        if stream_ids:
-            events_stmt = events_stmt.filter(EventModel.stream_id.in_(stream_ids))
+        if streams_ids:
+            events_stmt = events_stmt.filter(EventModel.stream_id.in_(streams_ids))
+
+        if events_names:
+            events_stmt = events_stmt.filter(EventModel.name.in_(events_names))
 
         last_id = 0
         while True:

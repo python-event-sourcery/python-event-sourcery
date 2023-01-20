@@ -14,7 +14,9 @@ class StorageStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def iter(self, *stream_ids: StreamId) -> Iterator[RawEvent]:
+    def iter(
+        self, streams_ids: list[StreamId], events_names: list[str]
+    ) -> Iterator[RawEvent]:
         pass
 
     @abc.abstractmethod

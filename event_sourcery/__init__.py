@@ -2,6 +2,7 @@ __all__ = [
     "configure_models",
     "get_event_store",
     "Event",
+    "EventStore",
     "get_outbox",
     "Repository",
     "Aggregate",
