@@ -11,10 +11,12 @@ from event_sourcery import Event
 from event_sourcery.event_registry import EventRegistry
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.base_event import Event as BaseEvent
+from event_sourcery.interfaces.cursors_dao import CursorsDao
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.interfaces.subscriber import Subscriber
 from event_sourcery_pydantic.serde import PydanticSerde
+from event_sourcery_sqlalchemy.sqlalchemy_cursors_dao import SqlAlchemyCursorsDao
 from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageStrategy
 from event_sourcery_sqlalchemy.sqlalchemy_outbox import SqlAlchemyOutboxStorageStrategy
 
@@ -86,6 +88,11 @@ def storage_strategy(session: Session) -> StorageStrategy:
 @pytest.fixture()
 def outbox_storage_strategy(session: Session) -> OutboxStorageStrategy:
     return SqlAlchemyOutboxStorageStrategy(session)
+
+
+@pytest.fixture()
+def cursors_dao(session: Session) -> CursorsDao:
+    return SqlAlchemyCursorsDao(session)
 
 
 @pytest.fixture()

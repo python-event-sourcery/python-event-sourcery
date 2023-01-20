@@ -8,7 +8,7 @@ from event_sourcery_sqlalchemy.jsonb import JSONB
 
 
 def configure_models(base: Type) -> None:
-    for model_cls in (Stream, Event, Snapshot, OutboxEntry):
+    for model_cls in (Stream, Event, Snapshot, OutboxEntry, ProjectorCursor):
         instrument_declarative(model_cls, {}, base.metadata)
 
 
@@ -59,3 +59,20 @@ class OutboxEntry:
     created_at = Column(DateTime(), nullable=False, index=True)
     data = Column(JSONB(), nullable=False)
     tries_left = Column(Integer(), nullable=False, server_default="3")
+
+
+class ProjectorCursor:
+    __tablename__ = "event_sourcery_projector_cursors"
+    __table_args__ = (
+        Index(
+            "ix_name_stream_id",
+            "name",
+            "stream_id",
+            unique=True,
+        ),
+    )
+
+    id = Column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
+    name = Column(String(255), nullable=False)
+    stream_id = Column(GUID(), nullable=False, index=True)
+    version = Column(BigInteger(), nullable=False)
