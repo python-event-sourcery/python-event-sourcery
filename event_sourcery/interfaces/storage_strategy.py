@@ -9,7 +9,11 @@ from event_sourcery.versioning import Versioning
 class StorageStrategy(abc.ABC):
     @abc.abstractmethod
     def fetch_events(
-        self, stream_id: StreamId, start: int | None = None, stop: int | None = None
+        self,
+        stream_id: StreamId | None,
+        stream_name: str | None,
+        start: int | None = None,
+        stop: int | None = None,
     ) -> list[RawEvent]:
         pass
 
@@ -30,9 +34,10 @@ class StorageStrategy(abc.ABC):
     @abc.abstractmethod
     def ensure_stream(
         self,
-        stream_id: StreamId,
+        stream_id: StreamId | None,
+        stream_name: str | None,
         versioning: Versioning,
-    ) -> None:
+    ) -> StreamId:
         pass
 
     @abc.abstractmethod

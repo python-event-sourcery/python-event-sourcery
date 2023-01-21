@@ -18,6 +18,14 @@ class VersioningMismatch(EventStoreException):
     pass
 
 
+class EitherStreamIdOrStreamNameIsRequired(EventStoreException):
+    pass
+
+
+class AnotherStreamWithThisNameButOtherIdExists(EventStoreException):
+    pass
+
+
 class ExpectedVersionUsedOnVersionlessStream(VersioningMismatch):
     pass
 
