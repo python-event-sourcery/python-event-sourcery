@@ -8,3 +8,10 @@ services:
       POSTGRES_PASSWORD: es
     ports:
       - "5432:5432"
+
+  rabbitmq:
+    image: rabbitmq:3.11.2-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+
