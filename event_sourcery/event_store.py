@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Iterator, Sequence, Type, TypeVar, cast
+from typing import Iterator, Sequence, Tuple, Type, TypeVar, cast
 
 from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.dto import RawEvent
@@ -15,7 +15,7 @@ from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrat
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.interfaces.subscriber import Subscriber
-from event_sourcery.types.stream_id import StreamId
+from event_sourcery.types.stream_id import StreamId, StreamName
 from event_sourcery.versioning import NO_VERSIONING, ExplicitVersioning, Versioning
 
 TAggregate = TypeVar("TAggregate")
@@ -119,7 +119,7 @@ class EventStore:
         stream_name: str | None = None,
         expected_version: int | Versioning = 0,
     ) -> None:
-        serialized_events = self._append(
+        serialized_events, actual_stream_name = self._append(
             stream_id=stream_id,
             stream_name=stream_name,
             events=events,
@@ -163,7 +163,7 @@ class EventStore:
         stream_name: str | None,
         events: Sequence[Metadata],
         expected_version: int | Versioning,
-    ) -> list[RawEvent]:
+    ) -> Tuple[list[RawEvent], StreamName | None]:
         if not events:
             raise NoEventsToAppend
 
@@ -180,14 +180,14 @@ class EventStore:
         else:
             versioning = NO_VERSIONING
 
-        stream_id = self._storage_strategy.ensure_stream(
+        stream_id, actual_stream_name = self._storage_strategy.ensure_stream(
             stream_id=stream_id,
             stream_name=stream_name,
             versioning=versioning,
         )
         serialized_events = self._serialize_events(events, stream_id)
         self._storage_strategy.insert_events(serialized_events)
-        return serialized_events
+        return serialized_events, actual_stream_name
 
     def iter(
         self,

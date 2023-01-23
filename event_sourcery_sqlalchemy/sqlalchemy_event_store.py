@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Iterator, Union, cast
+from typing import Callable, Iterator, Tuple, Union, cast
 from uuid import uuid4
 
 from sqlalchemy import delete
@@ -15,7 +15,7 @@ from event_sourcery.exceptions import (
     ConcurrentStreamWriteError,
 )
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
-from event_sourcery.types.stream_id import StreamId
+from event_sourcery.types.stream_id import StreamId, StreamName
 from event_sourcery.versioning import NO_VERSIONING, Versioning
 from event_sourcery_sqlalchemy.models import Event as EventModel
 from event_sourcery_sqlalchemy.models import Snapshot as SnapshotModel
@@ -127,7 +127,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         stream_id: StreamId | None,
         stream_name: str | None,
         versioning: Versioning,
-    ) -> StreamId:
+    ) -> Tuple[StreamId, StreamName | None]:
         given_stream_id = stream_id
         if stream_id is None:
             stream_id = uuid4()
@@ -152,10 +152,10 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             if given_stream_id is not None and stream_id != given_stream_id:
                 raise AnotherStreamWithThisNameButOtherIdExists()
 
-        stream_version = (
-            self._session.query(StreamModel.version)
+        stream_version, stream_name = (
+            self._session.query(StreamModel.version, StreamModel.name)
             .filter(StreamModel.uuid == stream_id)
-            .scalar()
+            .one()
         )
 
         versioning.validate_if_compatible(stream_version)
@@ -174,7 +174,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             if result.rowcount != 1:  # optimistic lock failed
                 raise ConcurrentStreamWriteError
 
-        return cast(StreamId, stream_id)
+        return cast(StreamId, stream_id), stream_name
 
     def insert_events(self, events: list[RawEvent]) -> None:
         rows = []

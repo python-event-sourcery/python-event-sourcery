@@ -1,8 +1,8 @@
 import abc
-from typing import Callable, Iterator
+from typing import Callable, Iterator, Tuple
 
 from event_sourcery.dto import RawEvent
-from event_sourcery.types.stream_id import StreamId
+from event_sourcery.types.stream_id import StreamId, StreamName
 from event_sourcery.versioning import Versioning
 
 
@@ -37,7 +37,7 @@ class StorageStrategy(abc.ABC):
         stream_id: StreamId | None,
         stream_name: str | None,
         versioning: Versioning,
-    ) -> StreamId:
+    ) -> Tuple[StreamId, StreamName | None]:
         pass
 
     @abc.abstractmethod
