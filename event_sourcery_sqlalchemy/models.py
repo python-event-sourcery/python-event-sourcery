@@ -59,6 +59,7 @@ class OutboxEntry:
     id = Column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     created_at = Column(DateTime(), nullable=False, index=True)
     data = Column(JSONB(), nullable=False)
+    stream_name = Column(String(255), nullable=True)
     tries_left = Column(Integer(), nullable=False, server_default="3")
 
 

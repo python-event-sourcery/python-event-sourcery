@@ -10,6 +10,7 @@ from event_sourcery.interfaces.outbox_storage_strategy import (
     EntryId,
     OutboxStorageStrategy,
 )
+from event_sourcery.types.stream_id import StreamName
 from event_sourcery_sqlalchemy.models import OutboxEntry
 
 
@@ -17,7 +18,9 @@ from event_sourcery_sqlalchemy.models import OutboxEntry
 class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
     _session: Session
 
-    def put_into_outbox(self, events: list[RawEvent]) -> None:
+    def put_into_outbox(
+        self, events: list[RawEvent], stream_name: StreamName | None
+    ) -> None:
         rows = []
         for event in events:
             as_dict = dict(event)
@@ -29,11 +32,14 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
                 {
                     "created_at": datetime.utcnow(),
                     "data": as_dict,
+                    "stream_name": stream_name,
                 }
             )
         self._session.execute(insert(OutboxEntry), rows)
 
-    def outbox_entries(self, limit: int) -> Iterator[Tuple[EntryId, RawEvent]]:
+    def outbox_entries(
+        self, limit: int
+    ) -> Iterator[Tuple[EntryId, RawEvent, StreamName | None]]:
         stmt = (
             select(OutboxEntry)
             .filter(OutboxEntry.tries_left > 0)
@@ -42,7 +48,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
             .with_for_update(skip_locked=True)
         )
         entries = self._session.execute(stmt).scalars().all()
-        return ((entry.id, entry.data) for entry in entries)
+        return ((entry.id, entry.data, entry.stream_name) for entry in entries)
 
     def decrease_tries_left(self, entry_id: EntryId) -> None:
         entry = self._session.query(OutboxEntry).get(entry_id)

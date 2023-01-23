@@ -127,7 +127,9 @@ class EventStore:
         )
 
         self._notify(events)
-        self._outbox_storage_strategy.put_into_outbox(serialized_events)
+        self._outbox_storage_strategy.put_into_outbox(
+            serialized_events, actual_stream_name
+        )
 
     def _notify(self, events: Sequence[Metadata]) -> None:
         for event in events:

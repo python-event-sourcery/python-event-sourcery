@@ -34,7 +34,18 @@ def test_calls_publisher(
 
     outbox.run_once()
 
-    publisher.assert_called_once_with(an_event)
+    publisher.assert_called_once_with(an_event, None)
+
+
+def test_calls_publisher_with_stream_name_if_present(
+    outbox: Outbox, publisher: Mock, event_store: EventStore
+) -> None:
+    an_event = Metadata[SomeEvent](event=SomeEvent(first_name="Mark"), version=1)
+    event_store.publish(an_event, stream_name="orders-1")
+
+    outbox.run_once()
+
+    publisher.assert_called_once_with(an_event, "orders-1")
 
 
 def test_sends_only_once_in_case_of_success(
@@ -46,7 +57,7 @@ def test_sends_only_once_in_case_of_success(
     for _ in range(2):
         outbox.run_once()
 
-    publisher.assert_called_once_with(an_event)
+    publisher.assert_called_once_with(an_event, None)
 
 
 def test_tries_to_send_up_to_three_times(
