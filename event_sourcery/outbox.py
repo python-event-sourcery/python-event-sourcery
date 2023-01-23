@@ -1,4 +1,5 @@
 import abc
+import logging
 from typing import Callable, Type
 
 from event_sourcery.interfaces.base_event import Event
@@ -6,6 +7,8 @@ from event_sourcery.interfaces.event import Metadata
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.types.stream_id import StreamName
+
+logger = logging.getLogger(__name__)
 
 
 class Outbox(abc.ABC):
@@ -33,6 +36,7 @@ class Outbox(abc.ABC):
             try:
                 self._publisher(event, stream_name)
             except Exception:
+                logger.exception("Failed to publish message #%d", entry_id)
                 self._storage_strategy.decrease_tries_left(entry_id)
             else:
                 self._storage_strategy.remove_from_outbox(entry_id)
