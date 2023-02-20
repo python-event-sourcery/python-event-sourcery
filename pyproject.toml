@@ -8,12 +8,14 @@ packages = [
     { include = "event_sourcery" },
     { include = "event_sourcery_pydantic" },
     { include = "event_sourcery_sqlalchemy" },
+    { include = "event_sourcery_kombu" },
 ]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
 pydantic = "^1.9"
 SQLAlchemy = "^1.4"
+kombu = {version = "*", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"
@@ -26,6 +28,9 @@ pytest-cov = "^3.0.0"
 mkdocs-material = "^8.3.9"
 psycopg2-binary = "^2.9.3"
 
+[tool.poetry.extras]
+kombu = ["kombu"]
+
 [tool.pytest]
 addopts = ""
 
@@ -35,6 +40,7 @@ source = [
     "event_sourcery",
     "event_sourcery_pydantic",
     "event_sourcery_sqlalchemy",
+    "event_sourcery_kombu",
 ]
 
 [tool.coverage.report]
