@@ -1,7 +1,7 @@
 from typing import Type
 
-from sqlalchemy import BigInteger, Column, DateTime, Index, Integer, String
-from sqlalchemy.ext.declarative import instrument_declarative
+from sqlalchemy import BigInteger, DateTime, Index, Integer, String
+from sqlalchemy.orm import mapped_column, registry
 
 from event_sourcery_sqlalchemy.guid import GUID
 from event_sourcery_sqlalchemy.jsonb import JSONB
@@ -9,15 +9,15 @@ from event_sourcery_sqlalchemy.jsonb import JSONB
 
 def configure_models(base: Type) -> None:
     for model_cls in (Stream, Event, Snapshot, OutboxEntry, ProjectorCursor):
-        instrument_declarative(model_cls, {}, base.metadata)
+        registry(metadata=base.metadata, class_registry={}).map_declaratively(model_cls)
 
 
 class Stream:
     __tablename__ = "event_sourcery_streams"
 
-    uuid = Column(GUID(), primary_key=True)
-    name = Column(String(255), unique=True, nullable=True)
-    version = Column(BigInteger(), nullable=True)
+    uuid = mapped_column(GUID(), primary_key=True)
+    name = mapped_column(String(255), unique=True, nullable=True)
+    version = mapped_column(BigInteger(), nullable=True)
 
 
 class Event:
@@ -31,36 +31,36 @@ class Event:
         ),
     )
 
-    id = Column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
-    version = Column(Integer(), nullable=True)
-    uuid = Column(GUID(), index=True, unique=True)
-    stream_id = Column(GUID(), nullable=False, index=True)
-    name = Column(String(200), nullable=False)
-    data = Column(JSONB(), nullable=False)
-    event_context = Column(JSONB(), nullable=False)
-    created_at = Column(DateTime(), nullable=False, index=True)
+    id = mapped_column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
+    version = mapped_column(Integer(), nullable=True)
+    uuid = mapped_column(GUID(), index=True, unique=True)
+    stream_id = mapped_column(GUID(), nullable=False, index=True)
+    name = mapped_column(String(200), nullable=False)
+    data = mapped_column(JSONB(), nullable=False)
+    event_context = mapped_column(JSONB(), nullable=False)
+    created_at = mapped_column(DateTime(), nullable=False, index=True)
 
 
 class Snapshot:
     __tablename__ = "event_sourcery_snapshots"
 
-    uuid = Column(GUID, primary_key=True)
-    version = Column(Integer(), nullable=False)
-    stream_id = Column(GUID(), nullable=False, index=True)
-    name = Column(String(50), nullable=False)
-    data = Column(JSONB(), nullable=False)
-    event_context = Column(JSONB(), nullable=False)
-    created_at = Column(DateTime(), nullable=False)
+    uuid = mapped_column(GUID, primary_key=True)
+    version = mapped_column(Integer(), nullable=False)
+    stream_id = mapped_column(GUID(), nullable=False, index=True)
+    name = mapped_column(String(50), nullable=False)
+    data = mapped_column(JSONB(), nullable=False)
+    event_context = mapped_column(JSONB(), nullable=False)
+    created_at = mapped_column(DateTime(), nullable=False)
 
 
 class OutboxEntry:
     __tablename__ = "event_sourcery_outbox_entries"
 
-    id = Column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
-    created_at = Column(DateTime(), nullable=False, index=True)
-    data = Column(JSONB(), nullable=False)
-    stream_name = Column(String(255), nullable=True)
-    tries_left = Column(Integer(), nullable=False, server_default="3")
+    id = mapped_column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
+    created_at = mapped_column(DateTime(), nullable=False, index=True)
+    data = mapped_column(JSONB(), nullable=False)
+    stream_name = mapped_column(String(255), nullable=True)
+    tries_left = mapped_column(Integer(), nullable=False, server_default="3")
 
 
 class ProjectorCursor:
@@ -74,7 +74,7 @@ class ProjectorCursor:
         ),
     )
 
-    id = Column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
-    name = Column(String(255), nullable=False)
-    stream_id = Column(GUID(), nullable=False, index=True)
-    version = Column(BigInteger(), nullable=False)
+    id = mapped_column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
+    name = mapped_column(String(255), nullable=False)
+    stream_id = mapped_column(GUID(), nullable=False, index=True)
+    version = mapped_column(BigInteger(), nullable=False)

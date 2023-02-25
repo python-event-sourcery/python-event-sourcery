@@ -26,7 +26,7 @@ class SqlAlchemyCursorsDao(CursorsDao):
             self._session.execute(stmt)
             return
 
-        stmt = (
+        update_stmt = (
             update(ProjectorCursor)
             .where(
                 ProjectorCursor.name == name,
@@ -35,8 +35,8 @@ class SqlAlchemyCursorsDao(CursorsDao):
             )
             .values({ProjectorCursor.version: version})
         )
-        result = self._session.execute(stmt)
-        if result.rowcount == 1:
+        result = self._session.execute(update_stmt)
+        if result.rowcount == 1:  # type: ignore
             return
         else:
             current_version = self._current_version(name, stream_id)

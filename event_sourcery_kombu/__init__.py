@@ -1,13 +1,13 @@
-from typing import NoReturn, Callable
+from typing import Callable
 
-from kombu import Connection, Exchange, Queue, Message
+from kombu import Connection, Exchange, Message, Queue
 from kombu.connection import ConnectionPool
 from kombu.pools import connections
 from pydantic import AmqpDsn, BaseSettings, Field
 
 __all__ = ["publish_event", "declare_exchange"]
 
-from event_sourcery import Metadata, Subscription, Event
+from event_sourcery import Event, Metadata, Subscription
 from event_sourcery.event_registry import event_name
 
 
@@ -62,7 +62,10 @@ def declare_exchange() -> None:
 
 
 def _publish(
-    routing_key: str, message: str, exchange: str, headers: dict,
+    routing_key: str,
+    message: str,
+    exchange: str,
+    headers: dict,
 ) -> None:
     with PoolFactory.get().acquire(block=True) as conn:
         producer = conn.Producer()
@@ -71,7 +74,7 @@ def _publish(
             exchange=exchange,
             routing_key=routing_key,
             headers=headers,
-            content_type='application/json',
+            content_type="application/json",
         )
 
 
@@ -80,7 +83,7 @@ def _declare(queue_or_exchange: Exchange | Queue) -> None:
         queue_or_exchange(conn).declare()
 
 
-def consume(subscription: Subscription, listener: Callable[[Metadata], None]) -> NoReturn:
+def consume(subscription: Subscription, listener: Callable[[Metadata], None]) -> None:
     queue = Queue(f"event_sourcery.{listener.__name__}", durable=True)
     _declare(queue)
 
@@ -88,7 +91,7 @@ def consume(subscription: Subscription, listener: Callable[[Metadata], None]) ->
         event_name = message.headers["event"]
         event_type = Event.__registry__.type_for_name(event_name)
 
-        metadata = Metadata[event_type](**body)
+        metadata = Metadata[event_type](**body)  # type: ignore
 
         try:
             listener(metadata)
@@ -100,14 +103,20 @@ def consume(subscription: Subscription, listener: Callable[[Metadata], None]) ->
 
     with PoolFactory.get().acquire(block=True) as conn:
         for event_type in subscription.event_types:
-            queue(conn).bind_to(exchange=EVENT_SOURCERY_EXCHANGE, arguments={
-                "event": event_name(event_type),
-            })
+            queue(conn).bind_to(
+                exchange=EVENT_SOURCERY_EXCHANGE,
+                arguments={
+                    "event": event_name(event_type),
+                },
+            )
 
         for stream_category in subscription.stream_categories:
-            queue(conn).bind_to(exchange=EVENT_SOURCERY_EXCHANGE, arguments={
-                "stream_category": stream_category,
-            })
+            queue(conn).bind_to(
+                exchange=EVENT_SOURCERY_EXCHANGE,
+                arguments={
+                    "stream_category": stream_category,
+                },
+            )
 
         with conn.Consumer([queue], callbacks=[callback]):
             while True:
@@ -115,4 +124,3 @@ def consume(subscription: Subscription, listener: Callable[[Metadata], None]) ->
                     conn.drain_events()
                 except KeyboardInterrupt:
                     return
-

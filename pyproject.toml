@@ -14,17 +14,17 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
 pydantic = "^1.9"
-SQLAlchemy = "^1.4"
+SQLAlchemy = ">=2.0"
 kombu = {version = "*", optional = true}
 
 [tool.poetry.dev-dependencies]
-black = "^22.6.0"
-isort = "^5.10.1"
-flake8 = "^4.0.1"
-bandit = "^1.7.4"
-mypy = "^0.971"
-pytest = "^7.1.2"
-pytest-cov = "^3.0.0"
+black = "*"
+isort = "*"
+flake8 = "*"
+bandit = "*"
+mypy = "*"
+pytest = "*"
+pytest-cov = "*"
 mkdocs-material = "^8.3.9"
 psycopg2-binary = "^2.9.3"
 

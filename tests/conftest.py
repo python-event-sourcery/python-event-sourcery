@@ -67,7 +67,7 @@ class DeclarativeBase(Protocol):
 
 @pytest.fixture(scope="session")
 def declarative_base() -> DeclarativeBase:
-    from sqlalchemy.ext.declarative import as_declarative
+    from sqlalchemy.orm import as_declarative
 
     from event_sourcery_sqlalchemy.models import configure_models
 

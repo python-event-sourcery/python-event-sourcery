@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Iterator, Tuple, Union, cast
+from typing import Callable, Iterator, Sequence, Tuple, Union, cast
 from uuid import uuid4
 
 from sqlalchemy import delete
@@ -70,7 +70,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             stream_id_subq = (
                 select(StreamModel.uuid)
                 .filter(StreamModel.name == stream_name)
-                .subquery()
+                .scalar_subquery()
             )
             events_stmt = events_stmt.filter(EventModel.stream_id == stream_id_subq)
 
@@ -80,7 +80,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         if stop is not None:
             events_stmt = events_stmt.filter(EventModel.version < stop)
 
-        events: list[Union[EventModel, SnapshotModel]]
+        events: Sequence[Union[EventModel, SnapshotModel]]
         try:
             snapshot_stmt = (
                 select(SnapshotModel)
@@ -101,9 +101,8 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             events_stmt = events_stmt.filter(
                 EventModel.version > latest_snapshot.version
             )
-            events = [latest_snapshot] + self._session.execute(
-                events_stmt
-            ).scalars().all()
+            newer_events = list(self._session.execute(events_stmt).scalars().all())
+            events = [latest_snapshot] + newer_events  # type: ignore
 
         if not events:
             return []
@@ -171,7 +170,8 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             )
             result = self._session.execute(stmt)
 
-            if result.rowcount != 1:  # optimistic lock failed
+            if result.rowcount != 1:  # type: ignore
+                # optimistic lock failed
                 raise ConcurrentStreamWriteError
 
         return cast(StreamId, stream_id), stream_name

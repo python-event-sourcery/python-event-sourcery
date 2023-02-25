@@ -51,9 +51,9 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
         return ((entry.id, entry.data, entry.stream_name) for entry in entries)
 
     def decrease_tries_left(self, entry_id: EntryId) -> None:
-        entry = self._session.query(OutboxEntry).get(entry_id)
+        entry = cast(OutboxEntry, self._session.get(OutboxEntry, entry_id))
         entry.tries_left -= 1
 
     def remove_from_outbox(self, entry_id: EntryId) -> None:
-        entry = self._session.query(OutboxEntry).get(entry_id)
+        entry = self._session.get(OutboxEntry, entry_id)
         self._session.delete(entry)
