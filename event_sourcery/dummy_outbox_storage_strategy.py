@@ -5,7 +5,7 @@ from event_sourcery.interfaces.outbox_storage_strategy import (
     EntryId,
     OutboxStorageStrategy,
 )
-from event_sourcery.types.stream_id import StreamName
+from event_sourcery.types.stream_id import StreamId, StreamName
 
 
 class DummyOutboxStorageStrategy(OutboxStorageStrategy):
@@ -16,7 +16,7 @@ class DummyOutboxStorageStrategy(OutboxStorageStrategy):
 
     def outbox_entries(
         self, limit: int
-    ) -> Iterator[Tuple[EntryId, RawEvent, StreamName | None]]:
+    ) -> Iterator[Tuple[EntryId, RawEvent, StreamName | None, StreamId]]:
         return iter([])
 
     def decrease_tries_left(self, entry_id: EntryId) -> None:

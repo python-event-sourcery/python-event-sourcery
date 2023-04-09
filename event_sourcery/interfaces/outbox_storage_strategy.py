@@ -2,7 +2,7 @@ import abc
 from typing import Iterator, Tuple
 
 from event_sourcery.dto import RawEvent
-from event_sourcery.types.stream_id import StreamName
+from event_sourcery.types.stream_id import StreamId, StreamName
 
 EntryId = int
 
@@ -17,7 +17,7 @@ class OutboxStorageStrategy(abc.ABC):
     @abc.abstractmethod
     def outbox_entries(
         self, limit: int
-    ) -> Iterator[Tuple[EntryId, RawEvent, StreamName | None]]:
+    ) -> Iterator[Tuple[EntryId, RawEvent, StreamName | None, StreamId]]:
         pass
 
     @abc.abstractmethod

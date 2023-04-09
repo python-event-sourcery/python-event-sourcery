@@ -9,6 +9,7 @@ from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrat
 from event_sourcery.outbox import Outbox
 from event_sourcery_pydantic.serde import PydanticSerde
 from tests.events import SomeEvent
+from tests.matchers import AnyUUID
 
 
 @pytest.fixture()
@@ -30,11 +31,12 @@ def test_calls_publisher(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
     an_event = Metadata[SomeEvent](event=SomeEvent(first_name="John"), version=1)
-    event_store.publish(an_event, stream_id=uuid4())
+    stream_id = uuid4()
+    event_store.publish(an_event, stream_id=stream_id)
 
     outbox.run_once()
 
-    publisher.assert_called_once_with(an_event, None)
+    publisher.assert_called_once_with(an_event, None, stream_id)
 
 
 def test_calls_publisher_with_stream_name_if_present(
@@ -45,19 +47,20 @@ def test_calls_publisher_with_stream_name_if_present(
 
     outbox.run_once()
 
-    publisher.assert_called_once_with(an_event, "orders-1")
+    publisher.assert_called_once_with(an_event, "orders-1", AnyUUID())
 
 
 def test_sends_only_once_in_case_of_success(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
     an_event = Metadata[SomeEvent](event=SomeEvent(first_name="John"), version=1)
-    event_store.publish(an_event, stream_id=uuid4())
+    stream_id = uuid4()
+    event_store.publish(an_event, stream_id=stream_id)
 
     for _ in range(2):
         outbox.run_once()
 
-    publisher.assert_called_once_with(an_event, None)
+    publisher.assert_called_once_with(an_event, None, stream_id)
 
 
 def test_tries_to_send_up_to_three_times(

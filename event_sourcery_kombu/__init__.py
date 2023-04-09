@@ -7,7 +7,7 @@ from pydantic import AmqpDsn, BaseSettings, Field
 
 __all__ = ["publish_event", "declare_exchange"]
 
-from event_sourcery import Event, Metadata, Subscription
+from event_sourcery import Event, Metadata, StreamId, StreamName, Subscription
 from event_sourcery.event_registry import event_name
 
 
@@ -43,7 +43,9 @@ class PoolFactory:
 EVENT_SOURCERY_EXCHANGE = "event_sourcery.events"
 
 
-def publish_event(metadata: Metadata, stream_name: str | None) -> None:
+def publish_event(
+    metadata: Metadata, stream_name: str | None, stream_id: StreamId
+) -> None:
     name = event_name(type(metadata.event))
     stream_category = stream_name.split(".", maxsplit=1)[0] if stream_name else None
     _publish(
@@ -52,6 +54,7 @@ def publish_event(metadata: Metadata, stream_name: str | None) -> None:
             "event": name,
             "stream_name": stream_name,
             "stream_category": stream_category,
+            "stream_id": str(stream_id),
         },
         message=metadata.json(),
         exchange=EVENT_SOURCERY_EXCHANGE,
@@ -84,7 +87,10 @@ def _declare(queue_or_exchange: Exchange | Queue) -> None:
         queue_or_exchange(conn).declare()
 
 
-def consume(subscription: Subscription, listener: Callable[[Metadata], None]) -> None:
+def consume(
+    subscription: Subscription,
+    listener: Callable[[Metadata, StreamId, StreamName | None], None],
+) -> None:
     queue = Queue(f"event_sourcery.{listener.__name__}", durable=True)
     _declare(queue)
 
@@ -92,10 +98,12 @@ def consume(subscription: Subscription, listener: Callable[[Metadata], None]) ->
         event_name = message.headers["event"]
         event_type = Event.__registry__.type_for_name(event_name)
 
+        stream_name = message.headers["stream_name"]
+        stream_id = StreamId(message.headers["stream_id"])
         metadata = Metadata[event_type](**body)  # type: ignore
 
         try:
-            listener(metadata)
+            listener(metadata, stream_id, stream_name)
         except Exception:  # TODO: DLQ, retries, error handling etc
             message.reject()
             raise
