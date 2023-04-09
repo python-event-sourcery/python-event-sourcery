@@ -45,12 +45,13 @@ EVENT_SOURCERY_EXCHANGE = "event_sourcery.events"
 
 def publish_event(metadata: Metadata, stream_name: str | None) -> None:
     name = event_name(type(metadata.event))
+    stream_category = stream_name.split(".", maxsplit=1)[0] if stream_name else None
     _publish(
         routing_key=name,
         headers={
             "event": name,
             "stream_name": stream_name,
-            "stream_category": stream_name.split(".")[0] if stream_name else None,
+            "stream_category": stream_category,
         },
         message=metadata.json(),
         exchange=EVENT_SOURCERY_EXCHANGE,
@@ -95,7 +96,7 @@ def consume(subscription: Subscription, listener: Callable[[Metadata], None]) ->
 
         try:
             listener(metadata)
-        except Exception:
+        except Exception:  # TODO: DLQ, retries, error handling etc
             message.reject()
             raise
         else:
