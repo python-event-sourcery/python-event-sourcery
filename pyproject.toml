@@ -16,6 +16,7 @@ python = ">=3.10,<4.0"
 pydantic = "^1.9"
 SQLAlchemy = ">=2.0"
 kombu = {version = "*", optional = true}
+cloudevents = {version = "*", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = "*"
@@ -30,6 +31,7 @@ psycopg2-binary = "^2.9.3"
 
 [tool.poetry.extras]
 kombu = ["kombu"]
+cloudevents = ["cloudevents"]
 
 [tool.pytest]
 addopts = ""
