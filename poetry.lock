@@ -213,12 +213,37 @@ docs = ["sphinx", "docutils (<0.18)"]
 test = ["objgraph", "psutil", "faulthandler"]
 
 [[package]]
+name = "grimp"
+version = "2.3"
+description = "Builds a queryable graph of the imports within one or more Python packages."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+typing-extensions = ">=3.10.0.0"
+
+[[package]]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
 category = "dev"
 optional = false
 python-versions = ">=3.5"
+
+[[package]]
+name = "import-linter"
+version = "1.8.0"
+description = "Enforces rules for the imports within and between Python packages."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+click = ">=6"
+grimp = ">=2.3"
+tomli = {version = ">=1.2.1", markers = "python_version < \"3.11\""}
+typing-extensions = ">=3.10.0.0"
 
 [[package]]
 name = "iniconfig"
@@ -704,7 +729,7 @@ kombu = ["kombu"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "444a1d23e7bfd58ad1e47a7a4ef2f8ea084858a44d541964dbd3d8c8acdd1417"
+content-hash = "6956248ff5bc46edbc591a32ef09e69f38710b27a0b67aad17a0899effd3cd25"
 
 [metadata.files]
 amqp = [
@@ -991,9 +1016,15 @@ greenlet = [
     {file = "greenlet-2.0.1-cp39-cp39-win_amd64.whl", hash = "sha256:b23d2a46d53210b498e5b701a1913697671988f4bf8e10f935433f6e7c332fb6"},
     {file = "greenlet-2.0.1.tar.gz", hash = "sha256:42e602564460da0e8ee67cb6d7236363ee5e131aa15943b6670e44e5c2ed0f67"},
 ]
+grimp = [
+    {file = "grimp-2.3.tar.gz", hash = "sha256:78e4ace38be714bbfc0c2f64322722daa72e4d6e9b2cb0d2452058222e5b58b8"},
+]
 idna = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
     {file = "idna-3.4.tar.gz", hash = "sha256:814f528e8dead7d329833b91c5faa87d60bf71824cd12a7530b5526063d02cb4"},
+]
+import-linter = [
+    {file = "import-linter-1.8.0.tar.gz", hash = "sha256:482fc2cb0c036cf17d9ee6552077acabb426fa9dab36927589bb857935b82e69"},
 ]
 iniconfig = [
     {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},

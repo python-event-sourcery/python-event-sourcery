@@ -28,6 +28,7 @@ pytest = "*"
 pytest-cov = "*"
 mkdocs-material = "^8.3.9"
 psycopg2-binary = "^2.9.3"
+import-linter = "*"
 
 [tool.poetry.extras]
 kombu = ["kombu"]
