@@ -20,14 +20,6 @@ def test_can_append_then_load_with_named_stream(event_store: EventStore) -> None
     assert events[0].event == an_event
 
 
-@pytest.mark.skip("Hard to say how .iter api should change")
-def test_can_iter_over_named_stream(event_store: EventStore) -> None:
-    an_event = SomeEvent(first_name="Ciapong")
-    event_store.append(an_event, stream_name="Test #2")
-
-    list(event_store.iter())
-
-
 def test_can_append_then_load_with_named_stream_with_assigned_uuid(
     event_store: EventStore,
 ) -> None:

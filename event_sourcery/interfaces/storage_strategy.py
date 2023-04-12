@@ -1,5 +1,5 @@
 import abc
-from typing import Callable, Iterator, Tuple
+from typing import Callable, Tuple
 
 from event_sourcery.dto import RawEvent
 from event_sourcery.types.stream_id import StreamId, StreamName
@@ -15,12 +15,6 @@ class StorageStrategy(abc.ABC):
         start: int | None = None,
         stop: int | None = None,
     ) -> list[RawEvent]:
-        pass
-
-    @abc.abstractmethod
-    def iter(
-        self, streams_ids: list[StreamId], events_names: list[str]
-    ) -> Iterator[RawEvent]:
         pass
 
     @abc.abstractmethod

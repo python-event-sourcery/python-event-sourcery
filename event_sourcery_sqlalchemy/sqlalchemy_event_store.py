@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Iterator, Sequence, Tuple, Union, cast
+from typing import Callable, Sequence, Tuple, Union, cast
 from uuid import uuid4
 
 from sqlalchemy import delete
@@ -25,34 +25,6 @@ from event_sourcery_sqlalchemy.models import Stream as StreamModel
 @dataclass(repr=False)
 class SqlAlchemyStorageStrategy(StorageStrategy):
     _session: Session
-
-    def iter(
-        self, streams_ids: list[StreamId], events_names: list[str]
-    ) -> Iterator[RawEvent]:
-        events_stmt = select(EventModel).order_by(EventModel.id).limit(100)
-        if streams_ids:
-            events_stmt = events_stmt.filter(EventModel.stream_id.in_(streams_ids))
-
-        if events_names:
-            events_stmt = events_stmt.filter(EventModel.name.in_(events_names))
-
-        last_id = 0
-        while True:
-            stmt = events_stmt.filter(EventModel.id > last_id)
-            events = self._session.execute(stmt).scalars().all()
-            if not events:
-                break
-            last_id = events[-1].id
-            for event in events:
-                yield RawEvent(
-                    uuid=event.uuid,
-                    stream_id=event.stream_id,
-                    created_at=event.created_at,
-                    version=event.version,
-                    name=event.name,
-                    data=event.data,
-                    context=event.event_context,
-                )
 
     def fetch_events(
         self,

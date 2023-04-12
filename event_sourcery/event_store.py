@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Iterator, Sequence, Tuple, Type, TypeVar, cast
+from typing import Sequence, Tuple, Type, TypeVar, cast
 
 from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.dto import RawEvent
@@ -177,26 +177,6 @@ class EventStore:
         serialized_events = self._serialize_events(events, stream_id)
         self._storage_strategy.insert_events(serialized_events)
         return serialized_events, actual_stream_name
-
-    def iter(
-        self,
-        streams_ids: list[StreamId] | None = None,
-        events: list[Type[Event]] | None = None,
-    ) -> Iterator[Metadata]:
-        if streams_ids is None:
-            streams_ids = []
-
-        if events is None:
-            events = []
-
-        events_names = [self._event_registry.name_for_type(event) for event in events]
-        events_iterator = self._storage_strategy.iter(
-            streams_ids=streams_ids, events_names=events_names
-        )
-        for event in events_iterator:
-            yield self._serde.deserialize(
-                event, self._event_registry.type_for_name(event["name"])
-            )
 
     def delete_stream(self, stream_id: StreamId) -> None:
         self._storage_strategy.delete_stream(stream_id)
