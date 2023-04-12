@@ -53,7 +53,7 @@ def get_event_store(
         serde=PydanticSerde(),
         storage_strategy=SqlAlchemyStorageStrategy(session),
         outbox_storage_strategy=outbox_storage,
-        event_base_class=Event,
+        event_registry=Event.__registry__,
         subscriptions=subscriptions,
     )
 

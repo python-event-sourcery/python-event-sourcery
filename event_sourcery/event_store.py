@@ -6,7 +6,6 @@ from event_sourcery.dto import RawEvent
 from event_sourcery.event_registry import EventRegistry
 from event_sourcery.exceptions import (
     EitherStreamIdOrStreamNameIsRequired,
-    Misconfiguration,
     NoEventsToAppend,
 )
 from event_sourcery.interfaces.base_event import Event
@@ -27,28 +26,16 @@ class EventStore:
         serde: Serde,
         storage_strategy: StorageStrategy,
         outbox_storage_strategy: OutboxStorageStrategy,
-        event_base_class: Type[Event] | None = None,
-        event_registry: EventRegistry | None = None,
+        event_registry: EventRegistry,
         subscriptions: dict[Type[TEvent], list[Subscriber]] | None = None,
     ) -> None:
-        if event_base_class is not None and event_registry is not None:
-            raise Misconfiguration(
-                "You can specify only one of `event_base_class` or `event_registry`"
-            )
-
         if subscriptions is None:
             subscriptions = {}
-
-        if event_base_class is not None:
-            self._event_registry = event_base_class.__registry__
-        elif event_registry is not None:
-            self._event_registry = event_registry
-        else:  # not possible
-            pass
 
         self._serde = serde
         self._storage_strategy = storage_strategy
         self._outbox_storage_strategy = outbox_storage_strategy
+        self._event_registry = event_registry
         self._subscriptions = subscriptions
 
     def load_stream(

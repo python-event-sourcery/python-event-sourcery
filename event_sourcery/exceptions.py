@@ -10,10 +10,6 @@ class ConcurrentStreamWriteError(EventStoreException):
     pass
 
 
-class Misconfiguration(EventStoreException):
-    pass
-
-
 class VersioningMismatch(EventStoreException):
     pass
 

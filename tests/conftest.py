@@ -41,7 +41,7 @@ def event_store_factory(
     defaults = dict(
         serde=PydanticSerde(),
         storage_strategy=storage_strategy,
-        event_base_class=BaseEvent,
+        event_registry=BaseEvent.__registry__,
         outbox_storage_strategy=outbox_storage_strategy,
     )
 
@@ -51,7 +51,7 @@ def event_store_factory(
             if value is not EventStoreFactoryCallable.GUARD:
                 arguments[key] = value
 
-        return EventStore(**arguments)  # type: ignore
+        return EventStore(**arguments)
 
     return cast(EventStoreFactoryCallable, _callable)
 
