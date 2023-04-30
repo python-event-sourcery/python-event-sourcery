@@ -30,7 +30,7 @@ from event_sourcery.outbox import Outbox
 from event_sourcery.projector import Projector
 from event_sourcery.repository import Repository
 from event_sourcery.subscription import Subscription
-from event_sourcery.types.stream_id import StreamId, StreamName
+from event_sourcery.types.stream_id import StreamId
 from event_sourcery.versioning import NO_VERSIONING
 from event_sourcery_pydantic.serde import PydanticSerde
 from event_sourcery_sqlalchemy.models import configure_models
@@ -59,7 +59,7 @@ def get_event_store(
 
 
 def get_outbox(
-    session: Session, publisher: Callable[[Metadata, StreamName | None, StreamId], None]
+    session: Session, publisher: Callable[[Metadata, StreamId], None]
 ) -> Outbox:
     return Outbox(
         serde=PydanticSerde(),

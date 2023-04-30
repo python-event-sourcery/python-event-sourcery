@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from sqlalchemy.orm import Session
 
-from event_sourcery import Event, Metadata
+from event_sourcery import Event, Metadata, StreamId
 from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.interfaces.subscriber import Subscriber
 from tests.conftest import EventStoreFactoryCallable
@@ -20,7 +20,7 @@ def test_synchronous_subscriber_gets_called(
             SomeEvent: [subscriber],
         },
     )
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     event = Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1)
 
     store.publish(event, stream_id=stream_id)
@@ -37,7 +37,7 @@ def test_is_able_to_handle_events_without_metadata(
             SomeEvent: [subscriber],
         },
     )
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     event = SomeEvent(first_name="Test")
 
     store.publish(event, stream_id=stream_id)
@@ -56,7 +56,7 @@ def test_synchronous_subscriber_of_all_events_gets_called(
             Event: [catch_all_subscriber],
         },
     )
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     events = [
         Metadata[SomeEvent](event=SomeEvent(first_name="John"), version=1),
         Metadata[AnotherEvent](event=AnotherEvent(last_name="Doe"), version=2),
@@ -91,7 +91,7 @@ def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None
                 pass
 
     event_store = event_store_factory(subscriptions={Credit: [project]})
-    event_store.publish(*events, stream_id=uuid4())
+    event_store.publish(*events, stream_id=StreamId(uuid4()))
 
     assert total == 11
 
@@ -106,7 +106,7 @@ def test_after_commit_subscriber_gets_called_after_tx_is_committed(
     )
     event = Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1)
 
-    event_store.publish(event, stream_id=uuid4())
+    event_store.publish(event, stream_id=StreamId(uuid4()))
 
     subscriber_mock.assert_not_called()
 

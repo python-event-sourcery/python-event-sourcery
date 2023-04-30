@@ -10,7 +10,7 @@ from event_sourcery.interfaces.outbox_storage_strategy import (
     EntryId,
     OutboxStorageStrategy,
 )
-from event_sourcery.types.stream_id import StreamId, StreamName
+from event_sourcery.types.stream_id import StreamId
 from event_sourcery_sqlalchemy.models import OutboxEntry
 
 
@@ -18,9 +18,7 @@ from event_sourcery_sqlalchemy.models import OutboxEntry
 class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
     _session: Session
 
-    def put_into_outbox(
-        self, events: list[RawEvent], stream_name: StreamName | None
-    ) -> None:
+    def put_into_outbox(self, events: list[RawEvent]) -> None:
         rows = []
         for event in events:
             as_dict = dict(event)
@@ -32,14 +30,14 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
                 {
                     "created_at": datetime.utcnow(),
                     "data": as_dict,
-                    "stream_name": stream_name,
+                    "stream_name": event["stream_id"].name,
                 }
             )
         self._session.execute(insert(OutboxEntry), rows)
 
     def outbox_entries(
         self, limit: int
-    ) -> Iterator[Tuple[EntryId, RawEvent, StreamName | None, StreamId]]:
+    ) -> Iterator[Tuple[EntryId, RawEvent, StreamId]]:
         stmt = (
             select(OutboxEntry)
             .filter(OutboxEntry.tries_left > 0)
@@ -49,7 +47,14 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
         )
         entries = self._session.execute(stmt).scalars().all()
         return (
-            (entry.id, entry.data, entry.stream_name, StreamId(entry.data["stream_id"]))
+            (
+                entry.id,
+                entry.data,
+                StreamId(
+                    from_hex=entry.data["stream_id"],
+                    name=entry.stream_name,
+                ),
+            )
             for entry in entries
         )
 

@@ -54,7 +54,7 @@ def test_projects_the_events(event_store: EventStore, cursors_dao: CursorsDao) -
         cursors_dao=cursors_dao,
         read_model=read_model,
     )
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     events = [
         AccountCreated(
             national_id="#123", first_last_names="John Doe", initial_deposit=100
@@ -88,7 +88,7 @@ def test_is_able_to_load_up_events_from_untracked_stream(
         cursors_dao=cursors_dao,
         read_model=read_model,
     )
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     events = [
         AccountCreated(
             national_id="#321", first_last_names="Janine Doe", initial_deposit=200
@@ -121,7 +121,7 @@ def test_is_able_to_load_up_events_from_tracked_stream(
         cursors_dao=cursors_dao,
         read_model=read_model,
     )
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     events = [
         AccountCreated(
             national_id="#777", first_last_names="John Wick", initial_deposit=10
@@ -155,7 +155,7 @@ def test_ignores_duplicated_events_from_the_middle(
         cursors_dao=cursors_dao,
         read_model=read_model,
     )
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     events = [
         AccountCreated(
             national_id="#111", first_last_names="Dwayne", initial_deposit=10
@@ -191,7 +191,7 @@ def test_ignores_duplicated_events_from_the_beginning(
         cursors_dao=cursors_dao,
         read_model=read_model,
     )
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     events = [
         AccountCreated(national_id="#333", first_last_names="Mark", initial_deposit=5),
         CashDeposited(amount=5),
@@ -232,4 +232,4 @@ def test_raises_exception_when_trying_to_project_unversioned_event(
     )
 
     with pytest.raises(Projector.CantProjectUnversionedEvent):
-        projector.project(unversioned_event, stream_id=uuid4())
+        projector.project(unversioned_event, stream_id=StreamId(uuid4()))

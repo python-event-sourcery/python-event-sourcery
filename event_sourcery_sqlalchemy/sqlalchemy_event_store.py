@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Sequence, Tuple, Union, cast
-from uuid import uuid4
+from typing import Callable, Sequence, Union
 
 from sqlalchemy import delete
 from sqlalchemy import event as sa_event
@@ -15,7 +14,7 @@ from event_sourcery.exceptions import (
     ConcurrentStreamWriteError,
 )
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
-from event_sourcery.types.stream_id import StreamId, StreamName
+from event_sourcery.types.stream_id import StreamId
 from event_sourcery.versioning import NO_VERSIONING, Versioning
 from event_sourcery_sqlalchemy.models import Event as EventModel
 from event_sourcery_sqlalchemy.models import Snapshot as SnapshotModel
@@ -28,20 +27,17 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
 
     def fetch_events(
         self,
-        stream_id: StreamId | None,
-        stream_name: str | None,
+        stream_id: StreamId,
         start: int | None = None,
         stop: int | None = None,
     ) -> list[RawEvent]:
         events_stmt = select(EventModel).order_by(EventModel.version)
+        events_stmt = events_stmt.filter(EventModel.stream_id == stream_id)
 
-        if stream_id is not None:
-            events_stmt = events_stmt.filter(EventModel.stream_id == stream_id)
-
-        if stream_name is not None:
+        if stream_id.name is not None:
             stream_id_subq = (
                 select(StreamModel.uuid)
-                .filter(StreamModel.name == stream_name)
+                .filter(StreamModel.name == stream_id.name)
                 .scalar_subquery()
             )
             events_stmt = events_stmt.filter(EventModel.stream_id == stream_id_subq)
@@ -93,34 +89,26 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         ]
         return raw_dict_events
 
-    def ensure_stream(
-        self,
-        stream_id: StreamId | None,
-        stream_name: str | None,
-        versioning: Versioning,
-    ) -> Tuple[StreamId, StreamName | None]:
+    def ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         given_stream_id = stream_id
-        if stream_id is None:
-            stream_id = uuid4()
-
         initial_version = versioning.initial_version
 
         ensure_stream_stmt = (
             postgresql_insert(StreamModel)
             .values(
                 uuid=stream_id,
-                name=stream_name,
+                name=stream_id.name,
                 version=initial_version,
             )
             .on_conflict_do_nothing()
         )
         self._session.execute(ensure_stream_stmt)
-        if stream_name is not None:
+        if stream_id.name is not None:
             get_stream_id_stmt = select(StreamModel.uuid).filter(
-                StreamModel.name == stream_name
+                StreamModel.name == stream_id.name
             )
-            stream_id = self._session.execute(get_stream_id_stmt).scalar()
-            if given_stream_id is not None and stream_id != given_stream_id:
+            stream_id = StreamId(self._session.execute(get_stream_id_stmt).scalar())
+            if stream_id != given_stream_id:
                 raise AnotherStreamWithThisNameButOtherIdExists()
 
         stream_version, stream_name = (
@@ -145,8 +133,6 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             if result.rowcount != 1:  # type: ignore
                 # optimistic lock failed
                 raise ConcurrentStreamWriteError
-
-        return cast(StreamId, stream_id), stream_name
 
     def insert_events(self, events: list[RawEvent]) -> None:
         rows = []

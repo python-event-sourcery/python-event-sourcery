@@ -7,7 +7,7 @@ from pydantic import AmqpDsn, BaseSettings, Field
 
 __all__ = ["publish_event", "declare_exchange"]
 
-from event_sourcery import Event, Metadata, StreamId, StreamName, Subscription
+from event_sourcery import Event, Metadata, StreamId, Subscription
 from event_sourcery.event_registry import event_name
 
 
@@ -89,7 +89,7 @@ def _declare(queue_or_exchange: Exchange | Queue) -> None:
 
 def consume(
     subscription: Subscription,
-    listener: Callable[[Metadata, StreamId, StreamName | None], None],
+    listener: Callable[[Metadata, StreamId], None],
 ) -> None:
     queue = Queue(f"event_sourcery.{listener.__name__}", durable=True)
     _declare(queue)
@@ -98,12 +98,14 @@ def consume(
         event_name = message.headers["event"]
         event_type = Event.__registry__.type_for_name(event_name)
 
-        stream_name = message.headers["stream_name"]
-        stream_id = StreamId(message.headers["stream_id"])
+        stream_id = StreamId(
+            from_hex=message.headers["stream_id"],
+            name=message.headers["stream_name"],
+        )
         metadata = Metadata[event_type](**body)  # type: ignore
 
         try:
-            listener(metadata, stream_id, stream_name)
+            listener(metadata, stream_id)
         except Exception:  # TODO: DLQ, retries, error handling etc
             message.reject()
             raise

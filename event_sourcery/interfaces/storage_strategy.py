@@ -1,8 +1,8 @@
 import abc
-from typing import Callable, Tuple
+from typing import Callable
 
 from event_sourcery.dto import RawEvent
-from event_sourcery.types.stream_id import StreamId, StreamName
+from event_sourcery.types import StreamId
 from event_sourcery.versioning import Versioning
 
 
@@ -10,8 +10,7 @@ class StorageStrategy(abc.ABC):
     @abc.abstractmethod
     def fetch_events(
         self,
-        stream_id: StreamId | None,
-        stream_name: str | None,
+        stream_id: StreamId,
         start: int | None = None,
         stop: int | None = None,
     ) -> list[RawEvent]:
@@ -26,12 +25,7 @@ class StorageStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def ensure_stream(
-        self,
-        stream_id: StreamId | None,
-        stream_name: str | None,
-        versioning: Versioning,
-    ) -> Tuple[StreamId, StreamName | None]:
+    def ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         pass
 
     @abc.abstractmethod

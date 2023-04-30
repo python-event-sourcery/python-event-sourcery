@@ -6,7 +6,7 @@ from event_sourcery.interfaces.base_event import Event
 from event_sourcery.interfaces.event import Metadata
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.serde import Serde
-from event_sourcery.types.stream_id import StreamId, StreamName
+from event_sourcery.types.stream_id import StreamId
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class Outbox(abc.ABC):
         serde: Serde,
         storage_strategy: OutboxStorageStrategy,
         event_base_class: Type[Event],
-        publisher: Callable[[Metadata, StreamName | None, StreamId], None],
+        publisher: Callable[[Metadata, StreamId], None],
     ) -> None:
         self._serde = serde
         self._storage_strategy = storage_strategy
@@ -28,13 +28,13 @@ class Outbox(abc.ABC):
 
     def run_once(self) -> None:
         raw_event_dicts = self._storage_strategy.outbox_entries(limit=self.CHUNK_SIZE)
-        for entry_id, raw_event_dict, stream_name, stream_id in raw_event_dicts:
+        for entry_id, raw_event_dict, stream_id in raw_event_dicts:
             event = self._serde.deserialize(
                 event=raw_event_dict,
                 event_type=self._event_registry.type_for_name(raw_event_dict["name"]),
             )
             try:
-                self._publisher(event, stream_name, stream_id)
+                self._publisher(event, stream_id)
             except Exception:
                 logger.exception("Failed to publish message #%d", entry_id)
                 self._storage_strategy.decrease_tries_left(entry_id)

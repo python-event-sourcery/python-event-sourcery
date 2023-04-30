@@ -1,21 +1,19 @@
 from functools import singledispatchmethod
-from typing import Sequence, Tuple, Type, TypeVar, cast
+from typing import Sequence, Type, TypeVar, cast
 
 from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.dto import RawEvent
 from event_sourcery.event_registry import EventRegistry
-from event_sourcery.exceptions import (
-    EitherStreamIdOrStreamNameIsRequired,
-    NoEventsToAppend,
-)
+from event_sourcery.exceptions import NoEventsToAppend
 from event_sourcery.interfaces.base_event import Event
 from event_sourcery.interfaces.event import Metadata, TEvent
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.interfaces.subscriber import Subscriber
-from event_sourcery.types.stream_id import StreamId, StreamName
 from event_sourcery.versioning import NO_VERSIONING, ExplicitVersioning, Versioning
+
+from .types import StreamId
 
 TAggregate = TypeVar("TAggregate")
 
@@ -40,27 +38,22 @@ class EventStore:
 
     def load_stream(
         self,
-        stream_id: StreamId | None = None,
-        stream_name: str | None = None,
+        stream_id: StreamId,
         start: int | None = None,
         stop: int | None = None,
     ) -> Sequence[Metadata]:
-        events = self._storage_strategy.fetch_events(
-            stream_id, stream_name, start=start, stop=stop
-        )
+        events = self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
         return self._deserialize_events(events)
 
     @singledispatchmethod
     def append(
         self,
         *events: Metadata,
-        stream_id: StreamId | None = None,
-        stream_name: str | None = None,
+        stream_id: StreamId,
         expected_version: int | Versioning = 0,
     ) -> None:
         self._append(
             stream_id=stream_id,
-            stream_name=stream_name,
             events=events,
             expected_version=expected_version,
         )
@@ -69,15 +62,13 @@ class EventStore:
     def _append_events(
         self,
         *events: Event,
-        stream_id: StreamId | None = None,
-        stream_name: str | None = None,
+        stream_id: StreamId,
         expected_version: int | Versioning = 0,
     ) -> None:
         wrapped_events = self._wrap_events(expected_version, events)
         self.append(
             *wrapped_events,
             stream_id=stream_id,
-            stream_name=stream_name,
             expected_version=expected_version,
         )
 
@@ -102,21 +93,17 @@ class EventStore:
     def publish(
         self,
         *events: Metadata,
-        stream_id: StreamId | None = None,
-        stream_name: str | None = None,
+        stream_id: StreamId,
         expected_version: int | Versioning = 0,
     ) -> None:
-        serialized_events, actual_stream_name = self._append(
+        serialized_events = self._append(
             stream_id=stream_id,
-            stream_name=stream_name,
             events=events,
             expected_version=expected_version,
         )
 
         self._notify(events)
-        self._outbox_storage_strategy.put_into_outbox(
-            serialized_events, actual_stream_name
-        )
+        self._outbox_storage_strategy.put_into_outbox(serialized_events)
 
     def _notify(self, events: Sequence[Metadata]) -> None:
         for event in events:
@@ -135,29 +122,23 @@ class EventStore:
         self,
         *events: Event,
         stream_id: StreamId | None = None,
-        stream_name: str | None = None,
         expected_version: int | Versioning = 0,
     ) -> None:
         wrapped_events = self._wrap_events(expected_version, events)
         self.publish(
             *wrapped_events,
             stream_id=stream_id,
-            stream_name=stream_name,
             expected_version=expected_version,
         )
 
     def _append(
         self,
-        stream_id: StreamId | None,
-        stream_name: str | None,
+        stream_id: StreamId,
         events: Sequence[Metadata],
         expected_version: int | Versioning,
-    ) -> Tuple[list[RawEvent], StreamName | None]:
+    ) -> list[RawEvent]:
         if not events:
             raise NoEventsToAppend
-
-        if stream_id is None and stream_name is None:
-            raise EitherStreamIdOrStreamNameIsRequired()
 
         new_version = events[-1].version
         versioning: Versioning
@@ -169,14 +150,13 @@ class EventStore:
         else:
             versioning = NO_VERSIONING
 
-        stream_id, actual_stream_name = self._storage_strategy.ensure_stream(
+        self._storage_strategy.ensure_stream(
             stream_id=stream_id,
-            stream_name=stream_name,
             versioning=versioning,
         )
         serialized_events = self._serialize_events(events, stream_id)
         self._storage_strategy.insert_events(serialized_events)
-        return serialized_events, actual_stream_name
+        return serialized_events
 
     def delete_stream(self, stream_id: StreamId) -> None:
         self._storage_strategy.delete_stream(stream_id)
