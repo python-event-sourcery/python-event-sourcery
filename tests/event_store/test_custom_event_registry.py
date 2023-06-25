@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from event_sourcery import Metadata, StreamId
 from event_sourcery.event_registry import EventRegistry
-from tests.conftest import EventStoreFactoryCallable
+from event_sourcery.event_store import EventStoreFactoryCallable
 
 
 @pytest.fixture()

@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Sequence, Type, TypeVar, cast
+from typing import Protocol, Sequence, Type, TypeVar, cast
 
 from event_sourcery.after_commit_subscriber import AfterCommit
 from event_sourcery.dto import RawEvent
@@ -200,3 +200,16 @@ class EventStore:
             )
             for event in events
         ]
+
+
+class EventStoreFactoryCallable(Protocol):
+    GUARD: object = object()
+
+    def __call__(
+        self,
+        subscriptions: dict[Type[Event], list[Subscriber]] | None | object = GUARD,
+        serde: Serde | None | object = GUARD,
+        event_registry: EventRegistry | None | object = GUARD,
+        outbox_storage_strategy: OutboxStorageStrategy | None | object = GUARD,
+    ) -> EventStore:
+        pass

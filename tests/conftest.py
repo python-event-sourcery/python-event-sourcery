@@ -1,64 +1,14 @@
-from typing import Any, Iterator, Protocol, Type, cast
+from contextlib import contextmanager
+from typing import Generator, Protocol, cast
 
 import pytest
 from _pytest.fixtures import SubRequest
 from sqlalchemy import MetaData, create_engine
-from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from event_sourcery import Event
-from event_sourcery.event_registry import EventRegistry
-from event_sourcery.event_store import EventStore
-from event_sourcery.interfaces.base_event import Event as BaseEvent
-from event_sourcery.interfaces.cursors_dao import CursorsDao
-from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
-from event_sourcery.interfaces.storage_strategy import StorageStrategy
-from event_sourcery.interfaces.subscriber import Subscriber
-from event_sourcery_pydantic.serde import PydanticSerde
-from event_sourcery_sqlalchemy.sqlalchemy_cursors_dao import SqlAlchemyCursorsDao
-from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageStrategy
-from event_sourcery_sqlalchemy.sqlalchemy_outbox import SqlAlchemyOutboxStorageStrategy
-
-
-class EventStoreFactoryCallable(Protocol):
-    GUARD: object = object()
-
-    def __call__(
-        self,
-        subscriptions: dict[Type[Event], list[Subscriber]] | None | object = GUARD,
-        event_base_class: Type[Event] | None | object = GUARD,
-        event_registry: EventRegistry | None | object = GUARD,
-    ) -> EventStore:
-        pass
-
-
-@pytest.fixture()
-def event_store_factory(
-    storage_strategy: StorageStrategy,
-    outbox_storage_strategy: OutboxStorageStrategy,
-) -> EventStoreFactoryCallable:
-    defaults = dict(
-        serde=PydanticSerde(),
-        storage_strategy=storage_strategy,
-        event_registry=BaseEvent.__registry__,
-        outbox_storage_strategy=outbox_storage_strategy,
-    )
-
-    def _callable(**kwargs: Any) -> EventStore:
-        arguments = defaults.copy()
-        for key, value in kwargs.items():
-            if value is not EventStoreFactoryCallable.GUARD:
-                arguments[key] = value
-
-        return EventStore(**arguments)
-
-    return cast(EventStoreFactoryCallable, _callable)
-
-
-@pytest.fixture()
-def event_store(event_store_factory: EventStoreFactoryCallable) -> EventStore:
-    return event_store_factory()
+from event_sourcery.event_store import EventStore, EventStoreFactoryCallable
+from event_sourcery_sqlalchemy import SQLStoreFactory
 
 
 class DeclarativeBase(Protocol):
@@ -80,37 +30,46 @@ def declarative_base() -> DeclarativeBase:
     return cast(DeclarativeBase, Base)
 
 
-@pytest.fixture()
-def storage_strategy(session: Session) -> StorageStrategy:
-    return SqlAlchemyStorageStrategy(session)
-
-
-@pytest.fixture()
-def outbox_storage_strategy(session: Session) -> OutboxStorageStrategy:
-    return SqlAlchemyOutboxStorageStrategy(session)
-
-
-@pytest.fixture()
-def cursors_dao(session: Session) -> CursorsDao:
-    return SqlAlchemyCursorsDao(session)
-
-
-@pytest.fixture()
-def session(engine: Engine) -> Iterator[Session]:
-    session = Session(bind=engine)
-    yield session
-    session.close()
-
-
-@pytest.fixture(params=["sqlite://", "postgresql://es:es@localhost/es"])
-def engine(request: SubRequest, declarative_base: DeclarativeBase) -> Iterator[Engine]:
-    engine = create_engine(request.param, future=True)
+@contextmanager
+def sql_factory(
+    url: str,
+    declarative_base: DeclarativeBase,
+) -> Generator[SQLStoreFactory, None, None]:
+    engine = create_engine(url, future=True)
     try:
         declarative_base.metadata.create_all(bind=engine)
     except OperationalError:
         pytest.skip(f"{engine.url.drivername} test database not available, skipping")
     else:
-        yield engine
-
-        engine.dispose()
+        session = Session(bind=engine)
+        yield SQLStoreFactory(lambda: session)
+        session.close()
         declarative_base.metadata.drop_all(bind=engine)
+        engine.dispose()
+
+
+@pytest.fixture()
+def sqlite_factory(
+    declarative_base: DeclarativeBase,
+) -> Generator[SQLStoreFactory, None, None]:
+    with sql_factory("sqlite:///:memory:", declarative_base) as factory:
+        yield factory
+
+
+@pytest.fixture()
+def postgres_factory(
+    declarative_base: DeclarativeBase,
+) -> Generator[SQLStoreFactory, None, None]:
+    url = "postgresql://es:es@localhost:5432/es"
+    with sql_factory(url, declarative_base) as factory:
+        yield factory
+
+
+@pytest.fixture(params=["sqlite_factory", "postgres_factory"])
+def event_store_factory(request: SubRequest) -> EventStoreFactoryCallable:
+    return cast(EventStoreFactoryCallable, request.getfixturevalue(request.param))
+
+
+@pytest.fixture()
+def event_store(event_store_factory: EventStoreFactoryCallable) -> EventStore:
+    return event_store_factory()

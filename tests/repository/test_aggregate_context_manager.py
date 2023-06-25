@@ -5,9 +5,8 @@ import pytest
 
 from event_sourcery import Event, Repository, StreamId
 from event_sourcery.aggregate import Aggregate
-from event_sourcery.event_store import EventStore
+from event_sourcery.event_store import EventStore, EventStoreFactoryCallable
 from event_sourcery.exceptions import ConcurrentStreamWriteError
-from tests.conftest import EventStoreFactoryCallable
 
 
 class TurnedOn(Event):

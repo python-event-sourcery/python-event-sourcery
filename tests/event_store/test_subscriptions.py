@@ -2,12 +2,13 @@ from typing import cast
 from unittest.mock import Mock, call
 from uuid import uuid4
 
-from sqlalchemy.orm import Session
+import pytest
 
 from event_sourcery import Event, Metadata, StreamId
 from event_sourcery.after_commit_subscriber import AfterCommit
+from event_sourcery.event_store import EventStoreFactoryCallable
 from event_sourcery.interfaces.subscriber import Subscriber
-from tests.conftest import EventStoreFactoryCallable
+from event_sourcery_sqlalchemy import SQLStoreFactory
 from tests.events import AnotherEvent, SomeEvent
 
 
@@ -96,10 +97,16 @@ def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None
     assert total == 11
 
 
+@pytest.mark.parametrize(
+    "factory_name",
+    ["sqlite_factory", "postgres_factory"],
+)
 def test_after_commit_subscriber_gets_called_after_tx_is_committed(
-    event_store_factory: EventStoreFactoryCallable,
-    session: Session,
+    request: pytest.FixtureRequest,
+    factory_name: str,
 ) -> None:
+    event_store_factory: SQLStoreFactory = request.getfixturevalue(factory_name)
+    session = event_store_factory.session_maker()
     subscriber_mock = Mock(Subscriber)
     event_store = event_store_factory(
         subscriptions={SomeEvent: [AfterCommit(subscriber_mock)]}
