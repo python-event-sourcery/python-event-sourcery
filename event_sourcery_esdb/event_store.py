@@ -68,7 +68,8 @@ class ESDBStorageStrategy(StorageStrategy):
             return None
 
     def delete_stream(self, stream_id: StreamId) -> None:
-        raise NotImplementedError
+        name = stream.Name(stream_id)
+        self._client.delete_stream(str(name), StreamState.ANY)
 
     def run_after_commit(self, callback: Callable[[], None]) -> None:
         ...
