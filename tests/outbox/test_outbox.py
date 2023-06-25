@@ -6,22 +6,25 @@ import pytest
 from event_sourcery import Event, Metadata, StreamId
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
-from event_sourcery.outbox import Outbox
+from event_sourcery.outbox import Outbox, Publisher
 from event_sourcery_pydantic.serde import PydanticSerde
 from tests.events import SomeEvent
 
 
 @pytest.fixture()
 def publisher() -> Mock:
-    return Mock()
+    return Mock(Publisher)
 
 
 @pytest.fixture()
-def outbox(outbox_storage_strategy: OutboxStorageStrategy, publisher: Mock) -> Outbox:
+def outbox(
+    outbox_storage_strategy: OutboxStorageStrategy,
+    publisher: Publisher,
+) -> Outbox:
     return Outbox(
         serde=PydanticSerde(),
         storage_strategy=outbox_storage_strategy,
-        event_base_class=Event,
+        event_registry=Event.__registry__,
         publisher=publisher,
     )
 

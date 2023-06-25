@@ -1,14 +1,17 @@
 import abc
 import logging
-from typing import Callable, Type
+from typing import Callable
 
-from event_sourcery.interfaces.base_event import Event
+from event_sourcery.event_registry import EventRegistry
 from event_sourcery.interfaces.event import Metadata
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.types.stream_id import StreamId
 
 logger = logging.getLogger(__name__)
+
+
+Publisher = Callable[[Metadata, StreamId], None]
 
 
 class Outbox(abc.ABC):
@@ -18,12 +21,12 @@ class Outbox(abc.ABC):
         self,
         serde: Serde,
         storage_strategy: OutboxStorageStrategy,
-        event_base_class: Type[Event],
-        publisher: Callable[[Metadata, StreamId], None],
+        event_registry: EventRegistry,
+        publisher: Publisher,
     ) -> None:
         self._serde = serde
         self._storage_strategy = storage_strategy
-        self._event_registry = event_base_class.__registry__
+        self._event_registry = event_registry
         self._publisher = publisher
 
     def run_once(self) -> None:

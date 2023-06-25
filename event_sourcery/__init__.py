@@ -9,12 +9,13 @@ __all__ = [
     "Metadata",
     "Context",
     "NO_VERSIONING",
+    "Outbox",
     "Projector",
     "Subscription",
     "StreamId",
 ]
 
-from typing import Callable, Type
+from typing import Type
 
 from sqlalchemy.orm import Session
 
@@ -26,7 +27,7 @@ from event_sourcery.interfaces.event import Context, Metadata
 from event_sourcery.interfaces.event import TEvent as EventProtocol
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.subscriber import Subscriber
-from event_sourcery.outbox import Outbox
+from event_sourcery.outbox import Outbox, Publisher
 from event_sourcery.projector import Projector
 from event_sourcery.repository import Repository
 from event_sourcery.subscription import Subscription
@@ -59,11 +60,12 @@ def get_event_store(
 
 
 def get_outbox(
-    session: Session, publisher: Callable[[Metadata, StreamId], None]
+    session: Session,
+    publisher: Publisher,
 ) -> Outbox:
     return Outbox(
         serde=PydanticSerde(),
         storage_strategy=SqlAlchemyOutboxStorageStrategy(session),
-        event_base_class=Event,
+        event_registry=Event.__registry__,
         publisher=publisher,
     )
