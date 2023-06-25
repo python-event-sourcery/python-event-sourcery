@@ -1,11 +1,14 @@
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
+import pytest
+
 from event_sourcery import Metadata, StreamId
 from event_sourcery.event_store import EventStore
 from tests.events import NastyEventWithJsonUnfriendlyTypes, SomeEvent
 
 
+@pytest.mark.esdb_not_implemented
 def test_save_retrieve(event_store: EventStore) -> None:
     stream_uuid = StreamId(uuid4())
     events = [Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1)]
@@ -15,6 +18,7 @@ def test_save_retrieve(event_store: EventStore) -> None:
     assert loaded_events == events
 
 
+@pytest.mark.esdb_not_implemented
 def test_save_retrieve_part_of_stream(event_store: EventStore) -> None:
     stream_uuid = StreamId(uuid4())
     events = [
@@ -34,12 +38,14 @@ def test_save_retrieve_part_of_stream(event_store: EventStore) -> None:
     ]
 
 
+@pytest.mark.esdb_not_implemented
 def test_loading_not_existing_stream_returns_empty_list(
     event_store: EventStore,
 ) -> None:
     assert event_store.load_stream(stream_id=StreamId(uuid4())) == []
 
 
+@pytest.mark.esdb_not_implemented
 def test_stores_retrieves_metadata(event_store: EventStore) -> None:
     an_event = Metadata[SomeEvent](
         event=SomeEvent(
@@ -55,6 +61,7 @@ def test_stores_retrieves_metadata(event_store: EventStore) -> None:
     assert events == [an_event]
 
 
+@pytest.mark.esdb_not_implemented
 def test_is_able_to_handle_non_trivial_formats(event_store: EventStore) -> None:
     an_event = Metadata[NastyEventWithJsonUnfriendlyTypes](
         event=NastyEventWithJsonUnfriendlyTypes(
@@ -73,6 +80,7 @@ def test_is_able_to_handle_non_trivial_formats(event_store: EventStore) -> None:
     assert events == [an_event]
 
 
+@pytest.mark.esdb_not_implemented
 def test_is_able_to_handle_events_without_metadata(event_store: EventStore) -> None:
     an_event = SomeEvent(first_name="Luke")
     stream_id = StreamId(uuid4())

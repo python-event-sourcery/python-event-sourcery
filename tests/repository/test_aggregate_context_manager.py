@@ -80,6 +80,7 @@ def test_light_switch_cannot_be_turned_off_twice() -> None:
         switch.turn_off()
 
 
+@pytest.mark.esdb_not_implemented
 def test_light_switch_changes_are_preserved_by_repository(
     repo: Repository[LightSwitch],
 ) -> None:
@@ -95,6 +96,7 @@ def test_light_switch_changes_are_preserved_by_repository(
             switch_second_incarnation.turn_off()
 
 
+@pytest.mark.esdb_not_implemented
 def test_repository_supports_optimistic_locking(
     repo: Repository[LightSwitch],
 ) -> None:
@@ -111,6 +113,7 @@ def test_repository_supports_optimistic_locking(
     assert not switch_second_incarnation.shines
 
 
+@pytest.mark.esdb_not_implemented
 def test_repository_publishes_events(
     event_store_factory: EventStoreFactoryCallable,
 ) -> None:

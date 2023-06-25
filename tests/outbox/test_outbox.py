@@ -19,6 +19,7 @@ def outbox(event_store: EventStore, publisher: Publisher) -> Outbox:
     return event_store.outbox(publisher)
 
 
+@pytest.mark.esdb_not_implemented
 def test_calls_publisher(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
@@ -31,6 +32,7 @@ def test_calls_publisher(
     publisher.assert_called_once_with(an_event, stream_id)
 
 
+@pytest.mark.esdb_not_implemented
 def test_calls_publisher_with_stream_name_if_present(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
@@ -43,6 +45,7 @@ def test_calls_publisher_with_stream_name_if_present(
     publisher.assert_called_once_with(an_event, stream_id)
 
 
+@pytest.mark.esdb_not_implemented
 def test_sends_only_once_in_case_of_success(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
@@ -56,6 +59,7 @@ def test_sends_only_once_in_case_of_success(
     publisher.assert_called_once_with(an_event, stream_id)
 
 
+@pytest.mark.esdb_not_implemented
 def test_tries_to_send_up_to_three_times(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
