@@ -26,6 +26,14 @@ def raw_event(from_entry: RecordedEvent) -> RawEvent:
     )
 
 
+def snapshot(from_entry: RecordedEvent) -> RawEvent:
+    metadata = json.loads(from_entry.metadata.decode("utf-8"))
+    position = metadata[f"{ES_PREFIX}stream_position"]
+    event = raw_event(from_entry)
+    event["version"] = stream.Position(position).as_version()
+    return event
+
+
 def new_entry(from_raw: RawEvent, **metadata: Any) -> NewEvent:
     return NewEvent(
         id=from_raw["uuid"],

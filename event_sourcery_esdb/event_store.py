@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, cast
 
 from esdbclient import EventStoreDBClient, StreamState
 from esdbclient.exceptions import NotFound
@@ -23,7 +23,11 @@ class ESDBStorageStrategy(StorageStrategy):
         start: int | None = None,
         stop: int | None = None,
     ) -> list[RawEvent]:
+        snapshot = None
         name = stream.Name(stream_id)
+        if start is None and (snapshot := self._read_snapshot(name)) is not None:
+            start = cast(int, snapshot["version"]) + 1
+
         position, limit = stream.scope(start, stop)
         entries = self._client.read_stream(
             stream_name=str(name),
@@ -31,9 +35,24 @@ class ESDBStorageStrategy(StorageStrategy):
             limit=limit,
         )
         try:
-            return [dto.raw_event(entry) for entry in entries]
+            events = [dto.raw_event(entry) for entry in entries]
+            if snapshot:
+                return [snapshot] + events
+            return events
         except NotFound:
             return []
+
+    def _read_snapshot(self, name: stream.Name) -> RawEvent | None:
+        snapshots = self._client.read_stream(
+            name.snapshot,
+            limit=1,
+            backwards=True,
+        )
+        try:
+            last = next(iter(snapshots))
+            return dto.snapshot(last)
+        except NotFound:
+            return None
 
     def insert_events(self, events: list[RawEvent]) -> None:
         for stream_id in {e["stream_id"] for e in events}:
@@ -48,7 +67,13 @@ class ESDBStorageStrategy(StorageStrategy):
         )
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
-        raise NotImplementedError
+        name = stream.Name(snapshot["stream_id"])
+        stream_position = stream.Position.from_version(cast(int, snapshot["version"]))
+        self._client.append_events(
+            name.snapshot,
+            StreamState.ANY,
+            events=[dto.new_entry(snapshot, stream_position=stream_position)],
+        )
 
     def ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         name = stream.Name(stream_id)
