@@ -11,7 +11,6 @@ from event_sourcery.exceptions import (
 from tests.events import SomeEvent
 
 
-@pytest.mark.esdb_not_implemented
 def test_versionless_stream_is_supported(event_store: EventStore) -> None:
     stream_id = StreamId(uuid4())
     event_store.append(
@@ -33,7 +32,7 @@ def test_versionless_stream_is_supported(event_store: EventStore) -> None:
     assert flatenned_stream[1].event == SomeEvent(first_name="Another")
 
 
-@pytest.mark.esdb_not_implemented
+@pytest.mark.skip_esdb(reason="ESDB is auto versioning")
 def test_does_not_allow_for_mixing_versioning_with_no_versioning(
     event_store: EventStore,
 ) -> None:
@@ -51,7 +50,7 @@ def test_does_not_allow_for_mixing_versioning_with_no_versioning(
         )
 
 
-@pytest.mark.esdb_not_implemented
+@pytest.mark.skip_esdb(reason="ESDB is auto versioning")
 def test_does_not_allow_for_mixing_no_versioning_with_versioning(
     event_store: EventStore,
 ) -> None:

@@ -61,7 +61,6 @@ def cursors_dao(declarative_base: DeclarativeBase) -> Generator[CursorsDao, None
     engine.dispose()
 
 
-@pytest.mark.esdb_not_implemented
 def test_projects_the_events(event_store: EventStore, cursors_dao: CursorsDao) -> None:
     read_model = AllEventsReadModel()
     projector = Projector(
@@ -94,7 +93,6 @@ def test_projects_the_events(event_store: EventStore, cursors_dao: CursorsDao) -
     ]
 
 
-@pytest.mark.esdb_not_implemented
 def test_is_able_to_load_up_events_from_untracked_stream(
     event_store: EventStore, cursors_dao: CursorsDao
 ) -> None:
@@ -128,7 +126,6 @@ def test_is_able_to_load_up_events_from_untracked_stream(
     ]
 
 
-@pytest.mark.esdb_not_implemented
 def test_is_able_to_load_up_events_from_tracked_stream(
     event_store: EventStore, cursors_dao: CursorsDao
 ) -> None:
@@ -163,7 +160,6 @@ def test_is_able_to_load_up_events_from_tracked_stream(
     ]
 
 
-@pytest.mark.esdb_not_implemented
 def test_ignores_duplicated_events_from_the_middle(
     event_store: EventStore, cursors_dao: CursorsDao
 ) -> None:
@@ -200,7 +196,6 @@ def test_ignores_duplicated_events_from_the_middle(
     ]
 
 
-@pytest.mark.esdb_not_implemented
 def test_ignores_duplicated_events_from_the_beginning(
     event_store: EventStore, cursors_dao: CursorsDao
 ) -> None:

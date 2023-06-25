@@ -5,7 +5,6 @@ from event_sourcery.event_store import EventStore
 from tests.events import SomeEvent
 
 
-@pytest.mark.esdb_not_implemented
 def test_can_append_then_load_with_named_stream(event_store: EventStore) -> None:
     an_event = SomeEvent(first_name="Dziabong")
     event_store.append(an_event, stream_id=StreamId(name="Test #1"))
@@ -16,7 +15,6 @@ def test_can_append_then_load_with_named_stream(event_store: EventStore) -> None
     assert events[0].event == an_event
 
 
-@pytest.mark.esdb_not_implemented
 def test_can_append_then_load_with_named_stream_with_assigned_uuid(
     event_store: EventStore,
 ) -> None:
@@ -32,7 +30,7 @@ def test_can_append_then_load_with_named_stream_with_assigned_uuid(
     assert events_by_stream_name[0].event == an_event
 
 
-@pytest.mark.esdb_not_implemented
+@pytest.mark.skip_esdb(reason="ESDB can't use both ids")
 def test_lets_appending_by_both_id_and_name_then_just_name(
     event_store: EventStore,
 ) -> None:

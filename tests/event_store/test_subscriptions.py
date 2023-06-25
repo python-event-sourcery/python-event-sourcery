@@ -12,7 +12,6 @@ from event_sourcery_sqlalchemy import SQLStoreFactory
 from tests.events import AnotherEvent, SomeEvent
 
 
-@pytest.mark.esdb_not_implemented
 def test_synchronous_subscriber_gets_called(
     event_store_factory: EventStoreFactoryCallable,
 ) -> None:
@@ -30,7 +29,6 @@ def test_synchronous_subscriber_gets_called(
     subscriber.assert_called_once_with(event)
 
 
-@pytest.mark.esdb_not_implemented
 def test_is_able_to_handle_events_without_metadata(
     event_store_factory: EventStoreFactoryCallable,
 ) -> None:
@@ -50,7 +48,6 @@ def test_is_able_to_handle_events_without_metadata(
     assert event_called_with == event
 
 
-@pytest.mark.esdb_not_implemented
 def test_synchronous_subscriber_of_all_events_gets_called(
     event_store_factory: EventStoreFactoryCallable,
 ) -> None:
@@ -75,7 +72,6 @@ class Credit(Event):
     amount: int
 
 
-@pytest.mark.esdb_not_implemented
 def test_sync_projection(event_store_factory: EventStoreFactoryCallable) -> None:
     events = [
         Metadata[Credit](event=Credit(amount=1), version=1),

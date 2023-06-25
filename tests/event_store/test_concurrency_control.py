@@ -8,7 +8,6 @@ from event_sourcery.exceptions import ConcurrentStreamWriteError
 from tests.events import SomeEvent
 
 
-@pytest.mark.esdb_not_implemented
 def test_concurrency_error(event_store: EventStore) -> None:
     stream_id = StreamId(uuid4())
     event = Metadata[SomeEvent](event=SomeEvent(first_name="Test"), version=1)
@@ -17,7 +16,6 @@ def test_concurrency_error(event_store: EventStore) -> None:
         event_store.append(event, stream_id=stream_id, expected_version=10)
 
 
-@pytest.mark.esdb_not_implemented
 def test_does_not_raise_concurrency_error_if_adding_two_events_at_a_time(
     event_store: EventStore,
 ) -> None:
@@ -39,7 +37,6 @@ def test_does_not_raise_concurrency_error_if_adding_two_events_at_a_time(
         pytest.fail("Should NOT raise an exception!")
 
 
-@pytest.mark.esdb_not_implemented
 def test_does_not_raise_concurrency_error_if_no_one_bumped_up_version(
     event_store: EventStore,
 ) -> None:
