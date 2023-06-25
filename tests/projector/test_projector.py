@@ -1,10 +1,15 @@
+from typing import Generator
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 from event_sourcery import Event, EventStore, Metadata, Projector
 from event_sourcery.interfaces.cursors_dao import CursorsDao
 from event_sourcery.types.stream_id import StreamId
+from event_sourcery_sqlalchemy.sqlalchemy_cursors_dao import SqlAlchemyCursorsDao
+from tests.conftest import DeclarativeBase
 
 
 class AccountCreated(Event):
@@ -44,6 +49,16 @@ class AllEventsReadModel:
 
     def get_all(self) -> list[dict]:
         return self._data
+
+
+@pytest.fixture()
+def cursors_dao(declarative_base: DeclarativeBase) -> Generator[CursorsDao, None, None]:
+    engine = create_engine("sqlite:///:memory:", future=True)
+    declarative_base.metadata.create_all(bind=engine)
+    session = Session(bind=engine)
+    yield SqlAlchemyCursorsDao(session)
+    declarative_base.metadata.drop_all(bind=engine)
+    engine.dispose()
 
 
 def test_projects_the_events(event_store: EventStore, cursors_dao: CursorsDao) -> None:
