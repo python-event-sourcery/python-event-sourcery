@@ -3,11 +3,9 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery import Event, Metadata, StreamId
+from event_sourcery import Metadata, StreamId
 from event_sourcery.event_store import EventStore
-from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.outbox import Outbox, Publisher
-from event_sourcery_pydantic.serde import PydanticSerde
 from tests.events import SomeEvent
 
 
@@ -17,16 +15,8 @@ def publisher() -> Mock:
 
 
 @pytest.fixture()
-def outbox(
-    outbox_storage_strategy: OutboxStorageStrategy,
-    publisher: Publisher,
-) -> Outbox:
-    return Outbox(
-        serde=PydanticSerde(),
-        storage_strategy=outbox_storage_strategy,
-        event_registry=Event.__registry__,
-        publisher=publisher,
-    )
+def outbox(event_store: EventStore, publisher: Publisher) -> Outbox:
+    return event_store.outbox(publisher)
 
 
 def test_calls_publisher(

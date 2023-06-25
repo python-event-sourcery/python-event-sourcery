@@ -13,6 +13,7 @@ from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.interfaces.subscriber import Subscriber
 from event_sourcery.versioning import NO_VERSIONING, ExplicitVersioning, Versioning
 
+from .outbox import Outbox, Publisher
 from .types import StreamId
 
 TAggregate = TypeVar("TAggregate")
@@ -35,6 +36,14 @@ class EventStore:
         self._outbox_storage_strategy = outbox_storage_strategy
         self._event_registry = event_registry
         self._subscriptions = subscriptions
+
+    def outbox(self, publisher: Publisher) -> Outbox:
+        return Outbox(
+            serde=self._serde,
+            storage_strategy=self._outbox_storage_strategy,
+            event_registry=self._event_registry,
+            publisher=publisher,
+        )
 
     def load_stream(
         self,

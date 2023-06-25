@@ -3,7 +3,6 @@ __all__ = [
     "get_event_store",
     "Event",
     "EventStore",
-    "get_outbox",
     "Repository",
     "Aggregate",
     "Metadata",
@@ -27,7 +26,7 @@ from event_sourcery.interfaces.event import Context, Metadata
 from event_sourcery.interfaces.event import TEvent as EventProtocol
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.subscriber import Subscriber
-from event_sourcery.outbox import Outbox, Publisher
+from event_sourcery.outbox import Outbox
 from event_sourcery.projector import Projector
 from event_sourcery.repository import Repository
 from event_sourcery.subscription import Subscription
@@ -56,16 +55,4 @@ def get_event_store(
         outbox_storage_strategy=outbox_storage,
         event_registry=Event.__registry__,
         subscriptions=subscriptions,
-    )
-
-
-def get_outbox(
-    session: Session,
-    publisher: Publisher,
-) -> Outbox:
-    return Outbox(
-        serde=PydanticSerde(),
-        storage_strategy=SqlAlchemyOutboxStorageStrategy(session),
-        event_registry=Event.__registry__,
-        publisher=publisher,
     )
