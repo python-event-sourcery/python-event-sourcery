@@ -35,7 +35,7 @@ class Name(UserString):
 
 
 class Position(int):
-    def __new__(cls, value: int | None) -> "Position | None":  # type: ignore
+    def __new__(cls, value: int | str | None) -> "Position | None":  # type: ignore
         if value is None:
             return None
         return super().__new__(Position, value)

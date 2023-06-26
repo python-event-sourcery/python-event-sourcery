@@ -87,15 +87,6 @@ def esdb_factory(
         reason = skip_esdb.kwargs.get("reason", "")
         pytest.skip(f"Skipping ESDB tests: {reason}")
 
-    not_implemented = request.node.get_closest_marker("esdb_not_implemented")
-    if not_implemented:
-        marker = pytest.mark.xfail(
-            reason="ESDB not implemented",
-            raises=NotImplementedError,
-            strict=True,
-        )
-        request.node.add_marker(marker)
-
     return ESDBStoreFactory(esdb)
 
 

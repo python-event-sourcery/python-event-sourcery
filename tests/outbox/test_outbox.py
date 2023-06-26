@@ -1,11 +1,16 @@
+from typing import Generator
 from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
+from esdbclient import EventStoreDBClient, StreamState
+from esdbclient.exceptions import NotFound
 
 from event_sourcery import Metadata, StreamId
 from event_sourcery.event_store import EventStore
 from event_sourcery.outbox import Outbox, Publisher
+from event_sourcery_esdb.outbox import Outbox as ESDBOutbox
+from event_sourcery_esdb.stream import Position
 from tests.events import SomeEvent
 
 
@@ -19,7 +24,26 @@ def outbox(event_store: EventStore, publisher: Publisher) -> Outbox:
     return event_store.outbox(publisher)
 
 
-@pytest.mark.esdb_not_implemented
+@pytest.fixture()
+def esdb(esdb: EventStoreDBClient) -> Generator[EventStoreDBClient, None, None]:
+    esdb.append_event(
+        ESDBOutbox.name,
+        StreamState.ANY,
+        ESDBOutbox.Snapshot(
+            snapshot=ESDBOutbox.Snapshot.Data(
+                position=Position(esdb.get_commit_position()),
+                attempts={},
+            )
+        ),
+    )
+    yield esdb
+    try:
+        esdb.delete_stream(ESDBOutbox.name, StreamState.ANY)
+        esdb.delete_stream(ESDBOutbox.metadata, StreamState.ANY)
+    except NotFound:
+        pass
+
+
 def test_calls_publisher(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
@@ -32,12 +56,11 @@ def test_calls_publisher(
     publisher.assert_called_once_with(an_event, stream_id)
 
 
-@pytest.mark.esdb_not_implemented
 def test_calls_publisher_with_stream_name_if_present(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
     an_event = Metadata[SomeEvent](event=SomeEvent(first_name="Mark"), version=1)
-    stream_id = StreamId(name="orders-1")
+    stream_id = StreamId(name=f"orders-{uuid4().hex}")
     event_store.publish(an_event, stream_id=stream_id)
 
     outbox.run_once()
@@ -45,7 +68,6 @@ def test_calls_publisher_with_stream_name_if_present(
     publisher.assert_called_once_with(an_event, stream_id)
 
 
-@pytest.mark.esdb_not_implemented
 def test_sends_only_once_in_case_of_success(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
@@ -59,7 +81,6 @@ def test_sends_only_once_in_case_of_success(
     publisher.assert_called_once_with(an_event, stream_id)
 
 
-@pytest.mark.esdb_not_implemented
 def test_tries_to_send_up_to_three_times(
     outbox: Outbox, publisher: Mock, event_store: EventStore
 ) -> None:
