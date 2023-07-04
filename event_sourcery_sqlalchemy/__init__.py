@@ -10,9 +10,8 @@ from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrat
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.subscriber import Subscriber
 from event_sourcery_pydantic.serde import PydanticSerde
-
-from .sqlalchemy_event_store import SqlAlchemyStorageStrategy
-from .sqlalchemy_outbox import SqlAlchemyOutboxStorageStrategy
+from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageStrategy
+from event_sourcery_sqlalchemy.sqlalchemy_outbox import SqlAlchemyOutboxStorageStrategy
 
 
 @dataclass(repr=False)

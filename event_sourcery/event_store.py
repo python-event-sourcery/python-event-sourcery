@@ -11,10 +11,9 @@ from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrat
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.interfaces.subscriber import Subscriber
+from event_sourcery.outbox import Outbox, Publisher
+from event_sourcery.types import StreamId
 from event_sourcery.versioning import NO_VERSIONING, ExplicitVersioning, Versioning
-
-from .outbox import Outbox, Publisher
-from .types import StreamId
 
 TAggregate = TypeVar("TAggregate")
 

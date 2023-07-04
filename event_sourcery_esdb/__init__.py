@@ -13,10 +13,9 @@ from event_sourcery.interfaces.base_event import Event as BaseEvent
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.subscriber import Subscriber
+from event_sourcery_esdb.event_store import ESDBStorageStrategy
+from event_sourcery_esdb.outbox import ESDBOutboxStorageStrategy
 from event_sourcery_pydantic.serde import PydanticSerde
-
-from .event_store import ESDBStorageStrategy
-from .outbox import ESDBOutboxStorageStrategy
 
 
 class ESDBStoreFactory:

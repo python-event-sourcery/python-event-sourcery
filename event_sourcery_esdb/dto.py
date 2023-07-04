@@ -5,8 +5,7 @@ from typing import Any
 from esdbclient import NewEvent, RecordedEvent
 
 from event_sourcery.dto import RawEvent
-
-from . import stream
+from event_sourcery_esdb import stream
 
 ES_PREFIX = "$es-"
 

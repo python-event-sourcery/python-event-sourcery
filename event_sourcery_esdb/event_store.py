@@ -9,8 +9,7 @@ from event_sourcery.exceptions import ConcurrentStreamWriteError
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.types.stream_id import StreamId
 from event_sourcery.versioning import NO_VERSIONING, Versioning
-
-from . import dto, stream
+from event_sourcery_esdb import dto, stream
 
 
 @dataclass(repr=False)

@@ -13,9 +13,8 @@ from event_sourcery.interfaces.outbox_storage_strategy import (
     EntryId,
     OutboxStorageStrategy,
 )
-
-from . import dto, stream
-from .stream import Position
+from event_sourcery_esdb import dto, stream
+from event_sourcery_esdb.stream import Position
 
 
 @dataclass(frozen=True)
