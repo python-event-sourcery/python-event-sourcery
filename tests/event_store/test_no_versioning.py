@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery import NO_VERSIONING
+from event_sourcery import NO_VERSIONING, StreamId
 from event_sourcery.event_store import EventStore
 from event_sourcery.exceptions import (
     ExpectedVersionUsedOnVersionlessStream,
@@ -12,7 +12,7 @@ from tests.events import SomeEvent
 
 
 def test_versionless_stream_is_supported(event_store: EventStore) -> None:
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     event_store.append(
         SomeEvent(first_name="Test"),
         stream_id=stream_id,
@@ -32,10 +32,11 @@ def test_versionless_stream_is_supported(event_store: EventStore) -> None:
     assert flatenned_stream[1].event == SomeEvent(first_name="Another")
 
 
+@pytest.mark.skip_esdb(reason="ESDB is auto versioning")
 def test_does_not_allow_for_mixing_versioning_with_no_versioning(
     event_store: EventStore,
 ) -> None:
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     event_store.append(
         SomeEvent(first_name="Test"),
         stream_id=stream_id,
@@ -49,10 +50,11 @@ def test_does_not_allow_for_mixing_versioning_with_no_versioning(
         )
 
 
+@pytest.mark.skip_esdb(reason="ESDB is auto versioning")
 def test_does_not_allow_for_mixing_no_versioning_with_versioning(
     event_store: EventStore,
 ) -> None:
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     event_store.append(
         SomeEvent(first_name="Test"),
         stream_id=stream_id,

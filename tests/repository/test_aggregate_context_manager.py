@@ -3,11 +3,10 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery import Event, Repository
+from event_sourcery import Event, Repository, StreamId
 from event_sourcery.aggregate import Aggregate
-from event_sourcery.event_store import EventStore
+from event_sourcery.event_store import EventStore, EventStoreFactoryCallable
 from event_sourcery.exceptions import ConcurrentStreamWriteError
-from tests.conftest import EventStoreFactoryCallable
 
 
 class TurnedOn(Event):
@@ -84,7 +83,7 @@ def test_light_switch_cannot_be_turned_off_twice() -> None:
 def test_light_switch_changes_are_preserved_by_repository(
     repo: Repository[LightSwitch],
 ) -> None:
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     with repo.aggregate(stream_id, LightSwitch()) as switch_first_incarnation:
         switch_first_incarnation.turn_on()
 
@@ -99,7 +98,7 @@ def test_light_switch_changes_are_preserved_by_repository(
 def test_repository_supports_optimistic_locking(
     repo: Repository[LightSwitch],
 ) -> None:
-    stream_id = uuid4()
+    stream_id = StreamId(uuid4())
     with repo.aggregate(stream_id, LightSwitch()) as switch_first_incarnation:
         switch_first_incarnation.turn_on()
 
@@ -119,7 +118,7 @@ def test_repository_publishes_events(
     event_store = event_store_factory(subscriptions={Event: [catch_all_subscriber]})
     repo: Repository[LightSwitch] = Repository[LightSwitch](event_store)
 
-    with repo.aggregate(uuid4(), LightSwitch()) as switch:
+    with repo.aggregate(StreamId(uuid4()), LightSwitch()) as switch:
         switch.turn_on()
         switch.turn_off()
 
