@@ -37,6 +37,7 @@ class EventStore:
         self._subscriptions = subscriptions
 
     def outbox(self, publisher: Publisher) -> Outbox:
+        # TODO: move to strategy?
         return Outbox(
             serde=self._serde,
             storage_strategy=self._outbox_storage_strategy,
@@ -202,6 +203,7 @@ class EventStore:
 
 
 class EventStoreFactoryCallable(Protocol):
+    # TODO: Refactor into some better interface or pattern
     GUARD: object = object()
 
     def __call__(

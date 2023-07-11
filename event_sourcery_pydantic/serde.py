@@ -9,6 +9,7 @@ from event_sourcery.types.stream_id import StreamId
 
 
 class PydanticSerde(Serde):
+    # TODO: move to main package
     def deserialize(self, event: RawEvent, event_type: Type[Event]) -> Metadata:
         event_as_dict = dict(event)
         del event_as_dict["stream_id"]

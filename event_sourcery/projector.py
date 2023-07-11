@@ -9,6 +9,8 @@ ReadModel: TypeAlias = Callable[[Metadata, StreamId], None]
 
 
 class Projector:
+    # Note: Hide inside EventStore?
+    # Note: How to use it? Who will call project?
     class CantProjectUnversionedEvent(Exception):
         pass
 

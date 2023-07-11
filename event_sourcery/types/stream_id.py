@@ -4,6 +4,7 @@ from uuid import UUID, uuid5
 
 @dataclass(frozen=True, repr=False, eq=False)
 class StreamId(UUID):
+    # TODO: Add category
     NAMESPACE = UUID("3a24a3ee-d33d-4266-93ab-7d8e256a6d44")
 
     uuid: InitVar[UUID | None] = None

@@ -10,6 +10,7 @@ class InvalidSubscription(Exception):
 
 @dataclass(frozen=True)
 class Subscription:
+    # Note: In relation with Projector?
     event_types: list[Type[Event]] = field(default_factory=list)
     stream_categories: list[str] = field(default_factory=list)
 

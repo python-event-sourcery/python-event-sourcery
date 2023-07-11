@@ -43,6 +43,7 @@ def get_event_store(
     subscriptions: dict[Type[EventProtocol], list[Subscriber]] | None = None,
     with_outbox: bool = True,
 ) -> EventStore:
+    # TODO: Move this to specific storage factory
     outbox_storage: OutboxStorageStrategy
     if with_outbox:
         outbox_storage = SqlAlchemyOutboxStorageStrategy(session)

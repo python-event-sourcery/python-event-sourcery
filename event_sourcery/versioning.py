@@ -5,6 +5,7 @@ from event_sourcery.exceptions import (
     NoExpectedVersionGivenOnVersionedStream,
 )
 
+# TODO: Is part of Api, should be packaged together
 
 class Versioning(abc.ABC):
     @abc.abstractmethod

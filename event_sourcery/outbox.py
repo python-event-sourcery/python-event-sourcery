@@ -15,6 +15,9 @@ Publisher = Callable[[Metadata, StreamId], None]
 
 
 class Outbox(abc.ABC):
+    # Note: Make it as internal mechanism of strategy?
+    # TODO: Rethink
+    # Note: maybe Publisher can iterate outbox in contextmanager?
     CHUNK_SIZE = 100
 
     def __init__(

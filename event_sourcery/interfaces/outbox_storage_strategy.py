@@ -16,6 +16,7 @@ class OutboxStorageStrategy(abc.ABC):
     def outbox_entries(
         self, limit: int
     ) -> Iterator[Tuple[EntryId, RawEvent, StreamId]]:
+        # Note: maybe in context manger with remove ? It would open custom approach
         pass
 
     @abc.abstractmethod
@@ -24,4 +25,5 @@ class OutboxStorageStrategy(abc.ABC):
 
     @abc.abstractmethod
     def remove_from_outbox(self, entry_id: EntryId) -> None:
+        # TODO: change to range or batch, or remove till position
         pass

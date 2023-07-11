@@ -34,4 +34,5 @@ class StorageStrategy(abc.ABC):
 
     @abc.abstractmethod
     def run_after_commit(self, callback: Callable[[], None]) -> None:
+        # TODO: to remove
         pass

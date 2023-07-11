@@ -14,6 +14,7 @@ TEvent = TypeVar("TEvent", bound=Event)
 
 
 class Repository(Generic[TAggregate]):
+    # TODO: Move with aggregate to separate package with building blocks
     def __init__(self, event_store: EventStore) -> None:
         self._event_store = event_store
 

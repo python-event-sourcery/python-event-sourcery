@@ -9,6 +9,7 @@ from event_sourcery.types import StreamId
 
 
 class DummyOutboxStorageStrategy(OutboxStorageStrategy):
+    # Note: Implementation related, not client, so maybe put with interface?
     def put_into_outbox(self, events: list[RawEvent]) -> None:
         pass
 

@@ -4,6 +4,8 @@ from event_sourcery.types.stream_id import StreamId
 
 
 class CursorsDao(abc.ABC):
+    # Note: What is it for? Doc?
+    # TODO: Introduce Projection using Cursor?
     class StreamNotTracked(Exception):
         pass
 
