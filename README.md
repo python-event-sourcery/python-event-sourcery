@@ -39,8 +39,6 @@ Although one can easily start with a library, the latter is very customizable an
 ## Use cases & features
 Until full documentation is available, you can follow tests
 
-- Event-driven applications (in the same process) [tests](https://github.com/Enforcer/python-event-sourcery/blob/main/tests/event_store/test_subscriptions.py)
-- CQRS - synchronous projections [tests](https://github.com/Enforcer/python-event-sourcery/blob/main/tests/event_store/test_subscriptions.py#L50)
 - Event Sourcing [tests](https://github.com/Enforcer/python-event-sourcery/blob/main/tests/repository/test_aggregate_context_manager.py)
 - Snapshots (for Event Sourcing) [tests](https://github.com/Enforcer/python-event-sourcery/blob/main/tests/event_store/test_snapshots.py)
 - Event Store - storage for events [tests](https://github.com/Enforcer/python-event-sourcery/blob/main/tests/event_store/test_save_retrieval.py)
