@@ -14,8 +14,6 @@ __all__ = [
     "StreamId",
 ]
 
-from typing import Type
-
 from sqlalchemy.orm import Session
 
 from event_sourcery.aggregate import Aggregate
@@ -23,9 +21,7 @@ from event_sourcery.dummy_outbox_storage_strategy import DummyOutboxStorageStrat
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.base_event import Event
 from event_sourcery.interfaces.event import Context, Metadata
-from event_sourcery.interfaces.event import TEvent as EventProtocol
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
-from event_sourcery.interfaces.subscriber import Subscriber
 from event_sourcery.outbox import Outbox
 from event_sourcery.projector import Projector
 from event_sourcery.repository import Repository
@@ -40,7 +36,6 @@ from event_sourcery_sqlalchemy.sqlalchemy_outbox import SqlAlchemyOutboxStorageS
 
 def get_event_store(
     session: Session,
-    subscriptions: dict[Type[EventProtocol], list[Subscriber]] | None = None,
     with_outbox: bool = True,
 ) -> EventStore:
     outbox_storage: OutboxStorageStrategy
@@ -54,5 +49,4 @@ def get_event_store(
         storage_strategy=SqlAlchemyStorageStrategy(session),
         outbox_storage_strategy=outbox_storage,
         event_registry=Event.__registry__,
-        subscriptions=subscriptions,
     )

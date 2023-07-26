@@ -1,11 +1,10 @@
-from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
 
 from event_sourcery import Event, Repository, StreamId
 from event_sourcery.aggregate import Aggregate
-from event_sourcery.event_store import EventStore, EventStoreFactoryCallable
+from event_sourcery.event_store import EventStore
 from event_sourcery.exceptions import ConcurrentStreamWriteError
 
 
@@ -109,20 +108,6 @@ def test_repository_supports_optimistic_locking(
                 switch_third_incarnation.turn_off()
 
     assert not switch_second_incarnation.shines
-
-
-def test_repository_publishes_events(
-    event_store_factory: EventStoreFactoryCallable,
-) -> None:
-    catch_all_subscriber = Mock()
-    event_store = event_store_factory(subscriptions={Event: [catch_all_subscriber]})
-    repo: Repository[LightSwitch] = Repository[LightSwitch](event_store)
-
-    with repo.aggregate(StreamId(uuid4()), LightSwitch()) as switch:
-        switch.turn_on()
-        switch.turn_off()
-
-    assert catch_all_subscriber.call_count == 2
 
 
 @pytest.fixture()
