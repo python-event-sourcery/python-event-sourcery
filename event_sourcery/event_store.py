@@ -7,9 +7,9 @@ from event_sourcery.exceptions import NoEventsToAppend
 from event_sourcery.interfaces.base_event import Event
 from event_sourcery.interfaces.event import Metadata
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
-from event_sourcery.interfaces.serde import Serde
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
 from event_sourcery.outbox import Outbox, Publisher
+from event_sourcery.serde import PydanticSerde
 from event_sourcery.types import StreamId
 from event_sourcery.versioning import NO_VERSIONING, ExplicitVersioning, Versioning
 
@@ -19,19 +19,17 @@ TAggregate = TypeVar("TAggregate")
 class EventStore:
     def __init__(
         self,
-        serde: Serde,
         storage_strategy: StorageStrategy,
         outbox_storage_strategy: OutboxStorageStrategy,
         event_registry: EventRegistry,
     ) -> None:
-        self._serde = serde
+        self._serde = PydanticSerde()
         self._storage_strategy = storage_strategy
         self._outbox_storage_strategy = outbox_storage_strategy
         self._event_registry = event_registry
 
     def outbox(self, publisher: Publisher) -> Outbox:
         return Outbox(
-            serde=self._serde,
             storage_strategy=self._outbox_storage_strategy,
             event_registry=self._event_registry,
             publisher=publisher,
@@ -185,7 +183,6 @@ class EventStoreFactoryCallable(Protocol):
 
     def __call__(
         self,
-        serde: Serde | None | object = GUARD,
         event_registry: EventRegistry | None | object = GUARD,
         outbox_storage_strategy: OutboxStorageStrategy | None | object = GUARD,
     ) -> EventStore:

@@ -28,7 +28,6 @@ from event_sourcery.repository import Repository
 from event_sourcery.subscription import Subscription
 from event_sourcery.types.stream_id import StreamId
 from event_sourcery.versioning import NO_VERSIONING
-from event_sourcery_pydantic.serde import PydanticSerde
 from event_sourcery_sqlalchemy.models import configure_models
 from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageStrategy
 from event_sourcery_sqlalchemy.sqlalchemy_outbox import SqlAlchemyOutboxStorageStrategy
@@ -45,7 +44,6 @@ def get_event_store(
         outbox_storage = DummyOutboxStorageStrategy()
 
     return EventStore(
-        serde=PydanticSerde(),
         storage_strategy=SqlAlchemyStorageStrategy(session),
         outbox_storage_strategy=outbox_storage,
         event_registry=Event.__registry__,

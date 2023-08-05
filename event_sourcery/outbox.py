@@ -5,7 +5,7 @@ from typing import Callable
 from event_sourcery.event_registry import EventRegistry
 from event_sourcery.interfaces.event import Metadata
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
-from event_sourcery.interfaces.serde import Serde
+from event_sourcery.serde import PydanticSerde
 from event_sourcery.types.stream_id import StreamId
 
 logger = logging.getLogger(__name__)
@@ -19,12 +19,11 @@ class Outbox(abc.ABC):
 
     def __init__(
         self,
-        serde: Serde,
         storage_strategy: OutboxStorageStrategy,
         event_registry: EventRegistry,
         publisher: Publisher,
     ) -> None:
-        self._serde = serde
+        self._serde = PydanticSerde()
         self._storage_strategy = storage_strategy
         self._event_registry = event_registry
         self._publisher = publisher
