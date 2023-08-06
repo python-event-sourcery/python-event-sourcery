@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from event_sourcery.event_store import EventStore, EventStoreFactoryCallable
 from event_sourcery_esdb import ESDBStoreFactory
 from event_sourcery_sqlalchemy import SQLStoreFactory
+from tests.mark import xfail_if_not_implemented_yet
 
 
 class DeclarativeBase(Protocol):
@@ -52,16 +53,20 @@ def sql_factory(
 
 @pytest.fixture()
 def sqlite_factory(
+    request: pytest.FixtureRequest,
     declarative_base: DeclarativeBase,
 ) -> Generator[SQLStoreFactory, None, None]:
+    xfail_if_not_implemented_yet(request, "sqlite")
     with sql_factory("sqlite:///:memory:", declarative_base) as factory:
         yield factory
 
 
 @pytest.fixture()
 def postgres_factory(
+    request: pytest.FixtureRequest,
     declarative_base: DeclarativeBase,
 ) -> Generator[SQLStoreFactory, None, None]:
+    xfail_if_not_implemented_yet(request, "postgres")
     url = "postgresql://es:es@localhost:5432/es"
     with sql_factory(url, declarative_base) as factory:
         yield factory
@@ -87,6 +92,7 @@ def esdb_factory(
         reason = skip_esdb.kwargs.get("reason", "")
         pytest.skip(f"Skipping ESDB tests: {reason}")
 
+    xfail_if_not_implemented_yet(request, "esdb")
     return ESDBStoreFactory(esdb)
 
 
