@@ -25,7 +25,7 @@ def test_can_append_and_load_with_category(
     assert events[0].event == an_event
 
 
-@pytest.mark.not_implemented(storage=["esdb", "sqlite", "postgres"])
+@pytest.mark.not_implemented(storage=["sqlite", "postgres"])
 @pytest.mark.parametrize(
     ["stream_1", "stream_2"],
     [
@@ -56,7 +56,7 @@ def test_different_streams_when_same_name_but_different_category(
     assert events_1 != events_2
 
 
-@pytest.mark.not_implemented(storage=["esdb", "sqlite", "postgres"])
+@pytest.mark.not_implemented(storage=["sqlite", "postgres"])
 def test_removes_stream_with_category(event_store: EventStore) -> None:
     stream_1 = StreamId(name="name", category="c1")
     stream_2 = StreamId(name="name", category="c2")

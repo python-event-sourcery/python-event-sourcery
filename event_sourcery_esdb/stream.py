@@ -17,13 +17,24 @@ class Name(UserString):
             raise ValueError
 
         self.uuid = stream_id or self._get_id(stream_name or "")
-        super().__init__(self.uuid.hex)
+        super().__init__(self._as_string(self.uuid))
 
     @staticmethod
     def _get_id(from_name: str) -> StreamId:
+        category: str | None = None
         if from_name.endswith("-snapshot"):
             from_name, _ = from_name.rsplit("-", 1)
-        return StreamId(from_hex=from_name)
+        if "-" in from_name:
+            category, from_name = from_name.split("-", 1)
+        return StreamId(from_hex=from_name, category=category)
+
+    @staticmethod
+    def _as_string(stream_id: StreamId) -> str:
+        if stream_id.category:
+            if "-" in stream_id.category:
+                raise ValueError("Category can't contain '-'")
+            return f"{stream_id.category}-{stream_id.hex}"
+        return stream_id.hex
 
     @property
     def metadata(self) -> str:
