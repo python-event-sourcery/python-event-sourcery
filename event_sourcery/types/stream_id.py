@@ -8,6 +8,7 @@ class StreamId(UUID):
 
     uuid: InitVar[UUID | None] = None
     name: str | None = None
+    category: str | None = None
     from_hex: InitVar[str | None] = None
 
     def __post_init__(self, uuid: UUID | None, from_hex: str | None) -> None:
