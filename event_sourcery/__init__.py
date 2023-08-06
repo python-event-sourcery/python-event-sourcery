@@ -12,6 +12,7 @@ __all__ = [
     "Projector",
     "Subscription",
     "StreamId",
+    "StreamUUID",
 ]
 
 from sqlalchemy.orm import Session
@@ -26,7 +27,7 @@ from event_sourcery.outbox import Outbox
 from event_sourcery.projector import Projector
 from event_sourcery.repository import Repository
 from event_sourcery.subscription import Subscription
-from event_sourcery.types.stream_id import StreamId
+from event_sourcery.types.stream_id import StreamId, StreamUUID
 from event_sourcery.versioning import NO_VERSIONING
 from event_sourcery_sqlalchemy.models import configure_models
 from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageStrategy

@@ -3,12 +3,11 @@ from uuid import UUID, uuid5
 
 
 @dataclass(frozen=True, repr=False, eq=False)
-class StreamId(UUID):
+class StreamUUID(UUID):
     NAMESPACE = UUID("3a24a3ee-d33d-4266-93ab-7d8e256a6d44")
 
     uuid: InitVar[UUID | None] = None
     name: str | None = None
-    category: str | None = None
     from_hex: InitVar[str | None] = None
 
     def __post_init__(self, uuid: UUID | None, from_hex: str | None) -> None:
@@ -26,3 +25,14 @@ class StreamId(UUID):
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}" f"(hex={self!s}, name={self.name})"
+
+
+@dataclass(frozen=True, repr=False, eq=False)
+class StreamId(StreamUUID):
+    category: str | None = None
+
+    def __repr__(self) -> str:
+        return (
+            f"{type(self).__name__}"
+            f"(hex={self!s}, name={self.name}, category={self.category})"
+        )

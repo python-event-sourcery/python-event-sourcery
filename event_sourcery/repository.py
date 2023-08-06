@@ -5,7 +5,7 @@ from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.base_event import Event
 from event_sourcery.interfaces.event import Metadata
-from event_sourcery.types.stream_id import StreamId
+from event_sourcery.types.stream_id import StreamId, StreamUUID
 
 TAggregate = TypeVar("TAggregate", bound=Aggregate)
 
@@ -20,9 +20,10 @@ class Repository(Generic[TAggregate]):
     @contextmanager
     def aggregate(
         self,
-        stream_id: StreamId,
+        uuid: StreamUUID,
         aggregate: TAggregate,
     ) -> Iterator[TAggregate]:
+        stream_id = StreamId(uuid=uuid, name=uuid.name, category=aggregate.category)
         old_version = self._load(stream_id, aggregate)
         yield aggregate
         self._save(aggregate, old_version, stream_id)

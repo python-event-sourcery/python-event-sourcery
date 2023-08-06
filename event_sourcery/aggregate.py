@@ -1,10 +1,12 @@
 from contextlib import contextmanager
-from typing import Iterator
+from typing import ClassVar, Iterator
 
 from event_sourcery.interfaces.base_event import Event
 
 
 class Aggregate:
+    category: ClassVar[str]
+
     def __init__(self) -> None:
         self.__changes: list[Event] = []
 
