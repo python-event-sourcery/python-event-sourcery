@@ -16,7 +16,14 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.ext.hybrid import Comparator, hybrid_property
-from sqlalchemy.orm import Composite, Mapped, mapped_column, registry, relationship
+from sqlalchemy.orm import (
+    Composite,
+    InstrumentedAttribute,
+    Mapped,
+    mapped_column,
+    registry,
+    relationship,
+)
 
 from event_sourcery import StreamId
 from event_sourcery_sqlalchemy.guid import GUID
@@ -29,10 +36,15 @@ def configure_models(base: Type) -> None:
 
 
 class StreamIdComparator(Comparator[StreamId]):
-    def __init__(self, uuid: Column, name: Column, category: Column) -> None:
+    def __init__(
+        self,
+        uuid: InstrumentedAttribute,
+        name: InstrumentedAttribute,
+        category: InstrumentedAttribute,
+    ) -> None:
         super().__init__(Composite(uuid, name, category))
 
-    def __eq__(self, other: Any) -> ColumnElement[bool]:
+    def __eq__(self, other: Any) -> ColumnElement[bool]:  # type: ignore[override]
         uuid, name, category = cast(Composite, self.__clause_element__()).attrs
         same_stream_id = cast(
             ColumnElement[Type[bool]],
@@ -54,21 +66,20 @@ class Stream:
     name = mapped_column(String(255), nullable=True, default=None)
     category = mapped_column(String(255), nullable=False, default="")
     version = mapped_column(BigInteger(), nullable=True)
-    stream_id: Mapped[StreamId]
 
     @hybrid_property
     def stream_id(self) -> StreamId:
         return StreamId(self.uuid, self.name, category=self.category or None)
 
-    @stream_id.setter
-    def stream_id(self, value: StreamId) -> None:
+    @stream_id.inplace.setter
+    def _stream_id_setter(self, value: StreamId) -> None:
         self.uuid = value
         self.name = value.name
         self.category = value.category or ""
 
-    @stream_id.comparator
+    @stream_id.inplace.comparator
     @classmethod
-    def stream_id(cls) -> StreamIdComparator:
+    def _stream_id_comparator(cls) -> StreamIdComparator:
         return StreamIdComparator(cls.uuid, cls.name, cls.category)
 
 
