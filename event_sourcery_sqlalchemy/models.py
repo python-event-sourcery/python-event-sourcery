@@ -12,6 +12,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
     and_,
+    true,
 )
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.ext.hybrid import Comparator, hybrid_property
@@ -45,12 +46,12 @@ class StreamIdComparator(Comparator[StreamId]):
 
     def __eq__(self, other: Any) -> ColumnElement[bool]:  # type: ignore[override]
         uuid, name, category = cast(Composite, self.__clause_element__()).attrs
-        same_stream_id = cast(
-            ColumnElement[Type[bool]],
-            name == other.name if other.name else uuid == other,
+        same_uuid = cast(ColumnElement[bool], uuid == other)
+        same_name = cast(
+            ColumnElement[bool], name == other.name if other.name else true()
         )
         same_category = cast(ColumnElement[bool], category == (other.category or ""))
-        return and_(same_stream_id, same_category)
+        return and_(same_uuid, same_name, same_category)
 
 
 class Stream:
