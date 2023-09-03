@@ -1,12 +1,9 @@
-from __future__ import annotations
-
 from datetime import datetime
 from typing import Any, Type, cast
 from uuid import UUID
 
 from sqlalchemy import (
     BigInteger,
-    Column,
     ColumnElement,
     DateTime,
     ForeignKey,
@@ -73,6 +70,9 @@ class Stream:
     category = mapped_column(String(255), nullable=False, default="")
     version = mapped_column(BigInteger(), nullable=True)
 
+    events: Mapped[list["Event"]]
+    snapshots: Mapped[list["Snapshot"]]
+
     @hybrid_property
     def stream_id(self) -> StreamId:
         return StreamId(self.uuid, self.name, category=self.category or None)
@@ -126,7 +126,7 @@ class Event:
         nullable=False,
         index=True,
     )
-    stream = relationship(Stream, backref="events")
+    stream: Mapped[Stream] = relationship(Stream, back_populates="events")
     stream_id: AssociationProxy[StreamId] = association_proxy("stream", "stream_id")
     name = mapped_column(String(200), nullable=False)
     data = mapped_column(JSONB(), nullable=False)
@@ -162,7 +162,7 @@ class Snapshot:
         nullable=False,
         index=True,
     )
-    stream = relationship(Stream, backref="snapshots")
+    stream = relationship(Stream, back_populates="snapshots")
     stream_id: AssociationProxy[StreamId] = association_proxy("stream", "stream_id")
     name = mapped_column(String(50), nullable=False)
     data = mapped_column(JSONB(), nullable=False)
@@ -197,3 +197,7 @@ class ProjectorCursor:
     stream_id = mapped_column(GUID(), nullable=False, index=True)
     category = mapped_column(String(255), nullable=True)
     version = mapped_column(BigInteger(), nullable=False)
+
+
+Stream.events = relationship(Event, back_populates="stream")
+Stream.snapshots = relationship(Snapshot, back_populates="stream")
