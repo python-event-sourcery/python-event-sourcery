@@ -3,7 +3,7 @@ from typing import Callable, Sequence, Union
 
 from sqlalchemy import delete
 from sqlalchemy import event as sa_event
-from sqlalchemy import insert, select, update
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
@@ -31,16 +31,11 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         start: int | None = None,
         stop: int | None = None,
     ) -> list[RawEvent]:
-        events_stmt = select(EventModel).order_by(EventModel.version)
-        events_stmt = events_stmt.filter(EventModel.stream_id == stream_id)
-
-        if stream_id.name is not None:
-            stream_id_subq = (
-                select(StreamModel.uuid)
-                .filter(StreamModel.name == stream_id.name)
-                .scalar_subquery()
-            )
-            events_stmt = events_stmt.filter(EventModel.stream_id == stream_id_subq)
+        events_stmt = (
+            select(EventModel)
+            .filter_by(stream_id=stream_id)
+            .order_by(EventModel.version)
+        )
 
         if start is not None:
             events_stmt = events_stmt.filter(EventModel.version >= start)
@@ -52,7 +47,8 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         try:
             snapshot_stmt = (
                 select(SnapshotModel)
-                .filter(SnapshotModel.stream_id == stream_id)
+                .join(StreamModel)
+                .filter(StreamModel.stream_id == stream_id)
                 .order_by(SnapshotModel.created_at.desc())
                 .limit(1)
             )
@@ -90,30 +86,36 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         return raw_dict_events
 
     def ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
-        given_stream_id = stream_id
         initial_version = versioning.initial_version
 
+        model = StreamModel(stream_id=stream_id, version=initial_version)
         ensure_stream_stmt = (
             postgresql_insert(StreamModel)
             .values(
-                uuid=stream_id,
-                name=stream_id.name,
-                version=initial_version,
+                uuid=model.uuid,
+                name=model.name,
+                category=model.category,
+                version=model.version,
             )
             .on_conflict_do_nothing()
         )
         self._session.execute(ensure_stream_stmt)
         if stream_id.name is not None:
             get_stream_id_stmt = select(StreamModel.uuid).filter(
-                StreamModel.name == stream_id.name
+                StreamModel.name == stream_id.name,
+                StreamModel.category == stream_id.category,
             )
-            stream_id = StreamId(self._session.execute(get_stream_id_stmt).scalar())
-            if stream_id != given_stream_id:
+            found_stream_id = StreamId(
+                uuid=self._session.execute(get_stream_id_stmt).scalar(),
+                name=stream_id.name,
+                category=stream_id.category,
+            )
+            if found_stream_id != stream_id:
                 raise AnotherStreamWithThisNameButOtherIdExists()
 
-        stream_version, stream_name = (
-            self._session.query(StreamModel.version, StreamModel.name)
-            .filter(StreamModel.uuid == stream_id)
+        (stream_version,) = (
+            self._session.query(StreamModel.version)
+            .filter(StreamModel.stream_id == stream_id)
             .one()
         )
 
@@ -123,7 +125,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             stmt = (
                 update(StreamModel)
                 .where(
-                    StreamModel.uuid == stream_id,
+                    StreamModel.stream_id == stream_id,
                     StreamModel.version == versioning.expected_version,
                 )
                 .values(version=versioning.initial_version)
@@ -135,42 +137,47 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 raise ConcurrentStreamWriteError
 
     def insert_events(self, events: list[RawEvent]) -> None:
-        rows = []
         for event in events:
-            rows.append(
-                {
-                    "uuid": event["uuid"],
-                    "stream_id": event["stream_id"],
-                    "created_at": event["created_at"],
-                    "name": event["name"],
-                    "data": event["data"],
-                    "event_context": event["context"],
-                    "version": event["version"],
-                }
+            stream = (
+                self._session.query(StreamModel)
+                .filter_by(stream_id=event["stream_id"])
+                .one()
             )
-
-        self._session.execute(insert(EventModel), rows)
+            entry = EventModel(
+                uuid=event["uuid"],
+                created_at=event["created_at"],
+                name=event["name"],
+                data=event["data"],
+                event_context=event["context"],
+                version=event["version"],
+            )
+            stream.events.append(entry)
+        self._session.flush()
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
-        snapshot_as_dict = dict(snapshot)
-        row = {
-            "uuid": snapshot_as_dict.pop("uuid"),
-            "stream_id": snapshot_as_dict.pop("stream_id"),
-            "created_at": snapshot_as_dict.pop("created_at"),
-            "version": snapshot_as_dict.pop("version"),
-            "name": snapshot_as_dict.pop("name"),
-            "data": snapshot_as_dict["data"],
-            "event_context": snapshot_as_dict["context"],
-        }
-        self._session.execute(insert(SnapshotModel), [row])
+        entry = SnapshotModel(
+            uuid=snapshot["uuid"],
+            created_at=snapshot["created_at"],
+            version=snapshot["version"],
+            name=snapshot["name"],
+            data=snapshot["data"],
+            event_context=snapshot["context"],
+        )
+        stream = (
+            self._session.query(StreamModel)
+            .filter_by(stream_id=snapshot["stream_id"])
+            .one()
+        )
+        stream.snapshots.append(entry)
+        self._session.flush()
 
     def delete_stream(self, stream_id: StreamId) -> None:
         delete_events_stmt = delete(EventModel).where(
-            EventModel.stream_id == str(stream_id)
+            EventModel.stream_id == stream_id,
         )
         self._session.execute(delete_events_stmt)
         delete_stream_stmt = delete(StreamModel).where(
-            StreamModel.uuid == str(stream_id)
+            StreamModel.stream_id == stream_id,
         )
         self._session.execute(delete_stream_stmt)
 

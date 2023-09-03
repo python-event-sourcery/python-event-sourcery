@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery import Event, Repository, StreamId
+from event_sourcery import Event, Repository, StreamUUID
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
 from event_sourcery.exceptions import ConcurrentStreamWriteError
@@ -17,6 +17,8 @@ class TurnedOff(Event):
 
 
 class LightSwitch(Aggregate):
+    category = "light_switch"
+
     class AlreadyTurnedOn(Exception):
         pass
 
@@ -82,11 +84,11 @@ def test_light_switch_cannot_be_turned_off_twice() -> None:
 def test_light_switch_changes_are_preserved_by_repository(
     repo: Repository[LightSwitch],
 ) -> None:
-    stream_id = StreamId(uuid4())
-    with repo.aggregate(stream_id, LightSwitch()) as switch_first_incarnation:
+    uuid = StreamUUID(uuid4())
+    with repo.aggregate(uuid, LightSwitch()) as switch_first_incarnation:
         switch_first_incarnation.turn_on()
 
-    with repo.aggregate(stream_id, LightSwitch()) as switch_second_incarnation:
+    with repo.aggregate(uuid, LightSwitch()) as switch_second_incarnation:
         try:
             switch_second_incarnation.turn_on()
         except LightSwitch.AlreadyTurnedOn:
@@ -97,13 +99,13 @@ def test_light_switch_changes_are_preserved_by_repository(
 def test_repository_supports_optimistic_locking(
     repo: Repository[LightSwitch],
 ) -> None:
-    stream_id = StreamId(uuid4())
-    with repo.aggregate(stream_id, LightSwitch()) as switch_first_incarnation:
+    uuid = StreamUUID(uuid4())
+    with repo.aggregate(uuid, LightSwitch()) as switch_first_incarnation:
         switch_first_incarnation.turn_on()
 
     with pytest.raises(ConcurrentStreamWriteError):
-        with repo.aggregate(stream_id, LightSwitch()) as switch_second_incarnation:
-            with repo.aggregate(stream_id, LightSwitch()) as switch_third_incarnation:
+        with repo.aggregate(uuid, LightSwitch()) as switch_second_incarnation:
+            with repo.aggregate(uuid, LightSwitch()) as switch_third_incarnation:
                 switch_second_incarnation.turn_off()
                 switch_third_incarnation.turn_off()
 

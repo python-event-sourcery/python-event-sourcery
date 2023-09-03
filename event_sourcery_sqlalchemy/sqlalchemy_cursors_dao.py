@@ -20,7 +20,8 @@ class SqlAlchemyCursorsDao(CursorsDao):
 
             stmt = insert(ProjectorCursor).values(
                 name=name,
-                stream_id=str(stream_id),
+                stream_id=stream_id,
+                category=stream_id.category,
                 version=version,
             )
             self._session.execute(stmt)
@@ -30,7 +31,8 @@ class SqlAlchemyCursorsDao(CursorsDao):
             update(ProjectorCursor)
             .where(
                 ProjectorCursor.name == name,
-                ProjectorCursor.stream_id == str(stream_id),
+                ProjectorCursor.stream_id == stream_id,
+                ProjectorCursor.category == stream_id.category,
                 ProjectorCursor.version == version - 1,
             )
             .values({ProjectorCursor.version: version})
@@ -51,14 +53,16 @@ class SqlAlchemyCursorsDao(CursorsDao):
     def _current_version(self, name: str, stream_id: StreamId) -> int | None:
         stmt = select(ProjectorCursor.version).filter(
             ProjectorCursor.name == name,
-            ProjectorCursor.stream_id == str(stream_id),
+            ProjectorCursor.stream_id == stream_id,
+            ProjectorCursor.category == stream_id.category,
         )
         return cast(int | None, self._session.execute(stmt).scalar())
 
     def put_at(self, name: str, stream_id: StreamId, version: int) -> None:
         stmt = insert(ProjectorCursor).values(
             name=name,
-            stream_id=str(stream_id),
+            stream_id=stream_id,
+            category=stream_id.category,
             version=version,
         )
         self._session.execute(stmt)
@@ -68,7 +72,8 @@ class SqlAlchemyCursorsDao(CursorsDao):
             update(ProjectorCursor)
             .where(
                 ProjectorCursor.name == name,
-                ProjectorCursor.stream_id == str(stream_id),
+                ProjectorCursor.stream_id == stream_id,
+                ProjectorCursor.category == stream_id.category,
             )
             .values({ProjectorCursor.version: version})
         )
