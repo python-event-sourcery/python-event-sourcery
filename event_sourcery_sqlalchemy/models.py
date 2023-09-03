@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Type, cast
+from uuid import UUID
 
 from sqlalchemy import (
     BigInteger,
@@ -61,6 +63,10 @@ class Stream:
         UniqueConstraint("name", "category"),
     )
 
+    def __init__(self, stream_id: StreamId, version: int | None) -> None:
+        self.stream_id = stream_id
+        self.version = version
+
     id = mapped_column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     uuid = mapped_column(GUID(), nullable=False)
     name = mapped_column(String(255), nullable=True, default=None)
@@ -94,6 +100,22 @@ class Event:
         ),
     )
 
+    def __init__(
+        self,
+        uuid: UUID,
+        created_at: datetime,
+        name: str,
+        data: dict,
+        event_context: dict,
+        version: int | None,
+    ) -> None:
+        self.uuid = uuid
+        self.created_at = created_at
+        self.name = name
+        self.data = data
+        self.event_context = event_context
+        self.version = version
+
     id = mapped_column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     version = mapped_column(Integer(), nullable=True)
     uuid = mapped_column(GUID(), index=True, unique=True)
@@ -114,6 +136,22 @@ class Event:
 
 class Snapshot:
     __tablename__ = "event_sourcery_snapshots"
+
+    def __init__(
+        self,
+        uuid: UUID,
+        created_at: datetime,
+        name: str,
+        data: dict,
+        event_context: dict,
+        version: int | None,
+    ) -> None:
+        self.uuid = uuid
+        self.created_at = created_at
+        self.name = name
+        self.data = data
+        self.event_context = event_context
+        self.version = version
 
     uuid = mapped_column(GUID, primary_key=True)
     version = mapped_column(Integer(), nullable=False)
