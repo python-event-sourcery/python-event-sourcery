@@ -57,6 +57,7 @@ def cursors_dao(declarative_base: DeclarativeBase) -> Generator[CursorsDao, None
     declarative_base.metadata.create_all(bind=engine)
     session = Session(bind=engine)
     yield SqlAlchemyCursorsDao(session)
+    session.close()
     declarative_base.metadata.drop_all(bind=engine)
     engine.dispose()
 
