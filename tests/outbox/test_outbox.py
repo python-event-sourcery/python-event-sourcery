@@ -7,7 +7,7 @@ from esdbclient import EventStoreDBClient, StreamState
 from esdbclient.exceptions import NotFound
 
 from event_sourcery import Metadata, StreamId
-from event_sourcery.event_store import EventStore
+from event_sourcery.event_store import EventStore, EventStoreFactoryCallable
 from event_sourcery.outbox import Outbox, Publisher
 from event_sourcery_esdb.outbox import Outbox as ESDBOutbox
 from event_sourcery_esdb.stream import Position
@@ -92,3 +92,21 @@ def test_tries_to_send_up_to_three_times(
         outbox.run_once()
 
     assert len(publisher.mock_calls) == 3
+
+
+class TestFilterers:
+    @pytest.fixture()
+    def event_store(self, event_store_factory: EventStoreFactoryCallable) -> EventStore:
+        # Filterer could be simple callable that returns bool if an event should
+        # be published or not
+        filterer = lambda event: False  # noqa: E731
+        return event_store_factory()
+
+    def test_no_entries_are_published_when_filterer_filters_out_everything(
+        self, outbox: Outbox, publisher: Mock, event_store: EventStore
+    ) -> None:
+        an_event = Metadata[SomeEvent](event=SomeEvent(first_name="John"), version=1)
+        event_store.publish(an_event, stream_id=StreamId(uuid4()))
+        outbox.run_once()
+
+        assert len(publisher.mock_calls) == 0
