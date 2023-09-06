@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Generator, Protocol, cast
+from typing import Iterator, Protocol, cast
 
 import pytest
 from _pytest.fixtures import SubRequest
@@ -8,9 +8,11 @@ from sqlalchemy import MetaData, create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
+from event_sourcery.dummy_outbox_filterer_strategy import dummy_filterer
 from event_sourcery.event_store import EventStore, EventStoreFactoryCallable
-from event_sourcery_esdb import ESDBStoreFactory
-from event_sourcery_sqlalchemy import SQLStoreFactory
+from event_sourcery.interfaces.outbox_filterer_strategy import OutboxFiltererStrategy
+from event_sourcery_esdb import ESDBOutboxStorageStrategy, ESDBStoreFactory
+from event_sourcery_sqlalchemy import SqlAlchemyOutboxStorageStrategy, SQLStoreFactory
 from tests.mark import xfail_if_not_implemented_yet
 
 
@@ -34,46 +36,58 @@ def declarative_base() -> DeclarativeBase:
 
 
 @contextmanager
-def sql_factory(
+def sql_session(
     url: str,
     declarative_base: DeclarativeBase,
-) -> Generator[SQLStoreFactory, None, None]:
+) -> Iterator[Session]:
     engine = create_engine(url, future=True)
     try:
         declarative_base.metadata.create_all(bind=engine)
     except OperationalError:
         pytest.skip(f"{engine.url.drivername} test database not available, skipping")
     else:
-        session = Session(bind=engine)
-        yield SQLStoreFactory(lambda: session)
-        session.close()
+        with Session(bind=engine) as session:
+            yield session
+
         declarative_base.metadata.drop_all(bind=engine)
         engine.dispose()
 
 
 @pytest.fixture()
-def sqlite_factory(
-    request: pytest.FixtureRequest,
-    declarative_base: DeclarativeBase,
-) -> Generator[SQLStoreFactory, None, None]:
+def sqlite_session(
+    request: pytest.FixtureRequest, declarative_base: DeclarativeBase
+) -> Iterator[Session]:
     xfail_if_not_implemented_yet(request, "sqlite")
-    with sql_factory("sqlite:///:memory:", declarative_base) as factory:
-        yield factory
+    with sql_session("sqlite:///:memory:", declarative_base) as session:
+        yield session
+
+
+@pytest.fixture()
+def sqlite_factory(
+    sqlite_session: Session,
+) -> SQLStoreFactory:
+    return SQLStoreFactory(lambda: sqlite_session)
+
+
+@pytest.fixture()
+def postgres_session(
+    request: pytest.FixtureRequest, declarative_base: DeclarativeBase
+) -> Iterator[Session]:
+    xfail_if_not_implemented_yet(request, "sqlite")
+    url = "postgresql://es:es@localhost:5432/es"
+    with sql_session(url, declarative_base) as session:
+        yield session
 
 
 @pytest.fixture()
 def postgres_factory(
-    request: pytest.FixtureRequest,
-    declarative_base: DeclarativeBase,
-) -> Generator[SQLStoreFactory, None, None]:
-    xfail_if_not_implemented_yet(request, "postgres")
-    url = "postgresql://es:es@localhost:5432/es"
-    with sql_factory(url, declarative_base) as factory:
-        yield factory
+    postgres_session: Session,
+) -> SQLStoreFactory:
+    return SQLStoreFactory(lambda: postgres_session)
 
 
 @pytest.fixture()
-def esdb() -> Generator[EventStoreDBClient, None, None]:
+def esdb() -> Iterator[EventStoreDBClient]:
     client = EventStoreDBClient(uri="esdb://localhost:2113?Tls=false")
     commit_position = client.get_commit_position()
     yield client
@@ -94,6 +108,32 @@ def esdb_factory(
 
     xfail_if_not_implemented_yet(request, "esdb")
     return ESDBStoreFactory(esdb)
+
+
+@pytest.fixture()
+def filterer() -> OutboxFiltererStrategy:
+    return dummy_filterer
+
+
+@pytest.fixture()
+def sqlite_outbox_storage_strategy(
+    sqlite_session: Session, filterer: OutboxFiltererStrategy
+) -> SqlAlchemyOutboxStorageStrategy:
+    return SqlAlchemyOutboxStorageStrategy(sqlite_session, filterer)
+
+
+@pytest.fixture()
+def postgres_outbox_storage_strategy(
+    postgres_session: Session, filterer: OutboxFiltererStrategy
+) -> SqlAlchemyOutboxStorageStrategy:
+    return SqlAlchemyOutboxStorageStrategy(postgres_session, filterer)
+
+
+@pytest.fixture()
+def esdb_outbox_storage_strategy(
+    esdb: EventStoreDBClient, filterer: OutboxFiltererStrategy
+) -> ESDBOutboxStorageStrategy:
+    return ESDBOutboxStorageStrategy(esdb, filterer)
 
 
 @pytest.fixture(params=["esdb_factory", "sqlite_factory", "postgres_factory"])

@@ -6,6 +6,7 @@ from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
 from event_sourcery.dto import RawEvent
+from event_sourcery.interfaces.outbox_filterer_strategy import OutboxFiltererStrategy
 from event_sourcery.interfaces.outbox_storage_strategy import (
     EntryId,
     OutboxStorageStrategy,
@@ -17,6 +18,7 @@ from event_sourcery_sqlalchemy.models import OutboxEntry
 @dataclass(repr=False)
 class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
     _session: Session
+    _filterer: OutboxFiltererStrategy
 
     def put_into_outbox(self, events: list[RawEvent]) -> None:
         rows = []
@@ -56,6 +58,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
                 ),
             )
             for entry in entries
+            if self._filterer(entry.data)
         )
 
     def decrease_tries_left(self, entry_id: EntryId) -> None:

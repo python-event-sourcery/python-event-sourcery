@@ -3,11 +3,13 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
+from _pytest.fixtures import SubRequest
 from esdbclient import EventStoreDBClient, StreamState
 from esdbclient.exceptions import NotFound
 
-from event_sourcery import Metadata, StreamId
+from event_sourcery import Metadata, OutboxStorageStrategy, StreamId
 from event_sourcery.event_store import EventStore, EventStoreFactoryCallable
+from event_sourcery.interfaces.outbox_filterer_strategy import OutboxFiltererStrategy
 from event_sourcery.outbox import Outbox, Publisher
 from event_sourcery_esdb.outbox import Outbox as ESDBOutbox
 from event_sourcery_esdb.stream import Position
@@ -94,15 +96,30 @@ def test_tries_to_send_up_to_three_times(
     assert len(publisher.mock_calls) == 3
 
 
-class TestFilterers:
+class TestFiltererWhichFiltersOutEverything:
     @pytest.fixture()
-    def event_store(self, event_store_factory: EventStoreFactoryCallable) -> EventStore:
-        # Filterer could be simple callable that returns bool if an event should
-        # be published or not
-        filterer = lambda event: False  # noqa: E731
-        return event_store_factory()
+    def filterer(self) -> OutboxFiltererStrategy:
+        return lambda event: False
 
-    def test_no_entries_are_published_when_filterer_filters_out_everything(
+    @pytest.fixture(
+        params=[
+            ("esdb_factory", "esdb_outbox_storage_strategy"),
+            ("sqlite_factory", "sqlite_outbox_storage_strategy"),
+            ("postgres_factory", "postgres_outbox_storage_strategy"),
+        ]
+    )
+    def event_store(self, request: SubRequest) -> EventStore:
+        event_store_factory_fixture, outbox_stategy_fixture = request.param
+        event_store_factory: EventStoreFactoryCallable = request.getfixturevalue(
+            event_store_factory_fixture
+        )
+        outbox_stategy: OutboxStorageStrategy = request.getfixturevalue(
+            outbox_stategy_fixture
+        )
+
+        return event_store_factory(outbox_storage_strategy=outbox_stategy)
+
+    def test_no_entries_are_published(
         self, outbox: Outbox, publisher: Mock, event_store: EventStore
     ) -> None:
         an_event = Metadata[SomeEvent](event=SomeEvent(first_name="John"), version=1)

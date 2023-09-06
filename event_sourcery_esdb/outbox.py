@@ -9,6 +9,7 @@ from esdbclient.exceptions import NotFound
 
 from event_sourcery import StreamId
 from event_sourcery.dto import RawEvent
+from event_sourcery.interfaces.outbox_filterer_strategy import OutboxFiltererStrategy
 from event_sourcery.interfaces.outbox_storage_strategy import (
     EntryId,
     OutboxStorageStrategy,
@@ -141,6 +142,7 @@ class Outbox:
 class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     MAX_EVENTS_BEFORE_SNAPSHOT = 2
     _client: EventStoreDBClient
+    _filterer: OutboxFiltererStrategy
 
     def put_into_outbox(self, events: list[RawEvent]) -> None:
         ...
@@ -153,11 +155,12 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
             return (
                 (
                     cast(int, entry.commit_position),
-                    dto.raw_event(entry),
+                    raw_event,
                     stream.Name(stream_name=entry.stream_name).uuid,
                 )
                 for entry in events
                 if outbox.should_emit(entry.commit_position)
+                and self._filterer(raw_event := dto.raw_event(entry))
             )
 
     def decrease_tries_left(self, entry_id: EntryId) -> None:
