@@ -101,7 +101,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         if stream_id.name is not None:
             get_stream_id_stmt = select(StreamModel.uuid).filter(
                 StreamModel.name == stream_id.name,
-                StreamModel.category == stream_id.category,
+                StreamModel.category == (stream_id.category or ""),
             )
             found_stream_id = StreamId(
                 uuid=self._session.execute(get_stream_id_stmt).scalar(),
