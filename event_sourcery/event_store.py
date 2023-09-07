@@ -102,20 +102,6 @@ class EventStore:
         )
         self._outbox_storage_strategy.put_into_outbox(serialized_events)
 
-    @publish.register
-    def _publish_events(
-        self,
-        *events: Event,
-        stream_id: StreamId | None = None,
-        expected_version: int | Versioning = 0,
-    ) -> None:
-        wrapped_events = self._wrap_events(expected_version, events)
-        self.publish(
-            *wrapped_events,
-            stream_id=stream_id,
-            expected_version=expected_version,
-        )
-
     def _append(
         self,
         stream_id: StreamId,
