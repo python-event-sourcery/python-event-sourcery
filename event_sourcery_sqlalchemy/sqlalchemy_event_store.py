@@ -1,9 +1,7 @@
 from dataclasses import dataclass
-from typing import Callable, Sequence, Union
+from typing import Sequence, Union
 
-from sqlalchemy import delete
-from sqlalchemy import event as sa_event
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
@@ -180,6 +178,3 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             StreamModel.stream_id == stream_id,
         )
         self._session.execute(delete_stream_stmt)
-
-    def run_after_commit(self, callback: Callable[[], None]) -> None:
-        sa_event.listen(self._session, "after_commit", lambda _session: callback())
