@@ -55,6 +55,8 @@ exclude_lines = [
     "pragma: no cover",
     "pass",
     "NotImplementedError",
+    "__repr__",
+    "__str__",
 ]
 
 [build-system]
