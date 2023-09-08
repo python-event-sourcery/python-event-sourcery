@@ -2,6 +2,7 @@ import sys
 from collections import UserString
 from typing import Tuple, cast
 
+from event_sourcery.exceptions import IllegalCategoryName
 from event_sourcery.types import StreamId
 
 
@@ -32,7 +33,7 @@ class Name(UserString):
     def _as_string(stream_id: StreamId) -> str:
         if stream_id.category:
             if "-" in stream_id.category:
-                raise ValueError("Category can't contain '-'")
+                raise IllegalCategoryName("ESDB storage can't handle category with '-'")
             return f"{stream_id.category}-{stream_id.hex}"
         return stream_id.hex
 

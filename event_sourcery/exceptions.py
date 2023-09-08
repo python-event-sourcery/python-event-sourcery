@@ -28,3 +28,7 @@ class ExpectedVersionUsedOnVersionlessStream(VersioningMismatch):
 
 class NoExpectedVersionGivenOnVersionedStream(VersioningMismatch):
     pass
+
+
+class IllegalCategoryName(ValueError):
+    pass
