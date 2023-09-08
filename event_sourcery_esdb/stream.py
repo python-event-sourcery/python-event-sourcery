@@ -14,10 +14,7 @@ class Name(UserString):
         stream_id: StreamId | None = None,
         stream_name: str | None = None,
     ) -> None:
-        if stream_id is None and stream_name is None:
-            raise ValueError
-
-        self.uuid = stream_id or self._get_id(stream_name or "")
+        self.uuid = stream_id or self._get_id(from_name=(stream_name or ""))
         super().__init__(self._as_string(self.uuid))
 
     @staticmethod
