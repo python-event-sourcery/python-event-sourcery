@@ -57,6 +57,7 @@ exclude_lines = [
     "NotImplementedError",
     "__repr__",
     "__str__",
+    "TYPE_CHECKING",
 ]
 
 [build-system]
