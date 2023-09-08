@@ -1,5 +1,12 @@
 from dataclasses import InitVar, dataclass
-from uuid import UUID, uuid5
+from uuid import UUID, uuid4, uuid5
+
+
+@dataclass
+class IncompatibleUuidAndName(Exception):
+    received: UUID
+    expected: UUID
+    name: str
 
 
 @dataclass(frozen=True, repr=False, eq=False)
@@ -14,14 +21,17 @@ class StreamUUID(UUID):
         if uuid is not None:
             super().__init__(bytes=uuid.bytes)
         elif self.name is not None:
-            super().__init__(bytes=uuid5(self.NAMESPACE, self.name).bytes)
+            super().__init__(bytes=self._from_name(self.name).bytes)
         elif from_hex is not None:
             super().__init__(hex=from_hex)
         else:
-            raise ValueError
+            super().__init__(bytes=uuid4().bytes)
 
-        if self.name and uuid5(self.NAMESPACE, self.name) != self:
-            raise ValueError(f"Not compatible name '{self.name}' and uuid '{self.hex}'")
+        if self.name and (expected := self._from_name(self.name)) != self:
+            raise IncompatibleUuidAndName(self, expected, self.name)
+
+    def _from_name(self, name: str) -> UUID:
+        return uuid5(self.NAMESPACE, name)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}" f"(hex={self!s}, name={self.name})"
