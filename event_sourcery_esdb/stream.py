@@ -35,10 +35,6 @@ class Name(UserString):
         return stream_id.hex
 
     @property
-    def metadata(self) -> str:
-        return f"$${self!s}"
-
-    @property
     def snapshot(self) -> str:
         return f"{self!s}-snapshot"
 
