@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery import Event, Repository, StreamUUID
+from event_sourcery import Event, Repository, StreamId, StreamUUID
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
 from event_sourcery.exceptions import ConcurrentStreamWriteError
@@ -94,6 +94,18 @@ def test_light_switch_changes_are_preserved_by_repository(
         except LightSwitch.AlreadyTurnedOn:
             # o mon Dieu, I made a mistake!
             switch_second_incarnation.turn_off()
+
+
+def test_nothing_when_no_changes_on_aggregate(
+    repo: Repository[LightSwitch],
+    event_store: EventStore,
+) -> None:
+    uuid = StreamUUID()
+    with repo.aggregate(uuid, LightSwitch()):
+        pass
+
+    stream = event_store.load_stream(StreamId(uuid, category=LightSwitch.category))
+    assert list(stream) == []
 
 
 def test_repository_supports_optimistic_locking(
