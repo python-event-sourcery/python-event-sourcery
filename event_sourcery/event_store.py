@@ -88,7 +88,6 @@ class EventStore:
     ) -> Sequence[Metadata]:
         return [Metadata.wrap(event=event, version=None) for event in events]
 
-    @singledispatchmethod
     def publish(
         self,
         *events: Metadata,
