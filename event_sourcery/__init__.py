@@ -18,6 +18,7 @@ __all__ = [
 from sqlalchemy.orm import Session
 
 from event_sourcery.aggregate import Aggregate
+from event_sourcery.dummy_outbox_filterer_strategy import dummy_filterer
 from event_sourcery.dummy_outbox_storage_strategy import DummyOutboxStorageStrategy
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.base_event import Event
@@ -40,7 +41,7 @@ def get_event_store(
 ) -> EventStore:
     outbox_storage: OutboxStorageStrategy
     if with_outbox:
-        outbox_storage = SqlAlchemyOutboxStorageStrategy(session)
+        outbox_storage = SqlAlchemyOutboxStorageStrategy(session, dummy_filterer)
     else:
         outbox_storage = DummyOutboxStorageStrategy()
 
