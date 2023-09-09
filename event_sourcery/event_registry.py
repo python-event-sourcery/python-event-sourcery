@@ -9,9 +9,13 @@ class ClassModuleUnavailable(Exception):
     pass
 
 
+class DuplicatedEvent(Exception):
+    pass
+
+
 def event_name(cls: Type) -> str:
     event_module = inspect.getmodule(cls)
-    if event_module is None:
+    if event_module is None:  # pragma: no cover
         raise ClassModuleUnavailable
     return f"{event_module.__name__}.{cls.__qualname__}"
 
@@ -23,11 +27,11 @@ class EventRegistry:
 
     def add(self, event: Type["Event"]) -> Type["Event"]:
         if event in self._types_to_names:
-            raise Exception(f"Duplicated Event detected! {event}")
+            raise DuplicatedEvent(f"Duplicated Event detected! {event}")
 
         name = event_name(event)
         if name in self._names_to_types:
-            raise Exception(f"Duplicated Event name detected! {name}")
+            raise DuplicatedEvent(f"Duplicated Event name detected! {name}")
 
         self._types_to_names[event] = name
         self._names_to_types[name] = event

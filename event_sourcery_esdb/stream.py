@@ -2,6 +2,7 @@ import sys
 from collections import UserString
 from typing import Tuple, cast
 
+from event_sourcery.exceptions import IllegalCategoryName
 from event_sourcery.types import StreamId
 
 
@@ -13,10 +14,7 @@ class Name(UserString):
         stream_id: StreamId | None = None,
         stream_name: str | None = None,
     ) -> None:
-        if stream_id is None and stream_name is None:
-            raise ValueError
-
-        self.uuid = stream_id or self._get_id(stream_name or "")
+        self.uuid = stream_id or self._get_id(from_name=(stream_name or ""))
         super().__init__(self._as_string(self.uuid))
 
     @staticmethod
@@ -32,13 +30,9 @@ class Name(UserString):
     def _as_string(stream_id: StreamId) -> str:
         if stream_id.category:
             if "-" in stream_id.category:
-                raise ValueError("Category can't contain '-'")
+                raise IllegalCategoryName("ESDB storage can't handle category with '-'")
             return f"{stream_id.category}-{stream_id.hex}"
         return stream_id.hex
-
-    @property
-    def metadata(self) -> str:
-        return f"$${self!s}"
 
     @property
     def snapshot(self) -> str:
@@ -46,21 +40,11 @@ class Name(UserString):
 
 
 class Position(int):
-    def __new__(cls, value: int | str | None) -> "Position | None":  # type: ignore
-        if value is None:
-            return None
+    def __new__(cls, value: int | str) -> "Position":
         return super().__new__(Position, value)
 
     @classmethod
-    def as_previous(cls, to_version: int) -> "Position | None":
-        previous_version = to_version - 1
-        return cls.from_version(previous_version)
-
-    @classmethod
-    def from_version(cls, version: int) -> "Position | None":
-        assert version >= 0
-        if version == 0:
-            return None
+    def from_version(cls, version: int) -> "Position":
         return Position(version - 1)
 
     def as_version(self) -> int:

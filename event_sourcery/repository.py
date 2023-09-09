@@ -43,13 +43,18 @@ class Repository(Generic[TAggregate]):
         old_version: int,
         stream_id: StreamId,
     ) -> None:
-        with aggregate.__persisting_changes__() as events:
+        with aggregate.__persisting_changes__() as pending:
             start_from = old_version + 1
+            events = [
+                Metadata.wrap(event, version)
+                for version, event in enumerate(pending, start=start_from)
+            ]
+
+            if not events:
+                return
+
             self._event_store.publish(
-                *[
-                    Metadata.wrap(event, version)
-                    for version, event in enumerate(events, start=start_from)
-                ],
+                *events,
                 stream_id=stream_id,
                 expected_version=old_version,
             )

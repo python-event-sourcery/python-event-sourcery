@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, cast
+from typing import cast
 
 from esdbclient import EventStoreDBClient, StreamState
 from esdbclient.exceptions import NotFound
@@ -94,6 +94,3 @@ class ESDBStorageStrategy(StorageStrategy):
     def delete_stream(self, stream_id: StreamId) -> None:
         name = stream.Name(stream_id)
         self._client.delete_stream(str(name), StreamState.ANY)
-
-    def run_after_commit(self, callback: Callable[[], None]) -> None:
-        ...

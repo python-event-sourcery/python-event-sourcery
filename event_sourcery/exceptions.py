@@ -2,10 +2,6 @@ class EventStoreException(Exception):
     pass
 
 
-class NoEventsToAppend(EventStoreException):
-    pass
-
-
 class ConcurrentStreamWriteError(EventStoreException):
     pass
 
@@ -27,4 +23,8 @@ class ExpectedVersionUsedOnVersionlessStream(VersioningMismatch):
 
 
 class NoExpectedVersionGivenOnVersionedStream(VersioningMismatch):
+    pass
+
+
+class IllegalCategoryName(ValueError):
     pass
