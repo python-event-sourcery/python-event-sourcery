@@ -73,7 +73,7 @@ def sqlite_factory(
 def postgres_session(
     request: pytest.FixtureRequest, declarative_base: DeclarativeBase
 ) -> Iterator[Session]:
-    xfail_if_not_implemented_yet(request, "sqlite")
+    xfail_if_not_implemented_yet(request, "postgres")
     url = "postgresql://es:es@localhost:5432/es"
     with sql_session(url, declarative_base) as session:
         yield session
