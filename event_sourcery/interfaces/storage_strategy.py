@@ -1,4 +1,5 @@
 import abc
+from typing import Iterator
 
 from event_sourcery.dto import RawEvent
 from event_sourcery.types import StreamId
@@ -29,4 +30,8 @@ class StorageStrategy(abc.ABC):
 
     @abc.abstractmethod
     def delete_stream(self, stream_id: StreamId) -> None:
+        pass
+
+    @abc.abstractmethod
+    def iter(self, batch_size: int = 100) -> Iterator[RawEvent]:
         pass

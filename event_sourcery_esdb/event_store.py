@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import cast
+from typing import Iterator, cast
 
 from esdbclient import EventStoreDBClient, StreamState
 from esdbclient.exceptions import NotFound
@@ -94,3 +94,6 @@ class ESDBStorageStrategy(StorageStrategy):
     def delete_stream(self, stream_id: StreamId) -> None:
         name = stream.Name(stream_id)
         self._client.delete_stream(str(name), StreamState.ANY)
+
+    def iter(self, batch_size: int = 100) -> Iterator[RawEvent]:
+        return iter([])

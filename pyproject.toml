@@ -35,6 +35,9 @@ import-linter = "*"
 kombu = ["kombu"]
 cloudevents = ["cloudevents"]
 
+[tool.poetry.group.dev.dependencies]
+factory-boy = "^3.3.0"
+
 [tool.pytest]
 addopts = ""
 

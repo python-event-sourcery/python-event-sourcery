@@ -1,6 +1,8 @@
 from datetime import date, datetime
 from uuid import UUID
 
+import factory
+
 from event_sourcery import Event
 
 
@@ -17,3 +19,10 @@ class NastyEventWithJsonUnfriendlyTypes(Event):
     a_datetime: datetime
     second_datetime: datetime
     a_date: date
+
+
+class SomeEventFactory(factory.Factory):
+    class Meta:
+        model = SomeEvent
+
+    first_name = factory.Faker("first_name")

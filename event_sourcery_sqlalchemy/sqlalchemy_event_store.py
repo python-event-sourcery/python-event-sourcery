@@ -1,5 +1,6 @@
+import time
 from dataclasses import dataclass
-from typing import Sequence, Union
+from typing import Iterator, Sequence, Union
 
 from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
@@ -69,19 +70,19 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         if not events:
             return []
 
-        raw_dict_events = [
-            RawEvent(
-                uuid=event.uuid,
-                stream_id=event.stream_id,
-                created_at=event.created_at,
-                version=event.version,
-                name=event.name,
-                data=event.data,
-                context=event.event_context,
-            )
-            for event in events
-        ]
+        raw_dict_events = [self._model_to_raw_event(event) for event in events]
         return raw_dict_events
+
+    def _model_to_raw_event(self, event: EventModel | SnapshotModel) -> RawEvent:
+        return RawEvent(
+            uuid=event.uuid,
+            stream_id=event.stream_id,
+            created_at=event.created_at,
+            version=event.version,
+            name=event.name,
+            data=event.data,
+            context=event.event_context,
+        )
 
     def ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         initial_version = versioning.initial_version
@@ -178,3 +179,48 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             StreamModel.stream_id == stream_id,
         )
         self._session.execute(delete_stream_stmt)
+
+    def iter(self, batch_size: int = 100) -> Iterator[RawEvent]:
+        # Gap detection in MartenDB:
+        # https://jeremydmiller.com/2016/08/31/building-martens-async-daemon/
+        # 1. Fetch events created no later than 3 seconds ago (configurable)
+        # 2. After fetching a batch, check if there are any gaps
+        #    If there are no gaps, simply continue.
+        #    If there are gaps:
+        #       - wait a little bit, say 3 seconds (configurable)
+        #       - try again.
+
+        def has_gaps(events: Sequence[EventModel]) -> bool:
+            if len(events) == 1:
+                return False
+
+            return any(
+                events[i].id != events[i - 1].id + 1 for i in range(1, len(events))
+            )
+
+        def fetch_batch(start_from: int) -> Sequence[EventModel]:
+            # TODO: fetch only events persisted no later than 3 seconds ago
+            stmt = (
+                select(EventModel)
+                .filter(EventModel.id > start_from)
+                .order_by(EventModel.id)
+                .limit(batch_size)
+            )
+            return self._session.execute(stmt).scalars().all()
+
+        last_id = -1
+        while True:
+            batch = fetch_batch(last_id)
+            if not batch:
+                # sleep, then continue in infinite iterator
+                # perhaps it's applicable only for background daemon?
+                break
+
+            if has_gaps(batch):
+                time.sleep(3)
+                batch = fetch_batch(last_id)
+
+            for event in batch:
+                yield self._model_to_raw_event(event)
+
+            last_id = batch[-1].id

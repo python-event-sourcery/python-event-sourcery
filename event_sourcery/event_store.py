@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Sequence, TypeVar, cast
+from typing import Iterator, Sequence, TypeVar, cast
 
 from event_sourcery.dto import RawEvent
 from event_sourcery.event_registry import EventRegistry
@@ -160,3 +160,10 @@ class EventStore:
             )
             for event in events
         ]
+
+    def iter(self, batch_size: int = 100) -> Iterator[Metadata]:
+        for raw_event in self._storage_strategy.iter():
+            yield self._serde.deserialize(
+                event=raw_event,
+                event_type=self._event_registry.type_for_name(raw_event["name"]),
+            )
