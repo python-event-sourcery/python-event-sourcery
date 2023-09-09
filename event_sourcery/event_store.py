@@ -53,7 +53,7 @@ class EventStore:
     ) -> None:
         self._append(
             stream_id=stream_id,
-            events=(first, ) + events,
+            events=(first,) + events,
             expected_version=expected_version,
         )
 
@@ -98,7 +98,7 @@ class EventStore:
     ) -> None:
         serialized_events = self._append(
             stream_id=stream_id,
-            events=(first, ) + events,
+            events=(first,) + events,
             expected_version=expected_version,
         )
         self._outbox_storage_strategy.put_into_outbox(serialized_events)

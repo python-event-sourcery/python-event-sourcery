@@ -3,11 +3,12 @@ from uuid import uuid4
 import pytest
 
 from event_sourcery import StreamId
-from event_sourcery.event_store import EventStore, EventStoreFactoryCallable
+from event_sourcery.event_store import EventStore
 from event_sourcery.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     IllegalCategoryName,
 )
+from event_sourcery.factory import EventStoreFactory
 from tests.events import SomeEvent
 
 
@@ -70,9 +71,9 @@ def test_blocks_new_stream_uuid_with_same_name_as_other(
 
 
 def test_esdb_cant_use_category_with_dash(
-    esdb_factory: EventStoreFactoryCallable,
+    esdb_factory: EventStoreFactory,
 ) -> None:
-    event_store = esdb_factory()
+    event_store = esdb_factory.build()
     an_event = SomeEvent(first_name="Cing")
     category_with_dash = StreamId(name="Test #6", category="with-dash")
 
