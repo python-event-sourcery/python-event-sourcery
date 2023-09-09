@@ -4,6 +4,7 @@ from typing import Callable
 from sqlalchemy.orm import Session
 
 from event_sourcery import EventStore
+from event_sourcery.dummy_outbox_filterer_strategy import dummy_filterer
 from event_sourcery.event_registry import EventRegistry
 from event_sourcery.interfaces.base_event import Event as BaseEvent
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
@@ -24,7 +25,8 @@ class SQLStoreFactory:
         return EventStore(
             storage_strategy=SqlAlchemyStorageStrategy(session),
             outbox_storage_strategy=(
-                outbox_storage_strategy or SqlAlchemyOutboxStorageStrategy(session)
+                outbox_storage_strategy
+                or SqlAlchemyOutboxStorageStrategy(session, dummy_filterer)
             ),
             event_registry=event_registry or BaseEvent.__registry__,
         )

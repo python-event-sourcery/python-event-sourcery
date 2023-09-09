@@ -6,6 +6,7 @@ from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
 from event_sourcery.dto import RawEvent
+from event_sourcery.interfaces.outbox_filterer_strategy import OutboxFiltererStrategy
 from event_sourcery.interfaces.outbox_storage_strategy import (
     EntryId,
     OutboxStorageStrategy,
@@ -17,10 +18,14 @@ from event_sourcery_sqlalchemy.models import OutboxEntry
 @dataclass(repr=False)
 class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
     _session: Session
+    _filterer: OutboxFiltererStrategy
 
     def put_into_outbox(self, events: list[RawEvent]) -> None:
         rows = []
         for event in events:
+            if not self._filterer(event):
+                continue
+
             as_dict = dict(event)
             created_at = cast(datetime, as_dict["created_at"])
             as_dict["created_at"] = created_at.isoformat()
@@ -33,6 +38,10 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
                     "stream_name": event["stream_id"].name,
                 }
             )
+
+        if len(rows) == 0:
+            return
+
         self._session.execute(insert(OutboxEntry), rows)
 
     def outbox_entries(

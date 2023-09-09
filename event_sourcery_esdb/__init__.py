@@ -6,6 +6,7 @@ __all__ = [
 from esdbclient import EventStoreDBClient
 
 from event_sourcery import EventStore
+from event_sourcery.dummy_outbox_filterer_strategy import dummy_filterer
 from event_sourcery.event_registry import EventRegistry
 from event_sourcery.interfaces.base_event import Event as BaseEvent
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
@@ -25,7 +26,8 @@ class ESDBStoreFactory:
         return EventStore(
             storage_strategy=ESDBStorageStrategy(self._client),
             outbox_storage_strategy=(
-                outbox_storage_strategy or ESDBOutboxStorageStrategy(self._client)
+                outbox_storage_strategy
+                or ESDBOutboxStorageStrategy(self._client, dummy_filterer)
             ),
             event_registry=event_registry or BaseEvent.__registry__,
         )
