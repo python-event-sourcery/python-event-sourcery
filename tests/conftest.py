@@ -8,11 +8,10 @@ from sqlalchemy import MetaData, create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from event_sourcery.dummy_outbox_filterer_strategy import dummy_filterer
 from event_sourcery.event_store import EventStore, EventStoreFactoryCallable
-from event_sourcery.interfaces.outbox_filterer_strategy import OutboxFiltererStrategy
-from event_sourcery_esdb import ESDBOutboxStorageStrategy, ESDBStoreFactory
-from event_sourcery_sqlalchemy import SqlAlchemyOutboxStorageStrategy, SQLStoreFactory
+from event_sourcery.factory import EventStoreFactory
+from event_sourcery_esdb import ESDBStoreFactory
+from event_sourcery_sqlalchemy import SQLStoreFactory
 from tests.mark import xfail_if_not_implemented_yet
 
 
@@ -66,7 +65,7 @@ def sqlite_session(
 def sqlite_factory(
     sqlite_session: Session,
 ) -> SQLStoreFactory:
-    return SQLStoreFactory(lambda: sqlite_session)
+    return SQLStoreFactory(sqlite_session).with_outbox()
 
 
 @pytest.fixture()
@@ -83,7 +82,7 @@ def postgres_session(
 def postgres_factory(
     postgres_session: Session,
 ) -> SQLStoreFactory:
-    return SQLStoreFactory(lambda: postgres_session)
+    return SQLStoreFactory(postgres_session).with_outbox()
 
 
 @pytest.fixture()
@@ -107,33 +106,7 @@ def esdb_factory(
         pytest.skip(f"Skipping ESDB tests: {reason}")
 
     xfail_if_not_implemented_yet(request, "esdb")
-    return ESDBStoreFactory(esdb)
-
-
-@pytest.fixture()
-def filterer() -> OutboxFiltererStrategy:
-    return dummy_filterer
-
-
-@pytest.fixture()
-def sqlite_outbox_storage_strategy(
-    sqlite_session: Session, filterer: OutboxFiltererStrategy
-) -> SqlAlchemyOutboxStorageStrategy:
-    return SqlAlchemyOutboxStorageStrategy(sqlite_session, filterer)
-
-
-@pytest.fixture()
-def postgres_outbox_storage_strategy(
-    postgres_session: Session, filterer: OutboxFiltererStrategy
-) -> SqlAlchemyOutboxStorageStrategy:
-    return SqlAlchemyOutboxStorageStrategy(postgres_session, filterer)
-
-
-@pytest.fixture()
-def esdb_outbox_storage_strategy(
-    esdb: EventStoreDBClient, filterer: OutboxFiltererStrategy
-) -> ESDBOutboxStorageStrategy:
-    return ESDBOutboxStorageStrategy(esdb, filterer)
+    return ESDBStoreFactory(esdb).with_outbox()
 
 
 @pytest.fixture(params=["esdb_factory", "sqlite_factory", "postgres_factory"])
@@ -142,5 +115,5 @@ def event_store_factory(request: SubRequest) -> EventStoreFactoryCallable:
 
 
 @pytest.fixture()
-def event_store(event_store_factory: EventStoreFactoryCallable) -> EventStore:
-    return event_store_factory()
+def event_store(event_store_factory: EventStoreFactory) -> EventStore:
+    return event_store_factory.build()
