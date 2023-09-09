@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from event_sourcery import Metadata, StreamId
 from event_sourcery.event_registry import EventRegistry
-from event_sourcery.event_store import EventStoreFactoryCallable
+from event_sourcery.factory import EventStoreFactory
 
 
 @pytest.fixture()
@@ -15,14 +15,16 @@ def registry() -> EventRegistry:
 
 
 def test_can_work_with_custom_events_with_custom_registry(
-    event_store_factory: EventStoreFactoryCallable,
+    event_store_factory: EventStoreFactory,
     registry: EventRegistry,
 ) -> None:
     @registry.add  # type: ignore
     class SomeDummyEvent(BaseModel):
         name: ClassVar[str] = "SomeDummyEvent"
 
-    event_store = event_store_factory(event_registry=registry)
+    event_store = event_store_factory.with_event_registry(
+        event_registry=registry
+    ).build()
 
     stream_id = StreamId(uuid4())
     event_store.append(

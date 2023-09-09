@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Protocol, Sequence, TypeVar, cast
+from typing import Sequence, TypeVar, cast
 
 from event_sourcery.dto import RawEvent
 from event_sourcery.event_registry import EventRegistry
@@ -53,7 +53,7 @@ class EventStore:
     ) -> None:
         self._append(
             stream_id=stream_id,
-            events=(first, ) + events,
+            events=(first,) + events,
             expected_version=expected_version,
         )
 
@@ -98,7 +98,7 @@ class EventStore:
     ) -> None:
         serialized_events = self._append(
             stream_id=stream_id,
-            events=(first, ) + events,
+            events=(first,) + events,
             expected_version=expected_version,
         )
         self._outbox_storage_strategy.put_into_outbox(serialized_events)
@@ -160,14 +160,3 @@ class EventStore:
             )
             for event in events
         ]
-
-
-class EventStoreFactoryCallable(Protocol):
-    GUARD: object = object()
-
-    def __call__(
-        self,
-        event_registry: EventRegistry | None | object = GUARD,
-        outbox_storage_strategy: OutboxStorageStrategy | None | object = GUARD,
-    ) -> EventStore:
-        pass
