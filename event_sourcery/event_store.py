@@ -3,7 +3,6 @@ from typing import Protocol, Sequence, TypeVar, cast
 
 from event_sourcery.dto import RawEvent
 from event_sourcery.event_registry import EventRegistry
-from event_sourcery.exceptions import NoEventsToAppend
 from event_sourcery.interfaces.base_event import Event
 from event_sourcery.interfaces.event import Metadata
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
@@ -47,13 +46,14 @@ class EventStore:
     @singledispatchmethod
     def append(
         self,
+        first: Metadata,
         *events: Metadata,
         stream_id: StreamId,
         expected_version: int | Versioning = 0,
     ) -> None:
         self._append(
             stream_id=stream_id,
-            events=events,
+            events=(first, ) + events,
             expected_version=expected_version,
         )
 
@@ -88,15 +88,17 @@ class EventStore:
     ) -> Sequence[Metadata]:
         return [Metadata.wrap(event=event, version=None) for event in events]
 
+    @singledispatchmethod
     def publish(
         self,
+        first: Metadata,
         *events: Metadata,
         stream_id: StreamId,
         expected_version: int | Versioning = 0,
     ) -> None:
         serialized_events = self._append(
             stream_id=stream_id,
-            events=events,
+            events=(first, ) + events,
             expected_version=expected_version,
         )
         self._outbox_storage_strategy.put_into_outbox(serialized_events)
@@ -107,9 +109,6 @@ class EventStore:
         events: Sequence[Metadata],
         expected_version: int | Versioning,
     ) -> list[RawEvent]:
-        if not events:
-            raise NoEventsToAppend
-
         new_version = events[-1].version
         versioning: Versioning
         if expected_version is not NO_VERSIONING:

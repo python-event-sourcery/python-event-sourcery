@@ -9,7 +9,6 @@ from esdbclient.exceptions import NotFound
 
 from event_sourcery import Metadata, OutboxStorageStrategy, StreamId
 from event_sourcery.event_store import EventStore, EventStoreFactoryCallable
-from event_sourcery.exceptions import NoEventsToAppend
 from event_sourcery.interfaces.outbox_filterer_strategy import OutboxFiltererStrategy
 from event_sourcery.outbox import Outbox, Publisher
 from event_sourcery_esdb.outbox import Outbox as ESDBOutbox
@@ -45,11 +44,6 @@ def esdb(esdb: EventStoreDBClient) -> Generator[EventStoreDBClient, None, None]:
         esdb.delete_stream(ESDBOutbox.metadata, StreamState.ANY)
     except NotFound:
         pass
-
-
-def test_raises_when_no_events_published(event_store: EventStore) -> None:
-    with pytest.raises(NoEventsToAppend):
-        event_store.publish(stream_id=StreamId())
 
 
 def test_calls_publisher(

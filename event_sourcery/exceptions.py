@@ -2,10 +2,6 @@ class EventStoreException(Exception):
     pass
 
 
-class NoEventsToAppend(EventStoreException):
-    pass
-
-
 class ConcurrentStreamWriteError(EventStoreException):
     pass
 
