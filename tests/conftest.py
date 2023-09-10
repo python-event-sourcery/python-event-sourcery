@@ -65,7 +65,7 @@ def sqlite_session(
 def sqlite_factory(
     sqlite_session: Session,
 ) -> SQLStoreFactory:
-    return SQLStoreFactory(sqlite_session).with_outbox()
+    return SQLStoreFactory(sqlite_session).without_outbox()
 
 
 @pytest.fixture()
@@ -82,7 +82,7 @@ def postgres_session(
 def postgres_factory(
     postgres_session: Session,
 ) -> SQLStoreFactory:
-    return SQLStoreFactory(postgres_session).with_outbox()
+    return SQLStoreFactory(postgres_session).without_outbox()
 
 
 @pytest.fixture()
@@ -106,7 +106,7 @@ def esdb_factory(
         pytest.skip(f"Skipping ESDB tests: {reason}")
 
     xfail_if_not_implemented_yet(request, "esdb")
-    return ESDBStoreFactory(esdb).with_outbox()
+    return ESDBStoreFactory(esdb).without_outbox()
 
 
 @pytest.fixture(params=["esdb_factory", "sqlite_factory", "postgres_factory"])

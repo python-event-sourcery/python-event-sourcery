@@ -1,49 +1,14 @@
-from typing import Generator
 from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
-from esdbclient import EventStoreDBClient, StreamState
-from esdbclient.exceptions import NotFound
 
 from event_sourcery import Metadata, StreamId
 from event_sourcery.event_store import EventStore
 from event_sourcery.factory import EventStoreFactory
 from event_sourcery.interfaces.outbox_filterer_strategy import OutboxFiltererStrategy
-from event_sourcery.outbox import Outbox, Publisher
-from event_sourcery_esdb.outbox import Outbox as ESDBOutbox
-from event_sourcery_esdb.stream import Position
+from event_sourcery.outbox import Outbox
 from tests.events import SomeEvent
-
-
-@pytest.fixture()
-def publisher() -> Mock:
-    return Mock(Publisher)
-
-
-@pytest.fixture()
-def outbox(event_store: EventStore, publisher: Publisher) -> Outbox:
-    return event_store.outbox(publisher)
-
-
-@pytest.fixture()
-def esdb(esdb: EventStoreDBClient) -> Generator[EventStoreDBClient, None, None]:
-    esdb.append_event(
-        ESDBOutbox.name,
-        StreamState.ANY,
-        ESDBOutbox.Snapshot(
-            snapshot=ESDBOutbox.Snapshot.Data(
-                position=Position(esdb.get_commit_position()),
-                attempts={},
-            )
-        ),
-    )
-    yield esdb
-    try:
-        esdb.delete_stream(ESDBOutbox.name, StreamState.ANY)
-        esdb.delete_stream(ESDBOutbox.metadata, StreamState.ANY)
-    except NotFound:
-        pass
 
 
 def test_calls_publisher(
