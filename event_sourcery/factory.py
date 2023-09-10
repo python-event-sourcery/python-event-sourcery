@@ -29,12 +29,8 @@ class EventStoreFactory(abc.ABC):
         self._event_registry = event_registry
         return self
 
+    @abc.abstractmethod
     def build(self) -> EventStore:
-        if self._storage_strategy is self.__UNSET:
-             raise Exception(
-                "Configure storage strategy by calling .with_storage_strategy()"
-            )
-
         return EventStore(
             storage_strategy=cast(StorageStrategy, self._storage_strategy),
             outbox_storage_strategy=cast(OutboxStorageStrategy, self._outbox_strategy),
