@@ -18,16 +18,12 @@ class EventStoreFactory(abc.ABC):
 
     def __init__(self) -> None:
         self._storage_strategy: StorageStrategy | object = self.__UNSET
-        self._outbox_strategy: OutboxStorageStrategy | None | object = self.__UNSET
+        self._outbox_strategy: OutboxStorageStrategy = DummyOutboxStorageStrategy()
         self._event_registry: EventRegistry = BaseEvent.__registry__
 
     @abc.abstractmethod
     def with_outbox(self, filterer: OutboxFiltererStrategy = dummy_filterer) -> Self:
         pass
-
-    def without_outbox(self) -> Self:
-        self._outbox_strategy = DummyOutboxStorageStrategy()
-        return self
 
     def with_event_registry(self, event_registry: EventRegistry) -> Self:
         self._event_registry = event_registry
@@ -35,13 +31,8 @@ class EventStoreFactory(abc.ABC):
 
     def build(self) -> EventStore:
         if self._storage_strategy is self.__UNSET:
-            raise Exception(
+             raise Exception(
                 "Configure storage strategy by calling .with_storage_strategy()"
-            )
-
-        if self._outbox_strategy is self.__UNSET:
-            raise Exception(
-                "Configure outbox by calling .with_outbox() or .without_outbox()"
             )
 
         return EventStore(

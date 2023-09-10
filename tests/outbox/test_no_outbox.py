@@ -10,7 +10,7 @@ from tests.events import SomeEvent
 
 @pytest.fixture()
 def event_store(event_store_factory: EventStoreFactory) -> EventStore:
-    return event_store_factory.without_outbox().build()
+    return event_store_factory.build()
 
 
 @pytest.fixture()
