@@ -16,8 +16,8 @@ from event_sourcery_esdb.stream import Position
 def esdb(esdb: EventStoreDBClient) -> Generator[EventStoreDBClient, None, None]:
     esdb.append_event(
         ESDBOutbox.name,
-        StreamState.ANY,
-        ESDBOutbox.Snapshot(
+        current_version=StreamState.ANY,
+        event=ESDBOutbox.Snapshot(
             snapshot=ESDBOutbox.Snapshot.Data(
                 position=Position(esdb.get_commit_position()),
                 attempts={},
@@ -26,8 +26,8 @@ def esdb(esdb: EventStoreDBClient) -> Generator[EventStoreDBClient, None, None]:
     )
     yield esdb
     try:
-        esdb.delete_stream(ESDBOutbox.name, StreamState.ANY)
-        esdb.delete_stream(ESDBOutbox.metadata, StreamState.ANY)
+        esdb.delete_stream(ESDBOutbox.name, current_version=StreamState.ANY)
+        esdb.delete_stream(ESDBOutbox.metadata, current_version=StreamState.ANY)
     except NotFound:
         pass
 

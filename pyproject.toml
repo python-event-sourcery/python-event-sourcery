@@ -15,7 +15,7 @@ packages = [
 python = ">=3.10,<4.0"
 pydantic = "^1.9"
 SQLAlchemy = ">=2.0"
-esdbclient = ">=0.15"
+esdbclient = ">=1.0b3"
 kombu = {version = "*", optional = true}
 cloudevents = {version = "*", optional = true}
 

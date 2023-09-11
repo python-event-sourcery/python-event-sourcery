@@ -62,7 +62,8 @@ class ESDBStorageStrategy(StorageStrategy):
     def _append_events(self, name: stream.Name, events: list[RawEvent]) -> int:
         assert all(e["stream_id"] == name.uuid for e in events)
         return self._client.append_events(
-            str(name), StreamState.ANY, events=(dto.new_entry(e) for e in events)
+            str(name), current_version=StreamState.ANY,
+            events=(dto.new_entry(e) for e in events)
         )
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
@@ -70,7 +71,7 @@ class ESDBStorageStrategy(StorageStrategy):
         stream_position = stream.Position.from_version(cast(int, snapshot["version"]))
         self._client.append_events(
             name.snapshot,
-            StreamState.ANY,
+            current_version=StreamState.ANY,
             events=[dto.new_entry(snapshot, stream_position=stream_position)],
         )
 
@@ -93,4 +94,4 @@ class ESDBStorageStrategy(StorageStrategy):
 
     def delete_stream(self, stream_id: StreamId) -> None:
         name = stream.Name(stream_id)
-        self._client.delete_stream(str(name), StreamState.ANY)
+        self._client.delete_stream(str(name), current_version=StreamState.ANY)

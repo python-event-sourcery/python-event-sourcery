@@ -151,7 +151,7 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
         self, limit: int
     ) -> Iterator[Tuple[EntryId, RawEvent, StreamId]]:
         with self.outbox() as outbox:
-            events = self._client.read_all(outbox.read_from_position)
+            events = self._client.read_all(commit_position=outbox.read_from_position)
             return (
                 (
                     cast(int, entry.commit_position),
@@ -166,15 +166,15 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     def decrease_tries_left(self, entry_id: EntryId) -> None:
         self._client.append_event(
             Outbox.name,
-            StreamState.ANY,
-            Outbox.FailedAttempt(position=Position(entry_id)),
+            current_version=StreamState.ANY,
+            event=Outbox.FailedAttempt(position=Position(entry_id)),
         )
 
     def remove_from_outbox(self, entry_id: EntryId) -> None:
         self._client.append_event(
             Outbox.name,
-            StreamState.ANY,
-            Outbox.Emitted(position=Position(entry_id)),
+            current_version=StreamState.ANY,
+            event=Outbox.Emitted(position=Position(entry_id)),
         )
 
     @contextmanager
@@ -192,11 +192,11 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     def _create_snapshot(self, outbox: Outbox) -> None:
         self._client.append_event(
             outbox.name,
-            StreamState.ANY,
-            outbox.make_snapshot(),
+            current_version=StreamState.ANY,
+            event=outbox.make_snapshot(),
         )
         self._client.append_event(
             outbox.metadata,
-            StreamState.ANY,
-            TruncateBeforeEvent(position=Position(outbox.version + 1)),
+            current_version=StreamState.ANY,
+            event=TruncateBeforeEvent(position=Position(outbox.version + 1)),
         )
