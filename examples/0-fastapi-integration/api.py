@@ -7,12 +7,11 @@ from sqlalchemy.orm import Session, as_declarative
 
 # Import a couple of things from event_sourcery
 from event_sourcery.event_store import EventStore  # for type annotations
-from event_sourcery import (
+from event_sourcery import Event  # base class for events
+from event_sourcery_sqlalchemy import (
     configure_models,  # set-up function for library's models
-    get_event_store,  # factory function to start quickly
-    Event,  # base class for events
+    SQLStoreFactory # sql store factory to start quickly
 )
-
 
 # Set up your DB and application as you would normally do
 engine = create_engine(
@@ -42,7 +41,7 @@ configure_models(Base)
 
 # Set up factory for event store to be injected into views
 def event_store(session: Session = Depends(db_session)) -> EventStore:
-    return get_event_store(session)
+    return SQLStoreFactory(session).build()
 
 
 # Define your event(s) using base-class provided

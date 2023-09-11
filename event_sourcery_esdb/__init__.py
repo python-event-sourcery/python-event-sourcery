@@ -15,10 +15,9 @@ from event_sourcery_esdb.outbox import ESDBOutboxStorageStrategy
 
 class ESDBStoreFactory(EventStoreFactory):
     def __init__(self, esdb: EventStoreDBClient) -> None:
-        super().__init__()
         self._client = esdb
-        self._storage_strategy = ESDBStorageStrategy(self._client)
+        self._configure(storage_strategy=ESDBStorageStrategy(self._client))
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = dummy_filterer) -> Self:
-        self._outbox_strategy = ESDBOutboxStorageStrategy(self._client, filterer)
-        return self
+        strategy = ESDBOutboxStorageStrategy(self._client, filterer)
+        return self._configure(outbox_storage_strategy=strategy)
