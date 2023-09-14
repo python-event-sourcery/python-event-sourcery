@@ -20,4 +20,5 @@ class ESDBStoreFactory(EventStoreFactory):
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = dummy_filterer) -> Self:
         strategy = ESDBOutboxStorageStrategy(self._client, filterer)
+        strategy.create_subscription()
         return self._configure(outbox_storage_strategy=strategy)

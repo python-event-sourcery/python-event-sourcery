@@ -62,8 +62,9 @@ class ESDBStorageStrategy(StorageStrategy):
     def _append_events(self, name: stream.Name, events: list[RawEvent]) -> int:
         assert all(e["stream_id"] == name.uuid for e in events)
         return self._client.append_events(
-            str(name), current_version=StreamState.ANY,
-            events=(dto.new_entry(e) for e in events)
+            str(name),
+            current_version=StreamState.ANY,
+            events=(dto.new_entry(e) for e in events),
         )
 
     def save_snapshot(self, snapshot: RawEvent) -> None:

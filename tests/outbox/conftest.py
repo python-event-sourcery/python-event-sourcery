@@ -1,35 +1,23 @@
 from typing import Generator
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+from uuid import uuid4
 
 import pytest
-from esdbclient import EventStoreDBClient, StreamState
-from esdbclient.exceptions import NotFound
 
 from event_sourcery import EventStore, Outbox
 from event_sourcery.factory import EventStoreFactory
 from event_sourcery.outbox import Publisher
-from event_sourcery_esdb.outbox import Outbox as ESDBOutbox
-from event_sourcery_esdb.stream import Position
+from event_sourcery_esdb import ESDBStoreFactory
+from event_sourcery_esdb.outbox import ESDBOutboxStorageStrategy
 
 
 @pytest.fixture()
-def esdb(esdb: EventStoreDBClient) -> Generator[EventStoreDBClient, None, None]:
-    esdb.append_event(
-        ESDBOutbox.name,
-        current_version=StreamState.ANY,
-        event=ESDBOutbox.Snapshot(
-            snapshot=ESDBOutbox.Snapshot.Data(
-                position=Position(esdb.get_commit_position()),
-                attempts={},
-            )
-        ),
-    )
-    yield esdb
-    try:
-        esdb.delete_stream(ESDBOutbox.name, current_version=StreamState.ANY)
-        esdb.delete_stream(ESDBOutbox.metadata, current_version=StreamState.ANY)
-    except NotFound:
-        pass
+def esdb_factory(
+    esdb_factory: ESDBStoreFactory,
+) -> Generator[ESDBStoreFactory, None, None]:
+    tmp_name = f"outbox-test-{uuid4().hex}"
+    with patch.object(ESDBOutboxStorageStrategy, "OUTBOX_NAME", tmp_name):
+        yield esdb_factory
 
 
 @pytest.fixture()
