@@ -1,5 +1,7 @@
 import sys
+from datetime import date, datetime
 from typing import Iterator
+from uuid import UUID
 
 from pydantic import Field
 
@@ -37,3 +39,10 @@ class Snapshot(Metadata):
 
     event: _Event = Field(default_factory=_Event)
     version: int = Field(default_factory=lambda: actual_version)
+
+
+class NastyEventWithJsonUnfriendlyTypes(Event):
+    uuid: UUID
+    a_datetime: datetime
+    second_datetime: datetime
+    a_date: date
