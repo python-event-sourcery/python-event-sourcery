@@ -11,7 +11,7 @@ from tests.matchers import any_metadata
 
 def test_save_retrieve(given: Given, when: When, then: Then) -> None:
     given.stream(stream_id := StreamId())
-    when.appending(an_event := AnEvent(), on=stream_id)
+    when.appending(an_event := AnEvent(), to=stream_id)
     then.stream(stream_id).loads_only([an_event])
 
 
@@ -39,7 +39,7 @@ def test_stores_retrieves_metadata(given: Given, when: When, then: Then) -> None
     given.stream(stream_id := StreamId())
     when.appending(
         an_event := AnEvent(metadata={"correlation_id": uuid4(), "ip": "127.0.0.1"}),
-        on=stream_id,
+        to=stream_id,
     )
     then.stream(stream_id).loads_only([an_event])
 
@@ -60,7 +60,7 @@ def test_is_able_to_handle_non_trivial_formats(
             ),
             version=1,
         ),
-        on=stream_id,
+        to=stream_id,
     )
     then.stream(stream_id).loads_only([nasty_event])
 

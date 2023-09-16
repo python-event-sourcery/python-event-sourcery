@@ -39,7 +39,7 @@ def test_returns_all_events_after_last_snapshot(
     when.appending(
         after_latest_snapshot_1 := AnEvent(),
         after_latest_snapshot_2 := AnEvent(),
-        on=stream_id,
+        to=stream_id,
     )
 
     then.stream(stream_id).loads_only(

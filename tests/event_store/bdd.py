@@ -60,8 +60,8 @@ class When:
         self.store.save_snapshot(on, with_)
         return self
 
-    def appending(self, *events: Metadata, on: StreamId) -> Self:
-        self.store.append(*events, stream_id=on)
+    def appending(self, *events: Metadata, to: StreamId) -> Self:
+        self.store.append(*events, stream_id=to)
         return self
 
     def deleting(self, stream: StreamId) -> Self:
