@@ -1,15 +1,10 @@
-from uuid import uuid4
-
-from event_sourcery import Metadata, StreamId
-from event_sourcery.event_store import EventStore
-from tests.events import SomeEvent
+from event_sourcery import StreamId
+from tests.event_store.bdd import Given, Then, When
+from tests.event_store.factories import AnEvent
 
 
-def test_removes_stream(event_store: EventStore) -> None:
-    stream_id = StreamId(uuid4())
-    event = Metadata[SomeEvent](event=SomeEvent(first_name="Test1"), version=1)
-    event_store.append(event, stream_id=stream_id)
-
-    event_store.delete_stream(stream_id)
-
-    assert event_store.load_stream(stream_id) == []
+def test_removes_stream(given: Given, then: Then, when: When) -> None:
+    given.stream(stream := StreamId())
+    given.event(AnEvent(), on=stream)
+    when.deleting(stream)
+    then.stream(stream).is_empty()
