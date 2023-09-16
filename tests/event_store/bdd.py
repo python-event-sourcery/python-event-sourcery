@@ -1,8 +1,11 @@
 from collections import UserList
 from dataclasses import dataclass, field
+from functools import singledispatchmethod
+
 from typing_extensions import Self
 
-from event_sourcery import EventStore, Metadata, StreamId
+from event_sourcery import Event, EventStore, Metadata, StreamId
+from tests.event_store.factories import next_version
 
 
 class Events(UserList):
@@ -23,6 +26,9 @@ class Stream:
     def events(self) -> Events:
         return Events(self.store.load_stream(self.id))
 
+    def is_empty(self) -> None:
+        assert self.events == []
+
 
 @dataclass
 class Given:
@@ -35,8 +41,13 @@ class Given:
         self.store.append(*events, stream_id=on)
         return self
 
+    @singledispatchmethod
     def event(self, event: Metadata, on: StreamId) -> Self:
         return self.events(event, on=on)
+
+    @event.register
+    def base_event(self, event: Event, on: StreamId) -> Self:
+        return self.event(Metadata.wrap(event, version=next_version()), on)
 
     def snapshot(self, snapshot: Metadata, on: StreamId) -> Self:
         self.store.save_snapshot(on, snapshot)
@@ -53,6 +64,10 @@ class When:
 
     def appending(self, *events: Metadata, on: StreamId) -> Self:
         self.store.append(*events, stream_id=on)
+        return self
+
+    def deleting(self, stream: StreamId) -> Self:
+        self.store.delete_stream(stream)
         return self
 
 
