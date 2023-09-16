@@ -25,7 +25,7 @@ def test_can_append_and_load_with_category(
     stream_id: StreamId,
 ) -> None:
     given.event(an_event := AnEvent(), on=stream_id)
-    then.stream(stream_id).events.equals_to([any_metadata(an_event)])
+    then.stream(stream_id).loads_only([any_metadata(an_event)])
 
 
 @pytest.mark.parametrize(
@@ -52,9 +52,9 @@ def test_different_streams_when_same_name_but_different_category(
     given.event(an_event := AnEvent(), on=stream_1)
     given.event(an_event, on=stream_2)
 
-    (events_1 := then.stream(stream_1).events).equals_to([any_metadata(an_event)])
-    (events_2 := then.stream(stream_2).events).equals_to([any_metadata(an_event)])
-    assert events_1 != events_2
+    then.stream(stream_1).loads_only([any_metadata(an_event)])
+    then.stream(stream_2).loads_only([any_metadata(an_event)])
+    assert then.stream(stream_1).events != then.stream(stream_2).events
 
 
 def test_removes_stream_with_category(given: Given, when: When, then: Then) -> None:
@@ -66,4 +66,4 @@ def test_removes_stream_with_category(given: Given, when: When, then: Then) -> N
     when.deleting(stream_1)
 
     then.stream(stream_1).is_empty()
-    then.stream(stream_2).events.equals_to([any_metadata(an_event)])
+    then.stream(stream_2).loads_only([any_metadata(an_event)])

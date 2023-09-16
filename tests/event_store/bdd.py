@@ -1,4 +1,3 @@
-from collections import UserList
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
 from typing import Sequence
@@ -7,11 +6,6 @@ from typing_extensions import Self
 
 from event_sourcery import Event, EventStore, Metadata, StreamId
 from tests.event_store.factories import next_version
-
-
-class Events(UserList):
-    def equals_to(self, events: Sequence[Metadata]) -> None:
-        assert self == list(events)
 
 
 @dataclass
@@ -24,8 +18,11 @@ class Stream:
         return self
 
     @property
-    def events(self) -> Events:
-        return Events(self.store.load_stream(self.id))
+    def events(self) -> list[Metadata]:
+        return list(self.store.load_stream(self.id))
+
+    def loads_only(self, events: Sequence[Metadata]) -> None:
+        assert self.events == list(events)
 
     def is_empty(self) -> None:
         assert self.events == []
