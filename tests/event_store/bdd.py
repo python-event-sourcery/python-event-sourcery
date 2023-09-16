@@ -1,6 +1,7 @@
 from collections import UserList
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
+from typing import Sequence
 
 from typing_extensions import Self
 
@@ -9,7 +10,7 @@ from tests.event_store.factories import next_version
 
 
 class Events(UserList):
-    def equals_to(self, *events: Metadata) -> None:
+    def equals_to(self, events: Sequence[Metadata]) -> None:
         assert self == list(events)
 
 

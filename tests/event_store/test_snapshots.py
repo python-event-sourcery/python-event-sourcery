@@ -11,7 +11,7 @@ def test_handles_snapshots(given: Given, when: When, then: Then) -> None:
 
     when.snapshotting(snapshot := Snapshot(), on=stream_id)
 
-    then.stream(stream_id).events.equals_to(snapshot)
+    then.stream(stream_id).events.equals_to([snapshot])
 
 
 def test_handles_multiple_snapshots(given: Given, when: When, then: Then) -> None:
@@ -22,7 +22,7 @@ def test_handles_multiple_snapshots(given: Given, when: When, then: Then) -> Non
 
     when.snapshotting(latest_snapshot := Snapshot(), on=stream_id)
 
-    then.stream(stream_id).events.equals_to(latest_snapshot)
+    then.stream(stream_id).events.equals_to([latest_snapshot])
 
 
 def test_returns_all_events_after_last_snapshot(
@@ -43,9 +43,7 @@ def test_returns_all_events_after_last_snapshot(
     )
 
     then.stream(stream_id).events.equals_to(
-        latest_snapshot,
-        after_latest_snapshot_1,
-        after_latest_snapshot_2,
+        [latest_snapshot, after_latest_snapshot_1, after_latest_snapshot_2],
     )
 
 

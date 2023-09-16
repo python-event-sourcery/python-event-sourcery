@@ -12,7 +12,7 @@ from tests.matchers import any_metadata
 def test_save_retrieve(given: Given, when: When, then: Then) -> None:
     given.stream(stream_id := StreamId())
     when.appending(an_event := AnEvent(), on=stream_id)
-    then.stream(stream_id).events.equals_to(an_event)
+    then.stream(stream_id).events.equals_to([an_event])
 
 
 def test_save_retrieve_part_of_stream(given: Given, then: Then) -> None:
@@ -41,7 +41,7 @@ def test_stores_retrieves_metadata(given: Given, when: When, then: Then) -> None
         an_event := AnEvent(metadata={"correlation_id": uuid4(), "ip": "127.0.0.1"}),
         on=stream_id,
     )
-    then.stream(stream_id).events.equals_to(an_event)
+    then.stream(stream_id).events.equals_to([an_event])
 
 
 def test_is_able_to_handle_non_trivial_formats(
@@ -62,7 +62,7 @@ def test_is_able_to_handle_non_trivial_formats(
         ),
         on=stream_id,
     )
-    then.stream(stream_id).events.equals_to(nasty_event)
+    then.stream(stream_id).events.equals_to([nasty_event])
 
 
 def test_is_able_to_handle_events_without_metadata(
@@ -75,4 +75,4 @@ def test_is_able_to_handle_events_without_metadata(
         an_event := SomeEvent(first_name="Luke"),
         stream_id=stream_id,
     )
-    then.stream(stream_id).events.equals_to(any_metadata(for_event=an_event))
+    then.stream(stream_id).events.equals_to([any_metadata(for_event=an_event)])
