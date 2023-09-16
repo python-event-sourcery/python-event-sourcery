@@ -34,8 +34,8 @@ def test_returns_all_events_after_last_snapshot(
     given.events(AnEvent(), AnEvent(), on=stream_id)
     given.snapshot(Snapshot(), on=stream_id)
     given.events(AnEvent(), AnEvent(), on=stream_id)
+    given.snapshot(latest_snapshot := Snapshot(), on=stream_id)
 
-    when.snapshotting(latest_snapshot := Snapshot(), on=stream_id)
     when.appending(
         after_latest_snapshot_1 := AnEvent(),
         after_latest_snapshot_2 := AnEvent(),
