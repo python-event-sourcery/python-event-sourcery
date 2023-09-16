@@ -2,80 +2,63 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery import StreamId
-from event_sourcery.event_store import EventStore
+from event_sourcery import Event, StreamId
 from event_sourcery.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     IllegalCategoryName,
 )
 from event_sourcery.factory import EventStoreFactory
-from tests.events import SomeEvent
+from tests.event_store.bdd import Given, Then, When
 
 
-def test_can_append_then_load_with_named_stream(event_store: EventStore) -> None:
-    an_event = SomeEvent(first_name="Dziabong")
-    event_store.append(an_event, stream_id=StreamId(name="Test #1"))
+class AnEvent(Event):
+    pass
 
-    events = event_store.load_stream(stream_id=StreamId(name="Test #1"))
 
-    assert len(events) == 1
-    assert events[0].event == an_event
+def test_can_append_then_load_with_named_stream(given: Given, then: Then) -> None:
+    given.stream(stream_id := StreamId(name="Test #1"))
+    given.event(an_event := AnEvent(), on=stream_id)
+    then.stream(stream_id).loads([an_event])
 
 
 def test_can_append_then_load_with_named_stream_with_assigned_uuid(
-    event_store: EventStore,
+    given: Given,
+    then: Then,
 ) -> None:
-    an_event = SomeEvent(first_name="Brzdeng")
-    stream_id = StreamId(name="Test #3")
-    event_store.append(an_event, stream_id=stream_id)
-
-    events_by_stream_id = event_store.load_stream(stream_id=stream_id)
-    events_by_stream_name = event_store.load_stream(stream_id=StreamId(name="Test #3"))
-
-    assert events_by_stream_id == events_by_stream_name
-    assert len(events_by_stream_id) == 1
-    assert events_by_stream_name[0].event == an_event
+    given.stream(stream_id := StreamId(name="Test #2"))
+    given.event(an_event := AnEvent(), on=stream_id)
+    then.stream(stream_id).loads([an_event])
+    then.stream(StreamId(name="Test #2")).loads([an_event])
 
 
 @pytest.mark.skip_esdb(reason="ESDB can't use both ids")
 def test_lets_appending_by_both_id_and_name_then_just_name(
-    event_store: EventStore,
+    given: Given,
+    then: Then,
 ) -> None:
-    an_event = SomeEvent(first_name="Cing")
-    stream_id = StreamId(name="Test #4")
-    event_store.append(an_event, stream_id=stream_id)
-    another_event = SomeEvent(first_name="Ciang")
-    event_store.append(another_event, stream_id=stream_id, expected_version=1)
-
-    events_by_stream_id = event_store.load_stream(stream_id)
-    events_by_stream_name = event_store.load_stream(StreamId(name="Test #4"))
-
-    assert events_by_stream_id == events_by_stream_name
-    events = [metadata.event for metadata in events_by_stream_id]
-    assert events == [an_event, another_event]
+    given.stream(stream_id := StreamId(name="Test #3"))
+    given.event(stored_by_id := AnEvent(), on=stream_id)
+    given.event(stored_by_name := AnEvent(), on=StreamId(name="Test #3"))
+    then.stream(stream_id).loads([stored_by_id, stored_by_name])
+    then.stream(StreamId(name="Test #3")).loads([stored_by_id, stored_by_name])
 
 
 @pytest.mark.skip_esdb(reason="ESDB can't use both ids")
 def test_blocks_new_stream_uuid_with_same_name_as_other(
-    event_store: EventStore,
+    given: Given,
+    when: When,
 ) -> None:
-    name = "Test #5"
-    an_event = SomeEvent(first_name="Cing")
-
     class CorruptedStreamId(StreamId):
         NAMESPACE = uuid4()
 
-    event_store.append(an_event, stream_id=StreamId(name=name))
+    given.stream(stream_id := StreamId(name="Test #4"))
+    given.event(AnEvent(), on=stream_id)
     with pytest.raises(AnotherStreamWithThisNameButOtherIdExists):
-        event_store.append(an_event, stream_id=CorruptedStreamId(name=name))
+        when.appending(AnEvent(), to=CorruptedStreamId(name="Test #4"))
 
 
-def test_esdb_cant_use_category_with_dash(
-    esdb_factory: EventStoreFactory,
-) -> None:
-    event_store = esdb_factory.build()
-    an_event = SomeEvent(first_name="Cing")
-    category_with_dash = StreamId(name="Test #6", category="with-dash")
+def test_esdb_cant_use_category_with_dash(esdb_factory: EventStoreFactory) -> None:
+    when = When(esdb_factory.build())
 
     with pytest.raises(IllegalCategoryName):
-        event_store.append(an_event, stream_id=category_with_dash)
+        when.appending(AnEvent(), to=StreamId(category="with-dash"))

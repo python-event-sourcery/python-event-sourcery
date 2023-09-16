@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
-from typing import Sequence
+from typing import Sequence, cast
 
 from typing_extensions import Self
 
 from event_sourcery import Event, EventStore, Metadata, StreamId
 from tests.event_store.factories import next_version
+from tests.matchers import any_metadata
 
 
 @dataclass
@@ -22,6 +23,11 @@ class Stream:
         return list(self.store.load_stream(self.id))
 
     def loads_only(self, events: Sequence[Metadata]) -> None:
+        assert self.events == list(events)
+
+    def loads(self, events: Sequence[Metadata] | Sequence[Event]) -> None:
+        if not all([isinstance(e, Metadata) for e in events]):
+            events = [any_metadata(e) for e in cast(Sequence[Event], events)]
         assert self.events == list(events)
 
     def is_empty(self) -> None:
@@ -60,7 +66,7 @@ class When:
         self.store.save_snapshot(on, with_)
         return self
 
-    def appending(self, *events: Metadata, to: StreamId) -> Self:
+    def appending(self, *events: Metadata | Event, to: StreamId) -> Self:
         self.store.append(*events, stream_id=to)
         return self
 
