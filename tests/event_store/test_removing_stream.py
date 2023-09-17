@@ -6,5 +6,5 @@ from tests.event_store.factories import AnEvent
 def test_removes_stream(given: Given, then: Then, when: When) -> None:
     given.stream(stream := StreamId())
     given.event(AnEvent(), on=stream)
-    when.deleting(stream)
+    when.deletes(stream)
     then.stream(stream).is_empty()

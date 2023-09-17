@@ -62,15 +62,15 @@ class Given:
 class When:
     store: EventStore
 
-    def snapshotting(self, with_: Metadata, on: StreamId) -> Self:
+    def snapshots(self, with_: Metadata, on: StreamId) -> Self:
         self.store.save_snapshot(on, with_)
         return self
 
-    def appending(self, *events: Metadata | Event, to: StreamId) -> Self:
+    def appends(self, *events: Metadata | Event, to: StreamId) -> Self:
         self.store.append(*events, stream_id=to)
         return self
 
-    def deleting(self, stream: StreamId) -> Self:
+    def deletes(self, stream: StreamId) -> Self:
         self.store.delete_stream(stream)
         return self
 

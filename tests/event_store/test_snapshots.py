@@ -9,7 +9,7 @@ def test_handles_snapshots(given: Given, when: When, then: Then) -> None:
     given.stream(stream_id := StreamId())
     given.events(AnEvent(), AnEvent(), AnEvent(), on=stream_id)
 
-    when.snapshotting(snapshot := Snapshot(), on=stream_id)
+    when.snapshots(snapshot := Snapshot(), on=stream_id)
 
     then.stream(stream_id).loads_only([snapshot])
 
@@ -20,7 +20,7 @@ def test_handles_multiple_snapshots(given: Given, when: When, then: Then) -> Non
     given.snapshot(Snapshot(), on=stream_id)
     given.event(AnEvent(), on=stream_id)
 
-    when.snapshotting(latest_snapshot := Snapshot(), on=stream_id)
+    when.snapshots(latest_snapshot := Snapshot(), on=stream_id)
 
     then.stream(stream_id).loads_only([latest_snapshot])
 
@@ -36,7 +36,7 @@ def test_returns_all_events_after_last_snapshot(
     given.events(AnEvent(), AnEvent(), on=stream_id)
     given.snapshot(latest_snapshot := Snapshot(), on=stream_id)
 
-    when.appending(
+    when.appends(
         after_latest_snapshot_1 := AnEvent(),
         after_latest_snapshot_2 := AnEvent(),
         to=stream_id,
@@ -58,8 +58,8 @@ def test_rejects_snapshot_with_incorrect_version(
 
     ahead = actual_version + 2
     with pytest.raises(Exception):
-        when.snapshotting(Snapshot(version=ahead), on=stream_id)
+        when.snapshots(Snapshot(version=ahead), on=stream_id)
 
     outdated = actual_version - 1
     with pytest.raises(Exception):
-        when.snapshotting(Snapshot(version=outdated), on=stream_id)
+        when.snapshots(Snapshot(version=outdated), on=stream_id)

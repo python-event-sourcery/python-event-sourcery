@@ -54,11 +54,11 @@ def test_blocks_new_stream_uuid_with_same_name_as_other(
     given.stream(stream_id := StreamId(name="Test #4"))
     given.event(AnEvent(), on=stream_id)
     with pytest.raises(AnotherStreamWithThisNameButOtherIdExists):
-        when.appending(AnEvent(), to=CorruptedStreamId(name="Test #4"))
+        when.appends(AnEvent(), to=CorruptedStreamId(name="Test #4"))
 
 
 def test_esdb_cant_use_category_with_dash(esdb_factory: EventStoreFactory) -> None:
     when = When(esdb_factory.build())
 
     with pytest.raises(IllegalCategoryName):
-        when.appending(AnEvent(), to=StreamId(category="with-dash"))
+        when.appends(AnEvent(), to=StreamId(category="with-dash"))

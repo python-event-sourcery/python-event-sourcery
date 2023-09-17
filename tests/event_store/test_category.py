@@ -63,7 +63,7 @@ def test_removes_stream_with_category(given: Given, when: When, then: Then) -> N
     given.event(an_event := AnEvent(), on=stream_1)
     given.event(an_event, on=stream_2)
 
-    when.deleting(stream_1)
+    when.deletes(stream_1)
 
     then.stream(stream_1).is_empty()
     then.stream(stream_2).loads_only([any_metadata(an_event)])
