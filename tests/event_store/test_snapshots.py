@@ -1,54 +1,65 @@
-from uuid import uuid4
+import pytest
 
-from event_sourcery import Event, Metadata, StreamId
-from event_sourcery.event_store import EventStore
-
-
-class AnEvent(Event):
-    pass
+from event_sourcery import StreamId
+from tests.event_store.bdd import Given, Then, When
+from tests.event_store.factories import AnEvent, Snapshot, actual_version
 
 
-class Snapshot(Event):
-    pass
+def test_handles_snapshots(given: Given, when: When, then: Then) -> None:
+    given.stream(stream_id := StreamId())
+    given.events(AnEvent(), AnEvent(), AnEvent(), on=stream_id)
+
+    when.snapshots(snapshot := Snapshot(), on=stream_id)
+
+    then.stream(stream_id).loads_only([snapshot])
 
 
-def test_handles_snapshots(event_store: EventStore) -> None:
-    stream_id = StreamId(uuid4())
-    event_store.append(Metadata.wrap(event=AnEvent(), version=1), stream_id=stream_id)
-    snapshot = Metadata.wrap(event=Snapshot(), version=1)
-    event_store.save_snapshot(stream_id=stream_id, snapshot=snapshot)
+def test_handles_multiple_snapshots(given: Given, when: When, then: Then) -> None:
+    given.stream(stream_id := StreamId())
+    given.event(AnEvent(), on=stream_id)
+    given.snapshot(Snapshot(), on=stream_id)
+    given.event(AnEvent(), on=stream_id)
 
-    events = event_store.load_stream(stream_id=stream_id)
-    assert events == [snapshot]
+    when.snapshots(latest_snapshot := Snapshot(), on=stream_id)
+
+    then.stream(stream_id).loads_only([latest_snapshot])
 
 
-def test_handles_multiple_snapshots(event_store: EventStore) -> None:
-    stream_id = StreamId()
-    event_store.append(Metadata.wrap(event=AnEvent(), version=1), stream_id=stream_id)
-    event_store.save_snapshot(
-        stream_id=stream_id, snapshot=Metadata.wrap(event=Snapshot(), version=1)
+def test_returns_all_events_after_last_snapshot(
+    given: Given,
+    when: When,
+    then: Then,
+) -> None:
+    given.stream(stream_id := StreamId())
+    given.events(AnEvent(), AnEvent(), on=stream_id)
+    given.snapshot(Snapshot(), on=stream_id)
+    given.events(AnEvent(), AnEvent(), on=stream_id)
+    given.snapshot(latest_snapshot := Snapshot(), on=stream_id)
+
+    when.appends(
+        after_latest_snapshot_1 := AnEvent(),
+        after_latest_snapshot_2 := AnEvent(),
+        to=stream_id,
     )
-    event_store.append(Metadata.wrap(event=AnEvent(), version=2), stream_id=stream_id)
 
-    last = Metadata.wrap(event=Snapshot(), version=2)
-    event_store.save_snapshot(stream_id=stream_id, snapshot=last)
-
-    events = event_store.load_stream(stream_id=stream_id)
-    assert events == [last]
+    then.stream(stream_id).loads_only(
+        [latest_snapshot, after_latest_snapshot_1, after_latest_snapshot_2],
+    )
 
 
-def test_returns_all_events_after_last_snapshot(event_store: EventStore) -> None:
-    stream_id = StreamId()
-    event_store.append(Metadata.wrap(event=AnEvent(), version=1), stream_id=stream_id)
-    last_snapshot = Metadata.wrap(event=Snapshot(), version=1)
-    event_store.save_snapshot(stream_id=stream_id, snapshot=last_snapshot)
+@pytest.mark.xfail(strict=True, reason="Not implemented yet")
+def test_rejects_snapshot_with_incorrect_version(
+    given: Given,
+    when: When,
+    then: Then,
+) -> None:
+    given.stream(stream_id := StreamId())
+    given.event(AnEvent(), on=stream_id)
 
-    additional_events = [
-        Metadata.wrap(event=AnEvent(), version=2),
-        Metadata.wrap(event=AnEvent(), version=3),
-        Metadata.wrap(event=AnEvent(), version=4),
-    ]
-    event_store.append(*additional_events, stream_id=stream_id)
+    ahead = actual_version + 2
+    with pytest.raises(Exception):
+        when.snapshots(Snapshot(version=ahead), on=stream_id)
 
-    events = event_store.load_stream(stream_id=stream_id)
-    assert events == [last_snapshot] + additional_events
+    outdated = actual_version - 1
+    with pytest.raises(Exception):
+        when.snapshots(Snapshot(version=outdated), on=stream_id)

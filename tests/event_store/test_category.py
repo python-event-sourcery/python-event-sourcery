@@ -2,10 +2,13 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from event_sourcery import EventStore, StreamId
-from tests.events import SomeEvent
+from event_sourcery import Event, StreamId
+from tests.event_store.bdd import Given, Then, When
+from tests.matchers import any_metadata
 
-an_event = SomeEvent(first_name="First Name")
+
+class AnEvent(Event):
+    pass
 
 
 @pytest.mark.parametrize(
@@ -17,12 +20,12 @@ an_event = SomeEvent(first_name="First Name")
     ids=["by_name", "by_uuid"],
 )
 def test_can_append_and_load_with_category(
-    event_store: EventStore,
+    given: Given,
+    then: Then,
     stream_id: StreamId,
 ) -> None:
-    event_store.append(an_event, stream_id=stream_id)
-    events = event_store.load_stream(stream_id=stream_id)
-    assert events[0].event == an_event
+    given.event(an_event := AnEvent(), on=stream_id)
+    then.stream(stream_id).loads_only([any_metadata(an_event)])
 
 
 @pytest.mark.parametrize(
@@ -40,28 +43,27 @@ def test_can_append_and_load_with_category(
     ids=["by_name", "by_uuid"],
 )
 def test_different_streams_when_same_name_but_different_category(
-    event_store: EventStore,
+    given: Given,
+    when: When,
+    then: Then,
     stream_1: StreamId,
     stream_2: StreamId,
 ) -> None:
-    event_store.append(an_event, stream_id=stream_1)
-    event_store.append(an_event, stream_id=stream_2)
+    given.event(an_event := AnEvent(), on=stream_1)
+    given.event(an_event, on=stream_2)
 
-    events_1 = event_store.load_stream(stream_id=stream_1)
-    events_2 = event_store.load_stream(stream_id=stream_2)
-
-    assert events_1[0].event == an_event
-    assert events_2[0].event == an_event
-    assert events_1 != events_2
+    then.stream(stream_1).loads_only([any_metadata(an_event)])
+    then.stream(stream_2).loads_only([any_metadata(an_event)])
+    assert then.stream(stream_1).events != then.stream(stream_2).events
 
 
-def test_removes_stream_with_category(event_store: EventStore) -> None:
-    stream_1 = StreamId(name="name", category="c1")
-    stream_2 = StreamId(name="name", category="c2")
-    event_store.append(an_event, stream_id=stream_1)
-    event_store.append(an_event, stream_id=stream_2)
+def test_removes_stream_with_category(given: Given, when: When, then: Then) -> None:
+    given.stream(stream_1 := StreamId(name="name", category="c1"))
+    given.stream(stream_2 := StreamId(name="name", category="c2"))
+    given.event(an_event := AnEvent(), on=stream_1)
+    given.event(an_event, on=stream_2)
 
-    event_store.delete_stream(stream_1)
+    when.deletes(stream_1)
 
-    assert len(event_store.load_stream(stream_id=stream_1)) == 0
-    assert len(event_store.load_stream(stream_id=stream_2)) == 1
+    then.stream(stream_1).is_empty()
+    then.stream(stream_2).loads_only([any_metadata(an_event)])
