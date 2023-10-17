@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass(repr=False)
 class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     OUTBOX_NAME = "outbox"
+    MAX_PUBLISH_ATTEMPTS = 3
     _client: EventStoreDBClient
     _filterer: OutboxFiltererStrategy
     _active_subscription: PersistentSubscription | None = None
@@ -77,9 +78,13 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
             yield event
         except Exception:
             logger.exception("Failed to publish message #%d", entry.id)
-            if entry.retry_count and entry.retry_count >= 2:
+            failure_count = (entry.retry_count or 0) + 1
+            if self._reached_max_number_of_attempts(failure_count):
                 self.active_subscription.nack(entry.id, action="park")
             else:
                 self.active_subscription.nack(entry.id, action="retry")
         else:
             self.active_subscription.ack(entry.id)
+
+    def _reached_max_number_of_attempts(self, failure_count: int) -> bool:
+        return failure_count >= self.MAX_PUBLISH_ATTEMPTS

@@ -29,3 +29,7 @@ class EventStoreFactory(abc.ABC):
     @abc.abstractmethod
     def with_outbox(self, filterer: OutboxFiltererStrategy = dummy_filterer) -> Self:
         pass
+
+    def without_outbox(self) -> Self:
+        self._configure(outbox_storage_strategy=DummyOutboxStorageStrategy())
+        return self

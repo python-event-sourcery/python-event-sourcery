@@ -6,7 +6,6 @@ __all__ = [
     "Metadata",
     "Context",
     "NO_VERSIONING",
-    "Outbox",
     "Projector",
     "Subscription",
     "StreamId",
@@ -17,7 +16,6 @@ from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import EventStore
 from event_sourcery.interfaces.base_event import Event
 from event_sourcery.interfaces.event import Context, Metadata
-from event_sourcery.outbox import Outbox
 from event_sourcery.projector import Projector
 from event_sourcery.repository import Repository
 from event_sourcery.subscription import Subscription
