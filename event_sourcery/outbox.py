@@ -29,16 +29,11 @@ class Outbox(abc.ABC):
         self._publisher = publisher
 
     def run_once(self) -> None:
-        raw_event_dicts = self._storage_strategy.outbox_entries(limit=self.CHUNK_SIZE)
-        for entry_id, raw_event_dict, stream_id in raw_event_dicts:
-            event = self._serde.deserialize(
-                event=raw_event_dict,
-                event_type=self._event_registry.type_for_name(raw_event_dict["name"]),
-            )
-            try:
-                self._publisher(event, stream_id)
-            except Exception:
-                logger.exception("Failed to publish message #%d", entry_id)
-                self._storage_strategy.decrease_tries_left(entry_id)
-            else:
-                self._storage_strategy.remove_from_outbox(entry_id)
+        stream = self._storage_strategy.outbox_entries(limit=self.CHUNK_SIZE)
+        for entry in stream:
+            with entry as raw_event_dict:
+                event = self._serde.deserialize(
+                    event=raw_event_dict,
+                    event_type=self._event_registry.type_for_name(raw_event_dict["name"]),
+                )
+                self._publisher(event, raw_event_dict["stream_id"])

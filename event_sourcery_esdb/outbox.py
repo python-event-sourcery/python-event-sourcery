@@ -1,19 +1,18 @@
+import logging
 from contextlib import contextmanager
-from dataclasses import dataclass, field
-from typing import Dict, Generator, Iterator, Tuple, cast
+from dataclasses import dataclass
+from typing import ContextManager, Generator, Iterator
 
 from esdbclient import EventStoreDBClient, RecordedEvent
 from esdbclient.exceptions import DeadlineExceeded, NotFound
 from esdbclient.persistent import PersistentSubscription
 
-from event_sourcery import StreamId
 from event_sourcery.dto import RawEvent
 from event_sourcery.interfaces.outbox_filterer_strategy import OutboxFiltererStrategy
-from event_sourcery.interfaces.outbox_storage_strategy import (
-    EntryId,
-    OutboxStorageStrategy,
-)
-from event_sourcery_esdb import dto, stream
+from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
+from event_sourcery_esdb import dto
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(repr=False)
@@ -22,7 +21,6 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     _client: EventStoreDBClient
     _filterer: OutboxFiltererStrategy
     _active_subscription: PersistentSubscription | None = None
-    _processing: Dict[EntryId, RecordedEvent] = field(default_factory=dict)
 
     def create_subscription(self) -> None:
         try:
@@ -56,10 +54,7 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     def put_into_outbox(self, events: list[RawEvent]) -> None:
         ...
 
-    def outbox_entries(
-        self,
-        limit: int,
-    ) -> Iterator[Tuple[EntryId, RawEvent, StreamId]]:
+    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RawEvent]]:
         info = self._client.get_subscription_info(self.OUTBOX_NAME)
         if info.live_buffer_count == 0:
             return
@@ -67,28 +62,24 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
         with self._context(limit) as subscription:
             try:
                 for entry in subscription:
-                    entry_id = cast(int, entry.commit_position)
-                    self._processing[entry_id] = entry
-                    if self._filterer(raw_event := dto.raw_event(entry)):
-                        yield (
-                            entry_id,
-                            raw_event,
-                            stream.Name(stream_name=entry.stream_name).uuid,
-                        )
+                    if self._filterer(event := dto.raw_event(entry)):
+                        yield self._publish_context(entry, event)
             except DeadlineExceeded:
                 pass
-        self._processing = {}
 
-    def decrease_tries_left(self, entry_id: EntryId) -> None:
-        event = self._processing[entry_id]
-        if event.retry_count and event.retry_count >= 2:
-            self.active_subscription.nack(event.id, action="park")
+    @contextmanager
+    def _publish_context(
+        self,
+        entry: RecordedEvent,
+        event: RawEvent,
+    ) -> Generator[RawEvent, None, None]:
+        try:
+            yield event
+        except Exception:
+            logger.exception("Failed to publish message #%d", entry.id)
+            if entry.retry_count and entry.retry_count >= 2:
+                self.active_subscription.nack(entry.id, action="park")
+            else:
+                self.active_subscription.nack(entry.id, action="retry")
         else:
-            self.active_subscription.nack(event.id, action="retry")
-
-        del self._processing[entry_id]
-
-    def remove_from_outbox(self, entry_id: EntryId) -> None:
-        event = self._processing[entry_id]
-        self.active_subscription.ack(event.id)
-        del self._processing[entry_id]
+            self.active_subscription.ack(entry.id)
