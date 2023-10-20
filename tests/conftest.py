@@ -92,7 +92,12 @@ def esdb() -> Iterator[EventStoreDBClient]:
     yield client
     for event in client._connection.streams.read(commit_position=commit_position):
         if not event.stream_name.startswith("$"):
-            client.delete_stream(event.stream_name, StreamState.ANY)
+            client.delete_stream(
+                event.stream_name,
+                current_version=StreamState.ANY,
+            )
+    for sub in client.list_subscriptions():
+        client.delete_subscription(sub.group_name)
 
 
 @pytest.fixture()

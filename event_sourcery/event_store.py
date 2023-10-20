@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Sequence, TypeVar, cast
+from typing import Callable, Sequence, TypeVar, cast
 
 from event_sourcery.dto import RawEvent
 from event_sourcery.event_registry import EventRegistry
@@ -7,7 +7,6 @@ from event_sourcery.interfaces.base_event import Event
 from event_sourcery.interfaces.event import Metadata
 from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.interfaces.storage_strategy import StorageStrategy
-from event_sourcery.outbox import Outbox, Publisher
 from event_sourcery.serde import PydanticSerde
 from event_sourcery.types import StreamId
 from event_sourcery.versioning import NO_VERSIONING, ExplicitVersioning, Versioning
@@ -27,12 +26,20 @@ class EventStore:
         self._outbox_storage_strategy = outbox_storage_strategy
         self._event_registry = event_registry
 
-    def outbox(self, publisher: Publisher) -> Outbox:
-        return Outbox(
-            storage_strategy=self._outbox_storage_strategy,
-            event_registry=self._event_registry,
-            publisher=publisher,
-        )
+    def run_outbox(
+        self,
+        publisher: Callable[[Metadata, StreamId], None],
+        limit: int = 100,
+    ) -> None:
+        stream = self._outbox_storage_strategy.outbox_entries(limit=limit)
+        for entry in stream:
+            with entry as raw_event_dict:
+                event_type = self._event_registry.type_for_name(raw_event_dict["name"])
+                event = self._serde.deserialize(
+                    event=raw_event_dict,
+                    event_type=event_type,
+                )
+                publisher(event, raw_event_dict["stream_id"])
 
     def load_stream(
         self,

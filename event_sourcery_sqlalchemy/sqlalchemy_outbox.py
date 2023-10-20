@@ -1,18 +1,20 @@
+import logging
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterator, Tuple, cast
+from typing import ContextManager, Generator, Iterator, cast
+from uuid import UUID
 
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
 from event_sourcery.dto import RawEvent
 from event_sourcery.interfaces.outbox_filterer_strategy import OutboxFiltererStrategy
-from event_sourcery.interfaces.outbox_storage_strategy import (
-    EntryId,
-    OutboxStorageStrategy,
-)
+from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
 from event_sourcery.types.stream_id import StreamId
 from event_sourcery_sqlalchemy.models import OutboxEntry
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(repr=False)
@@ -44,9 +46,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
 
         self._session.execute(insert(OutboxEntry), rows)
 
-    def outbox_entries(
-        self, limit: int
-    ) -> Iterator[Tuple[EntryId, RawEvent, StreamId]]:
+    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RawEvent]]:
         stmt = (
             select(OutboxEntry)
             .filter(OutboxEntry.tries_left > 0)
@@ -55,22 +55,27 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
             .with_for_update(skip_locked=True)
         )
         entries = self._session.execute(stmt).scalars().all()
-        return (
-            (
-                entry.id,
-                entry.data,
-                StreamId(
-                    from_hex=entry.data["stream_id"],
-                    name=entry.stream_name,
-                ),
-            )
-            for entry in entries
+        for entry in entries:
+            yield self._publish_context(entry)
+
+    @contextmanager
+    def _publish_context(self, entry: OutboxEntry) -> Generator[RawEvent, None, None]:
+        raw = RawEvent(
+            uuid=UUID(entry.data["uuid"]),
+            stream_id=StreamId(
+                from_hex=entry.data["stream_id"],
+                name=entry.stream_name,
+            ),
+            created_at=datetime.fromisoformat(entry.data["created_at"]),
+            version=entry.data["version"],
+            name=entry.data["name"],
+            data=entry.data["data"],
+            context=entry.data["context"],
         )
-
-    def decrease_tries_left(self, entry_id: EntryId) -> None:
-        entry = cast(OutboxEntry, self._session.get(OutboxEntry, entry_id))
-        entry.tries_left -= 1
-
-    def remove_from_outbox(self, entry_id: EntryId) -> None:
-        entry = self._session.get(OutboxEntry, entry_id)
-        self._session.delete(entry)
+        try:
+            yield raw
+        except Exception:
+            logger.exception("Failed to publish message #%d", entry.id)
+            entry.tries_left -= 1
+        else:
+            self._session.delete(entry)

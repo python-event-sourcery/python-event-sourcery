@@ -119,7 +119,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7
 name = "coverage"
 version = "7.2.7"
 description = "Code coverage measurement for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -159,13 +159,14 @@ wmi = ["wmi (>=1.5.1,<2.0.0)"]
 
 [[package]]
 name = "esdbclient"
-version = "0.15"
+version = "1.0b3"
 description = "Python gRPC Client for EventStoreDB"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
+coverage = ">=7.2.7,<8.0.0"
 dnspython = ">=2.3.0,<3.0.0"
 grpcio = ">=1.51.0,<1.52.0 || >=1.53.0"
 protobuf = ">=3.11.0"
@@ -779,7 +780,7 @@ kombu = ["kombu"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "69ca88ddaa5108df9b8ba5201b52a0c4299cabb532625189be71acc31c84d00e"
+content-hash = "027df06385865e6d606d9c6b5a573690d7d6d41caf6c6bf7682c0efab5faf630"
 
 [metadata.files]
 amqp = [
@@ -998,8 +999,8 @@ dnspython = [
     {file = "dnspython-2.3.0.tar.gz", hash = "sha256:224e32b03eb46be70e12ef6d64e0be123a64e621ab4c0822ff6d450d52a540b9"},
 ]
 esdbclient = [
-    {file = "esdbclient-0.15-py3-none-any.whl", hash = "sha256:ba13d625d460992ea14a6f7b17f43dbab362b910cdc127125f7c63e6ff34fd59"},
-    {file = "esdbclient-0.15.tar.gz", hash = "sha256:e9d88374922a6f49decb50d8c2e84a758edee42ab3069a20839d2282486a6eb1"},
+    {file = "esdbclient-1.0b3-py3-none-any.whl", hash = "sha256:2211058f08b9e730f3b5cdc6f234f82938a884ea79d26956c8da1c30592b5828"},
+    {file = "esdbclient-1.0b3.tar.gz", hash = "sha256:68c5c086962750da9d0f8b110bc86aa1c665ffc96130cdaca534abd8d6d038d3"},
 ]
 exceptiongroup = [
     {file = "exceptiongroup-1.1.0-py3-none-any.whl", hash = "sha256:327cbda3da756e2de031a3107b81ab7b3770a602c4d16ca618298c526f4bec1e"},
