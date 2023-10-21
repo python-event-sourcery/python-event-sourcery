@@ -25,7 +25,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from event_sourcery import StreamId
+from event_sourcery.event_store import StreamId
 from event_sourcery_sqlalchemy.guid import GUID
 from event_sourcery_sqlalchemy.jsonb import JSONB
 

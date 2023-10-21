@@ -7,8 +7,8 @@ license = "MIT"
 packages = [
     { include = "event_sourcery" },
     { include = "event_sourcery_esdb" },
-    { include = "event_sourcery_sqlalchemy" },
     { include = "event_sourcery_kombu" },
+    { include = "event_sourcery_sqlalchemy" },
 ]
 
 [tool.poetry.dependencies]

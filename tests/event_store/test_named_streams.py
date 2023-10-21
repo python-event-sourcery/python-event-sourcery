@@ -2,12 +2,11 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery import Event, StreamId
-from event_sourcery.exceptions import (
+from event_sourcery.event_store import Event, EventStoreFactory, StreamId
+from event_sourcery.event_store.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     IllegalCategoryName,
 )
-from event_sourcery.factory import EventStoreFactory
 from tests.event_store.bdd import Given, Then, When
 
 

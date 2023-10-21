@@ -2,7 +2,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from event_sourcery import Event, StreamId
+from event_sourcery.event_store import Event, StreamId
 from tests.event_store.bdd import Given, Then, When
 from tests.matchers import any_metadata
 

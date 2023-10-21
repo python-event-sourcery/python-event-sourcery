@@ -8,8 +8,7 @@ from sqlalchemy import MetaData, create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store import EventStore
-from event_sourcery.factory import EventStoreFactory
+from event_sourcery.event_store import EventStore, EventStoreFactory
 from event_sourcery_esdb import ESDBStoreFactory
 from event_sourcery_sqlalchemy import SQLStoreFactory
 from tests.mark import xfail_if_not_implemented_yet

@@ -7,9 +7,11 @@ from esdbclient import EventStoreDBClient, RecordedEvent
 from esdbclient.exceptions import DeadlineExceeded, NotFound
 from esdbclient.persistent import PersistentSubscription
 
-from event_sourcery.dto import RawEvent
-from event_sourcery.interfaces.outbox_filterer_strategy import OutboxFiltererStrategy
-from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
+from event_sourcery.event_store import RawEvent
+from event_sourcery.event_store.interfaces import (
+    OutboxFiltererStrategy,
+    OutboxStorageStrategy,
+)
 from event_sourcery_esdb import dto
 
 logger = logging.getLogger(__name__)

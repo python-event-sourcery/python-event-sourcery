@@ -2,8 +2,8 @@ import sys
 from collections import UserString
 from typing import Tuple, cast
 
-from event_sourcery.exceptions import IllegalCategoryName
-from event_sourcery.types import StreamId
+from event_sourcery.event_store import StreamId
+from event_sourcery.event_store.exceptions import IllegalCategoryName
 
 
 class Name(UserString):

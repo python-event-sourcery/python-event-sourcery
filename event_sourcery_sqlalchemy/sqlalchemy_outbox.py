@@ -8,10 +8,11 @@ from uuid import UUID
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
-from event_sourcery.dto import RawEvent
-from event_sourcery.interfaces.outbox_filterer_strategy import OutboxFiltererStrategy
-from event_sourcery.interfaces.outbox_storage_strategy import OutboxStorageStrategy
-from event_sourcery.types.stream_id import StreamId
+from event_sourcery.event_store import RawEvent, StreamId
+from event_sourcery.event_store.interfaces import (
+    OutboxFiltererStrategy,
+    OutboxStorageStrategy,
+)
 from event_sourcery_sqlalchemy.models import OutboxEntry
 
 logger = logging.getLogger(__name__)

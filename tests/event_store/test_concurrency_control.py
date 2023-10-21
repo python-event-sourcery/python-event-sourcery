@@ -1,7 +1,7 @@
 import pytest
 
-from event_sourcery import StreamId
-from event_sourcery.exceptions import ConcurrentStreamWriteError
+from event_sourcery.event_store import StreamId
+from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from tests.event_store.bdd import Given, Then, When
 from tests.event_store.factories import AnEvent
 

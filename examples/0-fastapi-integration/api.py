@@ -6,8 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, as_declarative
 
 # Import a couple of things from event_sourcery
-from event_sourcery.event_store import EventStore  # for type annotations
-from event_sourcery import Event  # base class for events
+from event_sourcery.event_store import Event, EventStore  # base class for events
 from event_sourcery_sqlalchemy import (
     configure_models,  # set-up function for library's models
     SQLStoreFactory # sql store factory to start quickly

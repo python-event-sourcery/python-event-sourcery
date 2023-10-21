@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import Field
 
-from event_sourcery import Event, Metadata
+from event_sourcery.event_store import Event, Metadata
 
 sequence: Iterator[int]
 actual_version = 0

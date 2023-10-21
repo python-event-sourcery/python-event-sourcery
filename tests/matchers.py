@@ -1,9 +1,10 @@
-from typing import Any
+from typing import Any, TypeVar
 from unittest.mock import ANY
 from uuid import UUID
 
-from event_sourcery import Metadata
-from event_sourcery.repository import TEvent
+from event_sourcery.event_store import Event, Metadata
+
+TEvent = TypeVar("TEvent", bound=Event)
 
 
 class AnyUUID:

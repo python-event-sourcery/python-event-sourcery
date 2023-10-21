@@ -1,4 +1,4 @@
-from event_sourcery import Event
+from event_sourcery.event_store import Event
 
 
 class SomeEvent(Event):
