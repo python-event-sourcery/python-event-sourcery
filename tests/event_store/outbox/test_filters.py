@@ -2,10 +2,10 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery.event_store import EventStore, EventStoreFactory, Metadata, StreamId
+from event_sourcery.event_store import EventStore, EventStoreFactory, StreamId
 from event_sourcery.event_store.interfaces import OutboxFiltererStrategy
+from tests.event_store.factories import AnEvent
 from tests.event_store.outbox.conftest import PublisherMock
-from tests.events import SomeEvent
 
 
 @pytest.fixture()
@@ -25,8 +25,6 @@ def test_no_entries_when_everything_was_filtered(
     publisher: PublisherMock,
     event_store: EventStore,
 ) -> None:
-    an_event = Metadata[SomeEvent](event=SomeEvent(first_name="John"), version=1)
-    event_store.publish(an_event, stream_id=StreamId(uuid4()))
+    event_store.publish(AnEvent(), stream_id=StreamId(uuid4()))
     event_store.run_outbox(publisher)
-
     publisher.assert_not_called()
