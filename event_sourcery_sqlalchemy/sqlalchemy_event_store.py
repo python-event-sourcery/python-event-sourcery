@@ -6,14 +6,12 @@ from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from event_sourcery.dto import RawEvent
-from event_sourcery.exceptions import (
+from event_sourcery.event_store import NO_VERSIONING, RawEvent, StreamId, Versioning
+from event_sourcery.event_store.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     ConcurrentStreamWriteError,
 )
-from event_sourcery.interfaces.storage_strategy import StorageStrategy
-from event_sourcery.types.stream_id import StreamId
-from event_sourcery.versioning import NO_VERSIONING, Versioning
+from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery_sqlalchemy.models import Event as EventModel
 from event_sourcery_sqlalchemy.models import Snapshot as SnapshotModel
 from event_sourcery_sqlalchemy.models import Stream as StreamModel

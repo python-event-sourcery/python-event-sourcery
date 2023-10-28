@@ -1,7 +1,7 @@
 import pytest
 
-from event_sourcery import NO_VERSIONING, Event, StreamId
-from event_sourcery.exceptions import (
+from event_sourcery.event_store import NO_VERSIONING, Event, StreamId
+from event_sourcery.event_store.exceptions import (
     ExpectedVersionUsedOnVersionlessStream,
     NoExpectedVersionGivenOnVersionedStream,
 )

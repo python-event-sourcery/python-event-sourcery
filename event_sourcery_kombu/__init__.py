@@ -1,4 +1,5 @@
-from typing import Callable
+from dataclasses import dataclass, field
+from typing import Callable, Type
 
 from kombu import Connection, Exchange, Message, Queue
 from kombu.connection import ConnectionPool
@@ -7,8 +8,8 @@ from pydantic import AmqpDsn, BaseSettings, Field
 
 __all__ = ["publish_event", "declare_exchange"]
 
-from event_sourcery import Event, Metadata, StreamId, Subscription
-from event_sourcery.event_registry import event_name
+from event_sourcery.event_store import Event, Metadata, StreamId
+from event_sourcery.event_store.event.registry import event_name
 
 
 class BrokerSettings(BaseSettings):
@@ -85,6 +86,22 @@ def _publish(
 def _declare(queue_or_exchange: Exchange | Queue) -> None:
     with PoolFactory.get().acquire(block=True) as conn:
         queue_or_exchange(conn).declare()
+
+
+class InvalidSubscription(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class Subscription:
+    event_types: list[Type[Event]] = field(default_factory=list)
+    stream_categories: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if len(self.event_types) == 0 and len(self.stream_categories) == 0:
+            raise InvalidSubscription(
+                "At least one event type or stream category needs to be specified"
+            )
 
 
 def consume(

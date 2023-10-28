@@ -68,7 +68,6 @@ from event_sourcery import (
     Event,  # base class for events
 )
 
-
 # Set up your DB and application as you would normally do
 engine = create_engine(
     "postgresql://event_sourcery:event_sourcery@localhost:5432/event_sourcery"
@@ -89,7 +88,6 @@ class Base:
 
 
 app = FastAPI(on_startup=[lambda: Base.metadata.create_all(bind=engine)])
-
 
 # initialize Event Sourcery models, so they can be handled by SQLAlchemy and e.g. alembic
 configure_models(Base)

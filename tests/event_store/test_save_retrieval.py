@@ -1,8 +1,7 @@
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
-from event_sourcery import Metadata, StreamId
-from event_sourcery.event_store import EventStore
+from event_sourcery.event_store import EventStore, Metadata, StreamId
 from tests.event_store.bdd import Given, Then, When
 from tests.event_store.factories import AnEvent, NastyEventWithJsonUnfriendlyTypes
 from tests.events import SomeEvent

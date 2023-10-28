@@ -1,6 +1,6 @@
 import pytest
 
-from event_sourcery import EventStore
+from event_sourcery.event_store import EventStore
 from tests.event_store import bdd, factories
 
 
