@@ -1,6 +1,6 @@
 from event_sourcery.event_store import StreamId
-from tests.event_store.bdd import Given, Then, When
-from tests.event_store.factories import AnEvent
+from tests.bdd import Given, Then, When
+from tests.factories import AnEvent
 
 
 def test_removes_stream(given: Given, then: Then, when: When) -> None:

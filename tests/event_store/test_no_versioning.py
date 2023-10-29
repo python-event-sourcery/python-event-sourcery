@@ -5,7 +5,7 @@ from event_sourcery.event_store.exceptions import (
     ExpectedVersionUsedOnVersionlessStream,
     NoExpectedVersionGivenOnVersionedStream,
 )
-from tests.event_store.bdd import Given, Then, When
+from tests.bdd import Given, Then, When
 
 
 class AnEvent(Event):

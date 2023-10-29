@@ -2,8 +2,8 @@ from datetime import date, datetime, timezone
 from uuid import uuid4
 
 from event_sourcery.event_store import EventStore, Metadata, StreamId
-from tests.event_store.bdd import Given, Then, When
-from tests.event_store.factories import AnEvent, NastyEventWithJsonUnfriendlyTypes
+from tests.bdd import Given, Then, When
+from tests.factories import AnEvent, NastyEventWithJsonUnfriendlyTypes
 from tests.matchers import any_metadata
 
 
