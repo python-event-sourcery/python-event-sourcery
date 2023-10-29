@@ -4,7 +4,6 @@ from uuid import uuid4
 from event_sourcery.event_store import EventStore, Metadata, StreamId
 from tests.event_store.bdd import Given, Then, When
 from tests.event_store.factories import AnEvent, NastyEventWithJsonUnfriendlyTypes
-from tests.events import SomeEvent
 from tests.matchers import any_metadata
 
 
@@ -70,8 +69,5 @@ def test_is_able_to_handle_events_without_metadata(
     then: Then,
 ) -> None:
     given.stream(stream_id := StreamId())
-    event_store.append(
-        an_event := SomeEvent(first_name="Luke"),
-        stream_id=stream_id,
-    )
+    event_store.append(an_event := AnEvent().event, stream_id=stream_id)
     then.stream(stream_id).loads_only([any_metadata(for_event=an_event)])
