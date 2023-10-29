@@ -8,7 +8,11 @@ from sqlalchemy import MetaData, create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store import EventStore, EventStoreFactory
+from event_sourcery.event_store import (
+    EventStore,
+    EventStoreFactory,
+    InMemoryEventStoreFactory,
+)
 from event_sourcery_esdb import ESDBStoreFactory
 from event_sourcery_sqlalchemy import SQLStoreFactory
 from tests.mark import xfail_if_not_implemented_yet
@@ -113,7 +117,19 @@ def esdb_factory(
     return ESDBStoreFactory(esdb)
 
 
-@pytest.fixture(params=["esdb_factory", "sqlite_factory", "postgres_factory"])
+@pytest.fixture()
+def in_memory_factory() -> EventStoreFactory:
+    return InMemoryEventStoreFactory()
+
+
+@pytest.fixture(
+    params=[
+        "in_memory_factory",
+        "esdb_factory",
+        "sqlite_factory",
+        "postgres_factory",
+    ]
+)
 def event_store_factory(request: SubRequest) -> EventStoreFactory:
     return cast(EventStoreFactory, request.getfixturevalue(request.param))
 
