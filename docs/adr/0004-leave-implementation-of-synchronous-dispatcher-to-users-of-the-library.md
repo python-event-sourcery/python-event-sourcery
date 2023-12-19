@@ -15,7 +15,7 @@ When events were published via `EventStore` with configured listeners, the latte
 
 This delivered a very basic mechanism of subscribing to events from e.g. other code modules, similar to e.g. Django signals.
 
-However, in-memory events implementation failed to conform to Liskov's Substitute Principle, because the handling and consequences of the erorrs are different for SQL-based backend and Event Store DB.
+However, in-memory events implementation failed to conform to Liskov's Substitute Principle, because the handling and consequences of the errors are different for SQL-based backend and Event Store DB.
 
 With SQL-based, everything is wrapped in a transaction. That means if the one of listeners fails, then the whole transaction is rolled back. With Event Store DB (and possibly other stores as well) there are no transactions, so failing in listener would not reverted changes made in Event Store.
 
