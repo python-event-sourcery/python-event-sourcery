@@ -4,7 +4,7 @@ from typing import Any, Callable, ContextManager, Iterator
 
 from typing_extensions import Self
 
-from event_sourcery.event_store.event import Event, EventRegistry, RawEvent
+from event_sourcery.event_store.event import Event, EventRegistry, RawEvent, Serde
 from event_sourcery.event_store.event_store import EventStore
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
@@ -25,10 +25,11 @@ class NoOutboxStorageStrategy(OutboxStorageStrategy):
 
 
 class EventStoreFactory(abc.ABC):
+    serde = Serde(Event.__registry__)
     build: Callable[..., EventStore] = partial(
         EventStore,
         outbox_storage_strategy=NoOutboxStorageStrategy(),
-        event_registry=Event.__registry__,
+        serde=serde,
     )
 
     def _configure(self, **kwargs: Any) -> Self:
@@ -36,7 +37,8 @@ class EventStoreFactory(abc.ABC):
         return self
 
     def with_event_registry(self, event_registry: EventRegistry) -> Self:
-        return self._configure(event_registry=event_registry)
+        self.serde = Serde(event_registry)
+        return self._configure(serde=self.serde)
 
     @abc.abstractmethod
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
