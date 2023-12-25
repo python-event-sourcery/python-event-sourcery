@@ -1,40 +1,39 @@
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
-from typing import Sequence, cast
+from typing import Sequence
 from unittest.mock import Mock
 
 from typing_extensions import Self
 
-from event_sourcery.event_store import Event, EventStore, Metadata, StreamId
+from event_sourcery import event_store as es
 from tests.matchers import any_metadata
 
 
 @dataclass
 class Stream:
-    store: EventStore
-    id: StreamId = field(default_factory=StreamId)
+    store: es.EventStore
+    id: es.StreamId = field(default_factory=es.StreamId)
 
-    def receives(self, *events: Metadata) -> Self:
+    def receives(self, *events: es.Metadata) -> Self:
         self.autoversion(*events)
         self.store.append(*events, stream_id=self.id)
         return self
 
-    def snapshots(self, snapshot: Metadata) -> Self:
+    def snapshots(self, snapshot: es.Metadata) -> Self:
         if not snapshot.version:
             snapshot.version = self.current_version
         self.store.save_snapshot(self.id, snapshot)
         return self
 
     @property
-    def events(self) -> list[Metadata]:
+    def events(self) -> list[es.Metadata]:
         return list(self.store.load_stream(self.id))
 
-    def loads_only(self, events: Sequence[Metadata]) -> None:
+    def loads_only(self, events: Sequence[es.Metadata]) -> None:
         assert self.events == list(events)
 
-    def loads(self, events: Sequence[Metadata] | Sequence[Event]) -> None:
-        if not all([isinstance(e, Metadata) for e in events]):
-            events = [any_metadata(e) for e in cast(Sequence[Event], events)]
+    def loads(self, events: Sequence[es.Metadata | es.Event]) -> None:
+        events = [e if isinstance(e, es.Metadata) else any_metadata(e) for e in events]
         assert self.events == list(events)
 
     def is_empty(self) -> None:
@@ -44,7 +43,7 @@ class Stream:
     def current_version(self) -> int | None:
         return (self.events or [Mock(version=0)])[-1].version
 
-    def autoversion(self, *events: Metadata) -> None:
+    def autoversion(self, *events: es.Metadata) -> None:
         if any(e.version is not None for e in events):
             return
 
@@ -57,59 +56,59 @@ class Stream:
 
 @dataclass
 class Given:
-    store: EventStore
+    store: es.EventStore
 
-    def stream(self, with_id: StreamId | None = None) -> Stream:
+    def stream(self, with_id: es.StreamId | None = None) -> Stream:
         return Stream(self.store) if not with_id else Stream(self.store, with_id)
 
-    def events(self, *events: Metadata, on: StreamId) -> Self:
+    def events(self, *events: es.Metadata, on: es.StreamId) -> Self:
         self.stream(on).receives(*events)
         return self
 
     @singledispatchmethod
-    def event(self, event: Metadata, on: StreamId) -> Self:
+    def event(self, event: es.Metadata, on: es.StreamId) -> Self:
         self.stream(on).receives(event)
         return self
 
     @event.register
-    def base_event(self, event: Event, on: StreamId) -> Self:
-        self.stream(on).receives(Metadata.wrap(event, version=None))
+    def base_event(self, event: es.Event, on: es.StreamId) -> Self:
+        self.stream(on).receives(es.Metadata.wrap(event, version=None))
         return self
 
-    def snapshot(self, snapshot: Metadata, on: StreamId) -> Self:
+    def snapshot(self, snapshot: es.Metadata, on: es.StreamId) -> Self:
         self.stream(on).snapshots(snapshot)
         return self
 
 
 @dataclass
 class When:
-    store: EventStore
+    store: es.EventStore
 
-    def stream(self, with_id: StreamId | None = None) -> Stream:
-        return Stream(self.store, with_id or StreamId())
+    def stream(self, with_id: es.StreamId | None = None) -> Stream:
+        return Stream(self.store, with_id or es.StreamId())
 
-    def snapshots(self, with_: Metadata, on: StreamId) -> Self:
+    def snapshots(self, with_: es.Metadata, on: es.StreamId) -> Self:
         self.stream(on).snapshots(with_)
         return self
 
     @singledispatchmethod
-    def appends(self, *events: Metadata, to: StreamId) -> Self:
+    def appends(self, *events: es.Metadata, to: es.StreamId) -> Self:
         self.stream(to).receives(*events)
         return self
 
     @appends.register
-    def appends_base(self, *events: Event, to: StreamId) -> Self:
-        self.stream(to).receives(*(Metadata.wrap(e, version=None) for e in events))
+    def appends_base(self, *events: es.Event, to: es.StreamId) -> Self:
+        self.stream(to).receives(*(es.Metadata.wrap(e, version=None) for e in events))
         return self
 
-    def deletes(self, stream: StreamId) -> Self:
+    def deletes(self, stream: es.StreamId) -> Self:
         self.store.delete_stream(stream)
         return self
 
 
 @dataclass
 class Then:
-    store: EventStore
+    store: es.EventStore
 
-    def stream(self, stream_id: StreamId) -> Stream:
+    def stream(self, stream_id: es.StreamId) -> Stream:
         return Stream(self.store, stream_id)
