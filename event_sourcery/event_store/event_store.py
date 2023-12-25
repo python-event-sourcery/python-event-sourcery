@@ -1,7 +1,7 @@
 from functools import singledispatchmethod
-from typing import Callable, Sequence, cast
+from typing import Callable, Iterator, Sequence, cast
 
-from event_sourcery.event_store.event import Event, Metadata, RawEvent, Serde
+from event_sourcery.event_store.event import Event, Metadata, RawEvent, Recorded, Serde
 from event_sourcery.event_store.interfaces import OutboxStorageStrategy, StorageStrategy
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.versioning import (
@@ -142,3 +142,6 @@ class EventStore:
         stream_id: StreamId,
     ) -> list[RawEvent]:
         return [self._serde.serialize(event=e, stream_id=stream_id) for e in events]
+
+    def subscribe(self) -> Iterator[Recorded]:
+        raise NotImplementedError

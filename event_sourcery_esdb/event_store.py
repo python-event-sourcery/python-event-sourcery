@@ -1,10 +1,16 @@
 from dataclasses import dataclass
-from typing import cast
+from typing import Iterator, cast
 
 from esdbclient import EventStoreDBClient, StreamState
 from esdbclient.exceptions import NotFound
 
-from event_sourcery.event_store import NO_VERSIONING, RawEvent, StreamId, Versioning
+from event_sourcery.event_store import (
+    NO_VERSIONING,
+    RawEvent,
+    RecordedRaw,
+    StreamId,
+    Versioning,
+)
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery_esdb import dto, stream
@@ -94,3 +100,6 @@ class ESDBStorageStrategy(StorageStrategy):
     def delete_stream(self, stream_id: StreamId) -> None:
         name = stream.Name(stream_id)
         self._client.delete_stream(str(name), current_version=StreamState.ANY)
+
+    def subscribe(self) -> Iterator[RecordedRaw]:
+        raise NotImplementedError

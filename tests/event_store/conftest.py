@@ -106,6 +106,7 @@ def in_memory_factory(request: pytest.FixtureRequest) -> EventStoreFactory:
         reason = skip_in_memory.kwargs.get("reason", "")
         pytest.skip(f"Skipping InMemory tests: {reason}")
 
+    xfail_if_not_implemented_yet(request, "in_memory")
     return InMemoryEventStoreFactory()
 
 

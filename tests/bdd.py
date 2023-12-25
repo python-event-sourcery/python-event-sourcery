@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
-from typing import Sequence
+from typing import Iterator, Sequence, TypeVar
 from unittest.mock import Mock
 
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
+from event_sourcery.event_store import Recorded
 from tests.matchers import any_metadata
 
 
@@ -55,12 +56,36 @@ class Stream:
 
 
 @dataclass
-class Given:
+class Subscription:
     store: es.EventStore
+    _subscription: Iterator[Recorded] = field(init=False)
+
+    def __post_init__(self) -> None:
+        self._subscription = self.store.subscribe()
+
+    def next_received_record_is(self, expected: Recorded) -> None:
+        received = next(self._subscription)
+        assert expected == received
+
+
+T = TypeVar("T")
+
+
+@dataclass
+class Step:
+    store: es.EventStore
+
+    def __call__(self, value: T) -> T:
+        return value
+
+    def subscription(self) -> Subscription:
+        return Subscription(self.store)
 
     def stream(self, with_id: es.StreamId | None = None) -> Stream:
         return Stream(self.store) if not with_id else Stream(self.store, with_id)
 
+
+class Given(Step):
     def events(self, *events: es.Metadata, on: es.StreamId) -> Self:
         self.stream(on).receives(*events)
         return self
@@ -80,13 +105,7 @@ class Given:
         return self
 
 
-@dataclass
-class When:
-    store: es.EventStore
-
-    def stream(self, with_id: es.StreamId | None = None) -> Stream:
-        return Stream(self.store, with_id or es.StreamId())
-
+class When(Step):
     def snapshots(self, with_: es.Metadata, on: es.StreamId) -> Self:
         self.stream(on).snapshots(with_)
         return self
@@ -106,9 +125,5 @@ class When:
         return self
 
 
-@dataclass
-class Then:
-    store: es.EventStore
-
-    def stream(self, stream_id: es.StreamId) -> Stream:
-        return Stream(self.store, stream_id)
+class Then(Step):
+    pass

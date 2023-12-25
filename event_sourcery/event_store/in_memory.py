@@ -6,10 +6,9 @@ from typing import ContextManager, Dict, Generator, Iterator
 
 from typing_extensions import Self
 
-from event_sourcery.event_store import EventStoreFactory
-from event_sourcery.event_store.event import RawEvent
+from event_sourcery.event_store.event import RawEvent, RecordedRaw
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
-from event_sourcery.event_store.factory import no_filter
+from event_sourcery.event_store.factory import EventStoreFactory, no_filter
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
@@ -108,6 +107,9 @@ class InMemoryStorageStrategy(StorageStrategy):
     def delete_stream(self, stream_id: StreamId) -> None:
         if stream_id in self._storage:
             self._storage.delete(stream_id)
+
+    def subscribe(self) -> Iterator[RecordedRaw]:
+        raise NotImplementedError
 
 
 @dataclass

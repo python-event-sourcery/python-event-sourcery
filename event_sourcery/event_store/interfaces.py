@@ -1,7 +1,7 @@
 import abc
 from typing import ContextManager, Iterator, Protocol
 
-from event_sourcery.event_store.event import RawEvent
+from event_sourcery.event_store.event import RawEvent, RecordedRaw
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.versioning import Versioning
 
@@ -45,4 +45,8 @@ class StorageStrategy(abc.ABC):
 
     @abc.abstractmethod
     def delete_stream(self, stream_id: StreamId) -> None:
+        pass
+
+    @abc.abstractmethod
+    def subscribe(self) -> Iterator[RecordedRaw]:
         pass

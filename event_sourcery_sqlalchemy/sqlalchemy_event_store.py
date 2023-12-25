@@ -1,12 +1,18 @@
 from dataclasses import dataclass
-from typing import Sequence, Union
+from typing import Iterator, Sequence, Union
 
 from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store import NO_VERSIONING, RawEvent, StreamId, Versioning
+from event_sourcery.event_store import (
+    NO_VERSIONING,
+    RawEvent,
+    RecordedRaw,
+    StreamId,
+    Versioning,
+)
 from event_sourcery.event_store.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     ConcurrentStreamWriteError,
@@ -176,3 +182,6 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             StreamModel.stream_id == stream_id,
         )
         self._session.execute(delete_stream_stmt)
+
+    def subscribe(self) -> Iterator[RecordedRaw]:
+        raise NotImplementedError
