@@ -19,6 +19,7 @@ from event_sourcery_esdb import dto, stream
 @dataclass(repr=False)
 class ESDBStorageStrategy(StorageStrategy):
     _client: EventStoreDBClient
+    _timeout: float = 1
 
     def fetch_events(
         self,
@@ -102,4 +103,15 @@ class ESDBStorageStrategy(StorageStrategy):
         self._client.delete_stream(str(name), current_version=StreamState.ANY)
 
     def subscribe(self) -> Iterator[RecordedRaw]:
-        raise NotImplementedError
+        from_position = self._client.get_commit_position()
+        subscription = self._client.subscribe_to_all(
+            commit_position=from_position,
+            timeout=self._timeout,
+        )
+        return (
+            RecordedRaw(
+                entry=dto.raw_event(from_entry=recorded),
+                position=recorded.commit_position or 0,
+            )
+            for recorded in subscription
+        )
