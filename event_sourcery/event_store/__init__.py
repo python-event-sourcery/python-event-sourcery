@@ -8,6 +8,7 @@ __all__ = [
     "InMemoryEventStoreFactory",
     "Metadata",
     "NO_VERSIONING",
+    "Position",
     "RawEvent",
     "Recorded",
     "RecordedRaw",
@@ -25,6 +26,7 @@ from event_sourcery.event_store.event import (
     Event,
     EventRegistry,
     Metadata,
+    Position,
     RawEvent,
     RecordedRaw,
 )

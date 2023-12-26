@@ -1,6 +1,6 @@
 import pytest
 
-from event_sourcery.event_store import StreamId
+from event_sourcery.event_store import EventStore, StreamId
 from tests.bdd import Given, Then, When
 from tests.factories import AnEvent
 from tests.matchers import any_record
@@ -46,3 +46,63 @@ def test_receives_only_events_after_start_of_subscription(
 
     when(stream).receives(new_event := AnEvent())
     then(subscription).next_received_record_is(any_record(new_event, stream.id))
+
+
+class TestFromPositionSubscription:
+    @pytest.mark.not_implemented(storage=["in_memory", "esdb", "sqlite", "postgres"])
+    def test_receives_all_events_from_selected_position(
+        self,
+        event_store: EventStore,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        starting_position = given(event_store).position
+        stream = given.stream().receives(old_event := AnEvent())
+        subscription = given.subscription(to=starting_position)
+
+        when(stream).receives(new_event := AnEvent())
+
+        then(subscription).next_received_record_is(any_record(old_event, stream.id))
+        then(subscription).next_received_record_is(any_record(new_event, stream.id))
+
+    @pytest.mark.not_implemented(storage=["in_memory", "esdb", "sqlite", "postgres"])
+    def test_receives_events_after_passed_position(
+        self,
+        event_store: EventStore,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        stream = given.stream().receives(AnEvent(), AnEvent(), AnEvent())
+        subscription = given.subscription(to=event_store.position)
+
+        when(stream).receives(new_event := AnEvent())
+
+        then(subscription).next_received_record_is(any_record(new_event, stream.id))
+
+    @pytest.mark.not_implemented(storage=["in_memory", "esdb", "sqlite", "postgres"])
+    def test_receives_events_from_multiple_streams_after_passed_position(
+        self,
+        event_store: EventStore,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        stream_1 = given.stream().receives(AnEvent(), AnEvent(), AnEvent())
+        stream_2 = given.stream().receives(AnEvent(), AnEvent(), AnEvent())
+        subscription = given.subscription(to=event_store.position)
+
+        when(stream_1).receives(first_after_position := AnEvent())
+        when(stream_2).receives(second_after_position := AnEvent())
+        when(stream_1).receives(third_after_position := AnEvent())
+
+        then(subscription).next_received_record_is(
+            any_record(first_after_position, stream_1.id)
+        )
+        then(subscription).next_received_record_is(
+            any_record(second_after_position, stream_2.id)
+        )
+        then(subscription).next_received_record_is(
+            any_record(third_after_position, stream_1.id)
+        )

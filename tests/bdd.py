@@ -6,7 +6,7 @@ from unittest.mock import Mock
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
-from event_sourcery.event_store import Recorded
+from event_sourcery.event_store import Position, Recorded
 from tests.matchers import any_metadata
 
 
@@ -58,10 +58,11 @@ class Stream:
 @dataclass
 class Subscription:
     store: es.EventStore
+    from_position: Position | None
     _subscription: Iterator[Recorded] = field(init=False)
 
     def __post_init__(self) -> None:
-        self._subscription = self.store.subscribe()
+        self._subscription = self.store.subscribe(self.from_position)
 
     def next_received_record_is(self, expected: Recorded) -> None:
         received = next(self._subscription)
@@ -78,8 +79,8 @@ class Step:
     def __call__(self, value: T) -> T:
         return value
 
-    def subscription(self) -> Subscription:
-        return Subscription(self.store)
+    def subscription(self, to: Position | None = None) -> Subscription:
+        return Subscription(self.store, to)
 
     def stream(self, with_id: es.StreamId | None = None) -> Stream:
         return Stream(self.store) if not with_id else Stream(self.store, with_id)

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from event_sourcery.event_store import (
     NO_VERSIONING,
+    Position,
     RawEvent,
     RecordedRaw,
     StreamId,
@@ -183,5 +184,9 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         )
         self._session.execute(delete_stream_stmt)
 
-    def subscribe(self) -> Iterator[RecordedRaw]:
+    def subscribe(self, from_position: Position | None) -> Iterator[RecordedRaw]:
+        raise NotImplementedError
+
+    @property
+    def current_position(self) -> Position | None:
         raise NotImplementedError

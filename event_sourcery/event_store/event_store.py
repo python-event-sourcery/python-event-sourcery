@@ -1,7 +1,14 @@
 from functools import singledispatchmethod
 from typing import Callable, Iterator, Sequence, cast
 
-from event_sourcery.event_store.event import Event, Metadata, RawEvent, Recorded, Serde
+from event_sourcery.event_store.event import (
+    Event,
+    Metadata,
+    Position,
+    RawEvent,
+    Recorded,
+    Serde,
+)
 from event_sourcery.event_store.interfaces import OutboxStorageStrategy, StorageStrategy
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.versioning import (
@@ -143,12 +150,16 @@ class EventStore:
     ) -> list[RawEvent]:
         return [self._serde.serialize(event=e, stream_id=stream_id) for e in events]
 
-    def subscribe(self) -> Iterator[Recorded]:
+    def subscribe(self, from_position: Position | None = None) -> Iterator[Recorded]:
         return (
             Recorded(
                 metadata=self._serde.deserialize(raw["entry"]),
                 stream_id=raw["entry"]["stream_id"],
                 position=raw["position"],
             )
-            for raw in self._storage_strategy.subscribe()
+            for raw in self._storage_strategy.subscribe(from_position)
         )
+
+    @property
+    def position(self) -> Position | None:
+        return self._storage_strategy.current_position

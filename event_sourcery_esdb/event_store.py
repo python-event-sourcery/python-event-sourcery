@@ -6,6 +6,7 @@ from esdbclient.exceptions import NotFound
 
 from event_sourcery.event_store import (
     NO_VERSIONING,
+    Position,
     RawEvent,
     RecordedRaw,
     StreamId,
@@ -102,7 +103,9 @@ class ESDBStorageStrategy(StorageStrategy):
         name = stream.Name(stream_id)
         self._client.delete_stream(str(name), current_version=StreamState.ANY)
 
-    def subscribe(self) -> Iterator[RecordedRaw]:
+    def subscribe(self, from_position: Position | None) -> Iterator[RecordedRaw]:
+        if from_position is not None:
+            raise NotImplementedError
         from_position = self._client.get_commit_position()
         subscription = self._client.subscribe_to_all(
             commit_position=from_position,
@@ -115,3 +118,7 @@ class ESDBStorageStrategy(StorageStrategy):
             )
             for recorded in subscription
         )
+
+    @property
+    def current_position(self) -> Position | None:
+        raise NotImplementedError

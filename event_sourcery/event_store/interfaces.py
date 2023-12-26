@@ -1,7 +1,7 @@
 import abc
 from typing import ContextManager, Iterator, Protocol
 
-from event_sourcery.event_store.event import RawEvent, RecordedRaw
+from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.versioning import Versioning
 
@@ -48,5 +48,10 @@ class StorageStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def subscribe(self) -> Iterator[RecordedRaw]:
+    def subscribe(self, from_position: Position | None) -> Iterator[RecordedRaw]:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def current_position(self) -> Position | None:
         pass

@@ -6,6 +6,7 @@ from typing import ContextManager, Dict, Generator, Iterator
 
 from typing_extensions import Self
 
+from event_sourcery.event_store import Position
 from event_sourcery.event_store.event import RawEvent, RecordedRaw
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.factory import EventStoreFactory, no_filter
@@ -129,8 +130,14 @@ class InMemoryStorageStrategy(StorageStrategy):
         if stream_id in self._storage:
             self._storage.delete(stream_id)
 
-    def subscribe(self) -> Iterator[RecordedRaw]:
+    def subscribe(self, from_position: Position | None) -> Iterator[RecordedRaw]:
+        if from_position is not None:
+            raise NotImplementedError
         return InMemorySubscription(self._storage)
+
+    @property
+    def current_position(self) -> Position | None:
+        raise NotImplementedError
 
 
 @dataclass
