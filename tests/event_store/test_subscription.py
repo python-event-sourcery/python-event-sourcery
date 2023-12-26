@@ -6,7 +6,7 @@ from tests.factories import AnEvent
 from tests.matchers import any_record
 
 
-@pytest.mark.not_implemented(storage=["sqlite", "postgres", "esdb", "in_memory"])
+@pytest.mark.not_implemented(storage=["sqlite", "postgres", "esdb"])
 def test_receives_all_events(given: Given, when: When, then: Then) -> None:
     subscription = given.subscription()
 
@@ -19,7 +19,7 @@ def test_receives_all_events(given: Given, when: When, then: Then) -> None:
     then(subscription).next_received_record_is(any_record(third_event, first_stream))
 
 
-@pytest.mark.not_implemented(storage=["sqlite", "postgres", "esdb", "in_memory"])
+@pytest.mark.not_implemented(storage=["sqlite", "postgres", "esdb"])
 def test_multiple_subscriptions_receives_events(
     given: Given,
     when: When,
@@ -35,7 +35,7 @@ def test_multiple_subscriptions_receives_events(
     then(subscription_2).next_received_record_is(any_record(an_event, stream.id))
 
 
-@pytest.mark.not_implemented(storage=["sqlite", "postgres", "esdb", "in_memory"])
+@pytest.mark.not_implemented(storage=["sqlite", "postgres", "esdb"])
 def test_receives_only_events_after_start_of_subscription(
     given: Given,
     when: When,

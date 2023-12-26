@@ -24,6 +24,10 @@ class Storage:
     _data: dict[StreamId, list[RawEvent]] = field(default_factory=dict, init=False)
     _versions: dict[StreamId, int | None] = field(default_factory=dict, init=False)
 
+    @property
+    def current_position(self) -> int:
+        return len(self.events)
+
     def __contains__(self, stream_id: object) -> bool:
         if not isinstance(stream_id, StreamId):
             raise TypeError
@@ -59,6 +63,23 @@ class Storage:
 
     def get_version(self, stream_id: StreamId) -> int | None:
         return self._versions[stream_id]
+
+
+@dataclass
+class InMemorySubscription(Iterator[RecordedRaw]):
+    _storage: Storage
+    _from_position: int = field(init=False)
+
+    def __post_init__(self) -> None:
+        self._from_position = self._storage.current_position
+
+    def __next__(self) -> RecordedRaw:
+        entry = RecordedRaw(
+            entry=deepcopy(self._storage.events[self._from_position]),
+            position=self._from_position,
+        )
+        self._from_position += 1
+        return entry
 
 
 class InMemoryStorageStrategy(StorageStrategy):
@@ -109,7 +130,7 @@ class InMemoryStorageStrategy(StorageStrategy):
             self._storage.delete(stream_id)
 
     def subscribe(self) -> Iterator[RecordedRaw]:
-        raise NotImplementedError
+        return InMemorySubscription(self._storage)
 
 
 @dataclass

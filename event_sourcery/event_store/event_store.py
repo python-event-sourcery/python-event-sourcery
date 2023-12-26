@@ -144,4 +144,11 @@ class EventStore:
         return [self._serde.serialize(event=e, stream_id=stream_id) for e in events]
 
     def subscribe(self) -> Iterator[Recorded]:
-        raise NotImplementedError
+        return (
+            Recorded(
+                metadata=self._serde.deserialize(raw["entry"]),
+                stream_id=raw["entry"]["stream_id"],
+                position=raw["position"],
+            )
+            for raw in self._storage_strategy.subscribe()
+        )
