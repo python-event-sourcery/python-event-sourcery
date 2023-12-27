@@ -111,11 +111,19 @@ class ESDBStorageStrategy(StorageStrategy):
         if from_position is None:
             from_position = self.current_position
         if to_category is not None:
-            raise NotImplementedError
-        subscription = self._client.subscribe_to_all(
-            commit_position=from_position,
-            timeout=self._timeout,
-        )
+            subscription = self._client.subscribe_to_all(
+                commit_position=from_position,
+                timeout=self._timeout,
+                filter_include=[
+                    f"{to_category}-\\w+",
+                ],
+                filter_by_stream_name=True,
+            )
+        else:
+            subscription = self._client.subscribe_to_all(
+                commit_position=from_position,
+                timeout=self._timeout,
+            )
         return (
             RecordedRaw(
                 entry=dto.raw_event(from_entry=recorded),
