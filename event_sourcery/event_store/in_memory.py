@@ -69,10 +69,7 @@ class Storage:
 @dataclass
 class InMemorySubscription(Iterator[RecordedRaw]):
     _storage: Storage
-    _from_position: int = field(init=False)
-
-    def __post_init__(self) -> None:
-        self._from_position = self._storage.current_position
+    _from_position: int
 
     def __next__(self) -> RecordedRaw:
         entry = RecordedRaw(
@@ -131,13 +128,14 @@ class InMemoryStorageStrategy(StorageStrategy):
             self._storage.delete(stream_id)
 
     def subscribe(self, from_position: Position | None) -> Iterator[RecordedRaw]:
-        if from_position is not None:
-            raise NotImplementedError
-        return InMemorySubscription(self._storage)
+        if from_position is None:
+            from_position = self._storage.current_position
+        return InMemorySubscription(self._storage, from_position)
 
     @property
     def current_position(self) -> Position | None:
-        raise NotImplementedError
+        current_position = self._storage.current_position
+        return current_position and Position(current_position)
 
 
 @dataclass
