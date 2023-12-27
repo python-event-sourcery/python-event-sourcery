@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from copy import deepcopy
+from copy import copy
 from dataclasses import dataclass, field
 from operator import getitem
 from typing import ContextManager, Dict, Generator, Iterator
@@ -54,7 +54,7 @@ class Storage:
         self._versions[stream_id] = with_snapshot["version"]
 
     def read(self, stream_id: StreamId) -> list[RawEvent]:
-        return deepcopy(self._data[stream_id])
+        return copy(self._data[stream_id])
 
     def delete(self, stream_id: StreamId) -> None:
         del self._data[stream_id]
@@ -73,11 +73,22 @@ class InMemorySubscription(Iterator[RecordedRaw]):
 
     def __next__(self) -> RecordedRaw:
         entry = RecordedRaw(
-            entry=deepcopy(self._storage.events[self._from_position]),
+            entry=copy(self._storage.events[self._from_position]),
             position=self._from_position,
         )
         self._from_position += 1
         return entry
+
+
+@dataclass
+class InMemoryToCategorySubscription(InMemorySubscription):
+    _category: str
+
+    def __next__(self) -> RecordedRaw:
+        event: RecordedRaw = super().__next__()
+        while event["entry"]["stream_id"].category != self._category:
+            event = super().__next__()
+        return event
 
 
 class InMemoryStorageStrategy(StorageStrategy):
@@ -135,7 +146,9 @@ class InMemoryStorageStrategy(StorageStrategy):
         if from_position is None:
             from_position = self._storage.current_position
         if to_category is not None:
-            raise NotImplementedError
+            return InMemoryToCategorySubscription(
+                self._storage, from_position, to_category,
+            )
         return InMemorySubscription(self._storage, from_position)
 
     @property

@@ -109,7 +109,7 @@ class TestFromPositionSubscription:
 
 
 class TestSubscriptionToCategory:
-    @pytest.mark.not_implemented(storage=["in_memory", "esdb", "sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["esdb", "sqlite", "postgres"])
     def test_receives_only_events_from_selected_category(
         self,
         given: Given,
@@ -131,7 +131,7 @@ class TestSubscriptionToCategory:
             any_record(second_event, stream_in_category.id)
         )
 
-    @pytest.mark.not_implemented(storage=["in_memory", "esdb", "sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["esdb", "sqlite", "postgres"])
     def test_receives_all_events_from_selected_category(
         self,
         given: Given,
@@ -157,7 +157,7 @@ class TestSubscriptionToCategory:
             any_record(third_event, stream_1.id)
         )
 
-    @pytest.mark.not_implemented(storage=["in_memory", "esdb", "sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["esdb", "sqlite", "postgres"])
     def test_receives_events_after_passed_position(
         self,
         event_store: EventStore,
