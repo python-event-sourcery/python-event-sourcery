@@ -49,7 +49,7 @@ def test_receives_only_events_after_start_of_subscription(
 
 
 class TestFromPositionSubscription:
-    @pytest.mark.not_implemented(storage=["esdb", "sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
     def test_receives_all_events_from_selected_position(
         self,
         event_store: EventStore,
@@ -66,7 +66,7 @@ class TestFromPositionSubscription:
         then(subscription).next_received_record_is(any_record(old_event, stream.id))
         then(subscription).next_received_record_is(any_record(new_event, stream.id))
 
-    @pytest.mark.not_implemented(storage=["esdb", "sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
     def test_receives_events_after_passed_position(
         self,
         event_store: EventStore,
@@ -81,7 +81,7 @@ class TestFromPositionSubscription:
 
         then(subscription).next_received_record_is(any_record(new_event, stream.id))
 
-    @pytest.mark.not_implemented(storage=["esdb", "sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
     def test_receives_events_from_multiple_streams_after_passed_position(
         self,
         event_store: EventStore,
