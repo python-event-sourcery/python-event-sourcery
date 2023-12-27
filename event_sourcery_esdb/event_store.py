@@ -103,9 +103,15 @@ class ESDBStorageStrategy(StorageStrategy):
         name = stream.Name(stream_id)
         self._client.delete_stream(str(name), current_version=StreamState.ANY)
 
-    def subscribe(self, from_position: Position | None) -> Iterator[RecordedRaw]:
+    def subscribe(
+        self,
+        from_position: Position | None,
+        to_category: str | None,
+    ) -> Iterator[RecordedRaw]:
         if from_position is None:
             from_position = self.current_position
+        if to_category is not None:
+            raise NotImplementedError
         subscription = self._client.subscribe_to_all(
             commit_position=from_position,
             timeout=self._timeout,

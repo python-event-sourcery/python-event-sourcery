@@ -184,7 +184,11 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         )
         self._session.execute(delete_stream_stmt)
 
-    def subscribe(self, from_position: Position | None) -> Iterator[RecordedRaw]:
+    def subscribe(
+        self,
+        from_position: Position | None,
+        to_category: str | None,
+    ) -> Iterator[RecordedRaw]:
         raise NotImplementedError
 
     @property

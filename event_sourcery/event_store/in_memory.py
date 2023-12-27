@@ -127,9 +127,15 @@ class InMemoryStorageStrategy(StorageStrategy):
         if stream_id in self._storage:
             self._storage.delete(stream_id)
 
-    def subscribe(self, from_position: Position | None) -> Iterator[RecordedRaw]:
+    def subscribe(
+        self,
+        from_position: Position | None,
+        to_category: str | None,
+    ) -> Iterator[RecordedRaw]:
         if from_position is None:
             from_position = self._storage.current_position
+        if to_category is not None:
+            raise NotImplementedError
         return InMemorySubscription(self._storage, from_position)
 
     @property

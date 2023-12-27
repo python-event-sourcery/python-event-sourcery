@@ -57,12 +57,7 @@ class Stream:
 
 @dataclass
 class Subscription:
-    store: es.EventStore
-    from_position: Position | None
-    _subscription: Iterator[Recorded] = field(init=False)
-
-    def __post_init__(self) -> None:
-        self._subscription = self.store.subscribe(self.from_position)
+    _subscription: Iterator[Recorded]
 
     def next_received_record_is(self, expected: Recorded) -> None:
         received = next(self._subscription)
@@ -79,8 +74,14 @@ class Step:
     def __call__(self, value: T) -> T:
         return value
 
-    def subscription(self, to: Position | None = None) -> Subscription:
-        return Subscription(self.store, to)
+    def subscription(
+        self,
+        to: Position | None = None,
+        to_category: str | None = None,
+    ) -> Subscription:
+        return Subscription(
+            self.store.subscribe(from_position=to, to_category=to_category)
+        )
 
     def stream(self, with_id: es.StreamId | None = None) -> Stream:
         return Stream(self.store) if not with_id else Stream(self.store, with_id)

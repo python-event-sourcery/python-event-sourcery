@@ -106,3 +106,72 @@ class TestFromPositionSubscription:
         then(subscription).next_received_record_is(
             any_record(third_after_position, stream_1.id)
         )
+
+
+class TestSubscriptionToCategory:
+    @pytest.mark.not_implemented(storage=["in_memory", "esdb", "sqlite", "postgres"])
+    def test_receives_only_events_from_selected_category(
+        self,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        subscription = given.subscription(to_category="Category")
+        stream_in_category = given.stream(StreamId(category="Category")).receives(
+            first_event := AnEvent(),
+        )
+        given.stream(StreamId(category="Other")).receives(AnEvent(), AnEvent())
+
+        when(stream_in_category).receives(second_event := AnEvent())
+
+        then(subscription).next_received_record_is(
+            any_record(first_event, stream_in_category.id)
+        )
+        then(subscription).next_received_record_is(
+            any_record(second_event, stream_in_category.id)
+        )
+
+    @pytest.mark.not_implemented(storage=["in_memory", "esdb", "sqlite", "postgres"])
+    def test_receives_all_events_from_selected_category(
+        self,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        subscription = given.subscription(to_category="Category")
+        stream_1 = given.stream(StreamId(category="Category")).receives(
+            first_event := AnEvent(),
+        )
+        stream_2 = given.stream(StreamId(category="Category")).receives(
+            second_event := AnEvent(),
+        )
+        given(stream_1).receives(third_event := AnEvent())
+
+        then(subscription).next_received_record_is(
+            any_record(first_event, stream_1.id)
+        )
+        then(subscription).next_received_record_is(
+            any_record(second_event, stream_2.id)
+        )
+        then(subscription).next_received_record_is(
+            any_record(third_event, stream_1.id)
+        )
+
+    @pytest.mark.not_implemented(storage=["in_memory", "esdb", "sqlite", "postgres"])
+    def test_receives_events_after_passed_position(
+        self,
+        event_store: EventStore,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        stream = given.stream(StreamId(category="Category")).receives(AnEvent())
+        other_stream = given.stream(StreamId(category="Other")).receives(AnEvent())
+        subscription = given.subscription(
+            to=event_store.position, to_category="Category",
+        )
+
+        when(other_stream).receives(AnEvent())
+        when(stream).receives(new_event := AnEvent())
+
+        then(subscription).next_received_record_is(any_record(new_event, stream.id))

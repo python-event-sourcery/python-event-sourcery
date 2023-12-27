@@ -48,7 +48,11 @@ class StorageStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def subscribe(self, from_position: Position | None) -> Iterator[RecordedRaw]:
+    def subscribe(
+        self,
+        from_position: Position | None,
+        to_category: str | None,
+    ) -> Iterator[RecordedRaw]:
         pass
 
     @property
