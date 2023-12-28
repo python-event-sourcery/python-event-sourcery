@@ -142,13 +142,18 @@ class InMemoryStorageStrategy(StorageStrategy):
         self,
         from_position: Position | None,
         to_category: str | None,
+        to_events: list[str] | None,
     ) -> Iterator[RecordedRaw]:
         if from_position is None:
             from_position = self._storage.current_position
         if to_category is not None:
             return InMemoryToCategorySubscription(
-                self._storage, from_position, to_category,
+                self._storage,
+                from_position,
+                to_category,
             )
+        elif to_events is not None:
+            raise NotImplementedError
         return InMemorySubscription(self._storage, from_position)
 
     @property

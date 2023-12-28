@@ -22,5 +22,7 @@ def any_metadata(for_event: TEvent) -> Metadata[TEvent]:
     )
 
 
-def any_record(for_metadata: Metadata[TEvent], on_stream: StreamId = ANY) -> Recorded:
-    return Recorded.construct(metadata=for_metadata, stream_id=on_stream, position=ANY)
+def any_record(event: Metadata | Event, on_stream: StreamId = ANY) -> Recorded:
+    if isinstance(event, Event):
+        event = any_metadata(event)
+    return Recorded.construct(metadata=event, stream_id=on_stream, position=ANY)

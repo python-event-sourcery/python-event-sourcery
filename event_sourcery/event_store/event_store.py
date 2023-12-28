@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Callable, Iterator, Sequence, cast
+from typing import Callable, Iterator, Sequence, Type, TypeAlias, cast
 
 from event_sourcery.event_store.event import (
     Event,
@@ -16,6 +16,8 @@ from event_sourcery.event_store.versioning import (
     ExplicitVersioning,
     Versioning,
 )
+
+Category: TypeAlias = str
 
 
 class EventStore:
@@ -153,15 +155,26 @@ class EventStore:
     def subscribe(
         self,
         from_position: Position | None = None,
-        to_category: str | None = None,
+        to: Category | list[Type[Event]] | None = None,
     ) -> Iterator[Recorded]:
+        to_category: Category | None = to if isinstance(to, Category) else None
+        to_events: list[str] | None = (
+            [self._serde.registry.name_for_type(et) for et in to]
+            if isinstance(to, list)
+            else None
+        )
+        subscription = self._storage_strategy.subscribe(
+            from_position,
+            to_category,
+            to_events,
+        )
         return (
             Recorded(
                 metadata=self._serde.deserialize(raw["entry"]),
                 stream_id=raw["entry"]["stream_id"],
                 position=raw["position"],
             )
-            for raw in self._storage_strategy.subscribe(from_position, to_category)
+            for raw in subscription
         )
 
     @property

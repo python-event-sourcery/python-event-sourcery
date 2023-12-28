@@ -107,6 +107,7 @@ class ESDBStorageStrategy(StorageStrategy):
         self,
         from_position: Position | None,
         to_category: str | None,
+        to_events: list[str] | None,
     ) -> Iterator[RecordedRaw]:
         if from_position is None:
             from_position = self.current_position
@@ -119,6 +120,8 @@ class ESDBStorageStrategy(StorageStrategy):
                 ],
                 filter_by_stream_name=True,
             )
+        elif to_events is not None:
+            raise NotImplementedError
         else:
             subscription = self._client.subscribe_to_all(
                 commit_position=from_position,

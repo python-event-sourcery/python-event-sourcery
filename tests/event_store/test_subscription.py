@@ -1,6 +1,6 @@
 import pytest
 
-from event_sourcery.event_store import EventStore, StreamId
+from event_sourcery.event_store import Event, EventStore, StreamId
 from tests.bdd import Given, Then, When
 from tests.factories import AnEvent
 from tests.matchers import any_record
@@ -175,3 +175,74 @@ class TestSubscriptionToCategory:
         when(stream).receives(new_event := AnEvent())
 
         then(subscription).next_received_record_is(any_record(new_event, stream.id))
+
+
+class TestSubscribeToEventTypes:
+    class FirstType(Event):
+        pass
+
+    class SecondType(Event):
+        pass
+
+    class ThirdType(Event):
+        pass
+
+    @pytest.mark.not_implemented(storage=["in_memory", "esdb", "sqlite", "postgres"])
+    def test_receives_only_events_with_subscribed_types(
+        self,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        subscription = given.subscription(to_events=[self.FirstType, self.ThirdType])
+
+        when.stream(stream_id := StreamId()).receives(
+            first_event := self.FirstType(),
+            self.SecondType(),
+            third_event := self.ThirdType(),
+        )
+
+        then(subscription).next_received_record_is(any_record(first_event, stream_id))
+        then(subscription).next_received_record_is(any_record(third_event, stream_id))
+
+    @pytest.mark.not_implemented(storage=["in_memory", "esdb", "sqlite", "postgres"])
+    def test_receives_subscribed_types_from_multiple_streams(
+        self,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        subscription = given.subscription(to_events=[self.FirstType, self.ThirdType])
+
+        stream_1 = when.stream().receives(
+            first_event := self.FirstType(),
+            self.SecondType(),
+        )
+        stream_2 = when.stream().receives(
+            self.SecondType(),
+            last_event := self.ThirdType(),
+        )
+
+        then(subscription).next_received_record_is(any_record(first_event, stream_1.id))
+        then(subscription).next_received_record_is(any_record(last_event, stream_2.id))
+
+    @pytest.mark.not_implemented(storage=["in_memory", "esdb", "sqlite", "postgres"])
+    def test_receives_events_after_passed_position(
+        self,
+        event_store: EventStore,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        stream_1 = when.stream().receives(self.FirstType(), self.SecondType())
+        stream_2 = when.stream().receives(self.SecondType(), self.ThirdType())
+        subscription = given.subscription(
+            to=event_store.position,
+            to_events=[self.FirstType, self.ThirdType],
+        )
+
+        when(stream_1).receives(first := self.FirstType(), self.SecondType())
+        when(stream_2).receives(second := self.ThirdType())
+
+        then(subscription).next_received_record_is(any_record(first, stream_1.id))
+        then(subscription).next_received_record_is(any_record(second, stream_2.id))

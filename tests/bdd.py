@@ -1,12 +1,12 @@
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
-from typing import Iterator, Sequence, TypeVar
+from typing import Iterator, Sequence, Type, TypeVar
 from unittest.mock import Mock
 
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
-from event_sourcery.event_store import Position, Recorded
+from event_sourcery.event_store import Event, Position, Recorded
 from tests.matchers import any_metadata
 
 
@@ -15,10 +15,16 @@ class Stream:
     store: es.EventStore
     id: es.StreamId = field(default_factory=es.StreamId)
 
+    @singledispatchmethod
     def receives(self, *events: es.Metadata) -> Self:
         self.autoversion(*events)
         self.store.append(*events, stream_id=self.id)
         return self
+
+    @receives.register
+    def receives_base_events(self, *events: es.Event) -> Self:
+        metadata = (es.Metadata.wrap(e, version=None) for e in events)
+        return self.receives(*metadata)
 
     def snapshots(self, snapshot: es.Metadata) -> Self:
         if not snapshot.version:
@@ -78,9 +84,11 @@ class Step:
         self,
         to: Position | None = None,
         to_category: str | None = None,
+        to_events: list[Type[Event]] | None = None,
     ) -> Subscription:
+        assert to_category is None or to_events is None
         return Subscription(
-            self.store.subscribe(from_position=to, to_category=to_category)
+            self.store.subscribe(from_position=to, to=to_category or to_events)
         )
 
     def stream(self, with_id: es.StreamId | None = None) -> Stream:
@@ -92,14 +100,8 @@ class Given(Step):
         self.stream(on).receives(*events)
         return self
 
-    @singledispatchmethod
-    def event(self, event: es.Metadata, on: es.StreamId) -> Self:
+    def event(self, event: es.Metadata | es.Event, on: es.StreamId) -> Self:
         self.stream(on).receives(event)
-        return self
-
-    @event.register
-    def base_event(self, event: es.Event, on: es.StreamId) -> Self:
-        self.stream(on).receives(es.Metadata.wrap(event, version=None))
         return self
 
     def snapshot(self, snapshot: es.Metadata, on: es.StreamId) -> Self:
@@ -108,18 +110,14 @@ class Given(Step):
 
 
 class When(Step):
+    subscribe = Step.subscription
+
     def snapshots(self, with_: es.Metadata, on: es.StreamId) -> Self:
         self.stream(on).snapshots(with_)
         return self
 
-    @singledispatchmethod
-    def appends(self, *events: es.Metadata, to: es.StreamId) -> Self:
+    def appends(self, *events: es.Metadata | es.Event, to: es.StreamId) -> Self:
         self.stream(to).receives(*events)
-        return self
-
-    @appends.register
-    def appends_base(self, *events: es.Event, to: es.StreamId) -> Self:
-        self.stream(to).receives(*(es.Metadata.wrap(e, version=None) for e in events))
         return self
 
     def deletes(self, stream: es.StreamId) -> Self:

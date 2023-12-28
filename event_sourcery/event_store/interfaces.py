@@ -52,6 +52,7 @@ class StorageStrategy(abc.ABC):
         self,
         from_position: Position | None,
         to_category: str | None,
+        to_events: list[str] | None,
     ) -> Iterator[RecordedRaw]:
         pass
 
