@@ -91,6 +91,17 @@ class InMemoryToCategorySubscription(InMemorySubscription):
         return event
 
 
+@dataclass
+class InMemoryToEventTypesSubscription(InMemorySubscription):
+    _types: list[str]
+
+    def __next__(self) -> RecordedRaw:
+        event: RecordedRaw = super().__next__()
+        while event["entry"]["name"] not in self._types:
+            event = super().__next__()
+        return event
+
+
 class InMemoryStorageStrategy(StorageStrategy):
     def __init__(self) -> None:
         self._names: Dict[str | None, str] = {}
@@ -153,7 +164,11 @@ class InMemoryStorageStrategy(StorageStrategy):
                 to_category,
             )
         elif to_events is not None:
-            raise NotImplementedError
+            return InMemoryToEventTypesSubscription(
+                self._storage,
+                from_position,
+                to_events,
+            )
         return InMemorySubscription(self._storage, from_position)
 
     @property
