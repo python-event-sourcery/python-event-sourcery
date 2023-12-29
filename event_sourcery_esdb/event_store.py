@@ -121,7 +121,12 @@ class ESDBStorageStrategy(StorageStrategy):
                 filter_by_stream_name=True,
             )
         elif to_events is not None:
-            raise NotImplementedError
+            subscription = self._client.subscribe_to_all(
+                commit_position=from_position,
+                timeout=self._timeout,
+                filter_include=to_events,
+                filter_by_stream_name=False,
+            )
         else:
             subscription = self._client.subscribe_to_all(
                 commit_position=from_position,

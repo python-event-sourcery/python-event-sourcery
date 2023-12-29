@@ -187,7 +187,7 @@ class TestSubscribeToEventTypes:
     class ThirdType(Event):
         pass
 
-    @pytest.mark.not_implemented(storage=["esdb", "sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
     def test_receives_only_events_with_subscribed_types(
         self,
         given: Given,
@@ -205,7 +205,7 @@ class TestSubscribeToEventTypes:
         then(subscription).next_received_record_is(any_record(first_event, stream_id))
         then(subscription).next_received_record_is(any_record(third_event, stream_id))
 
-    @pytest.mark.not_implemented(storage=["esdb", "sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
     def test_receives_subscribed_types_from_multiple_streams(
         self,
         given: Given,
@@ -226,7 +226,7 @@ class TestSubscribeToEventTypes:
         then(subscription).next_received_record_is(any_record(first_event, stream_1.id))
         then(subscription).next_received_record_is(any_record(last_event, stream_2.id))
 
-    @pytest.mark.not_implemented(storage=["esdb", "sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
     def test_receives_events_after_passed_position(
         self,
         event_store: EventStore,
