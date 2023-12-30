@@ -50,7 +50,7 @@ class Storage:
 
     def __contains__(self, stream_id: object) -> bool:
         if not isinstance(stream_id, StreamId):
-            return False
+            raise TypeError
 
         key = self._key_from_stream_id(stream_id)
         return key in self._data
