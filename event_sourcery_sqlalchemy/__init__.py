@@ -28,4 +28,4 @@ class SQLStoreFactory(EventStoreFactory):
         return self._configure(outbox_storage_strategy=strategy)
 
     def subscribe_in_transaction(self) -> InTransactionSubscription:
-        return InTransactionSubscription()
+        return InTransactionSubscription(self.serde)
