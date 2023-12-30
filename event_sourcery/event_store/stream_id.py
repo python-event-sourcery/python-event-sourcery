@@ -1,4 +1,5 @@
 from dataclasses import InitVar, dataclass
+from typing import Any
 from uuid import UUID, uuid4, uuid5
 
 from event_sourcery.event_store.exceptions import IncompatibleUuidAndName
@@ -41,3 +42,8 @@ class StreamId(StreamUUID):
             f"{type(self).__name__}"
             f"(hex={self!s}, name={self.name}, category={self.category})"
         )
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, StreamId):
+            return super().__eq__(other) and self.category == other.category
+        return NotImplemented
