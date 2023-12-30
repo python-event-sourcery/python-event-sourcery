@@ -47,3 +47,6 @@ class StreamId(StreamUUID):
         if isinstance(other, StreamId):
             return super().__eq__(other) and self.category == other.category
         return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash((self.category, super().__hash__()))
