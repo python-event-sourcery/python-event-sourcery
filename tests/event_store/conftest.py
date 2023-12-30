@@ -100,7 +100,12 @@ def esdb_factory(
 
 
 @pytest.fixture()
-def in_memory_factory() -> EventStoreFactory:
+def in_memory_factory(request: pytest.FixtureRequest) -> EventStoreFactory:
+    skip_in_memory = request.node.get_closest_marker("skip_in_memory")
+    if skip_in_memory:
+        reason = skip_in_memory.kwargs.get("reason", "")
+        pytest.skip(f"Skipping InMemory tests: {reason}")
+
     return InMemoryEventStoreFactory()
 
 

@@ -42,6 +42,7 @@ def test_lets_appending_by_both_id_and_name_then_just_name(
     then.stream(StreamId(name="Test #3")).loads([stored_by_id, stored_by_name])
 
 
+@pytest.mark.skip_in_memory(reason="InMemory can't use both ids")
 @pytest.mark.skip_esdb(reason="ESDB can't use both ids")
 def test_blocks_new_stream_uuid_with_same_name_as_other(
     given: Given,

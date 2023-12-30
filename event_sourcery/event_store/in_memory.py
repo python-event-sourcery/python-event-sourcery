@@ -1,4 +1,3 @@
-from collections import defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -9,10 +8,7 @@ from typing_extensions import Self
 
 from event_sourcery.event_store import EventStoreFactory
 from event_sourcery.event_store.event import RawEvent
-from event_sourcery.event_store.exceptions import (
-    AnotherStreamWithThisNameButOtherIdExists,
-    ConcurrentStreamWriteError,
-)
+from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.factory import no_filter
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
@@ -26,70 +22,44 @@ from event_sourcery.event_store.versioning import NO_VERSIONING, Versioning
 @dataclass
 class Storage:
     events: list[RawEvent] = field(default_factory=list, init=False)
-    _data: dict[str, list[RawEvent]] = field(default_factory=dict, init=False)
-    _names: dict[str | None, str] = field(default_factory=dict, init=False)
-    _versions: dict[str | None, dict[str, int | None]] = field(
-        default_factory=lambda: defaultdict(dict), init=False,
-    )
-
-    def _assert_stream_name(self, key: str, name: str | None) -> None:
-        if not name:
-            return
-
-        if name not in self._names:
-            self._names[name] = key
-
-        if self._names[name] != key:
-            raise AnotherStreamWithThisNameButOtherIdExists()
-
-    def _key_from_stream_id(self, stream_id: StreamId) -> str:
-        key = f"{stream_id.category}-{stream_id!s}"
-        name = stream_id.name and f"{stream_id.category}-{stream_id.name}"
-        self._assert_stream_name(key, name)
-        return key
+    _data: dict[StreamId, list[RawEvent]] = field(default_factory=dict, init=False)
+    _versions: dict[StreamId, int | None] = field(default_factory=dict, init=False)
 
     def __contains__(self, stream_id: object) -> bool:
         if not isinstance(stream_id, StreamId):
             raise TypeError
-
-        key = self._key_from_stream_id(stream_id)
-        return key in self._data
+        return stream_id in self._data
 
     def create(self, stream_id: StreamId, version: Versioning) -> None:
-        key = self._key_from_stream_id(stream_id)
-        self._data[key] = []
+        self._data[stream_id] = []
         if version is NO_VERSIONING:
-            self._versions[stream_id.category][key] = None
+            self._versions[stream_id] = None
         else:
-            self._versions[stream_id.category][key] = 0
+            self._versions[stream_id] = 0
 
     def append(self, events: list[RawEvent]) -> None:
         self.events.extend(events)
         for event in events:
-            key = self._key_from_stream_id(event["stream_id"])
-            self._data[key].append(event)
-            self._versions[event["stream_id"].category][key] = event["version"]
+            stream_id = event["stream_id"]
+            self._data[stream_id].append(event)
+            self._versions[stream_id] = event["version"]
 
     def replace(self, with_snapshot: RawEvent) -> None:
-        key = self._key_from_stream_id(with_snapshot["stream_id"])
-        self._data[key] = [with_snapshot]
-        self._versions[with_snapshot["stream_id"].category][key] = (
-            with_snapshot["version"]
-        )
+        stream_id = with_snapshot["stream_id"]
+        self._data[stream_id] = [with_snapshot]
+        self._versions[stream_id] = with_snapshot["version"]
 
     def read(self, stream_id: StreamId) -> list[RawEvent]:
-        return deepcopy(self._data[self._key_from_stream_id(stream_id)])
+        return deepcopy(self._data[stream_id])
 
     def delete(self, stream_id: StreamId) -> None:
-        del self._data[self._key_from_stream_id(stream_id)]
+        del self._data[stream_id]
 
     def set_version(self, stream_id: StreamId, version: Versioning) -> None:
-        key = self._key_from_stream_id(stream_id)
-        self._versions[stream_id.category][key] = version.expected_version
+        self._versions[stream_id] = version.expected_version
 
     def get_version(self, stream_id: StreamId) -> int | None:
-        key = self._key_from_stream_id(stream_id)
-        return self._versions[stream_id.category][key]
+        return self._versions[stream_id]
 
 
 class InMemoryStorageStrategy(StorageStrategy):
