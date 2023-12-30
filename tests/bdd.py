@@ -63,9 +63,9 @@ class Stream:
 
 @dataclass
 class Subscription:
-    _subscription: Iterator[Recorded]
+    _subscription: Iterator[Recorded] | Iterator[es.Entry]
 
-    def next_received_record_is(self, expected: Recorded) -> None:
+    def next_received_record_is(self, expected: Recorded | es.Entry) -> None:
         received = next(self._subscription)
         assert expected == received
 

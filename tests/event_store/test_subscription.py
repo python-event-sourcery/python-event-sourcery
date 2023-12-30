@@ -1,7 +1,11 @@
-import pytest
+from typing import Iterator, cast
 
-from event_sourcery.event_store import Event, EventStore, StreamId
-from tests.bdd import Given, Then, When
+import pytest
+from _pytest.fixtures import SubRequest
+
+from event_sourcery.event_store import Entry, Event, EventStore, StreamId
+from event_sourcery_sqlalchemy import SQLStoreFactory
+from tests.bdd import Given, Subscription, Then, When
 from tests.factories import AnEvent
 from tests.matchers import any_record
 
@@ -147,15 +151,11 @@ class TestSubscriptionToCategory:
         )
         given(stream_1).receives(third_event := AnEvent())
 
-        then(subscription).next_received_record_is(
-            any_record(first_event, stream_1.id)
-        )
+        then(subscription).next_received_record_is(any_record(first_event, stream_1.id))
         then(subscription).next_received_record_is(
             any_record(second_event, stream_2.id)
         )
-        then(subscription).next_received_record_is(
-            any_record(third_event, stream_1.id)
-        )
+        then(subscription).next_received_record_is(any_record(third_event, stream_1.id))
 
     @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
     def test_receives_events_after_passed_position(
@@ -168,7 +168,8 @@ class TestSubscriptionToCategory:
         stream = given.stream(StreamId(category="Category")).receives(AnEvent())
         other_stream = given.stream(StreamId(category="Other")).receives(AnEvent())
         subscription = given.subscription(
-            to=event_store.position, to_category="Category",
+            to=event_store.position,
+            to_category="Category",
         )
 
         when(other_stream).receives(AnEvent())
@@ -246,3 +247,67 @@ class TestSubscribeToEventTypes:
 
         then(subscription).next_received_record_is(any_record(first, stream_1.id))
         then(subscription).next_received_record_is(any_record(second, stream_2.id))
+
+
+class TestInTransactionSubscription:
+    @pytest.fixture(autouse=True)
+    def setup(self, event_store_factory: SQLStoreFactory) -> None:
+        self.factory = event_store_factory
+
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_receive_all_events(
+        self,
+        subscription: Subscription,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        stream = given.stream().receives(
+            first_event := AnEvent(),
+            second_event := AnEvent(),
+        )
+
+        then(subscription).next_received_record_is(
+            Entry(metadata=first_event, stream_id=stream.id)
+        )
+        then(subscription).next_received_record_is(
+            Entry(metadata=second_event, stream_id=stream.id)
+        )
+
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_receive_events_from_multiple_streams(
+        self,
+        subscription: Subscription,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        stream_1 = given.stream()
+        stream_2 = given.stream()
+
+        when(stream_1).receives(first_event := AnEvent())
+        when(stream_2).receives(second_event := AnEvent(), third_event := AnEvent())
+        when(stream_1).receives(fourth_event := AnEvent())
+
+        then(subscription).next_received_record_is(
+            Entry(metadata=first_event, stream_id=stream_1.id)
+        )
+        then(subscription).next_received_record_is(
+            Entry(metadata=second_event, stream_id=stream_2.id)
+        )
+        then(subscription).next_received_record_is(
+            Entry(metadata=third_event, stream_id=stream_2.id)
+        )
+        then(subscription).next_received_record_is(
+            Entry(metadata=fourth_event, stream_id=stream_1.id)
+        )
+
+    @pytest.fixture()
+    def subscription(self) -> Iterator[Subscription]:
+        in_transaction = self.factory.subscribe_in_transaction()
+        yield Subscription(in_transaction)
+        in_transaction.close()
+
+    @pytest.fixture(params=["sqlite_factory", "postgres_factory"])
+    def event_store_factory(self, request: SubRequest) -> SQLStoreFactory:
+        return cast(SQLStoreFactory, request.getfixturevalue(request.param))

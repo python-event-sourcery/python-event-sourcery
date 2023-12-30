@@ -15,6 +15,7 @@ from event_sourcery_sqlalchemy import models
 from event_sourcery_sqlalchemy.models import configure_models
 from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageStrategy
 from event_sourcery_sqlalchemy.sqlalchemy_outbox import SqlAlchemyOutboxStorageStrategy
+from event_sourcery_sqlalchemy.sqlalchemy_subscription import InTransactionSubscription
 
 
 class SQLStoreFactory(EventStoreFactory):
@@ -25,3 +26,6 @@ class SQLStoreFactory(EventStoreFactory):
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         strategy = SqlAlchemyOutboxStorageStrategy(self._session, filterer)
         return self._configure(outbox_storage_strategy=strategy)
+
+    def subscribe_in_transaction(self) -> InTransactionSubscription:
+        return InTransactionSubscription()
