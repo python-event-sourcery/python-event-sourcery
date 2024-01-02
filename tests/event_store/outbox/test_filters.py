@@ -4,7 +4,7 @@ import pytest
 
 from event_sourcery.event_store import EventStore, EventStoreFactory, StreamId
 from event_sourcery.event_store.interfaces import OutboxFiltererStrategy
-from tests.event_store.factories import AnEvent
+from tests.factories import AnEvent
 from tests.event_store.outbox.conftest import PublisherMock
 
 

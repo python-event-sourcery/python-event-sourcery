@@ -1,8 +1,8 @@
 import pytest
 
 from event_sourcery.event_store import StreamId
-from tests.event_store.bdd import Given, Then, When
-from tests.event_store.factories import AnEvent, Snapshot, actual_version
+from tests.bdd import Given, Then, When
+from tests.factories import AnEvent, Snapshot, actual_version
 
 
 def test_handles_snapshots(given: Given, when: When, then: Then) -> None:

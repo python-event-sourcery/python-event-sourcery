@@ -5,7 +5,7 @@ from typing import Sequence, cast
 from typing_extensions import Self
 
 from event_sourcery.event_store import Event, EventStore, Metadata, StreamId
-from tests.event_store.factories import next_version
+from tests.factories import next_version
 from tests.matchers import any_metadata
 
 

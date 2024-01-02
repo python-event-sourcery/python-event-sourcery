@@ -2,8 +2,8 @@ import pytest
 
 from event_sourcery.event_store import StreamId
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
-from tests.event_store.bdd import Given, Then, When
-from tests.event_store.factories import AnEvent
+from tests.bdd import Given, Then, When
+from tests.factories import AnEvent
 
 
 def test_concurrency_error(given: Given, when: When) -> None:

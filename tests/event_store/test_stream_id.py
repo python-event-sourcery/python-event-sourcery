@@ -41,3 +41,61 @@ def test_forbids_creating_stream_id_with_not_matching_uuid() -> None:
     random_uuid = uuid4()
     with pytest.raises(IncompatibleUuidAndName):
         StreamId(random_uuid, name="name")
+
+
+class TestStreamIdEQ:
+    def test_auto_init_equality(self) -> None:
+        assert StreamId() != StreamId()
+
+    def test_uuid_equality(self) -> None:
+        assert StreamId(uuid4()) != StreamId(uuid4())
+        assert StreamId(same := uuid4()) == StreamId(same)
+
+    def test_name_equality(self) -> None:
+        assert StreamId(name="Name") == StreamId(name="Name")
+        assert StreamId(name="Name") != StreamId(name="Other Name")
+
+    def test_hex_equality(self) -> None:
+        initial_hex = "ca2bb38132ef4671ae28984c3ccf8b5f"
+        assert StreamId(from_hex=initial_hex) == StreamId(from_hex=initial_hex)
+        assert StreamId(from_hex=initial_hex) != StreamId(from_hex=uuid4().hex)
+
+    def test_category_equality(self) -> None:
+        initial = uuid4()
+        assert StreamId(initial, category="Cat") == StreamId(initial, category="Cat")
+        assert StreamId(category="Cat") != StreamId(category="Cat")
+        assert StreamId(initial, category="Cat") != StreamId(initial, category="Other")
+
+
+class TestStreamIdHash:
+    def test_auto_init_have_different_hashes(self) -> None:
+        assert hash(StreamId()) != hash(StreamId())
+
+    def test_same_uuid_gives_same_hashes(self) -> None:
+        assert hash(StreamId(same_uuid := uuid4())) == hash(StreamId(same_uuid))
+
+    def test_same_uuid_and_category_gives_same_hashes(self) -> None:
+        assert hash(StreamId(same_uuid := uuid4(), category="Category")) == hash(
+            StreamId(same_uuid, category="Category")
+        )
+
+    def test_same_uuid_and_different_category_gives_different_hashes(self) -> None:
+        assert hash(StreamId(same_uuid := uuid4(), category="Category")) != hash(
+            StreamId(same_uuid, category="Different")
+        )
+
+    def test_same_name_gives_same_hash(self) -> None:
+        assert hash(StreamId(name="Name")) == hash(StreamId(name="Name"))
+
+    def test_different_names_gives_different_hashes(self) -> None:
+        assert hash(StreamId(name="Name")) != hash(StreamId(name="Different"))
+
+    def test_same_name_and_category_gives_same_hashes(self) -> None:
+        assert hash(StreamId(name="Name", category="Category")) == hash(
+            StreamId(name="Name", category="Category")
+        )
+
+    def test_same_name_and_different_category_gives_different_hashes(self) -> None:
+        assert hash(StreamId(name="Name", category="Category")) != hash(
+            StreamId(name="Name", category="Different")
+        )

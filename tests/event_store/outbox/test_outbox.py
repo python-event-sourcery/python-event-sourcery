@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from event_sourcery.event_store import EventStore, StreamId
-from tests.event_store.factories import AnEvent
+from tests.factories import AnEvent
 from tests.event_store.outbox.conftest import PublisherMock
 
 
