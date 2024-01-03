@@ -69,6 +69,9 @@ class Subscription:
         received = next(self._subscription)
         assert expected == received
 
+    def received_no_new_records(self) -> None:
+        assert next(self._subscription, None) is None
+
 
 T = TypeVar("T")
 

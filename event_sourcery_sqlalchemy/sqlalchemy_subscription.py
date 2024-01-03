@@ -18,6 +18,8 @@ class InTransactionSubscription(Iterator[Entry]):
         event.remove(models.Event, "before_insert", self)
 
     def __next__(self) -> Entry:
+        if not self._events:
+            raise StopIteration
         return self._events.pop(0)
 
     def __call__(self, mapper: Mapper, conn: Connection, model: models.Event) -> None:

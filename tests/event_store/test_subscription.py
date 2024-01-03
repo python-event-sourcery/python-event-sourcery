@@ -1,4 +1,5 @@
 from typing import Iterator, cast
+from unittest.mock import ANY
 
 import pytest
 from _pytest.fixtures import SubRequest
@@ -299,6 +300,20 @@ class TestInTransactionSubscription:
         then(subscription).next_received_record_is(
             Entry(metadata=fourth_event, stream_id=stream_1.id)
         )
+
+    def test_no_new_events_after_reading_all(
+        self,
+        subscription: Subscription,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        given.stream().receives(AnEvent(), AnEvent())
+
+        when(subscription).next_received_record_is(ANY)
+        when(subscription).next_received_record_is(ANY)
+
+        then(subscription).received_no_new_records()
 
     @pytest.fixture()
     def subscription(self) -> Iterator[Subscription]:
