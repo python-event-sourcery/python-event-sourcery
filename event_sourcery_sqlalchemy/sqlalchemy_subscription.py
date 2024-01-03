@@ -12,17 +12,17 @@ class InTransactionSubscription(Iterator[Entry]):
     def __init__(self, serde: Serde) -> None:
         self._serde = serde
         self._events: list[Entry] = []
-        event.listen(models.Event, "before_insert", self)
+        event.listen(models.Event, "before_insert", self.append)
 
     def close(self) -> None:
-        event.remove(models.Event, "before_insert", self)
+        event.remove(models.Event, "before_insert", self.append)
 
     def __next__(self) -> Entry:
         if not self._events:
             raise StopIteration
         return self._events.pop(0)
 
-    def __call__(self, mapper: Mapper, conn: Connection, model: models.Event) -> None:
+    def append(self, mapper: Mapper, conn: Connection, model: models.Event) -> None:
         raw = RawEvent(
             uuid=model.uuid,
             stream_id=model.stream_id,
