@@ -4,7 +4,7 @@ from typing import Any
 
 from esdbclient import NewEvent, RecordedEvent
 
-from event_sourcery.event_store import RawEvent
+from event_sourcery.event_store import Position, RawEvent, RecordedRaw
 from event_sourcery_esdb import stream
 
 ES_PREFIX = "$es-"
@@ -45,4 +45,11 @@ def new_entry(from_raw: RawEvent, **metadata: Any) -> NewEvent:
                 created_at=from_raw["created_at"].isoformat(),
             ),
         ).encode("utf-8"),
+    )
+
+
+def raw_record(from_entry: RecordedEvent) -> RecordedRaw:
+    return RecordedRaw(
+        entry=raw_event(from_entry=from_entry),
+        position=Position(from_entry.commit_position or 0),
     )

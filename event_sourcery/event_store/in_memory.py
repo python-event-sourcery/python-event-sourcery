@@ -149,25 +149,22 @@ class InMemoryStorageStrategy(StorageStrategy):
         if stream_id in self._storage:
             self._storage.delete(stream_id)
 
-    def subscribe(
-        self,
-        start_from: Position | None,
-        to_category: str | None,
-        to_events: list[str] | None,
-    ) -> Iterator[RecordedRaw]:
-        if to_category is not None:
-            return InMemoryToCategorySubscription(
-                self._storage,
-                start_from,
-                to_category,
-            )
-        elif to_events is not None:
-            return InMemoryToEventTypesSubscription(
-                self._storage,
-                start_from,
-                to_events,
-            )
+    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
         return InMemorySubscription(self._storage, start_from)
+
+    def subscribe_to_category(
+        self,
+        start_from: Position,
+        category: str,
+    ) -> Iterator[RecordedRaw]:
+        return InMemoryToCategorySubscription(self._storage, start_from, category)
+
+    def subscribe_to_events(
+        self,
+        start_from: Position,
+        events: list[str],
+    ) -> Iterator[RecordedRaw]:
+        return InMemoryToEventTypesSubscription(self._storage, start_from, events)
 
     @property
     def current_position(self) -> Position | None:

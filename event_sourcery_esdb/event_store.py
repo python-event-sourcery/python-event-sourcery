@@ -103,39 +103,45 @@ class ESDBStorageStrategy(StorageStrategy):
         name = stream.Name(stream_id)
         self._client.delete_stream(str(name), current_version=StreamState.ANY)
 
-    def subscribe(
+    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
+        return map(
+            dto.raw_record,
+            self._client.subscribe_to_all(
+                commit_position=start_from,
+                timeout=self._timeout,
+            ),
+        )
+
+    def subscribe_to_category(
         self,
-        start_from: Position,
-        to_category: str | None,
-        to_events: list[str] | None,
+        start_from: Position | None,
+        category: str,
     ) -> Iterator[RecordedRaw]:
-        if to_category is not None:
-            subscription = self._client.subscribe_to_all(
+        return map(
+            dto.raw_record,
+            self._client.subscribe_to_all(
                 commit_position=start_from,
                 timeout=self._timeout,
                 filter_include=[
-                    f"{to_category}-\\w+",
+                    f"{category}-\\w+",
                 ],
                 filter_by_stream_name=True,
-            )
-        elif to_events is not None:
-            subscription = self._client.subscribe_to_all(
+            ),
+        )
+
+    def subscribe_to_events(
+        self,
+        start_from: Position,
+        events: list[str],
+    ) -> Iterator[RecordedRaw]:
+        return map(
+            dto.raw_record,
+            self._client.subscribe_to_all(
                 commit_position=start_from,
                 timeout=self._timeout,
-                filter_include=to_events,
+                filter_include=events,
                 filter_by_stream_name=False,
-            )
-        else:
-            subscription = self._client.subscribe_to_all(
-                commit_position=start_from,
-                timeout=self._timeout,
-            )
-        return (
-            RecordedRaw(
-                entry=dto.raw_event(from_entry=recorded),
-                position=Position(recorded.commit_position or 0),
-            )
-            for recorded in subscription
+            ),
         )
 
     @property

@@ -163,11 +163,20 @@ class EventStore:
             if isinstance(to, list)
             else None
         )
-        subscription = self._storage_strategy.subscribe(
-            start_from,
-            to_category,
-            to_events,
-        )
+
+        if to_category:
+            subscription = self._storage_strategy.subscribe_to_category(
+                start_from,
+                str(to_category),
+            )
+        elif to_events:
+            subscription = self._storage_strategy.subscribe_to_events(
+                start_from,
+                to_events,
+            )
+        else:
+            subscription = self._storage_strategy.subscribe_to_all(start_from)
+
         return (
             Recorded(
                 metadata=self._serde.deserialize(raw["entry"]),

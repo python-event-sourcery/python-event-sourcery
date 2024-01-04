@@ -48,11 +48,22 @@ class StorageStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def subscribe(
+    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
+        pass
+
+    @abc.abstractmethod
+    def subscribe_to_category(
         self,
         start_from: Position,
-        to_category: str | None,
-        to_events: list[str] | None,
+        category: str,
+    ) -> Iterator[RecordedRaw]:
+        pass
+
+    @abc.abstractmethod
+    def subscribe_to_events(
+        self,
+        start_from: Position,
+        events: list[str],
     ) -> Iterator[RecordedRaw]:
         pass
 
