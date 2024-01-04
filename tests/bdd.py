@@ -90,8 +90,9 @@ class Step:
         to_events: list[Type[Event]] | None = None,
     ) -> Subscription:
         assert to_category is None or to_events is None
+        start_from = self.store.position or 0 if to is None else to
         return Subscription(
-            self.store.subscribe(from_position=to, to=to_category or to_events)
+            self.store.subscribe(start_from=start_from, to=to_category or to_events)
         )
 
     def stream(self, with_id: es.StreamId | None = None) -> Stream:

@@ -186,7 +186,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
 
     def subscribe(
         self,
-        from_position: Position | None,
+        start_from: Position,
         to_category: str | None,
         to_events: list[str] | None,
     ) -> Iterator[RecordedRaw]:

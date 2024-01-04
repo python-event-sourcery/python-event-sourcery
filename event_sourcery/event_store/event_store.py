@@ -154,7 +154,7 @@ class EventStore:
 
     def subscribe(
         self,
-        from_position: Position | None = None,
+        start_from: Position,
         to: Category | list[Type[Event]] | None = None,
     ) -> Iterator[Recorded]:
         to_category: Category | None = to if isinstance(to, Category) else None
@@ -164,7 +164,7 @@ class EventStore:
             else None
         )
         subscription = self._storage_strategy.subscribe(
-            from_position,
+            start_from,
             to_category,
             to_events,
         )

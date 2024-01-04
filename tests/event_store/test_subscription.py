@@ -40,19 +40,6 @@ def test_multiple_subscriptions_receives_events(
     then(subscription_2).next_received_record_is(any_record(an_event, stream.id))
 
 
-@pytest.mark.not_implemented(storage=["sqlite", "postgres"])
-def test_receives_only_events_after_start_of_subscription(
-    given: Given,
-    when: When,
-    then: Then,
-) -> None:
-    stream = given.stream().receives(AnEvent(), AnEvent())
-    subscription = given.subscription()
-
-    when(stream).receives(new_event := AnEvent())
-    then(subscription).next_received_record_is(any_record(new_event, stream.id))
-
-
 class TestFromPositionSubscription:
     @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
     def test_receives_all_events_from_selected_position(

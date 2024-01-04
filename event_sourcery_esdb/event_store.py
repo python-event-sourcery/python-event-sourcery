@@ -105,15 +105,13 @@ class ESDBStorageStrategy(StorageStrategy):
 
     def subscribe(
         self,
-        from_position: Position | None,
+        start_from: Position,
         to_category: str | None,
         to_events: list[str] | None,
     ) -> Iterator[RecordedRaw]:
-        if from_position is None:
-            from_position = self.current_position
         if to_category is not None:
             subscription = self._client.subscribe_to_all(
-                commit_position=from_position,
+                commit_position=start_from,
                 timeout=self._timeout,
                 filter_include=[
                     f"{to_category}-\\w+",
@@ -122,14 +120,14 @@ class ESDBStorageStrategy(StorageStrategy):
             )
         elif to_events is not None:
             subscription = self._client.subscribe_to_all(
-                commit_position=from_position,
+                commit_position=start_from,
                 timeout=self._timeout,
                 filter_include=to_events,
                 filter_by_stream_name=False,
             )
         else:
             subscription = self._client.subscribe_to_all(
-                commit_position=from_position,
+                commit_position=start_from,
                 timeout=self._timeout,
             )
         return (
