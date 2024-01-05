@@ -12,10 +12,10 @@ from event_sourcery.event_store import EventStoreFactory
 from event_sourcery.event_store.factory import no_filter
 from event_sourcery.event_store.interfaces import OutboxFiltererStrategy
 from event_sourcery_sqlalchemy import models
+from event_sourcery_sqlalchemy.event_store import SqlAlchemyStorageStrategy
 from event_sourcery_sqlalchemy.models import configure_models
-from event_sourcery_sqlalchemy.sqlalchemy_event_store import SqlAlchemyStorageStrategy
-from event_sourcery_sqlalchemy.sqlalchemy_outbox import SqlAlchemyOutboxStorageStrategy
-from event_sourcery_sqlalchemy.sqlalchemy_subscription import InTransactionSubscription
+from event_sourcery_sqlalchemy.outbox import SqlAlchemyOutboxStorageStrategy
+from event_sourcery_sqlalchemy.subscription import InTransactionSubscription
 
 
 class SQLStoreFactory(EventStoreFactory):

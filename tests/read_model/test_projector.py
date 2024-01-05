@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from event_sourcery.event_store import Event, EventStore, Metadata, StreamId
 from event_sourcery.read_model import CursorsDao, Projector
-from event_sourcery_sqlalchemy.sqlalchemy_cursors_dao import SqlAlchemyCursorsDao
+from event_sourcery_sqlalchemy.cursors_dao import SqlAlchemyCursorsDao
 from tests.conftest import DeclarativeBase
 
 
