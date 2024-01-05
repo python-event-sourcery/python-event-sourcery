@@ -2,7 +2,13 @@ import json
 from dataclasses import dataclass
 from typing import Mapping, cast
 
-from event_sourcery.event_store.event.dto import Event, Metadata, RawEvent
+from event_sourcery.event_store.event.dto import (
+    Event,
+    Metadata,
+    RawEvent,
+    Recorded,
+    RecordedRaw,
+)
 from event_sourcery.event_store.event.registry import EventRegistry
 from event_sourcery.event_store.stream_id import StreamId
 
@@ -20,6 +26,13 @@ class Serde:
         return Metadata[event_type](  # type: ignore
             **event_as_dict,
             event=event_type(**data),
+        )
+
+    def deserialize_record(self, record: RecordedRaw) -> Recorded:
+        return Recorded(
+            metadata=self.deserialize(record.entry),
+            stream_id=record.entry.stream_id,
+            position=record.position,
         )
 
     def serialize(

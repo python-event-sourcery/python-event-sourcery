@@ -177,14 +177,7 @@ class EventStore:
         else:
             subscription = self._storage_strategy.subscribe_to_all(start_from)
 
-        return (
-            Recorded(
-                metadata=self._serde.deserialize(raw.entry),
-                stream_id=raw.entry.stream_id,
-                position=raw.position,
-            )
-            for raw in subscription
-        )
+        return map(self._serde.deserialize_record, subscription)
 
     @property
     def position(self) -> Position | None:
