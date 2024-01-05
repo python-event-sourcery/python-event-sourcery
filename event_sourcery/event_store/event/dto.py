@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, ClassVar, Generic, Optional, TypedDict, TypeVar
+from typing import Any, ClassVar, Generic, Optional, TypeAlias, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Extra, Field
@@ -9,7 +9,7 @@ from event_sourcery.event_store.event.registry import EventRegistry
 from event_sourcery.event_store.stream_id import StreamId
 
 
-class RawEvent(TypedDict):
+class RawEvent(BaseModel):
     uuid: UUID
     stream_id: StreamId
     created_at: datetime
@@ -17,6 +17,14 @@ class RawEvent(TypedDict):
     name: str
     data: dict
     context: dict
+
+
+Position: TypeAlias = int
+
+
+class RecordedRaw(BaseModel):
+    entry: RawEvent
+    position: Position
 
 
 class Event(BaseModel):
@@ -44,3 +52,12 @@ class Metadata(GenericModel, Generic[TEvent]):
     @classmethod
     def wrap(cls, event: TEvent, version: int | None) -> "Metadata[TEvent]":
         return Metadata[TEvent](event=event, version=version)
+
+
+class Entry(BaseModel):
+    metadata: Metadata
+    stream_id: StreamId
+
+
+class Recorded(Entry):
+    position: Position

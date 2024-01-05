@@ -2,7 +2,7 @@ import pytest
 
 from event_sourcery.event_store import StreamId
 from tests.bdd import Given, Then, When
-from tests.factories import AnEvent, Snapshot, actual_version
+from tests.factories import AnEvent, Snapshot
 
 
 def test_handles_snapshots(given: Given, when: When, then: Then) -> None:
@@ -54,12 +54,12 @@ def test_rejects_snapshot_with_incorrect_version(
     then: Then,
 ) -> None:
     given.stream(stream_id := StreamId())
-    given.event(AnEvent(), on=stream_id)
+    given.events(AnEvent(), AnEvent(), AnEvent(), on=stream_id)
 
-    ahead = actual_version + 2
+    ahead = 3 + 2
     with pytest.raises(Exception):
         when.snapshots(Snapshot(version=ahead), on=stream_id)
 
-    outdated = actual_version - 1
+    outdated = 3 - 1
     with pytest.raises(Exception):
         when.snapshots(Snapshot(version=outdated), on=stream_id)

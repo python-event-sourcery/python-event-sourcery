@@ -4,8 +4,8 @@ import pytest
 
 from event_sourcery.event_store import EventStore, EventStoreFactory, StreamId
 from event_sourcery.event_store.interfaces import OutboxFiltererStrategy
-from tests.factories import AnEvent
 from tests.event_store.outbox.conftest import PublisherMock
+from tests.factories import AnEvent
 
 
 @pytest.fixture()
@@ -25,6 +25,6 @@ def test_no_entries_when_everything_was_filtered(
     publisher: PublisherMock,
     event_store: EventStore,
 ) -> None:
-    event_store.publish(AnEvent(), stream_id=StreamId(uuid4()))
+    event_store.publish(AnEvent(version=1), stream_id=StreamId(uuid4()))
     event_store.run_outbox(publisher)
     publisher.assert_not_called()

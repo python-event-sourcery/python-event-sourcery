@@ -1,10 +1,17 @@
 from dataclasses import dataclass
-from typing import cast
+from typing import Iterator, cast
 
 from esdbclient import EventStoreDBClient, StreamState
 from esdbclient.exceptions import NotFound
 
-from event_sourcery.event_store import NO_VERSIONING, RawEvent, StreamId, Versioning
+from event_sourcery.event_store import (
+    NO_VERSIONING,
+    Position,
+    RawEvent,
+    RecordedRaw,
+    StreamId,
+    Versioning,
+)
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery_esdb import dto, stream
@@ -13,6 +20,7 @@ from event_sourcery_esdb import dto, stream
 @dataclass(repr=False)
 class ESDBStorageStrategy(StorageStrategy):
     _client: EventStoreDBClient
+    _timeout: float = 1
 
     def fetch_events(
         self,
@@ -23,7 +31,7 @@ class ESDBStorageStrategy(StorageStrategy):
         snapshot = None
         name = stream.Name(stream_id)
         if start is None and (snapshot := self._read_snapshot(name)) is not None:
-            start = cast(int, snapshot["version"]) + 1
+            start = cast(int, snapshot.version) + 1
 
         position, limit = stream.scope(start, stop)
         entries = self._client.read_stream(
@@ -52,13 +60,13 @@ class ESDBStorageStrategy(StorageStrategy):
             return None
 
     def insert_events(self, events: list[RawEvent]) -> None:
-        for stream_id in {e["stream_id"] for e in events}:
+        for stream_id in {e.stream_id for e in events}:
             stream_name = stream.Name(stream_id)
-            stream_events = [e for e in events if e["stream_id"] == stream_id]
+            stream_events = [e for e in events if e.stream_id == stream_id]
             self._append_events(stream_name, events=stream_events)
 
     def _append_events(self, name: stream.Name, events: list[RawEvent]) -> int:
-        assert all(e["stream_id"] == name.uuid for e in events)
+        assert all(e.stream_id == name.uuid for e in events)
         return self._client.append_events(
             str(name),
             current_version=StreamState.ANY,
@@ -66,8 +74,8 @@ class ESDBStorageStrategy(StorageStrategy):
         )
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
-        name = stream.Name(snapshot["stream_id"])
-        stream_position = stream.Position.from_version(cast(int, snapshot["version"]))
+        name = stream.Name(snapshot.stream_id)
+        stream_position = stream.Position.from_version(cast(int, snapshot.version))
         self._client.append_events(
             name.snapshot,
             current_version=StreamState.ANY,
@@ -94,3 +102,48 @@ class ESDBStorageStrategy(StorageStrategy):
     def delete_stream(self, stream_id: StreamId) -> None:
         name = stream.Name(stream_id)
         self._client.delete_stream(str(name), current_version=StreamState.ANY)
+
+    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
+        return map(
+            dto.raw_record,
+            self._client.subscribe_to_all(
+                commit_position=start_from,
+                timeout=self._timeout,
+            ),
+        )
+
+    def subscribe_to_category(
+        self,
+        start_from: Position | None,
+        category: str,
+    ) -> Iterator[RecordedRaw]:
+        return map(
+            dto.raw_record,
+            self._client.subscribe_to_all(
+                commit_position=start_from,
+                timeout=self._timeout,
+                filter_include=[
+                    f"{category}-\\w+",
+                ],
+                filter_by_stream_name=True,
+            ),
+        )
+
+    def subscribe_to_events(
+        self,
+        start_from: Position,
+        events: list[str],
+    ) -> Iterator[RecordedRaw]:
+        return map(
+            dto.raw_record,
+            self._client.subscribe_to_all(
+                commit_position=start_from,
+                timeout=self._timeout,
+                filter_include=events,
+                filter_by_stream_name=False,
+            ),
+        )
+
+    @property
+    def current_position(self) -> Position | None:
+        return Position(self._client.get_commit_position())

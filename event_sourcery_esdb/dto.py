@@ -4,7 +4,7 @@ from typing import Any
 
 from esdbclient import NewEvent, RecordedEvent
 
-from event_sourcery.event_store import RawEvent
+from event_sourcery.event_store import Position, RawEvent, RecordedRaw
 from event_sourcery_esdb import stream
 
 ES_PREFIX = "$es-"
@@ -29,20 +29,27 @@ def snapshot(from_entry: RecordedEvent) -> RawEvent:
     metadata = json.loads(from_entry.metadata.decode("utf-8"))
     position = metadata[f"{ES_PREFIX}stream_position"]
     event = raw_event(from_entry)
-    event["version"] = stream.Position(position).as_version()
+    event.version = stream.Position(position).as_version()
     return event
 
 
 def new_entry(from_raw: RawEvent, **metadata: Any) -> NewEvent:
     return NewEvent(
-        id=from_raw["uuid"],
-        type=from_raw["name"],
-        data=json.dumps(from_raw["data"]).encode("utf-8"),
+        id=from_raw.uuid,
+        type=from_raw.name,
+        data=json.dumps(from_raw.data).encode("utf-8"),
         metadata=json.dumps(
             dict(
-                **from_raw["context"],
+                **from_raw.context,
                 **{f"{ES_PREFIX}{k}": v for k, v in metadata.items()},
-                created_at=from_raw["created_at"].isoformat(),
+                created_at=from_raw.created_at.isoformat(),
             ),
         ).encode("utf-8"),
+    )
+
+
+def raw_record(from_entry: RecordedEvent) -> RecordedRaw:
+    return RecordedRaw(
+        entry=raw_event(from_entry=from_entry),
+        position=Position(from_entry.commit_position or 0),
     )

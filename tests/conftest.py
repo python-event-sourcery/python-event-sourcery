@@ -8,7 +8,7 @@ from event_sourcery.event_store import (
     EventStoreFactory,
     InMemoryEventStoreFactory,
 )
-from tests import factories, bdd
+from tests import bdd
 
 
 class DeclarativeBase(Protocol):
@@ -38,11 +38,6 @@ def event_store_factory() -> EventStoreFactory:
 @pytest.fixture()
 def event_store(event_store_factory: EventStoreFactory) -> EventStore:
     return event_store_factory.build()
-
-
-@pytest.fixture(autouse=True)
-def setup() -> None:
-    factories.init_version()
 
 
 @pytest.fixture()

@@ -1,15 +1,15 @@
 from contextlib import contextmanager
-from copy import deepcopy
+from copy import copy
 from dataclasses import dataclass, field
 from operator import getitem
 from typing import ContextManager, Dict, Generator, Iterator
 
 from typing_extensions import Self
 
-from event_sourcery.event_store import EventStoreFactory
-from event_sourcery.event_store.event import RawEvent
+from event_sourcery.event_store import Position
+from event_sourcery.event_store.event import RawEvent, RecordedRaw
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
-from event_sourcery.event_store.factory import no_filter
+from event_sourcery.event_store.factory import EventStoreFactory, no_filter
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
@@ -24,6 +24,10 @@ class Storage:
     events: list[RawEvent] = field(default_factory=list, init=False)
     _data: dict[StreamId, list[RawEvent]] = field(default_factory=dict, init=False)
     _versions: dict[StreamId, int | None] = field(default_factory=dict, init=False)
+
+    @property
+    def current_position(self) -> int:
+        return len(self.events)
 
     def __contains__(self, stream_id: object) -> bool:
         if not isinstance(stream_id, StreamId):
@@ -40,17 +44,17 @@ class Storage:
     def append(self, events: list[RawEvent]) -> None:
         self.events.extend(events)
         for event in events:
-            stream_id = event["stream_id"]
+            stream_id = event.stream_id
             self._data[stream_id].append(event)
-            self._versions[stream_id] = event["version"]
+            self._versions[stream_id] = event.version
 
     def replace(self, with_snapshot: RawEvent) -> None:
-        stream_id = with_snapshot["stream_id"]
+        stream_id = with_snapshot.stream_id
         self._data[stream_id] = [with_snapshot]
-        self._versions[stream_id] = with_snapshot["version"]
+        self._versions[stream_id] = with_snapshot.version
 
     def read(self, stream_id: StreamId) -> list[RawEvent]:
-        return deepcopy(self._data[stream_id])
+        return copy(self._data[stream_id])
 
     def delete(self, stream_id: StreamId) -> None:
         del self._data[stream_id]
@@ -60,6 +64,42 @@ class Storage:
 
     def get_version(self, stream_id: StreamId) -> int | None:
         return self._versions[stream_id]
+
+
+@dataclass
+class InMemorySubscription(Iterator[RecordedRaw]):
+    _storage: Storage
+    _from_position: int
+
+    def __next__(self) -> RecordedRaw:
+        entry = RecordedRaw(
+            entry=copy(self._storage.events[self._from_position]),
+            position=self._from_position,
+        )
+        self._from_position += 1
+        return entry
+
+
+@dataclass
+class InMemoryToCategorySubscription(InMemorySubscription):
+    _category: str
+
+    def __next__(self) -> RecordedRaw:
+        event: RecordedRaw = super().__next__()
+        while event.entry.stream_id.category != self._category:
+            event = super().__next__()
+        return event
+
+
+@dataclass
+class InMemoryToEventTypesSubscription(InMemorySubscription):
+    _types: list[str]
+
+    def __next__(self) -> RecordedRaw:
+        event: RecordedRaw = super().__next__()
+        while event.entry.name not in self._types:
+            event = super().__next__()
+        return event
 
 
 class InMemoryStorageStrategy(StorageStrategy):
@@ -108,6 +148,28 @@ class InMemoryStorageStrategy(StorageStrategy):
     def delete_stream(self, stream_id: StreamId) -> None:
         if stream_id in self._storage:
             self._storage.delete(stream_id)
+
+    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
+        return InMemorySubscription(self._storage, start_from)
+
+    def subscribe_to_category(
+        self,
+        start_from: Position,
+        category: str,
+    ) -> Iterator[RecordedRaw]:
+        return InMemoryToCategorySubscription(self._storage, start_from, category)
+
+    def subscribe_to_events(
+        self,
+        start_from: Position,
+        events: list[str],
+    ) -> Iterator[RecordedRaw]:
+        return InMemoryToEventTypesSubscription(self._storage, start_from, events)
+
+    @property
+    def current_position(self) -> Position | None:
+        current_position = self._storage.current_position
+        return current_position and Position(current_position)
 
 
 @dataclass

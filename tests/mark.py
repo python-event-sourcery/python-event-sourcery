@@ -12,6 +12,7 @@ def xfail_if_not_implemented_yet(request: pytest.FixtureRequest, storage: str) -
 
     if storage in not_implemented:
         marker = pytest.mark.xfail(
+            raises=NotImplementedError,
             reason=f"{storage} not implemented yet",
             strict=True,
         )

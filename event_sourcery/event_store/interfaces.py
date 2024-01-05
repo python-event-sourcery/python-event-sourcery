@@ -1,7 +1,7 @@
 import abc
 from typing import ContextManager, Iterator, Protocol
 
-from event_sourcery.event_store.event import RawEvent
+from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.versioning import Versioning
 
@@ -45,4 +45,29 @@ class StorageStrategy(abc.ABC):
 
     @abc.abstractmethod
     def delete_stream(self, stream_id: StreamId) -> None:
+        pass
+
+    @abc.abstractmethod
+    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
+        pass
+
+    @abc.abstractmethod
+    def subscribe_to_category(
+        self,
+        start_from: Position,
+        category: str,
+    ) -> Iterator[RecordedRaw]:
+        pass
+
+    @abc.abstractmethod
+    def subscribe_to_events(
+        self,
+        start_from: Position,
+        events: list[str],
+    ) -> Iterator[RecordedRaw]:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def current_position(self) -> Position | None:
         pass

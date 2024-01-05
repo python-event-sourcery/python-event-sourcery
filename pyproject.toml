@@ -38,6 +38,11 @@ cloudevents = ["cloudevents"]
 [tool.pytest]
 addopts = ""
 
+[tool.pytest.ini_options]
+markers = [
+    "not_implemented: skip not implemented yet backend functionality",
+]
+
 [tool.coverage.run]
 branch = true
 source = [
