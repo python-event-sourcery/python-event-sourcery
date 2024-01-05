@@ -91,9 +91,16 @@ class Step:
     ) -> Subscription:
         assert to_category is None or to_events is None
         start_from = self.store.position or 0 if to is None else to
-        return Subscription(
-            self.store.subscribe(start_from=start_from, to=to_category or to_events)
-        )
+        if to_category:
+            return Subscription(
+                self.store.subscribe_to_category(start_from=start_from, to=to_category)
+            )
+        elif to_events:
+            return Subscription(
+                self.store.subscribe_to_events(start_from=start_from, to=to_events)
+            )
+        else:
+            return Subscription(self.store.subscribe_to_all(start_from=start_from))
 
     def stream(self, with_id: es.StreamId | None = None) -> Stream:
         return Stream(self.store) if not with_id else Stream(self.store, with_id)

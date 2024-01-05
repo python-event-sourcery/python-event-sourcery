@@ -152,32 +152,37 @@ class EventStore:
     ) -> list[RawEvent]:
         return [self._serde.serialize(event=e, stream_id=stream_id) for e in events]
 
-    def subscribe(
-        self,
-        start_from: Position,
-        to: Category | list[Type[Event]] | None = None,
-    ) -> Iterator[Recorded]:
-        to_category: Category | None = to if isinstance(to, Category) else None
-        to_events: list[str] | None = (
-            [self._serde.registry.name_for_type(et) for et in to]
-            if isinstance(to, list)
-            else None
+    def subscribe_to_all(self, start_from: Position) -> Iterator[Recorded]:
+        return map(
+            self._serde.deserialize_record,
+            self._storage_strategy.subscribe_to_all(start_from),
         )
 
-        if to_category:
-            subscription = self._storage_strategy.subscribe_to_category(
+    def subscribe_to_category(
+        self,
+        start_from: Position,
+        to: Category,
+    ) -> Iterator[Recorded]:
+        return map(
+            self._serde.deserialize_record,
+            self._storage_strategy.subscribe_to_category(
                 start_from,
-                str(to_category),
-            )
-        elif to_events:
-            subscription = self._storage_strategy.subscribe_to_events(
-                start_from,
-                to_events,
-            )
-        else:
-            subscription = self._storage_strategy.subscribe_to_all(start_from)
+                category=str(to),
+            ),
+        )
 
-        return map(self._serde.deserialize_record, subscription)
+    def subscribe_to_events(
+        self,
+        start_from: Position,
+        to: list[Type[Event]],
+    ) -> Iterator[Recorded]:
+        return map(
+            self._serde.deserialize_record,
+            self._storage_strategy.subscribe_to_events(
+                start_from,
+                [self._serde.registry.name_for_type(et) for et in to],
+            ),
+        )
 
     @property
     def position(self) -> Position | None:
