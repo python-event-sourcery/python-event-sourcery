@@ -38,7 +38,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
                 {
                     "created_at": datetime.utcnow(),
                     "data": as_dict,
-                    "stream_name": event["stream_id"].name,
+                    "stream_name": event.stream_id.name,
                 }
             )
 

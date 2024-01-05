@@ -40,7 +40,7 @@ class EventStore:
         for entry in stream:
             with entry as raw_event_dict:
                 event = self._serde.deserialize(raw_event_dict)
-                publisher(event, raw_event_dict["stream_id"])
+                publisher(event, raw_event_dict.stream_id)
 
     def load_stream(
         self,
@@ -179,9 +179,9 @@ class EventStore:
 
         return (
             Recorded(
-                metadata=self._serde.deserialize(raw["entry"]),
-                stream_id=raw["entry"]["stream_id"],
-                position=raw["position"],
+                metadata=self._serde.deserialize(raw.entry),
+                stream_id=raw.entry.stream_id,
+                position=raw.position,
             )
             for raw in subscription
         )

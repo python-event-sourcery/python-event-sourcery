@@ -31,7 +31,7 @@ class ESDBStorageStrategy(StorageStrategy):
         snapshot = None
         name = stream.Name(stream_id)
         if start is None and (snapshot := self._read_snapshot(name)) is not None:
-            start = cast(int, snapshot["version"]) + 1
+            start = cast(int, snapshot.version) + 1
 
         position, limit = stream.scope(start, stop)
         entries = self._client.read_stream(
@@ -60,13 +60,13 @@ class ESDBStorageStrategy(StorageStrategy):
             return None
 
     def insert_events(self, events: list[RawEvent]) -> None:
-        for stream_id in {e["stream_id"] for e in events}:
+        for stream_id in {e.stream_id for e in events}:
             stream_name = stream.Name(stream_id)
-            stream_events = [e for e in events if e["stream_id"] == stream_id]
+            stream_events = [e for e in events if e.stream_id == stream_id]
             self._append_events(stream_name, events=stream_events)
 
     def _append_events(self, name: stream.Name, events: list[RawEvent]) -> int:
-        assert all(e["stream_id"] == name.uuid for e in events)
+        assert all(e.stream_id == name.uuid for e in events)
         return self._client.append_events(
             str(name),
             current_version=StreamState.ANY,
@@ -74,8 +74,8 @@ class ESDBStorageStrategy(StorageStrategy):
         )
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
-        name = stream.Name(snapshot["stream_id"])
-        stream_position = stream.Position.from_version(cast(int, snapshot["version"]))
+        name = stream.Name(snapshot.stream_id)
+        stream_position = stream.Position.from_version(cast(int, snapshot.version))
         self._client.append_events(
             name.snapshot,
             current_version=StreamState.ANY,

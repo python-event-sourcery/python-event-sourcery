@@ -32,5 +32,5 @@ class InTransactionSubscription(Iterator[Entry]):
             data=model.data,
             context=model.event_context,
         )
-        entry = Entry(metadata=self._serde.deserialize(raw), stream_id=raw["stream_id"])
+        entry = Entry(metadata=self._serde.deserialize(raw), stream_id=raw.stream_id)
         self._events.append(entry)

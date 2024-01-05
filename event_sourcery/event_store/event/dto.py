@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, ClassVar, Generic, Optional, TypeAlias, TypedDict, TypeVar
+from typing import Any, ClassVar, Generic, Optional, TypeAlias, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Extra, Field
@@ -9,7 +9,7 @@ from event_sourcery.event_store.event.registry import EventRegistry
 from event_sourcery.event_store.stream_id import StreamId
 
 
-class RawEvent(TypedDict):
+class RawEvent(BaseModel):
     uuid: UUID
     stream_id: StreamId
     created_at: datetime
@@ -22,7 +22,7 @@ class RawEvent(TypedDict):
 Position: TypeAlias = int
 
 
-class RecordedRaw(TypedDict):
+class RecordedRaw(BaseModel):
     entry: RawEvent
     position: Position
 

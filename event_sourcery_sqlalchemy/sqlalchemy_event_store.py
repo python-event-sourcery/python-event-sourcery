@@ -143,32 +143,32 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         for event in events:
             stream = (
                 self._session.query(StreamModel)
-                .filter_by(stream_id=event["stream_id"])
+                .filter_by(stream_id=event.stream_id)
                 .one()
             )
             entry = EventModel(
-                uuid=event["uuid"],
-                created_at=event["created_at"],
-                name=event["name"],
-                data=event["data"],
-                event_context=event["context"],
-                version=event["version"],
+                uuid=event.uuid,
+                created_at=event.created_at,
+                name=event.name,
+                data=event.data,
+                event_context=event.context,
+                version=event.version,
             )
             stream.events.append(entry)
         self._session.flush()
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
         entry = SnapshotModel(
-            uuid=snapshot["uuid"],
-            created_at=snapshot["created_at"],
-            version=snapshot["version"],
-            name=snapshot["name"],
-            data=snapshot["data"],
-            event_context=snapshot["context"],
+            uuid=snapshot.uuid,
+            created_at=snapshot.created_at,
+            version=snapshot.version,
+            name=snapshot.name,
+            data=snapshot.data,
+            event_context=snapshot.context,
         )
         stream = (
             self._session.query(StreamModel)
-            .filter_by(stream_id=snapshot["stream_id"])
+            .filter_by(stream_id=snapshot.stream_id)
             .one()
         )
         stream.snapshots.append(entry)

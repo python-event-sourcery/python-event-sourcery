@@ -16,7 +16,7 @@ class Serde:
         del event_as_dict["stream_id"]
         del event_as_dict["name"]
         data = cast(Mapping, event_as_dict.pop("data"))
-        event_type = self.registry.type_for_name(event["name"])
+        event_type = self.registry.type_for_name(event.name)
         return Metadata[event_type](  # type: ignore
             **event_as_dict,
             event=event_type(**data),

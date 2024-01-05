@@ -44,14 +44,14 @@ class Storage:
     def append(self, events: list[RawEvent]) -> None:
         self.events.extend(events)
         for event in events:
-            stream_id = event["stream_id"]
+            stream_id = event.stream_id
             self._data[stream_id].append(event)
-            self._versions[stream_id] = event["version"]
+            self._versions[stream_id] = event.version
 
     def replace(self, with_snapshot: RawEvent) -> None:
-        stream_id = with_snapshot["stream_id"]
+        stream_id = with_snapshot.stream_id
         self._data[stream_id] = [with_snapshot]
-        self._versions[stream_id] = with_snapshot["version"]
+        self._versions[stream_id] = with_snapshot.version
 
     def read(self, stream_id: StreamId) -> list[RawEvent]:
         return copy(self._data[stream_id])
@@ -86,7 +86,7 @@ class InMemoryToCategorySubscription(InMemorySubscription):
 
     def __next__(self) -> RecordedRaw:
         event: RecordedRaw = super().__next__()
-        while event["entry"]["stream_id"].category != self._category:
+        while event.entry.stream_id.category != self._category:
             event = super().__next__()
         return event
 
@@ -97,7 +97,7 @@ class InMemoryToEventTypesSubscription(InMemorySubscription):
 
     def __next__(self) -> RecordedRaw:
         event: RecordedRaw = super().__next__()
-        while event["entry"]["name"] not in self._types:
+        while event.entry.name not in self._types:
             event = super().__next__()
         return event
 
