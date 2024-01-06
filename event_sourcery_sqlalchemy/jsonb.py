@@ -15,17 +15,13 @@ class JSONB(TypeDecorator):
             return dialect.type_descriptor(Text())
 
     def process_bind_param(self, value: Any, dialect: Any) -> Optional[Any]:
-        if value is None:
-            return value
-        elif dialect.name == "postgresql":
+        if dialect.name == "postgresql":
             return value
         else:
             return json.dumps(value)
 
     def process_result_value(self, value: Any, dialect: Any) -> Optional[Any]:
-        if value is None:
-            return value
-        elif dialect.name == "postgresql":
+        if dialect.name == "postgresql":
             return value
         else:
             return json.loads(value)

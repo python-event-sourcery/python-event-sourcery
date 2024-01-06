@@ -5,7 +5,28 @@ from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import AnEvent
 
 
+def test_no_calls_when_outbox_is_empty(
+    publisher: PublisherMock, event_store: EventStore
+) -> None:
+    event_store.run_outbox(publisher)
+    publisher.assert_not_called()
+
+
 def test_calls_publisher(publisher: PublisherMock, event_store: EventStore) -> None:
+    stream_id = StreamId(uuid4())
+    event_store.publish(
+        AnEvent(version=1),
+        AnEvent(version=2),
+        AnEvent(version=3),
+        stream_id=stream_id,
+    )
+    event_store.run_outbox(publisher, limit=2)
+    assert publisher.call_count == 2
+
+
+def test_publish_only_limited_number_of_events(
+    publisher: PublisherMock, event_store: EventStore
+) -> None:
     stream_id = StreamId(uuid4())
     event_store.publish(an_event := AnEvent(version=1), stream_id=stream_id)
     event_store.run_outbox(publisher)

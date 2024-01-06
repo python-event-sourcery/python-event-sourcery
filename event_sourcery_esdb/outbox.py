@@ -1,6 +1,7 @@
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
+from itertools import islice
 from typing import ContextManager, Generator, Iterator
 
 from esdbclient import EventStoreDBClient, RecordedEvent
@@ -28,7 +29,6 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     def create_subscription(self) -> None:
         try:
             self._client.get_subscription_info(self.OUTBOX_NAME)
-            return
         except NotFound:
             self._client.create_subscription_to_all(
                 self.OUTBOX_NAME,
@@ -39,13 +39,12 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     def _context(
         self,
         limit: int | None = None,
-    ) -> Generator[PersistentSubscription, None, None]:
+    ) -> Generator[Iterator[RecordedEvent], None, None]:
         self._active_subscription = self._client.read_subscription_to_all(
             self.OUTBOX_NAME,
-            buffer_size=limit or 100,
             timeout=10,
         )
-        yield self._active_subscription
+        yield islice(self._active_subscription, limit or 100)
         self._active_subscription.stop()
         self._active_subscription = None
 

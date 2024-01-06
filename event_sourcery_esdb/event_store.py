@@ -101,7 +101,10 @@ class ESDBStorageStrategy(StorageStrategy):
 
     def delete_stream(self, stream_id: StreamId) -> None:
         name = stream.Name(stream_id)
-        self._client.delete_stream(str(name), current_version=StreamState.ANY)
+        try:
+            self._client.delete_stream(str(name), current_version=StreamState.ANY)
+        except NotFound:
+            pass
 
     def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
         return map(

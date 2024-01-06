@@ -25,22 +25,17 @@ class GUID(TypeDecorator):
             return dialect.type_descriptor(CHAR(32))
 
     def process_bind_param(self, value: Any, dialect: Any) -> Optional[str]:
-        if value is None:
-            return value
-        elif dialect.name == "postgresql":
+        if dialect.name == "postgresql":
             return str(value)
         else:
-            if not isinstance(value, uuid.UUID):
+            if not isinstance(value, uuid.UUID):  # pragma: no cover
                 return "%.32x" % uuid.UUID(value).int
             else:
                 # hexstring
                 return "%.32x" % value.int
 
     def process_result_value(self, value: Any, dialect: Any) -> Optional[uuid.UUID]:
-        if value is None:
+        if isinstance(value, uuid.UUID):
             return value
         else:
-            if isinstance(value, uuid.UUID):
-                return value
-            else:
-                return uuid.UUID(value)
+            return uuid.UUID(value)
