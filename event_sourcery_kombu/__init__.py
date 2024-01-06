@@ -4,7 +4,8 @@ from typing import Callable, Type
 from kombu import Connection, Exchange, Message, Queue
 from kombu.connection import ConnectionPool
 from kombu.pools import connections
-from pydantic import AmqpDsn, BaseSettings, Field
+from pydantic import AmqpDsn, Field
+from pydantic_settings import BaseSettings
 
 __all__ = ["publish_event", "declare_exchange"]
 

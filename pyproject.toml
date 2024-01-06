@@ -13,7 +13,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-pydantic = "^1.9"
+pydantic = ">=2.0,<3"
 SQLAlchemy = ">=2.0"
 esdbclient = ">=1.0b3"
 kombu = {version = "*", optional = true}
@@ -29,7 +29,6 @@ pytest = "*"
 pytest-cov = "*"
 mkdocs-material = "^8.3.9"
 psycopg2-binary = "^2.9.3"
-import-linter = "*"
 
 [tool.poetry.extras]
 kombu = ["kombu"]
@@ -41,6 +40,8 @@ addopts = ""
 [tool.pytest.ini_options]
 markers = [
     "not_implemented: skip not implemented yet backend functionality",
+    "skip_esdb: skip features not supported by esdb or our implementation on top of it",
+    "skip_in_memory: skip features not supported by in-memory event store",
 ]
 
 [tool.coverage.run]
