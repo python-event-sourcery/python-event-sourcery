@@ -1,11 +1,11 @@
 from event_sourcery.event_store import StreamId
 from tests.bdd import Given, Then, When
-from tests.factories import AnEvent
+from tests.factories import an_event
 
 
 def test_removes_stream(given: Given, then: Then, when: When) -> None:
     given.stream(stream := StreamId())
-    given.event(AnEvent(), on=stream)
+    given.event(an_event(), on=stream)
     when.deletes(stream)
     then.stream(stream).is_empty()
 

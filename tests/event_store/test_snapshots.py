@@ -2,25 +2,25 @@ import pytest
 
 from event_sourcery.event_store import StreamId
 from tests.bdd import Given, Then, When
-from tests.factories import AnEvent, Snapshot
+from tests.factories import a_snapshot, an_event
 
 
 def test_handles_snapshots(given: Given, when: When, then: Then) -> None:
     given.stream(stream_id := StreamId())
-    given.events(AnEvent(), AnEvent(), AnEvent(), on=stream_id)
+    given.events(an_event(), an_event(), an_event(), on=stream_id)
 
-    when.snapshots(snapshot := Snapshot(), on=stream_id)
+    when.snapshots(snapshot := a_snapshot(), on=stream_id)
 
     then.stream(stream_id).loads_only([snapshot])
 
 
 def test_handles_multiple_snapshots(given: Given, when: When, then: Then) -> None:
     given.stream(stream_id := StreamId())
-    given.event(AnEvent(), on=stream_id)
-    given.snapshot(Snapshot(), on=stream_id)
-    given.event(AnEvent(), on=stream_id)
+    given.event(an_event(), on=stream_id)
+    given.snapshot(a_snapshot(), on=stream_id)
+    given.event(an_event(), on=stream_id)
 
-    when.snapshots(latest_snapshot := Snapshot(), on=stream_id)
+    when.snapshots(latest_snapshot := a_snapshot(), on=stream_id)
 
     then.stream(stream_id).loads_only([latest_snapshot])
 
@@ -31,14 +31,14 @@ def test_returns_all_events_after_last_snapshot(
     then: Then,
 ) -> None:
     given.stream(stream_id := StreamId())
-    given.events(AnEvent(), AnEvent(), on=stream_id)
-    given.snapshot(Snapshot(), on=stream_id)
-    given.events(AnEvent(), AnEvent(), on=stream_id)
-    given.snapshot(latest_snapshot := Snapshot(), on=stream_id)
+    given.events(an_event(), an_event(), on=stream_id)
+    given.snapshot(a_snapshot(), on=stream_id)
+    given.events(an_event(), an_event(), on=stream_id)
+    given.snapshot(latest_snapshot := a_snapshot(), on=stream_id)
 
     when.appends(
-        after_latest_snapshot_1 := AnEvent(),
-        after_latest_snapshot_2 := AnEvent(),
+        after_latest_snapshot_1 := an_event(),
+        after_latest_snapshot_2 := an_event(),
         to=stream_id,
     )
 
@@ -54,12 +54,12 @@ def test_rejects_snapshot_with_incorrect_version(
     then: Then,
 ) -> None:
     given.stream(stream_id := StreamId())
-    given.events(AnEvent(), AnEvent(), AnEvent(), on=stream_id)
+    given.events(an_event(), an_event(), an_event(), on=stream_id)
 
     ahead = 3 + 2
     with pytest.raises(Exception):
-        when.snapshots(Snapshot(version=ahead), on=stream_id)
+        when.snapshots(a_snapshot(version=ahead), on=stream_id)
 
     outdated = 3 - 1
     with pytest.raises(Exception):
-        when.snapshots(Snapshot(version=outdated), on=stream_id)
+        when.snapshots(a_snapshot(version=outdated), on=stream_id)

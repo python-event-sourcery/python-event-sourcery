@@ -9,7 +9,7 @@ class _Event(Event):
     pass
 
 
-def AnEvent(
+def an_event(
     event: Event | None = None, version: int | None = None, **kwargs: Any
 ) -> Metadata[_Event]:
     return Metadata(
@@ -19,7 +19,7 @@ def AnEvent(
     )
 
 
-def Snapshot(
+def a_snapshot(
     event: Event | None = None, version: int | None = None, **kwargs: Any
 ) -> Metadata[_Event]:
     return Metadata(

@@ -3,24 +3,24 @@ from uuid import uuid4
 
 from event_sourcery.event_store import EventStore, Metadata, StreamId
 from tests.bdd import Given, Then, When
-from tests.factories import AnEvent, NastyEventWithJsonUnfriendlyTypes
+from tests.factories import NastyEventWithJsonUnfriendlyTypes, an_event
 from tests.matchers import any_metadata
 
 
 def test_save_retrieve(given: Given, when: When, then: Then) -> None:
     given.stream(stream_id := StreamId())
-    when.appends(an_event := AnEvent(), to=stream_id)
-    then.stream(stream_id).loads_only([an_event])
+    when.appends(event := an_event(), to=stream_id)
+    then.stream(stream_id).loads_only([event])
 
 
 def test_save_retrieve_part_of_stream(given: Given, then: Then) -> None:
     given.stream(stream_id := StreamId())
     given.events(
-        AnEvent(),
-        second_event := AnEvent(),
-        third_event := AnEvent(),
-        fourth_event := AnEvent(),
-        AnEvent(),
+        an_event(),
+        second_event := an_event(),
+        third_event := an_event(),
+        fourth_event := an_event(),
+        an_event(),
         on=stream_id,
     )
     loaded = then.store.load_stream(stream_id, start=2, stop=5)
@@ -36,10 +36,10 @@ def test_loading_not_existing_stream_returns_empty_list(
 def test_stores_retrieves_metadata(given: Given, when: When, then: Then) -> None:
     given.stream(stream_id := StreamId())
     when.appends(
-        an_event := AnEvent(metadata={"correlation_id": uuid4(), "ip": "127.0.0.1"}),
+        event := an_event(metadata={"correlation_id": uuid4(), "ip": "127.0.0.1"}),
         to=stream_id,
     )
-    then.stream(stream_id).loads_only([an_event])
+    then.stream(stream_id).loads_only([event])
 
 
 def test_is_able_to_handle_non_trivial_formats(
@@ -69,5 +69,5 @@ def test_is_able_to_handle_events_without_metadata(
     then: Then,
 ) -> None:
     given.stream(stream_id := StreamId())
-    event_store.append(an_event := AnEvent().event, stream_id=stream_id)
-    then.stream(stream_id).loads_only([any_metadata(for_event=an_event)])
+    event_store.append(event := an_event().event, stream_id=stream_id)
+    then.stream(stream_id).loads_only([any_metadata(for_event=event)])
