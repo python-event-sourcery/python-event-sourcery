@@ -2,8 +2,7 @@ from datetime import datetime
 from typing import Any, ClassVar, Generic, Optional, TypeAlias, TypeVar
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Extra, Field
-from pydantic.generics import GenericModel
+from pydantic import BaseModel, Field
 
 from event_sourcery.event_store.event.registry import EventRegistry
 from event_sourcery.event_store.stream_id import StreamId
@@ -13,7 +12,7 @@ class RawEvent(BaseModel):
     uuid: UUID
     stream_id: StreamId
     created_at: datetime
-    version: int | None
+    version: int | None = None
     name: str
     data: dict
     context: dict
@@ -37,12 +36,12 @@ class Event(BaseModel):
 TEvent = TypeVar("TEvent", bound=Event)
 
 
-class Context(BaseModel, extra=Extra.allow):
+class Context(BaseModel, extra="allow"):
     correlation_id: UUID | None = None
     causation_id: UUID | None = None
 
 
-class Metadata(GenericModel, Generic[TEvent]):
+class Metadata(BaseModel, Generic[TEvent]):
     event: TEvent
     version: Optional[int]
     uuid: UUID = Field(default_factory=uuid4)

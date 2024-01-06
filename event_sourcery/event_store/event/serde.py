@@ -1,4 +1,3 @@
-import json
 from dataclasses import dataclass
 from typing import Mapping, cast
 
@@ -47,6 +46,6 @@ class Serde:
             created_at=event.created_at,
             version=event.version,
             name=self.registry.name_for_type(type(event.event)),
-            data=json.loads(model.json()),  # json dumps and loads? It's moronic
-            context=json.loads(event.context.json()),
+            data=model.model_dump(mode="json"),
+            context=event.context.model_dump(mode="json"),
         )

@@ -1,25 +1,32 @@
 from datetime import date, datetime
+from typing import Any
 from uuid import UUID
-
-from pydantic import Field
 
 from event_sourcery.event_store import Event, Metadata
 
 
-class AnEvent(Metadata):
-    class _Event(Event):
-        pass
-
-    event: _Event = Field(default_factory=_Event)
-    version: int | None = None
+class _Event(Event):
+    pass
 
 
-class Snapshot(Metadata):
-    class _Event(Event):
-        pass
+def AnEvent(
+    event: Event | None = None, version: int | None = None, **kwargs: Any
+) -> Metadata[_Event]:
+    return Metadata(
+        event=event or _Event(),
+        version=version,
+        **kwargs,
+    )
 
-    event: _Event = Field(default_factory=_Event)
-    version: int | None = None
+
+def Snapshot(
+    event: Event | None = None, version: int | None = None, **kwargs: Any
+) -> Metadata[_Event]:
+    return Metadata(
+        event=event or _Event(),
+        version=version,
+        **kwargs,
+    )
 
 
 class NastyEventWithJsonUnfriendlyTypes(Event):

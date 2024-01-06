@@ -13,7 +13,7 @@ class AnyUUID:
 
 
 def any_metadata(for_event: TEvent) -> Metadata[TEvent]:
-    return Metadata[TEvent].construct(
+    return Metadata[TEvent].model_construct(
         event=for_event,
         version=ANY,
         uuid=ANY,
@@ -25,4 +25,4 @@ def any_metadata(for_event: TEvent) -> Metadata[TEvent]:
 def any_record(event: Metadata | Event, on_stream: StreamId = ANY) -> Recorded:
     if isinstance(event, Event):
         event = any_metadata(event)
-    return Recorded.construct(metadata=event, stream_id=on_stream, position=ANY)
+    return Recorded.model_construct(metadata=event, stream_id=on_stream, position=ANY)
