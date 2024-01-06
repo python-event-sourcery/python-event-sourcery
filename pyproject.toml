@@ -51,6 +51,9 @@ source = [
     "event_sourcery_sqlalchemy",
     "event_sourcery_kombu",
 ]
+omit = [
+    "event_sourcery_kombu/*",
+]
 
 [tool.coverage.report]
 fail_under = 100
