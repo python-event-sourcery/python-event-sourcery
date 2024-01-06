@@ -26,7 +26,7 @@ class RecordedRaw(BaseModel):
     position: Position
 
 
-class Event(BaseModel):
+class Event(BaseModel, extra="forbid"):
     __registry__: ClassVar = EventRegistry()
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -41,7 +41,7 @@ class Context(BaseModel, extra="allow"):
     causation_id: UUID | None = None
 
 
-class Metadata(BaseModel, Generic[TEvent]):
+class Metadata(BaseModel, Generic[TEvent], extra="forbid"):
     event: TEvent
     version: Optional[int]
     uuid: UUID = Field(default_factory=uuid4)

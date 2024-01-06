@@ -33,10 +33,13 @@ def test_loading_not_existing_stream_returns_empty_list(
     assert event_store.load_stream(stream_id=StreamId()) == []
 
 
-def test_stores_retrieves_metadata(given: Given, when: When, then: Then) -> None:
+def test_stores_retrieves_extra_contextual_metadata(
+    given: Given, when: When, then: Then
+) -> None:
+    extra_metadata = {"correlation_id": uuid4().hex, "ip": "127.0.0.1"}
     given.stream(stream_id := StreamId())
     when.appends(
-        event := an_event(metadata={"correlation_id": uuid4(), "ip": "127.0.0.1"}),
+        event := an_event(context={"extra_metadata": extra_metadata}),
         to=stream_id,
     )
     then.stream(stream_id).loads_only([event])
