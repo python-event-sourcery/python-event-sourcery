@@ -30,8 +30,6 @@ class Storage:
         return len(self.events)
 
     def __contains__(self, stream_id: object) -> bool:
-        if not isinstance(stream_id, StreamId):
-            raise TypeError
         return stream_id in self._data
 
     def create(self, stream_id: StreamId, version: Versioning) -> None:
@@ -58,9 +56,6 @@ class Storage:
 
     def delete(self, stream_id: StreamId) -> None:
         del self._data[stream_id]
-
-    def set_version(self, stream_id: StreamId, version: Versioning) -> None:
-        self._versions[stream_id] = version.expected_version
 
     def get_version(self, stream_id: StreamId) -> int | None:
         return self._versions[stream_id]
