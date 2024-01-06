@@ -28,7 +28,7 @@ class GUID(TypeDecorator):
         if dialect.name == "postgresql":
             return str(value)
         else:
-            if not isinstance(value, uuid.UUID):
+            if not isinstance(value, uuid.UUID):  # pragma: no cover
                 return "%.32x" % uuid.UUID(value).int
             else:
                 # hexstring
