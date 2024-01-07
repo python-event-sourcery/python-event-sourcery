@@ -50,7 +50,7 @@ class TestFromPositionSubscription:
         then: Then,
     ) -> None:
         starting_position = given(event_store).position
-        stream = given.stream().receives(old_event := an_event())
+        stream = given.stream().with_events(old_event := an_event())
         subscription = given.subscription(to=starting_position)
 
         when(stream).receives(new_event := an_event())
@@ -66,7 +66,7 @@ class TestFromPositionSubscription:
         when: When,
         then: Then,
     ) -> None:
-        stream = given.stream().receives(an_event(), an_event(), an_event())
+        stream = given.stream().with_events(an_event(), an_event(), an_event())
         subscription = given.subscription(to=event_store.position)
 
         when(stream).receives(new_event := an_event())
@@ -81,8 +81,8 @@ class TestFromPositionSubscription:
         when: When,
         then: Then,
     ) -> None:
-        stream_1 = given.stream().receives(an_event(), an_event(), an_event())
-        stream_2 = given.stream().receives(an_event(), an_event(), an_event())
+        stream_1 = given.stream().with_events(an_event(), an_event(), an_event())
+        stream_2 = given.stream().with_events(an_event(), an_event(), an_event())
         subscription = given.subscription(to=event_store.position)
 
         when(stream_1).receives(first_after_position := an_event())
@@ -109,10 +109,10 @@ class TestSubscriptionToCategory:
         then: Then,
     ) -> None:
         subscription = given.subscription(to_category="Category")
-        stream_in_category = given.stream(StreamId(category="Category")).receives(
+        stream_in_category = given.stream(StreamId(category="Category")).with_events(
             first_event := an_event(),
         )
-        given.stream(StreamId(category="Other")).receives(an_event(), an_event())
+        given.stream(StreamId(category="Other")).with_events(an_event(), an_event())
 
         when(stream_in_category).receives(second_event := an_event())
 
@@ -131,13 +131,14 @@ class TestSubscriptionToCategory:
         then: Then,
     ) -> None:
         subscription = given.subscription(to_category="Category")
-        stream_1 = given.stream(StreamId(category="Category")).receives(
+
+        stream_1 = when.stream(StreamId(category="Category")).receives(
             first_event := an_event(),
         )
-        stream_2 = given.stream(StreamId(category="Category")).receives(
+        stream_2 = when.stream(StreamId(category="Category")).receives(
             second_event := an_event(),
         )
-        given(stream_1).receives(third_event := an_event())
+        when(stream_1).receives(third_event := an_event())
 
         then(subscription).next_received_record_is(any_record(first_event, stream_1.id))
         then(subscription).next_received_record_is(
@@ -153,8 +154,8 @@ class TestSubscriptionToCategory:
         when: When,
         then: Then,
     ) -> None:
-        stream = given.stream(StreamId(category="Category")).receives(an_event())
-        other_stream = given.stream(StreamId(category="Other")).receives(an_event())
+        stream = given.stream(StreamId(category="Category")).with_events(an_event())
+        other_stream = given.stream(StreamId(category="Other")).with_events(an_event())
         subscription = given.subscription(
             to=event_store.position,
             to_category="Category",
@@ -223,8 +224,8 @@ class TestSubscribeToEventTypes:
         when: When,
         then: Then,
     ) -> None:
-        stream_1 = when.stream().receives(self.FirstType(), self.SecondType())
-        stream_2 = when.stream().receives(self.SecondType(), self.ThirdType())
+        stream_1 = given.stream().with_events(self.FirstType(), self.SecondType())
+        stream_2 = given.stream().with_events(self.SecondType(), self.ThirdType())
         subscription = given.subscription(
             to=event_store.position,
             to_events=[self.FirstType, self.ThirdType],
@@ -245,11 +246,10 @@ class TestInTransactionSubscription:
     def test_receive_all_events(
         self,
         subscription: Subscription,
-        given: Given,
         when: When,
         then: Then,
     ) -> None:
-        stream = given.stream().receives(
+        stream = when.stream().receives(
             first_event := an_event(),
             second_event := an_event(),
         )
@@ -295,7 +295,7 @@ class TestInTransactionSubscription:
         when: When,
         then: Then,
     ) -> None:
-        given.stream().receives(an_event(), an_event())
+        given.stream().with_events(an_event(), an_event())
 
         when(subscription).next_received_record_is(ANY)
         when(subscription).next_received_record_is(ANY)

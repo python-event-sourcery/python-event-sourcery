@@ -26,6 +26,9 @@ class Stream:
         metadata = (es.Metadata.wrap(e, version=None) for e in events)
         return self.receives(*metadata)
 
+    def with_events(self, *events: es.Metadata | es.Event) -> Self:
+        return self.receives(*events)
+
     def snapshots(self, snapshot: es.Metadata) -> Self:
         if not snapshot.version:
             snapshot.version = self.current_version
