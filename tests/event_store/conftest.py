@@ -118,17 +118,13 @@ def in_memory_factory(request: pytest.FixtureRequest) -> EventStoreFactory:
 def django_setup() -> None:
     os.environ["DJANGO_SETTINGS_MODULE"] = "tests.django_tests.django_tests.settings"
     django.setup()
-
-
-MIGRATED = False
+    django_call_command("migrate")
 
 
 @pytest.fixture()
-def django_factory(django_setup, transactional_db) -> DjangoStoreFactory:
-    global MIGRATED
-    if not MIGRATED:
-        django_call_command("migrate")
-        MIGRATED = True
+def django_factory(transactional_db, django_setup) -> DjangoStoreFactory:
+    # order of fixtures is significant. First we enable db access,
+    # then we can set up Django (especially run migrations).
     return DjangoStoreFactory()
 
 
