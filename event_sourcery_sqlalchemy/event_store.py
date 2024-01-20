@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Iterator, Sequence, Union
+from typing import Iterator, Sequence, Union, cast
 
+from more_itertools import first_true
 from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import NoResultFound
@@ -88,44 +89,58 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         ]
         return raw_dict_events
 
-    def ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
+    def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         initial_version = versioning.initial_version
 
-        model = StreamModel(stream_id=stream_id, version=initial_version)
-        ensure_stream_stmt = (
-            postgresql_insert(StreamModel)
-            .values(
-                uuid=model.uuid,
-                name=model.name,
-                category=model.category,
-                version=model.version,
-            )
-            .on_conflict_do_nothing()
+        condition = (StreamModel.uuid == stream_id) & (
+            StreamModel.category == (stream_id.category or "")
         )
-        self._session.execute(ensure_stream_stmt)
+        if stream_id.name:
+            condition = condition | (
+                (StreamModel.name == stream_id.name)
+                & (StreamModel.category == (stream_id.category or ""))
+            )
+        matching_streams_stmt = select(StreamModel).where(condition)
+        matching_streams = self._session.execute(matching_streams_stmt).scalars().all()
+        if not matching_streams:
+            ensure_stream_stmt = (
+                postgresql_insert(StreamModel)
+                .values(
+                    uuid=stream_id,
+                    name=stream_id.name,
+                    category=stream_id.category or "",
+                    version=initial_version,
+                )
+                .on_conflict_do_nothing()
+            )
+            self._session.execute(ensure_stream_stmt)
+            matching_streams = (
+                self._session.execute(matching_streams_stmt).scalars().all()
+            )
+
         if stream_id.name is not None:
-            get_stream_id_stmt = select(StreamModel.uuid).filter(
-                StreamModel.name == stream_id.name,
-                StreamModel.category == (stream_id.category or ""),
-            )
-            found_stream_id = StreamId(
-                uuid=self._session.execute(get_stream_id_stmt).scalar(),
-                name=stream_id.name,
-                category=stream_id.category,
-            )
-            if found_stream_id != stream_id:
+            matching_stream_with_same_name: StreamModel = [
+                stream
+                for stream in matching_streams
+                if stream.name == stream_id.name
+                and stream.category == (stream_id.category or "")
+            ].pop()
+            if matching_stream_with_same_name.stream_id != stream_id:
                 raise AnotherStreamWithThisNameButOtherIdExists()
 
-        (stream_version,) = (
-            self._session.query(StreamModel.version)
-            .filter(StreamModel.stream_id == stream_id)
-            .one()
+        stream = cast(
+            StreamModel,
+            first_true(
+                matching_streams, pred=lambda stream: stream.stream_id == stream_id
+            ),
         )
+        self._session.info.setdefault("strong_set", set())
+        self._session.info["strong_set"].add(stream)
 
-        versioning.validate_if_compatible(stream_version)
+        versioning.validate_if_compatible(stream.version)
 
         if versioning.expected_version and versioning is not NO_VERSIONING:
-            stmt = (
+            bump_version_stmt = (
                 update(StreamModel)
                 .where(
                     StreamModel.stream_id == stream_id,
@@ -133,19 +148,26 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 )
                 .values(version=versioning.initial_version)
             )
-            result = self._session.execute(stmt)
+            result = self._session.execute(bump_version_stmt)
 
             if result.rowcount != 1:  # type: ignore
                 # optimistic lock failed
                 raise ConcurrentStreamWriteError
 
-    def insert_events(self, events: list[RawEvent]) -> None:
+    def insert_events(
+        self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
+    ) -> None:
+        self._ensure_stream(stream_id=stream_id, versioning=versioning)
+        stream = cast(
+            StreamModel,
+            first_true(
+                self._session.info["strong_set"],
+                pred=lambda model: isinstance(model, StreamModel)
+                and model.stream_id == stream_id,
+            ),
+        )
+
         for event in events:
-            stream = (
-                self._session.query(StreamModel)
-                .filter_by(stream_id=event.stream_id)
-                .one()
-            )
             entry = EventModel(
                 uuid=event.uuid,
                 created_at=event.created_at,

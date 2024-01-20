@@ -32,15 +32,13 @@ class StorageStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def insert_events(self, events: list[RawEvent]) -> None:
+    def insert_events(
+        self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
+    ) -> None:
         pass
 
     @abc.abstractmethod
     def save_snapshot(self, snapshot: RawEvent) -> None:
-        pass
-
-    @abc.abstractmethod
-    def ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         pass
 
     @abc.abstractmethod

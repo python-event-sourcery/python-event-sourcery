@@ -127,12 +127,10 @@ class EventStore:
         else:
             versioning = NO_VERSIONING
 
-        self._storage_strategy.ensure_stream(
-            stream_id=stream_id,
-            versioning=versioning,
-        )
         serialized_events = self._serialize_events(events, stream_id)
-        self._storage_strategy.insert_events(serialized_events)
+        self._storage_strategy.insert_events(
+            stream_id=stream_id, versioning=versioning, events=serialized_events
+        )
         return serialized_events
 
     def delete_stream(self, stream_id: StreamId) -> None:

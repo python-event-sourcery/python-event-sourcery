@@ -13,6 +13,13 @@ def test_save_retrieve(given: Given, when: When, then: Then) -> None:
     then.stream(stream_id).loads_only([event])
 
 
+def test_save_retrieve_multiple_times(given: Given, when: When, then: Then) -> None:
+    given.stream(stream_id := StreamId())
+    when.appends(event_1 := an_event(), event_2 := an_event(), to=stream_id)
+    when.appends(event_3 := an_event(), to=stream_id)
+    then.stream(stream_id).loads_only([event_1, event_2, event_3])
+
+
 def test_save_retrieve_part_of_stream(given: Given, then: Then) -> None:
     given.stream(stream_id := StreamId())
     given.events(
