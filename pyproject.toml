@@ -19,6 +19,7 @@ esdbclient = ">=1.0b3"
 kombu = {version = "*", optional = true}
 cloudevents = {version = "*", optional = true}
 django = {version = ">=4,<6", optional = true}
+more-itertools = "*"
 
 [tool.poetry.dev-dependencies]
 black = "*"
