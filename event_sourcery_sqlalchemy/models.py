@@ -61,10 +61,6 @@ class Stream:
         UniqueConstraint("name", "category"),
     )
 
-    def __init__(self, stream_id: StreamId, version: int | None) -> None:
-        self.stream_id = stream_id
-        self.version = version
-
     id = mapped_column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     uuid = mapped_column(GUID(), nullable=False)
     name = mapped_column(String(255), nullable=True, default=None)
@@ -77,12 +73,6 @@ class Stream:
     @hybrid_property
     def stream_id(self) -> StreamId:
         return StreamId(self.uuid, self.name, category=self.category or None)
-
-    @stream_id.inplace.setter
-    def _stream_id_setter(self, value: StreamId) -> None:
-        self.uuid = value
-        self.name = value.name
-        self.category = value.category or ""
 
     @stream_id.inplace.comparator
     @classmethod
