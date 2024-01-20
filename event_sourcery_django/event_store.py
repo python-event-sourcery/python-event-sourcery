@@ -58,20 +58,22 @@ class DjangoStorageStrategy(StorageStrategy):
             ).all()
             events = [latest_snapshot] + list(newer_events)
 
-        return [
-            RawEvent(
-                uuid=event.uuid,
-                stream_id=StreamId(
-                    uuid=stream.uuid, name=stream.name, category=stream.category
-                ),
-                created_at=event.created_at,
-                version=event.version,
-                name=event.name,
-                data=event.data,
-                context=event.event_context,
-            )
-            for event in events
-        ]
+        return [self._model_to_raw_event(event, stream) for event in events]
+
+    def _model_to_raw_event(self, event: EventModel, stream: StreamModel) -> RawEvent:
+        return RawEvent(
+            uuid=event.uuid,
+            stream_id=StreamId(
+                uuid=stream.uuid,
+                name=stream.name,
+                category=None if stream.category == "" else stream.category,
+            ),
+            created_at=event.created_at,
+            version=event.version,
+            name=event.name,
+            data=event.data,
+            context=event.event_context,
+        )
 
     def ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         initial_version = versioning.initial_version
@@ -132,31 +134,41 @@ class DjangoStorageStrategy(StorageStrategy):
     def delete_stream(self, stream_id: StreamId) -> None:
         StreamModel.objects.by_stream_id(stream_id=stream_id).delete()
 
-    def subscribe(
-        self,
-        from_position: Position | None,
-        to_category: str | None,
-        to_events: list[str] | None,
-    ) -> Iterator[RecordedRaw]:
-        raise NotImplementedError
-
     def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
-        raise NotImplementedError
+        events = EventModel.objects.select_related("stream").filter(id__gt=start_from)
+        for event in events:  # pragma: no cover
+            yield self._model_to_recorded(event)
 
     def subscribe_to_category(
         self,
         start_from: Position,
         category: str,
     ) -> Iterator[RecordedRaw]:
-        raise NotImplementedError
+        events = EventModel.objects.select_related("stream").filter(
+            id__gt=start_from, stream__category=category
+        )
+        for event in events:  # pragma: no cover
+            yield self._model_to_recorded(event)
 
     def subscribe_to_events(
         self,
         start_from: Position,
         events: list[str],
     ) -> Iterator[RecordedRaw]:
-        raise NotImplementedError
+        models = EventModel.objects.select_related("stream").filter(
+            id__gt=start_from,
+            name__in=events,
+        )
+        for event in models:  # pragma: no cover
+            yield self._model_to_recorded(event)
+
+    def _model_to_recorded(self, event: EventModel) -> RecordedRaw:
+        return RecordedRaw(
+            entry=self._model_to_raw_event(event, event.stream),
+            position=event.id,
+        )
 
     @property
     def current_position(self) -> Position | None:
-        raise NotImplementedError
+        newest_event = EventModel.objects.last()
+        return newest_event.id if newest_event is not None else 0
