@@ -13,12 +13,15 @@ class DjangoStoreFactory(EventStoreFactory):
     def __init__(self) -> None:
         # Django needs to NOT import models before apps are initialized
         from event_sourcery_django.event_store import DjangoStorageStrategy
+
         self._configure(storage_strategy=DjangoStorageStrategy())
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
-        raise NotImplementedError
-        # strategy = SqlAlchemyOutboxStorageStrategy(self._session, filterer)
-        # return self._configure(outbox_storage_strategy=strategy)
+        from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
+
+        return self._configure(
+            outbox_storage_strategy=DjangoOutboxStorageStrategy(filterer)
+        )
 
     # def subscribe_in_transaction(self) -> InTransactionSubscription:
     #     raise NotImplementedError

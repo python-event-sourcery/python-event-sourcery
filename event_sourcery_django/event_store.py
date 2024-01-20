@@ -1,22 +1,38 @@
-from typing import Iterator, Sequence, Union
+from typing import Iterator, Sequence, Union, cast
 
-from event_sourcery.event_store import StreamId, RawEvent, Versioning, RecordedRaw, Position
+from more_itertools import first, first_true
+
+from event_sourcery.event_store import (
+    NO_VERSIONING,
+    Position,
+    RawEvent,
+    RecordedRaw,
+    StreamId,
+    Versioning,
+)
+from event_sourcery.event_store.exceptions import (
+    AnotherStreamWithThisNameButOtherIdExists,
+    ConcurrentStreamWriteError,
+)
 from event_sourcery.event_store.interfaces import StorageStrategy
-
-from event_sourcery_django.models import Event as EventModel, Stream as StreamModel, Snapshot as SnapshotModel
+from event_sourcery_django.models import Event as EventModel
+from event_sourcery_django.models import Snapshot as SnapshotModel
+from event_sourcery_django.models import Stream as StreamModel
 
 
 class DjangoStorageStrategy(StorageStrategy):
-
     def fetch_events(
         self,
         stream_id: StreamId,
         start: int | None = None,
         stop: int | None = None,
     ) -> list[RawEvent]:
-        events_query = EventModel.objects.filter(
-            stream__uuid=stream_id  # should be by stream_id ale nie jest wspierane jeszcze
-        ).order_by("version")
+        try:
+            stream = StreamModel.objects.by_stream_id(stream_id=stream_id).get()
+        except StreamModel.DoesNotExist:
+            return []
+
+        events_query = EventModel.objects.filter(stream=stream).order_by("version")
 
         if start is not None:
             events_query = events_query.filter(version__gte=start)
@@ -26,9 +42,9 @@ class DjangoStorageStrategy(StorageStrategy):
 
         events: Sequence[Union[EventModel, SnapshotModel]]
 
-        snapshot_query = SnapshotModel.objects.filter(
-            uuid=stream_id.uuid
-        ).order_by("-created_at")
+        snapshot_query = SnapshotModel.objects.filter(stream=stream).order_by(
+            "-created_at"
+        )
         if start is not None:
             snapshot_query = snapshot_query.filter(version__gte=start)
         if stop is not None:
@@ -37,16 +53,17 @@ class DjangoStorageStrategy(StorageStrategy):
         if latest_snapshot is None:
             events = events_query.all()
         else:
-            newer_events = events_query.filter(version__gt=latest_snapshot.version).all()
-            events = [latest_snapshot] + newer_events
-
-        if not events:
-            return []
+            newer_events = events_query.filter(
+                version__gt=latest_snapshot.version
+            ).all()
+            events = [latest_snapshot] + list(newer_events)
 
         return [
             RawEvent(
                 uuid=event.uuid,
-                stream_id=StreamId(event.uuid, None, None),  # TODO
+                stream_id=StreamId(
+                    uuid=stream.uuid, name=stream.name, category=stream.category
+                ),
                 created_at=event.created_at,
                 version=event.version,
                 name=event.name,
@@ -59,59 +76,36 @@ class DjangoStorageStrategy(StorageStrategy):
     def ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         initial_version = versioning.initial_version
 
-        # TODO: stream_id to UUID, ale ma tez inne pola (nazwe?)
-        model = StreamModel.objects.get_or_create(uuid=stream_id, version=initial_version)
-        # TODO
+        matching_streams = StreamModel.objects.by_stream_id(stream_id=stream_id).all()
+        if stream_id.name and matching_streams:
+            stream_with_same_name = first_true(
+                matching_streams, pred=lambda stream: stream.name == stream_id.name
+            )
+            if (
+                stream_with_same_name is not None
+                and stream_with_same_name.uuid != stream_id
+            ):
+                raise AnotherStreamWithThisNameButOtherIdExists()
 
-        # model = StreamModel(stream_id=stream_id, version=initial_version)
-        # ensure_stream_stmt = (
-        #     postgresql_insert(StreamModel)
-        #     .values(
-        #         uuid=model.uuid,
-        #         name=model.name,
-        #         category=model.category,
-        #         version=model.version,
-        #     )
-        #     .on_conflict_do_nothing()
-        # )
-        # self._session.execute(ensure_stream_stmt)
-        # if stream_id.name is not None:
-        #     get_stream_id_stmt = select(StreamModel.uuid).filter(
-        #         StreamModel.name == stream_id.name,
-        #         StreamModel.category == (stream_id.category or ""),
-        #     )
-        #     found_stream_id = StreamId(
-        #         uuid=self._session.execute(get_stream_id_stmt).scalar(),
-        #         name=stream_id.name,
-        #         category=stream_id.category,
-        #     )
-        #     if found_stream_id != stream_id:
-        #         raise AnotherStreamWithThisNameButOtherIdExists()
-        #
-        # (stream_version,) = (
-        #     self._session.query(StreamModel.version)
-        #     .filter(StreamModel.stream_id == stream_id)
-        #     .one()
-        # )
-        #
-        # versioning.validate_if_compatible(stream_version)
-        #
-        # if versioning.expected_version and versioning is not NO_VERSIONING:
-        #     stmt = (
-        #         update(StreamModel)
-        #         .where(
-        #             StreamModel.stream_id == stream_id,
-        #             StreamModel.version == versioning.expected_version,
-        #         )
-        #         .values(version=versioning.initial_version)
-        #     )
-        #     result = self._session.execute(stmt)
-        #
-        #     if result.rowcount != 1:  # type: ignore
-        #         # optimistic lock failed
-        #         raise ConcurrentStreamWriteError
+        model, created = StreamModel.objects.get_or_create(
+            uuid=stream_id,
+            name=stream_id.name,
+            category=stream_id.category or "",
+            defaults={"version": initial_version},
+        )
+
+        versioning.validate_if_compatible(model.version)
+
+        if versioning.expected_version and versioning is not NO_VERSIONING:
+            result = StreamModel.objects.filter(
+                id=model.id, version=versioning.expected_version
+            ).update(version=versioning.initial_version)
+            if result != 1:
+                raise ConcurrentStreamWriteError
 
     def insert_events(self, events: list[RawEvent]) -> None:
+        event = cast(RawEvent, first(events))
+        stream = StreamModel.objects.by_stream_id(stream_id=event.stream_id).get()
         for event in events:
             EventModel.objects.create(
                 uuid=event.uuid,
@@ -120,37 +114,23 @@ class DjangoStorageStrategy(StorageStrategy):
                 data=event.data,
                 event_context=event.context,
                 version=event.version,
-                stream=StreamModel.objects.get(uuid=event.stream_id),
+                stream=stream,
             )
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
-        pass
-        # entry = SnapshotModel(
-        #     uuid=snapshot.uuid,
-        #     created_at=snapshot.created_at,
-        #     version=snapshot.version,
-        #     name=snapshot.name,
-        #     data=snapshot.data,
-        #     event_context=snapshot.context,
-        # )
-        # stream = (
-        #     self._session.query(StreamModel)
-        #     .filter_by(stream_id=snapshot.stream_id)
-        #     .one()
-        # )
-        # stream.snapshots.append(entry)
-        # self._session.flush()
+        stream = StreamModel.objects.by_stream_id(stream_id=snapshot.stream_id).get()
+        SnapshotModel.objects.create(
+            uuid=snapshot.uuid,
+            created_at=snapshot.created_at,
+            name=snapshot.name,
+            data=snapshot.data,
+            event_context=snapshot.context,
+            version=snapshot.version,
+            stream=stream,
+        )
 
     def delete_stream(self, stream_id: StreamId) -> None:
-        pass
-        # delete_events_stmt = delete(EventModel).where(
-        #     EventModel.stream_id == stream_id,
-        # )
-        # self._session.execute(delete_events_stmt)
-        # delete_stream_stmt = delete(StreamModel).where(
-        #     StreamModel.stream_id == stream_id,
-        # )
-        # self._session.execute(delete_stream_stmt)
+        StreamModel.objects.by_stream_id(stream_id=stream_id).delete()
 
     def subscribe(
         self,
