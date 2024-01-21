@@ -116,13 +116,16 @@ class InMemoryStorageStrategy(StorageStrategy):
         )
         return list(stream)
 
-    def insert_events(self, events: list[RawEvent]) -> None:
+    def insert_events(
+        self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
+    ) -> None:
+        self._ensure_stream(stream_id=stream_id, versioning=versioning)
         self._storage.append(events)
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
         self._storage.replace(with_snapshot=snapshot)
 
-    def ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
+    def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         if stream_id not in self._storage:
             self._storage.create(stream_id, versioning)
 

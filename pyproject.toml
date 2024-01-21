@@ -18,6 +18,7 @@ SQLAlchemy = ">=2.0"
 esdbclient = ">=1.0b3"
 kombu = {version = "*", optional = true}
 cloudevents = {version = "*", optional = true}
+more-itertools = "*"
 
 [tool.poetry.dev-dependencies]
 black = "*"

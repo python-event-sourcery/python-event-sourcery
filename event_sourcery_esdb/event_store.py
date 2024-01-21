@@ -59,7 +59,10 @@ class ESDBStorageStrategy(StorageStrategy):
         except NotFound:
             return None
 
-    def insert_events(self, events: list[RawEvent]) -> None:
+    def insert_events(
+        self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
+    ) -> None:
+        self._ensure_stream(stream_id=stream_id, versioning=versioning)
         for stream_id in {e.stream_id for e in events}:
             stream_name = stream.Name(stream_id)
             stream_events = [e for e in events if e.stream_id == stream_id]
@@ -82,7 +85,7 @@ class ESDBStorageStrategy(StorageStrategy):
             events=[dto.new_entry(snapshot, stream_position=stream_position)],
         )
 
-    def ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
+    def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         name = stream.Name(stream_id)
 
         if versioning is not NO_VERSIONING and versioning.expected_version:
