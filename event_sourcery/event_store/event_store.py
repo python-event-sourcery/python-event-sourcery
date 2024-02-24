@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Callable, Iterator, Sequence, Type, TypeAlias, cast
+from typing import Callable, Iterator, Sequence, Type, cast
 
 from event_sourcery.event_store.event import (
     Event,
@@ -10,14 +10,12 @@ from event_sourcery.event_store.event import (
     Serde,
 )
 from event_sourcery.event_store.interfaces import OutboxStorageStrategy, StorageStrategy
-from event_sourcery.event_store.stream_id import StreamId
+from event_sourcery.event_store.stream_id import Category, StreamId
 from event_sourcery.event_store.versioning import (
     NO_VERSIONING,
     ExplicitVersioning,
     Versioning,
 )
-
-Category: TypeAlias = str
 
 
 class EventStore:
