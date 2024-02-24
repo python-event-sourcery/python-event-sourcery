@@ -28,9 +28,10 @@ from event_sourcery.event_store.event import (
     Metadata,
     Position,
     RawEvent,
+    Recorded,
     RecordedRaw,
 )
-from event_sourcery.event_store.event_store import EventStore, Recorded
+from event_sourcery.event_store.event_store import EventStore
 from event_sourcery.event_store.factory import EventStoreFactory
 from event_sourcery.event_store.in_memory import InMemoryEventStoreFactory
 from event_sourcery.event_store.stream_id import StreamId, StreamUUID

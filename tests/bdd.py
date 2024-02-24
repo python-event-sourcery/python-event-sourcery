@@ -96,14 +96,14 @@ class Step:
         start_from = self.store.position or 0 if to is None else to
         if to_category:
             return Subscription(
-                self.store.subscribe_to_category(start_from=start_from, to=to_category)
+                self.store.subscriber(start_from).to_category(to_category).build_iter()
             )
         elif to_events:
             return Subscription(
-                self.store.subscribe_to_events(start_from=start_from, to=to_events)
+                self.store.subscriber(start_from).to_events(to_events).build_iter()
             )
         else:
-            return Subscription(self.store.subscribe_to_all(start_from=start_from))
+            return Subscription(self.store.subscriber(start_from).build_iter())
 
     def stream(self, with_id: es.StreamId | None = None) -> Stream:
         return Stream(self.store) if not with_id else Stream(self.store, with_id)
