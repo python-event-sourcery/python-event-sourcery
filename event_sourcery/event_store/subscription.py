@@ -1,3 +1,4 @@
+from datetime import timedelta
 from functools import partial
 from typing import Callable, Iterator, Protocol, Type
 
@@ -8,12 +9,12 @@ from event_sourcery.event_store.event import (
     RecordedRaw,
     Serde,
 )
-from event_sourcery.event_store.interfaces import StorageStrategy
+from event_sourcery.event_store.interfaces import Seconds, StorageStrategy
 from event_sourcery.event_store.stream_id import Category
 
 
 class Builder(Protocol):
-    def build_iter(self) -> Iterator[Recorded]:
+    def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded]:
         ...
 
 
@@ -48,5 +49,11 @@ class Subscriber(Builder):
         )
         return self
 
-    def build_iter(self) -> Iterator[Recorded]:
+    def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded]:
+        seconds = timelimit.seconds if isinstance(timelimit, timedelta) else timelimit
+        if seconds < 1:
+            raise ValueError(
+                f"Timebox must be at least 1 second. Received: {seconds:.02f}",
+            )
+        self._build = partial(self._build, timelimit=timelimit)
         return map(self._serde.deserialize_record, self._build())

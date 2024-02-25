@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from typing import Iterator, cast
 
-from esdbclient import EventStoreDBClient, StreamState
+import esdbclient
+from esdbclient import EventStoreDBClient, RecordedEvent, StreamState
 from esdbclient.exceptions import NotFound
 
 from event_sourcery.event_store import (
@@ -13,14 +14,13 @@ from event_sourcery.event_store import (
     Versioning,
 )
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
-from event_sourcery.event_store.interfaces import StorageStrategy
+from event_sourcery.event_store.interfaces import Seconds, StorageStrategy
 from event_sourcery_esdb import dto, stream
 
 
 @dataclass(repr=False)
 class ESDBStorageStrategy(StorageStrategy):
     _client: EventStoreDBClient
-    _timeout: float = 1
 
     def fetch_events(
         self,
@@ -109,46 +109,56 @@ class ESDBStorageStrategy(StorageStrategy):
         except NotFound:
             pass
 
-    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
-        return map(
-            dto.raw_record,
-            self._client.subscribe_to_all(
-                commit_position=start_from,
-                timeout=self._timeout,
-            ),
+    @staticmethod
+    def _subscription_iterator(
+        subscription: Iterator[RecordedEvent],
+    ) -> Iterator[RecordedRaw]:
+        try:
+            while True:
+                yield dto.raw_record(next(subscription))
+        except esdbclient.exceptions.DeadlineExceeded:
+            pass
+
+    def subscribe_to_all(
+        self,
+        start_from: Position,
+        timelimit: Seconds,
+    ) -> Iterator[RecordedRaw]:
+        subscription = self._client.subscribe_to_all(
+            commit_position=start_from,
+            timeout=timelimit,
         )
+        return self._subscription_iterator(subscription)
 
     def subscribe_to_category(
         self,
         start_from: Position | None,
+        timelimit: Seconds,
         category: str,
     ) -> Iterator[RecordedRaw]:
-        return map(
-            dto.raw_record,
-            self._client.subscribe_to_all(
-                commit_position=start_from,
-                timeout=self._timeout,
-                filter_include=[
-                    f"{category}-\\w+",
-                ],
-                filter_by_stream_name=True,
-            ),
+        subscription = self._client.subscribe_to_all(
+            commit_position=start_from,
+            timeout=timelimit,
+            filter_include=[
+                f"{category}-\\w+",
+            ],
+            filter_by_stream_name=True,
         )
+        return self._subscription_iterator(subscription)
 
     def subscribe_to_events(
         self,
         start_from: Position,
+        timelimit: Seconds,
         events: list[str],
     ) -> Iterator[RecordedRaw]:
-        return map(
-            dto.raw_record,
-            self._client.subscribe_to_all(
-                commit_position=start_from,
-                timeout=self._timeout,
-                filter_include=events,
-                filter_by_stream_name=False,
-            ),
+        subscription = self._client.subscribe_to_all(
+            commit_position=start_from,
+            timeout=timelimit,
+            filter_include=events,
+            filter_by_stream_name=False,
         )
+        return self._subscription_iterator(subscription)
 
     @property
     def current_position(self) -> Position | None:

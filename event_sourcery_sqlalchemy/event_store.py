@@ -19,7 +19,7 @@ from event_sourcery.event_store.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     ConcurrentStreamWriteError,
 )
-from event_sourcery.event_store.interfaces import StorageStrategy
+from event_sourcery.event_store.interfaces import Seconds, StorageStrategy
 from event_sourcery_sqlalchemy.models import Event as EventModel
 from event_sourcery_sqlalchemy.models import Snapshot as SnapshotModel
 from event_sourcery_sqlalchemy.models import Stream as StreamModel
@@ -214,12 +214,17 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
     ) -> Iterator[RecordedRaw]:
         raise NotImplementedError
 
-    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
+    def subscribe_to_all(
+        self,
+        start_from: Position,
+        timelimit: Seconds,
+    ) -> Iterator[RecordedRaw]:
         raise NotImplementedError
 
     def subscribe_to_category(
         self,
         start_from: Position,
+        timelimit: Seconds,
         category: str,
     ) -> Iterator[RecordedRaw]:
         raise NotImplementedError
@@ -227,6 +232,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
     def subscribe_to_events(
         self,
         start_from: Position,
+        timelimit: Seconds,
         events: list[str],
     ) -> Iterator[RecordedRaw]:
         raise NotImplementedError

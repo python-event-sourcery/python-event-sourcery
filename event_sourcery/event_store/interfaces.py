@@ -1,9 +1,11 @@
 import abc
-from typing import ContextManager, Iterator, Protocol
+from typing import ContextManager, Iterator, Protocol, TypeAlias
 
 from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.versioning import Versioning
+
+Seconds: TypeAlias = int | float
 
 
 class OutboxFiltererStrategy(Protocol):
@@ -46,13 +48,18 @@ class StorageStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
+    def subscribe_to_all(
+        self,
+        start_from: Position,
+        timelimit: Seconds,
+    ) -> Iterator[RecordedRaw]:
         pass
 
     @abc.abstractmethod
     def subscribe_to_category(
         self,
         start_from: Position,
+        timelimit: Seconds,
         category: str,
     ) -> Iterator[RecordedRaw]:
         pass
@@ -61,6 +68,7 @@ class StorageStrategy(abc.ABC):
     def subscribe_to_events(
         self,
         start_from: Position,
+        timelimit: Seconds,
         events: list[str],
     ) -> Iterator[RecordedRaw]:
         pass

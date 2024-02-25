@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Iterator, cast
 from unittest.mock import ANY
 
@@ -38,6 +39,31 @@ def test_multiple_subscriptions_receives_events(
 
     then(subscription_1).next_received_record_is(any_record(event, stream.id))
     then(subscription_2).next_received_record_is(any_record(event, stream.id))
+
+
+@pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+def test_stop_iterating_after_given_timeout(given: Given, then: Then) -> None:
+    with given.expected_execution(seconds=1):
+        then.subscription(timelimit=1).received_no_new_records()
+
+
+@pytest.mark.parametrize(
+    "timelimit",
+    [
+        (0.999999,),
+        (0,),
+        (-1,),
+        (-1.9999,),
+        (timedelta(seconds=0.9999999),),
+        (timedelta(seconds=-10),),
+    ],
+)
+def test_wont_accept_timebox_shorten_than_1_second(
+    event_store: EventStore,
+    timelimit: int | float | timedelta,
+) -> None:
+    with pytest.raises(ValueError):
+        event_store.subscriber(0).build_iter(timelimit=0.99999)
 
 
 class TestFromPositionSubscription:
@@ -166,6 +192,17 @@ class TestSubscriptionToCategory:
 
         then(subscription).next_received_record_is(any_record(new_event, stream.id))
 
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_stop_iterating_after_given_timeout(
+        self,
+        given: Given,
+        then: Then,
+    ) -> None:
+        timebox = given.expected_execution(seconds=1)
+        subscription = given.subscription(to_category="Category", timelimit=1)
+        with timebox:
+            then(subscription).received_no_new_records()
+
 
 class TestSubscribeToEventTypes:
     class FirstType(Event):
@@ -236,6 +273,13 @@ class TestSubscribeToEventTypes:
 
         then(subscription).next_received_record_is(any_record(first, stream_1.id))
         then(subscription).next_received_record_is(any_record(second, stream_2.id))
+
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_stop_iterating_after_given_timeout(self, given: Given, then: Then) -> None:
+        timebox = given.expected_execution(seconds=1)
+        subscription = given.subscription(to_events=[self.FirstType], timelimit=1)
+        with timebox:
+            then(subscription).received_no_new_records()
 
 
 class TestInTransactionSubscription:

@@ -1,3 +1,4 @@
+import time
 from contextlib import contextmanager
 from copy import copy
 from dataclasses import dataclass, field
@@ -6,13 +7,13 @@ from typing import ContextManager, Dict, Generator, Iterator
 
 from typing_extensions import Self
 
-from event_sourcery.event_store import Position
-from event_sourcery.event_store.event import RawEvent, RecordedRaw
+from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.factory import EventStoreFactory, no_filter
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
+    Seconds,
     StorageStrategy,
 )
 from event_sourcery.event_store.stream_id import StreamId
@@ -65,12 +66,21 @@ class Storage:
 class InMemorySubscription(Iterator[RecordedRaw]):
     _storage: Storage
     _from_position: int
+    _timelimit: Seconds
+
+    def get_record(self, position: int) -> RawEvent | None:
+        if len(self._storage.events) <= position:
+            return None
+        return self._storage.events[position]
 
     def __next__(self) -> RecordedRaw:
-        entry = RecordedRaw(
-            entry=copy(self._storage.events[self._from_position]),
-            position=self._from_position,
-        )
+        start = time.time()
+        while (record := self.get_record(self._from_position)) is None:
+            if time.time() - start > self._timelimit:
+                raise StopIteration()
+            time.sleep(0.1)
+
+        entry = RecordedRaw(entry=copy(record), position=self._from_position)
         self._from_position += 1
         return entry
 
@@ -147,22 +157,38 @@ class InMemoryStorageStrategy(StorageStrategy):
         if stream_id in self._storage:
             self._storage.delete(stream_id)
 
-    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
-        return InMemorySubscription(self._storage, start_from)
+    def subscribe_to_all(
+        self,
+        start_from: Position,
+        timelimit: Seconds,
+    ) -> Iterator[RecordedRaw]:
+        return InMemorySubscription(self._storage, start_from, timelimit)
 
     def subscribe_to_category(
         self,
         start_from: Position,
+        timelimit: Seconds,
         category: str,
     ) -> Iterator[RecordedRaw]:
-        return InMemoryToCategorySubscription(self._storage, start_from, category)
+        return InMemoryToCategorySubscription(
+            self._storage,
+            start_from,
+            timelimit,
+            category,
+        )
 
     def subscribe_to_events(
         self,
         start_from: Position,
+        timelimit: Seconds,
         events: list[str],
     ) -> Iterator[RecordedRaw]:
-        return InMemoryToEventTypesSubscription(self._storage, start_from, events)
+        return InMemoryToEventTypesSubscription(
+            self._storage,
+            start_from,
+            timelimit,
+            events,
+        )
 
     @property
     def current_position(self) -> Position | None:

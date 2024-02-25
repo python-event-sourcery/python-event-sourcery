@@ -1,8 +1,11 @@
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
-from typing import Iterator, Sequence, Type, TypeVar
+from typing import Generator, Iterator, Sequence, Type, TypeVar
 from unittest.mock import Mock
 
+from pytest import approx
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
@@ -70,10 +73,11 @@ class Subscription:
 
     def next_received_record_is(self, expected: Recorded | es.Entry) -> None:
         received = next(self._subscription)
-        assert expected == received
+        assert expected == received, f"{expected} != {received}"
 
     def received_no_new_records(self) -> None:
-        assert next(self._subscription, None) is None
+        record = next(self._subscription, None)
+        assert record is None, f"Received new record: {record}"
 
 
 T = TypeVar("T")
@@ -91,19 +95,17 @@ class Step:
         to: Position | None = None,
         to_category: str | None = None,
         to_events: list[Type[Event]] | None = None,
+        timelimit: int | float = 10,
     ) -> Subscription:
         assert to_category is None or to_events is None
         start_from = self.store.position or 0 if to is None else to
         if to_category:
-            return Subscription(
-                self.store.subscriber(start_from).to_category(to_category).build_iter()
-            )
+            builder = self.store.subscriber(start_from).to_category(to_category)
         elif to_events:
-            return Subscription(
-                self.store.subscriber(start_from).to_events(to_events).build_iter()
-            )
+            builder = self.store.subscriber(start_from).to_events(to_events)
         else:
-            return Subscription(self.store.subscriber(start_from).build_iter())
+            builder = self.store.subscriber(start_from)
+        return Subscription(builder.build_iter(timelimit))
 
     def stream(self, with_id: es.StreamId | None = None) -> Stream:
         return Stream(self.store) if not with_id else Stream(self.store, with_id)
@@ -121,6 +123,15 @@ class Given(Step):
     def snapshot(self, snapshot: es.Metadata, on: es.StreamId) -> Self:
         self.stream(on).snapshots(snapshot)
         return self
+
+    @contextmanager
+    def expected_execution(self, seconds: float) -> Generator:
+        start = time.time()
+        yield
+        took = time.time() - start
+        assert took == approx(
+            seconds, 0.15
+        ), f"Expected timing {seconds:.02f}s, got {took:.02f}s"
 
 
 class When(Step):
