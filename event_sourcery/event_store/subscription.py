@@ -1,6 +1,6 @@
 from datetime import timedelta
 from functools import partial
-from typing import Callable, Iterator, Protocol, Type
+from typing import Iterator, Protocol, Type
 
 from event_sourcery.event_store.event import (
     Event,
@@ -14,7 +14,7 @@ from event_sourcery.event_store.stream_id import Category
 
 
 class Builder(Protocol):
-    def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded]:
+    def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded | None]:
         ...
 
 
@@ -28,7 +28,7 @@ class Subscriber(Builder):
         self._start_from = start_from
         self._storage = storage
         self._serde = serde
-        self._build: Callable[[], Iterator[RecordedRaw]] = partial(
+        self._build = partial(
             self._storage.subscribe_to_all,
             start_from=self._start_from,
         )
@@ -49,11 +49,18 @@ class Subscriber(Builder):
         )
         return self
 
-    def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded]:
+    def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded | None]:
         seconds = timelimit.seconds if isinstance(timelimit, timedelta) else timelimit
         if seconds < 1:
             raise ValueError(
                 f"Timebox must be at least 1 second. Received: {seconds:.02f}",
             )
-        self._build = partial(self._build, timelimit=timelimit)
-        return map(self._serde.deserialize_record, self._build())
+        return self._single_event_unpack(self._build(batch_size=1, timelimit=seconds))
+
+    def _single_event_unpack(
+        self,
+        subscription: Iterator[list[RecordedRaw]],
+    ) -> Iterator[Recorded | None]:
+        while True:
+            batch = next(subscription)
+            yield self._serde.deserialize_record(batch[0]) if batch else None

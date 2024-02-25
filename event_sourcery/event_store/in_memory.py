@@ -63,48 +63,65 @@ class Storage:
 
 
 @dataclass
-class InMemorySubscription(Iterator[RecordedRaw]):
+class InMemorySubscription(Iterator[list[RecordedRaw]]):
     _storage: Storage
     _from_position: int
+    _batch_size: int
     _timelimit: Seconds
 
-    def get_record(self, position: int) -> RawEvent | None:
-        if len(self._storage.events) <= position:
+    def pop_record(self) -> tuple[RawEvent, Position] | None:
+        if len(self._storage.events) <= self._from_position:
             return None
-        return self._storage.events[position]
-
-    def __next__(self) -> RecordedRaw:
-        start = time.time()
-        while (record := self.get_record(self._from_position)) is None:
-            if time.time() - start > self._timelimit:
-                raise StopIteration()
-            time.sleep(0.1)
-
-        entry = RecordedRaw(entry=copy(record), position=self._from_position)
+        record = self._storage.events[self._from_position]
         self._from_position += 1
-        return entry
+        return record, self._from_position - 1
+
+    def __next__(self) -> list[RecordedRaw]:
+        batch: list[tuple[RawEvent, Position]] = []
+
+        start = time.time()
+        while len(batch) < self._batch_size:
+            record = self.pop_record()
+            if record is not None:
+                batch.append(record)
+            time.sleep(0.1)
+            if time.time() - start > self._timelimit:
+                break
+
+        return [
+            RecordedRaw(entry=copy(record), position=position)
+            for record, position in batch
+        ]
 
 
 @dataclass
 class InMemoryToCategorySubscription(InMemorySubscription):
     _category: str
 
-    def __next__(self) -> RecordedRaw:
-        event: RecordedRaw = super().__next__()
-        while event.entry.stream_id.category != self._category:
-            event = super().__next__()
-        return event
+    def pop_record(self) -> tuple[RawEvent, Position] | None:
+        while True:
+            record = super().pop_record()
+            if record is None:
+                return None
+            raw, position = record
+            if raw.stream_id.category != self._category:
+                continue
+            return record
 
 
 @dataclass
 class InMemoryToEventTypesSubscription(InMemorySubscription):
     _types: list[str]
 
-    def __next__(self) -> RecordedRaw:
-        event: RecordedRaw = super().__next__()
-        while event.entry.name not in self._types:
-            event = super().__next__()
-        return event
+    def pop_record(self) -> tuple[RawEvent, Position] | None:
+        while True:
+            record = super().pop_record()
+            if record is None:
+                return None
+            raw, position = record
+            if raw.name not in self._types:
+                continue
+            return record
 
 
 class InMemoryStorageStrategy(StorageStrategy):
@@ -160,19 +177,22 @@ class InMemoryStorageStrategy(StorageStrategy):
     def subscribe_to_all(
         self,
         start_from: Position,
+        batch_size: int,
         timelimit: Seconds,
-    ) -> Iterator[RecordedRaw]:
-        return InMemorySubscription(self._storage, start_from, timelimit)
+    ) -> Iterator[list[RecordedRaw]]:
+        return InMemorySubscription(self._storage, start_from, batch_size, timelimit)
 
     def subscribe_to_category(
         self,
         start_from: Position,
+        batch_size: int,
         timelimit: Seconds,
         category: str,
-    ) -> Iterator[RecordedRaw]:
+    ) -> Iterator[list[RecordedRaw]]:
         return InMemoryToCategorySubscription(
             self._storage,
             start_from,
+            batch_size,
             timelimit,
             category,
         )
@@ -180,12 +200,14 @@ class InMemoryStorageStrategy(StorageStrategy):
     def subscribe_to_events(
         self,
         start_from: Position,
+        batch_size: int,
         timelimit: Seconds,
         events: list[str],
-    ) -> Iterator[RecordedRaw]:
+    ) -> Iterator[list[RecordedRaw]]:
         return InMemoryToEventTypesSubscription(
             self._storage,
             start_from,
+            batch_size,
             timelimit,
             events,
         )

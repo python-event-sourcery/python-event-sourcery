@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Iterator, cast
+from functools import partial
+from typing import Callable, Iterator, cast
 
 import esdbclient
 from esdbclient import EventStoreDBClient, RecordedEvent, StreamState
@@ -111,32 +112,46 @@ class ESDBStorageStrategy(StorageStrategy):
 
     @staticmethod
     def _subscription_iterator(
-        subscription: Iterator[RecordedEvent],
-    ) -> Iterator[RecordedRaw]:
-        try:
-            while True:
-                yield dto.raw_record(next(subscription))
-        except esdbclient.exceptions.DeadlineExceeded:
-            pass
+        builder: Callable[[], Iterator[RecordedEvent]],
+        size: int,
+    ) -> Iterator[list[RecordedRaw]]:
+        subscription = builder()
+        batch = []
+        while True:
+            try:
+                raw = dto.raw_record(next(subscription))
+                builder = partial(builder, commit_position=raw.position)
+                batch.append(raw)
+                if len(batch) == size:
+                    yield batch
+                    batch = []
+            except esdbclient.exceptions.DeadlineExceeded:
+                yield batch
+                batch = []
+                subscription = builder()
 
     def subscribe_to_all(
         self,
         start_from: Position,
+        batch_size: int,
         timelimit: Seconds,
-    ) -> Iterator[RecordedRaw]:
-        subscription = self._client.subscribe_to_all(
+    ) -> Iterator[list[RecordedRaw]]:
+        builder = partial(
+            self._client.subscribe_to_all,
             commit_position=start_from,
             timeout=timelimit,
         )
-        return self._subscription_iterator(subscription)
+        return self._subscription_iterator(builder, batch_size)
 
     def subscribe_to_category(
         self,
         start_from: Position | None,
+        batch_size: int,
         timelimit: Seconds,
         category: str,
-    ) -> Iterator[RecordedRaw]:
-        subscription = self._client.subscribe_to_all(
+    ) -> Iterator[list[RecordedRaw]]:
+        builder = partial(
+            self._client.subscribe_to_all,
             commit_position=start_from,
             timeout=timelimit,
             filter_include=[
@@ -144,21 +159,23 @@ class ESDBStorageStrategy(StorageStrategy):
             ],
             filter_by_stream_name=True,
         )
-        return self._subscription_iterator(subscription)
+        return self._subscription_iterator(builder, batch_size)
 
     def subscribe_to_events(
         self,
         start_from: Position,
+        batch_size: int,
         timelimit: Seconds,
         events: list[str],
-    ) -> Iterator[RecordedRaw]:
-        subscription = self._client.subscribe_to_all(
+    ) -> Iterator[list[RecordedRaw]]:
+        builder = partial(
+            self._client.subscribe_to_all,
             commit_position=start_from,
             timeout=timelimit,
             filter_include=events,
             filter_by_stream_name=False,
         )
-        return self._subscription_iterator(subscription)
+        return self._subscription_iterator(builder, batch_size)
 
     @property
     def current_position(self) -> Position | None:

@@ -1,15 +1,29 @@
 from datetime import timedelta
+from functools import partial
 from typing import Iterator, cast
 from unittest.mock import ANY
 
 import pytest
 from _pytest.fixtures import SubRequest
 
-from event_sourcery.event_store import Entry, Event, EventStore, StreamId
+from event_sourcery.event_store import (
+    Entry,
+    Event,
+    EventStore,
+    EventStoreFactory,
+    StreamId,
+)
+from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery_sqlalchemy import SQLStoreFactory
 from tests.bdd import Given, Subscription, Then, When
 from tests.factories import an_event
 from tests.matchers import any_record
+
+
+@pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+def test_no_events_when_none_is_provided(given: Given, then: Then) -> None:
+    subscription = given.subscription(timelimit=1)
+    then(subscription).received_no_new_records()
 
 
 @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
@@ -64,6 +78,66 @@ def test_wont_accept_timebox_shorten_than_1_second(
 ) -> None:
     with pytest.raises(ValueError):
         event_store.subscriber(0).build_iter(timelimit=0.99999)
+
+
+class TestBatchBackend:
+    @pytest.fixture()
+    def backend(self, event_store_factory: EventStoreFactory) -> StorageStrategy:
+        build = cast(partial, event_store_factory.build)
+        return cast(StorageStrategy, build.keywords["storage_strategy"])
+
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_receives_requested_batch_size(
+        self,
+        backend: StorageStrategy,
+        given: Given,
+        when: When,
+    ) -> None:
+        subscription = given(backend).subscribe_to_all(
+            backend.current_position or 0,
+            batch_size=2,
+            timelimit=10,
+        )
+        when.stream().receives(an_event(), an_event(), an_event())
+        assert len(next(subscription)) == 2
+
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_returns_smaller_batch_when_timelimit_hits(
+        self,
+        backend: StorageStrategy,
+        given: Given,
+        when: When,
+    ) -> None:
+        subscription = given(backend).subscribe_to_all(
+            backend.current_position or 0,
+            batch_size=2,
+            timelimit=1,
+        )
+        when.stream().receives(an_event())
+        assert len(next(subscription)) == 1
+
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_subscription_continuously_awaits_for_new_events(
+        self,
+        backend: StorageStrategy,
+        given: Given,
+        when: When,
+    ) -> None:
+        subscription = given(backend).subscribe_to_all(
+            backend.current_position or 0,
+            batch_size=2,
+            timelimit=1,
+        )
+        when.stream().receives(an_event(), an_event(), an_event())
+        assert len(next(subscription)) == 2
+        when.stream().receives(an_event(), an_event())
+        assert len(next(subscription)) == 2
+        assert len(next(subscription)) == 1
+        assert len(next(subscription)) == 0
+        when.stream().receives(an_event(), an_event())
+        assert len(next(subscription)) == 2
+        assert len(next(subscription)) == 0
+        assert len(next(subscription)) == 0
 
 
 class TestFromPositionSubscription:

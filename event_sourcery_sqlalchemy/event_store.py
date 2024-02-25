@@ -217,24 +217,27 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
     def subscribe_to_all(
         self,
         start_from: Position,
+        batch_size: int,
         timelimit: Seconds,
-    ) -> Iterator[RecordedRaw]:
+    ) -> Iterator[list[RecordedRaw]]:
         raise NotImplementedError
 
     def subscribe_to_category(
         self,
         start_from: Position,
+        batch_size: int,
         timelimit: Seconds,
         category: str,
-    ) -> Iterator[RecordedRaw]:
+    ) -> Iterator[list[RecordedRaw]]:
         raise NotImplementedError
 
     def subscribe_to_events(
         self,
         start_from: Position,
+        batch_size: int,
         timelimit: Seconds,
         events: list[str],
-    ) -> Iterator[RecordedRaw]:
+    ) -> Iterator[list[RecordedRaw]]:
         raise NotImplementedError
 
     @property
