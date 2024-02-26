@@ -10,6 +10,7 @@ from typing_extensions import Self
 
 from event_sourcery import event_store as es
 from event_sourcery.event_store import Event, Position, Recorded
+from event_sourcery.event_store.subscription import Builder
 from tests.matchers import any_metadata
 
 
@@ -80,6 +81,19 @@ class Subscription:
         assert record is None, f"Received new record: {record}"
 
 
+@dataclass
+class BatchSubscription:
+    _subscription: Iterator[list[Recorded]]
+
+    def next_batch_is(self, expected: Sequence[Recorded]) -> None:
+        received = next(self._subscription)
+        assert expected == received, f"{expected} != {received}"
+
+    def next_batch_is_empty(self) -> None:
+        received = next(self._subscription)
+        assert received == [], f"Received {received}, instead of empty batch"
+
+
 T = TypeVar("T")
 
 
@@ -90,13 +104,12 @@ class Step:
     def __call__(self, value: T) -> T:
         return value
 
-    def subscription(
+    def _create_subscription_builder(
         self,
-        to: Position | None = None,
-        to_category: str | None = None,
-        to_events: list[Type[Event]] | None = None,
-        timelimit: int | float = 10,
-    ) -> Subscription:
+        to: Position | None,
+        to_category: str | None,
+        to_events: list[Type[Event]] | None,
+    ) -> Builder:
         assert to_category is None or to_events is None
         start_from = self.store.position or 0 if to is None else to
         if to_category:
@@ -105,7 +118,28 @@ class Step:
             builder = self.store.subscriber(start_from).to_events(to_events)
         else:
             builder = self.store.subscriber(start_from)
+        return builder
+
+    def subscription(
+        self,
+        to: Position | None = None,
+        to_category: str | None = None,
+        to_events: list[Type[Event]] | None = None,
+        timelimit: int | float = 1,
+    ) -> Subscription:
+        builder = self._create_subscription_builder(to, to_category, to_events)
         return Subscription(builder.build_iter(timelimit))
+
+    def batch_subscription(
+        self,
+        of_size: int,
+        to: Position | None = None,
+        to_category: str | None = None,
+        to_events: list[Type[Event]] | None = None,
+        timelimit: int | float = 1,
+    ) -> BatchSubscription:
+        builder = self._create_subscription_builder(to, to_category, to_events)
+        return BatchSubscription(builder.build_batch(of_size, timelimit))
 
     def stream(self, with_id: es.StreamId | None = None) -> Stream:
         return Stream(self.store) if not with_id else Stream(self.store, with_id)
@@ -135,8 +169,6 @@ class Given(Step):
 
 
 class When(Step):
-    subscribe = Step.subscription
-
     def snapshots(self, with_: es.Metadata, on: es.StreamId) -> Self:
         self.stream(on).snapshots(with_)
         return self

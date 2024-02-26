@@ -17,6 +17,13 @@ class Builder(Protocol):
     def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded | None]:
         ...
 
+    def build_batch(
+        self,
+        size: int,
+        timelimit: Seconds | timedelta,
+    ) -> Iterator[list[Recorded]]:
+        ...
+
 
 class Subscriber(Builder):
     def __init__(
@@ -49,12 +56,17 @@ class Subscriber(Builder):
         )
         return self
 
-    def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded | None]:
+    @staticmethod
+    def _timelimit_to_seconds(timelimit: Seconds | timedelta) -> float:
         seconds = timelimit.seconds if isinstance(timelimit, timedelta) else timelimit
         if seconds < 1:
             raise ValueError(
                 f"Timebox must be at least 1 second. Received: {seconds:.02f}",
             )
+        return float(seconds)
+
+    def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded | None]:
+        seconds = self._timelimit_to_seconds(timelimit)
         return self._single_event_unpack(self._build(batch_size=1, timelimit=seconds))
 
     def _single_event_unpack(
@@ -64,3 +76,14 @@ class Subscriber(Builder):
         while True:
             batch = next(subscription)
             yield self._serde.deserialize_record(batch[0]) if batch else None
+
+    def build_batch(
+        self,
+        size: int,
+        timelimit: Seconds | timedelta,
+    ) -> Iterator[list[Recorded]]:
+        seconds = self._timelimit_to_seconds(timelimit)
+        subscription = self._build(batch_size=size, timelimit=seconds)
+        return (
+            [self._serde.deserialize_record(e) for e in batch] for batch in subscription
+        )
