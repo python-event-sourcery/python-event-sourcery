@@ -2,7 +2,11 @@ from functools import singledispatchmethod
 from typing import Callable, Sequence, cast
 
 from event_sourcery.event_store.event import Event, Metadata, Position, RawEvent, Serde
-from event_sourcery.event_store.interfaces import OutboxStorageStrategy, StorageStrategy
+from event_sourcery.event_store.interfaces import (
+    OutboxStorageStrategy,
+    StorageStrategy,
+    SubscriptionStrategy,
+)
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.subscription import Subscriber
 from event_sourcery.event_store.versioning import (
@@ -17,10 +21,12 @@ class EventStore:
         self,
         storage_strategy: StorageStrategy,
         outbox_storage_strategy: OutboxStorageStrategy,
+        subscription_strategy: SubscriptionStrategy,
         serde: Serde,
     ) -> None:
         self._storage_strategy = storage_strategy
         self._outbox_storage_strategy = outbox_storage_strategy
+        self._subscription_strategy = subscription_strategy
         self._serde = serde
 
     def run_outbox(
@@ -142,7 +148,7 @@ class EventStore:
         return [self._serde.serialize(event=e, stream_id=stream_id) for e in events]
 
     def subscriber(self, from_position: Position) -> Subscriber:
-        return Subscriber(from_position, self._storage_strategy, self._serde)
+        return Subscriber(from_position, self._subscription_strategy, self._serde)
 
     @property
     def position(self) -> Position | None:

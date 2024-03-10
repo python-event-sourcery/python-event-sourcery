@@ -11,12 +11,16 @@ from event_sourcery.event_store.factory import no_filter
 from event_sourcery.event_store.interfaces import OutboxFiltererStrategy
 from event_sourcery_esdb.event_store import ESDBStorageStrategy
 from event_sourcery_esdb.outbox import ESDBOutboxStorageStrategy
+from event_sourcery_esdb.subscription import ESDBSubscriptionStrategy
 
 
 class ESDBStoreFactory(EventStoreFactory):
     def __init__(self, esdb: EventStoreDBClient) -> None:
         self._client = esdb
-        self._configure(storage_strategy=ESDBStorageStrategy(self._client))
+        self._configure(
+            storage_strategy=ESDBStorageStrategy(self._client),
+            subscription_strategy=ESDBSubscriptionStrategy(self._client),
+        )
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         strategy = ESDBOutboxStorageStrategy(self._client, filterer)

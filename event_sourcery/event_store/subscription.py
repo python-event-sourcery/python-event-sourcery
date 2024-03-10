@@ -9,7 +9,7 @@ from event_sourcery.event_store.event import (
     RecordedRaw,
     Serde,
 )
-from event_sourcery.event_store.interfaces import StorageStrategy
+from event_sourcery.event_store.interfaces import SubscriptionStrategy
 from event_sourcery.event_store.stream_id import Category
 
 Seconds: TypeAlias = int | float
@@ -31,20 +31,20 @@ class Subscriber(Builder):
     def __init__(
         self,
         start_from: Position,
-        storage: StorageStrategy,
+        strategy: SubscriptionStrategy,
         serde: Serde,
     ) -> None:
         self._start_from = start_from
-        self._storage = storage
+        self._strategy = strategy
         self._serde = serde
         self._build = partial(
-            self._storage.subscribe_to_all,
+            self._strategy.subscribe_to_all,
             start_from=self._start_from,
         )
 
     def to_category(self, category: Category) -> Builder:
         self._build = partial(
-            self._storage.subscribe_to_category,
+            self._strategy.subscribe_to_category,
             start_from=self._start_from,
             category=category,
         )
@@ -52,7 +52,7 @@ class Subscriber(Builder):
 
     def to_events(self, events: list[Type[Event]]) -> Builder:
         self._build = partial(
-            self._storage.subscribe_to_events,
+            self._strategy.subscribe_to_events,
             start_from=self._start_from,
             events=[self._serde.registry.name_for_type(event) for event in events],
         )

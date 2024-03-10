@@ -15,9 +15,9 @@ from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
     StorageStrategy,
+    SubscriptionStrategy,
 )
 from event_sourcery.event_store.stream_id import StreamId
-from event_sourcery.event_store.subscription import Seconds
 from event_sourcery.event_store.versioning import NO_VERSIONING, Versioning
 
 
@@ -68,7 +68,7 @@ class InMemorySubscription(Iterator[list[RecordedRaw]]):
     _storage: Storage
     _current_position: int
     _batch_size: int
-    _timelimit: Seconds
+    _timelimit: timedelta
 
     def _pop_record(self) -> tuple[RawEvent, Position] | None:
         if len(self._storage.events) <= self._current_position:
@@ -86,7 +86,7 @@ class InMemorySubscription(Iterator[list[RecordedRaw]]):
             if record is not None:
                 batch.append(record)
             time.sleep(0.1)
-            if time.monotonic() - start > self._timelimit:
+            if time.monotonic() - start > self._timelimit.total_seconds():
                 break
 
         return [
@@ -160,12 +160,57 @@ class InMemoryOutboxStorageStrategy(OutboxStorageStrategy):
         return failure_count >= self.MAX_PUBLISH_ATTEMPTS
 
 
+@dataclass
+class InMemorySubscriptionStrategy(SubscriptionStrategy):
+    _storage: Storage
+
+    def subscribe_to_all(
+        self,
+        start_from: Position,
+        batch_size: int,
+        timelimit: timedelta,
+    ) -> Iterator[list[RecordedRaw]]:
+        return InMemorySubscription(self._storage, start_from, batch_size, timelimit)
+
+    def subscribe_to_category(
+        self,
+        start_from: Position,
+        batch_size: int,
+        timelimit: timedelta,
+        category: str,
+    ) -> Iterator[list[RecordedRaw]]:
+        return InMemoryToCategorySubscription(
+            self._storage,
+            start_from,
+            batch_size,
+            timelimit,
+            category,
+        )
+
+    def subscribe_to_events(
+        self,
+        start_from: Position,
+        batch_size: int,
+        timelimit: timedelta,
+        events: list[str],
+    ) -> Iterator[list[RecordedRaw]]:
+        return InMemoryToEventTypesSubscription(
+            self._storage,
+            start_from,
+            batch_size,
+            timelimit,
+            events,
+        )
+
+
 class InMemoryStorageStrategy(StorageStrategy):
     def __init__(
-        self, outbox_strategy: InMemoryOutboxStorageStrategy | None = None
+        self,
+        storage: Storage,
+        outbox_strategy: InMemoryOutboxStorageStrategy | None = None,
     ) -> None:
         self._names: Dict[str | None, str] = {}
-        self._storage: Storage = Storage()
+        self._storage = storage
         self._outbox = outbox_strategy
 
     def fetch_events(
@@ -215,49 +260,6 @@ class InMemoryStorageStrategy(StorageStrategy):
         if stream_id in self._storage:
             self._storage.delete(stream_id)
 
-    def subscribe_to_all(
-        self,
-        start_from: Position,
-        batch_size: int,
-        timelimit: timedelta,
-    ) -> Iterator[list[RecordedRaw]]:
-        return InMemorySubscription(
-            self._storage,
-            start_from,
-            batch_size,
-            timelimit.total_seconds(),
-        )
-
-    def subscribe_to_category(
-        self,
-        start_from: Position,
-        batch_size: int,
-        timelimit: timedelta,
-        category: str,
-    ) -> Iterator[list[RecordedRaw]]:
-        return InMemoryToCategorySubscription(
-            self._storage,
-            start_from,
-            batch_size,
-            timelimit.total_seconds(),
-            category,
-        )
-
-    def subscribe_to_events(
-        self,
-        start_from: Position,
-        batch_size: int,
-        timelimit: timedelta,
-        events: list[str],
-    ) -> Iterator[list[RecordedRaw]]:
-        return InMemoryToEventTypesSubscription(
-            self._storage,
-            start_from,
-            batch_size,
-            timelimit.total_seconds(),
-            events,
-        )
-
     @property
     def current_position(self) -> Position | None:
         current_position = self._storage.current_position
@@ -266,10 +268,14 @@ class InMemoryStorageStrategy(StorageStrategy):
 
 class InMemoryEventStoreFactory(EventStoreFactory):
     def __init__(self) -> None:
-        self._configure(storage_strategy=InMemoryStorageStrategy())
+        self._storage = Storage()
+        self._configure(
+            storage_strategy=InMemoryStorageStrategy(self._storage),
+            subscription_strategy=InMemorySubscriptionStrategy(self._storage),
+        )
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         outbox = InMemoryOutboxStorageStrategy(filterer)
-        self._configure(storage_strategy=InMemoryStorageStrategy(outbox))
+        self._configure(storage_strategy=InMemoryStorageStrategy(self._storage, outbox))
         self._configure(outbox_storage_strategy=outbox)
         return self
