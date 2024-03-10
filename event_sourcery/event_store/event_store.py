@@ -7,6 +7,7 @@ from event_sourcery.event_store.interfaces import (
     StorageStrategy,
     SubscriptionStrategy,
 )
+from event_sourcery.event_store.outbox import Outbox
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.subscription import Subscriber
 from event_sourcery.event_store.versioning import (
@@ -25,7 +26,7 @@ class EventStore:
         serde: Serde,
     ) -> None:
         self._storage_strategy = storage_strategy
-        self._outbox_storage_strategy = outbox_storage_strategy
+        self._outbox = Outbox(outbox_storage_strategy, serde)
         self._subscription_strategy = subscription_strategy
         self._serde = serde
 
@@ -34,11 +35,7 @@ class EventStore:
         publisher: Callable[[Metadata, StreamId], None],
         limit: int = 100,
     ) -> None:
-        stream = self._outbox_storage_strategy.outbox_entries(limit=limit)
-        for entry in stream:
-            with entry as raw_event_dict:
-                event = self._serde.deserialize(raw_event_dict)
-                publisher(event, raw_event_dict.stream_id)
+        self._outbox.run_outbox(publisher, limit)
 
     def load_stream(
         self,
