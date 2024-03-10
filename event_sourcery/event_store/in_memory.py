@@ -125,10 +125,48 @@ class InMemoryToEventTypesSubscription(InMemorySubscription):
             return record
 
 
+@dataclass
+class InMemoryOutboxStorageStrategy(OutboxStorageStrategy):
+    MAX_PUBLISH_ATTEMPTS = 3
+    _filterer: OutboxFiltererStrategy
+    _outbox: list[tuple[RawEvent, int]] = field(default_factory=list, init=False)
+
+    def put_into_outbox(self, events: list[RawEvent]) -> None:
+        self._outbox.extend([(e, 0) for e in events if self._filterer(e)])
+
+    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RawEvent]]:
+        for entry in self._outbox[:limit]:
+            yield self._publish_context(*entry)
+
+    @contextmanager
+    def _publish_context(
+        self,
+        event: RawEvent,
+        failure_count: int,
+    ) -> Generator[RawEvent, None, None]:
+        index = self._outbox.index((event, failure_count))
+        try:
+            yield event
+        except Exception:
+            failure_count += 1
+            if self._reached_max_number_of_attempts(failure_count):
+                del self._outbox[index]
+            else:
+                self._outbox[index] = (event, failure_count)
+        else:
+            del self._outbox[index]
+
+    def _reached_max_number_of_attempts(self, failure_count: int) -> bool:
+        return failure_count >= self.MAX_PUBLISH_ATTEMPTS
+
+
 class InMemoryStorageStrategy(StorageStrategy):
-    def __init__(self) -> None:
+    def __init__(
+        self, outbox_strategy: InMemoryOutboxStorageStrategy | None = None
+    ) -> None:
         self._names: Dict[str | None, str] = {}
         self._storage: Storage = Storage()
+        self._outbox = outbox_strategy
 
     def fetch_events(
         self,
@@ -149,6 +187,8 @@ class InMemoryStorageStrategy(StorageStrategy):
     ) -> None:
         self._ensure_stream(stream_id=stream_id, versioning=versioning)
         self._storage.append(events)
+        if self._outbox:
+            self._outbox.put_into_outbox(events)
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
         self._storage.replace(with_snapshot=snapshot)
@@ -224,45 +264,12 @@ class InMemoryStorageStrategy(StorageStrategy):
         return current_position and Position(current_position)
 
 
-@dataclass
-class InMemoryOutboxStorageStrategy(OutboxStorageStrategy):
-    MAX_PUBLISH_ATTEMPTS = 3
-    _filterer: OutboxFiltererStrategy
-    _outbox: list[tuple[RawEvent, int]] = field(default_factory=list, init=False)
-
-    def put_into_outbox(self, events: list[RawEvent]) -> None:
-        self._outbox.extend([(e, 0) for e in events if self._filterer(e)])
-
-    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RawEvent]]:
-        for entry in self._outbox[:limit]:
-            yield self._publish_context(*entry)
-
-    @contextmanager
-    def _publish_context(
-        self,
-        event: RawEvent,
-        failure_count: int,
-    ) -> Generator[RawEvent, None, None]:
-        index = self._outbox.index((event, failure_count))
-        try:
-            yield event
-        except Exception:
-            failure_count += 1
-            if self._reached_max_number_of_attempts(failure_count):
-                del self._outbox[index]
-            else:
-                self._outbox[index] = (event, failure_count)
-        else:
-            del self._outbox[index]
-
-    def _reached_max_number_of_attempts(self, failure_count: int) -> bool:
-        return failure_count >= self.MAX_PUBLISH_ATTEMPTS
-
-
 class InMemoryEventStoreFactory(EventStoreFactory):
     def __init__(self) -> None:
         self._configure(storage_strategy=InMemoryStorageStrategy())
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
-        self._configure(outbox_storage_strategy=InMemoryOutboxStorageStrategy(filterer))
+        outbox = InMemoryOutboxStorageStrategy(filterer)
+        self._configure(storage_strategy=InMemoryStorageStrategy(outbox))
+        self._configure(outbox_storage_strategy=outbox)
         return self

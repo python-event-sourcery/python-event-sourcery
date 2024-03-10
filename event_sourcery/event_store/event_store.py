@@ -96,19 +96,18 @@ class EventStore:
         stream_id: StreamId,
         expected_version: int | Versioning = 0,
     ) -> None:
-        serialized_events = self._append(
+        self._append(
             stream_id=stream_id,
             events=(first,) + events,
             expected_version=expected_version,
         )
-        self._outbox_storage_strategy.put_into_outbox(serialized_events)
 
     def _append(
         self,
         stream_id: StreamId,
         events: Sequence[Metadata],
         expected_version: int | Versioning,
-    ) -> list[RawEvent]:
+    ) -> None:
         new_version = events[-1].version
         versioning: Versioning
         if expected_version is not NO_VERSIONING:
@@ -119,11 +118,11 @@ class EventStore:
         else:
             versioning = NO_VERSIONING
 
-        serialized_events = self._serialize_events(events, stream_id)
         self._storage_strategy.insert_events(
-            stream_id=stream_id, versioning=versioning, events=serialized_events
+            stream_id=stream_id,
+            versioning=versioning,
+            events=self._serialize_events(events, stream_id),
         )
-        return serialized_events
 
     def delete_stream(self, stream_id: StreamId) -> None:
         self._storage_strategy.delete_stream(stream_id)

@@ -24,11 +24,13 @@ from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery_sqlalchemy.models import Event as EventModel
 from event_sourcery_sqlalchemy.models import Snapshot as SnapshotModel
 from event_sourcery_sqlalchemy.models import Stream as StreamModel
+from event_sourcery_sqlalchemy.outbox import SqlAlchemyOutboxStorageStrategy
 
 
 @dataclass(repr=False)
 class SqlAlchemyStorageStrategy(StorageStrategy):
     _session: Session
+    _outbox: SqlAlchemyOutboxStorageStrategy | None = None
 
     def fetch_events(
         self,
@@ -178,6 +180,8 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 version=event.version,
             )
             stream.events.append(entry)
+        if self._outbox:
+            self._outbox.put_into_outbox(events)
         self._session.flush()
 
     def save_snapshot(self, snapshot: RawEvent) -> None:

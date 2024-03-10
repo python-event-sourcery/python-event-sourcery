@@ -14,10 +14,6 @@ class OutboxFiltererStrategy(Protocol):
 
 class OutboxStorageStrategy(abc.ABC):
     @abc.abstractmethod
-    def put_into_outbox(self, events: list[RawEvent]) -> None:
-        pass
-
-    @abc.abstractmethod
     def outbox_entries(self, limit: int) -> Iterator[ContextManager[RawEvent]]:
         pass
 

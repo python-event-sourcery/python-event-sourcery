@@ -25,6 +25,9 @@ class SQLStoreFactory(EventStoreFactory):
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         strategy = SqlAlchemyOutboxStorageStrategy(self._session, filterer)
+        self._configure(
+            storage_strategy=SqlAlchemyStorageStrategy(self._session, strategy)
+        )
         return self._configure(outbox_storage_strategy=strategy)
 
     def subscribe_in_transaction(self) -> InTransactionSubscription:
