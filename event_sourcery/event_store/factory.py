@@ -3,6 +3,7 @@ from typing import ContextManager, Iterator
 
 from typing_extensions import Self
 
+from event_sourcery.event_store import subscription
 from event_sourcery.event_store.event import EventRegistry, RawEvent, Serde
 from event_sourcery.event_store.event_store import EventStore
 from event_sourcery.event_store.interfaces import (
@@ -10,7 +11,6 @@ from event_sourcery.event_store.interfaces import (
     OutboxStorageStrategy,
 )
 from event_sourcery.event_store.outbox import Outbox
-from event_sourcery.event_store.subscription import Subscriber
 
 
 def no_filter(entry: RawEvent) -> bool:
@@ -26,7 +26,7 @@ class Engine:
     serde: Serde
     event_store: EventStore
     outbox: Outbox
-    subscriber: Subscriber
+    subscriber: subscription.Positioner
 
 
 class EventStoreFactory(abc.ABC):
