@@ -1,11 +1,10 @@
 import abc
-from typing import ContextManager, Iterator, Protocol, TypeAlias
+from datetime import timedelta
+from typing import ContextManager, Iterator, Protocol
 
 from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.versioning import Versioning
-
-Seconds: TypeAlias = int | float
 
 
 class OutboxFiltererStrategy(Protocol):
@@ -52,7 +51,7 @@ class StorageStrategy(abc.ABC):
         self,
         start_from: Position,
         batch_size: int,
-        timelimit: Seconds,
+        timelimit: timedelta,
     ) -> Iterator[list[RecordedRaw]]:
         pass
 
@@ -61,7 +60,7 @@ class StorageStrategy(abc.ABC):
         self,
         start_from: Position,
         batch_size: int,
-        timelimit: Seconds,
+        timelimit: timedelta,
         category: str,
     ) -> Iterator[list[RecordedRaw]]:
         pass
@@ -71,7 +70,7 @@ class StorageStrategy(abc.ABC):
         self,
         start_from: Position,
         batch_size: int,
-        timelimit: Seconds,
+        timelimit: timedelta,
         events: list[str],
     ) -> Iterator[list[RecordedRaw]]:
         pass

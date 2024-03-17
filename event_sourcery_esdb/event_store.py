@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import timedelta
 from functools import partial
 from typing import Callable, Iterator, cast
 
@@ -15,7 +16,7 @@ from event_sourcery.event_store import (
     Versioning,
 )
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
-from event_sourcery.event_store.interfaces import Seconds, StorageStrategy
+from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery_esdb import dto, stream
 
 
@@ -134,12 +135,12 @@ class ESDBStorageStrategy(StorageStrategy):
         self,
         start_from: Position,
         batch_size: int,
-        timelimit: Seconds,
+        timelimit: timedelta,
     ) -> Iterator[list[RecordedRaw]]:
         builder = partial(
             self._client.subscribe_to_all,
             commit_position=start_from,
-            timeout=timelimit,
+            timeout=timelimit.total_seconds(),
         )
         return self._subscription_iterator(builder, batch_size)
 
@@ -147,13 +148,13 @@ class ESDBStorageStrategy(StorageStrategy):
         self,
         start_from: Position | None,
         batch_size: int,
-        timelimit: Seconds,
+        timelimit: timedelta,
         category: str,
     ) -> Iterator[list[RecordedRaw]]:
         builder = partial(
             self._client.subscribe_to_all,
             commit_position=start_from,
-            timeout=timelimit,
+            timeout=timelimit.total_seconds(),
             filter_include=[
                 f"{category}-\\w+",
             ],
@@ -165,13 +166,13 @@ class ESDBStorageStrategy(StorageStrategy):
         self,
         start_from: Position,
         batch_size: int,
-        timelimit: Seconds,
+        timelimit: timedelta,
         events: list[str],
     ) -> Iterator[list[RecordedRaw]]:
         builder = partial(
             self._client.subscribe_to_all,
             commit_position=start_from,
-            timeout=timelimit,
+            timeout=timelimit.total_seconds(),
             filter_include=events,
             filter_by_stream_name=False,
         )

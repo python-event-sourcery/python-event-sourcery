@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Iterator, Sequence, Union, cast
 
 from more_itertools import first_true
@@ -19,7 +20,7 @@ from event_sourcery.event_store.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     ConcurrentStreamWriteError,
 )
-from event_sourcery.event_store.interfaces import Seconds, StorageStrategy
+from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery_sqlalchemy.models import Event as EventModel
 from event_sourcery_sqlalchemy.models import Snapshot as SnapshotModel
 from event_sourcery_sqlalchemy.models import Stream as StreamModel
@@ -218,7 +219,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         self,
         start_from: Position,
         batch_size: int,
-        timelimit: Seconds,
+        timelimit: timedelta,
     ) -> Iterator[list[RecordedRaw]]:
         raise NotImplementedError
 
@@ -226,7 +227,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         self,
         start_from: Position,
         batch_size: int,
-        timelimit: Seconds,
+        timelimit: timedelta,
         category: str,
     ) -> Iterator[list[RecordedRaw]]:
         raise NotImplementedError
@@ -235,7 +236,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         self,
         start_from: Position,
         batch_size: int,
-        timelimit: Seconds,
+        timelimit: timedelta,
         events: list[str],
     ) -> Iterator[list[RecordedRaw]]:
         raise NotImplementedError

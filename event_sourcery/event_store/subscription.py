@@ -1,6 +1,6 @@
 from datetime import timedelta
 from functools import partial
-from typing import Iterator, Protocol, Type
+from typing import Iterator, Protocol, Type, TypeAlias
 
 from event_sourcery.event_store.event import (
     Event,
@@ -9,8 +9,10 @@ from event_sourcery.event_store.event import (
     RecordedRaw,
     Serde,
 )
-from event_sourcery.event_store.interfaces import Seconds, StorageStrategy
+from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery.event_store.stream_id import Category
+
+Seconds: TypeAlias = int | float
 
 
 class Builder(Protocol):
@@ -57,17 +59,22 @@ class Subscriber(Builder):
         return self
 
     @staticmethod
-    def _timelimit_to_seconds(timelimit: Seconds | timedelta) -> float:
-        seconds = timelimit.seconds if isinstance(timelimit, timedelta) else timelimit
-        if seconds < 1:
+    def _to_timedelta(timelimit: Seconds | timedelta) -> timedelta:
+        seconds = (
+            timelimit
+            if isinstance(timelimit, timedelta)
+            else timedelta(seconds=timelimit)
+        )
+        if seconds.total_seconds() < 1:
             raise ValueError(
-                f"Timebox must be at least 1 second. Received: {seconds:.02f}",
+                f"Timebox must be at least 1 second. Received: "
+                f"{seconds.total_seconds():.02f}",
             )
-        return float(seconds)
+        return seconds
 
     def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded | None]:
-        seconds = self._timelimit_to_seconds(timelimit)
-        return self._single_event_unpack(self._build(batch_size=1, timelimit=seconds))
+        timelimit = self._to_timedelta(timelimit)
+        return self._single_event_unpack(self._build(batch_size=1, timelimit=timelimit))
 
     def _single_event_unpack(
         self,
@@ -82,7 +89,7 @@ class Subscriber(Builder):
         size: int,
         timelimit: Seconds | timedelta,
     ) -> Iterator[list[Recorded]]:
-        seconds = self._timelimit_to_seconds(timelimit)
+        seconds = self._to_timedelta(timelimit)
         subscription = self._build(batch_size=size, timelimit=seconds)
         return (
             [self._serde.deserialize_record(e) for e in batch] for batch in subscription

@@ -2,6 +2,7 @@ import time
 from contextlib import contextmanager
 from copy import copy
 from dataclasses import dataclass, field
+from datetime import timedelta
 from operator import getitem
 from typing import ContextManager, Dict, Generator, Iterator
 
@@ -13,10 +14,10 @@ from event_sourcery.event_store.factory import EventStoreFactory, no_filter
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
-    Seconds,
     StorageStrategy,
 )
 from event_sourcery.event_store.stream_id import StreamId
+from event_sourcery.event_store.subscription import Seconds
 from event_sourcery.event_store.versioning import NO_VERSIONING, Versioning
 
 
@@ -178,22 +179,27 @@ class InMemoryStorageStrategy(StorageStrategy):
         self,
         start_from: Position,
         batch_size: int,
-        timelimit: Seconds,
+        timelimit: timedelta,
     ) -> Iterator[list[RecordedRaw]]:
-        return InMemorySubscription(self._storage, start_from, batch_size, timelimit)
+        return InMemorySubscription(
+            self._storage,
+            start_from,
+            batch_size,
+            timelimit.total_seconds(),
+        )
 
     def subscribe_to_category(
         self,
         start_from: Position,
         batch_size: int,
-        timelimit: Seconds,
+        timelimit: timedelta,
         category: str,
     ) -> Iterator[list[RecordedRaw]]:
         return InMemoryToCategorySubscription(
             self._storage,
             start_from,
             batch_size,
-            timelimit,
+            timelimit.total_seconds(),
             category,
         )
 
@@ -201,14 +207,14 @@ class InMemoryStorageStrategy(StorageStrategy):
         self,
         start_from: Position,
         batch_size: int,
-        timelimit: Seconds,
+        timelimit: timedelta,
         events: list[str],
     ) -> Iterator[list[RecordedRaw]]:
         return InMemoryToEventTypesSubscription(
             self._storage,
             start_from,
             batch_size,
-            timelimit,
+            timelimit.total_seconds(),
             events,
         )
 
