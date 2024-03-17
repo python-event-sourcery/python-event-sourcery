@@ -160,9 +160,9 @@ class Given(Step):
 
     @contextmanager
     def expected_execution(self, seconds: float) -> Generator:
-        start = time.time()
+        start = time.monotonic()
         yield
-        took = time.time() - start
+        took = time.monotonic() - start
         assert took == approx(
             seconds, 0.15
         ), f"Expected timing {seconds:.02f}s, got {took:.02f}s"

@@ -79,13 +79,13 @@ class InMemorySubscription(Iterator[list[RecordedRaw]]):
     def __next__(self) -> list[RecordedRaw]:
         batch: list[tuple[RawEvent, Position]] = []
 
-        start = time.time()
+        start = time.monotonic()
         while len(batch) < self._batch_size:
             record = self.pop_record()
             if record is not None:
                 batch.append(record)
             time.sleep(0.1)
-            if time.time() - start > self._timelimit:
+            if time.monotonic() - start > self._timelimit:
                 break
 
         return [
