@@ -69,7 +69,7 @@ class InMemorySubscription(Iterator[list[RecordedRaw]]):
     _batch_size: int
     _timelimit: Seconds
 
-    def pop_record(self) -> tuple[RawEvent, Position] | None:
+    def _pop_record(self) -> tuple[RawEvent, Position] | None:
         if len(self._storage.events) <= self._from_position:
             return None
         record = self._storage.events[self._from_position]
@@ -81,7 +81,7 @@ class InMemorySubscription(Iterator[list[RecordedRaw]]):
 
         start = time.monotonic()
         while len(batch) < self._batch_size:
-            record = self.pop_record()
+            record = self._pop_record()
             if record is not None:
                 batch.append(record)
             time.sleep(0.1)
@@ -98,9 +98,9 @@ class InMemorySubscription(Iterator[list[RecordedRaw]]):
 class InMemoryToCategorySubscription(InMemorySubscription):
     _category: str
 
-    def pop_record(self) -> tuple[RawEvent, Position] | None:
+    def _pop_record(self) -> tuple[RawEvent, Position] | None:
         while True:
-            record = super().pop_record()
+            record = super()._pop_record()
             if record is None:
                 return None
             raw, position = record
@@ -113,9 +113,9 @@ class InMemoryToCategorySubscription(InMemorySubscription):
 class InMemoryToEventTypesSubscription(InMemorySubscription):
     _types: list[str]
 
-    def pop_record(self) -> tuple[RawEvent, Position] | None:
+    def _pop_record(self) -> tuple[RawEvent, Position] | None:
         while True:
-            record = super().pop_record()
+            record = super()._pop_record()
             if record is None:
                 return None
             raw, position = record
