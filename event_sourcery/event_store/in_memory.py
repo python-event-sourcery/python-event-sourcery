@@ -65,16 +65,16 @@ class Storage:
 @dataclass
 class InMemorySubscription(Iterator[list[RecordedRaw]]):
     _storage: Storage
-    _from_position: int
+    _current_position: int
     _batch_size: int
     _timelimit: Seconds
 
     def _pop_record(self) -> tuple[RawEvent, Position] | None:
-        if len(self._storage.events) <= self._from_position:
+        if len(self._storage.events) <= self._current_position:
             return None
-        record = self._storage.events[self._from_position]
-        self._from_position += 1
-        return record, self._from_position - 1
+        record = self._storage.events[self._current_position]
+        self._current_position += 1
+        return record, self._current_position - 1
 
     def __next__(self) -> list[RecordedRaw]:
         batch: list[tuple[RawEvent, Position]] = []
