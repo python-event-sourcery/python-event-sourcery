@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Iterator, Sequence, Union, cast
 
 from more_itertools import first_true
@@ -214,21 +215,30 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
     ) -> Iterator[RecordedRaw]:
         raise NotImplementedError
 
-    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
+    def subscribe_to_all(
+        self,
+        start_from: Position,
+        batch_size: int,
+        timelimit: timedelta,
+    ) -> Iterator[list[RecordedRaw]]:
         raise NotImplementedError
 
     def subscribe_to_category(
         self,
         start_from: Position,
+        batch_size: int,
+        timelimit: timedelta,
         category: str,
-    ) -> Iterator[RecordedRaw]:
+    ) -> Iterator[list[RecordedRaw]]:
         raise NotImplementedError
 
     def subscribe_to_events(
         self,
         start_from: Position,
+        batch_size: int,
+        timelimit: timedelta,
         events: list[str],
-    ) -> Iterator[RecordedRaw]:
+    ) -> Iterator[list[RecordedRaw]]:
         raise NotImplementedError
 
     @property

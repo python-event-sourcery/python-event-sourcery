@@ -1,8 +1,10 @@
 from dataclasses import InitVar, dataclass
-from typing import Any
+from typing import Any, TypeAlias
 from uuid import UUID, uuid4, uuid5
 
 from event_sourcery.event_store.exceptions import IncompatibleUuidAndName
+
+Category: TypeAlias = str
 
 
 @dataclass(frozen=True, repr=False, eq=False)
@@ -35,7 +37,7 @@ class StreamUUID(UUID):
 
 @dataclass(frozen=True, repr=False, eq=False)
 class StreamId(StreamUUID):
-    category: str | None = None
+    category: Category | None = None
 
     def __repr__(self) -> str:
         return (

@@ -1,4 +1,5 @@
 import abc
+from datetime import timedelta
 from typing import ContextManager, Iterator, Protocol
 
 from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw
@@ -46,23 +47,32 @@ class StorageStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
+    def subscribe_to_all(
+        self,
+        start_from: Position,
+        batch_size: int,
+        timelimit: timedelta,
+    ) -> Iterator[list[RecordedRaw]]:
         pass
 
     @abc.abstractmethod
     def subscribe_to_category(
         self,
         start_from: Position,
+        batch_size: int,
+        timelimit: timedelta,
         category: str,
-    ) -> Iterator[RecordedRaw]:
+    ) -> Iterator[list[RecordedRaw]]:
         pass
 
     @abc.abstractmethod
     def subscribe_to_events(
         self,
         start_from: Position,
+        batch_size: int,
+        timelimit: timedelta,
         events: list[str],
-    ) -> Iterator[RecordedRaw]:
+    ) -> Iterator[list[RecordedRaw]]:
         pass
 
     @property

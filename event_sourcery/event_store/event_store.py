@@ -1,23 +1,15 @@
 from functools import singledispatchmethod
-from typing import Callable, Iterator, Sequence, Type, TypeAlias, cast
+from typing import Callable, Sequence, cast
 
-from event_sourcery.event_store.event import (
-    Event,
-    Metadata,
-    Position,
-    RawEvent,
-    Recorded,
-    Serde,
-)
+from event_sourcery.event_store.event import Event, Metadata, Position, RawEvent, Serde
 from event_sourcery.event_store.interfaces import OutboxStorageStrategy, StorageStrategy
 from event_sourcery.event_store.stream_id import StreamId
+from event_sourcery.event_store.subscription import Subscriber
 from event_sourcery.event_store.versioning import (
     NO_VERSIONING,
     ExplicitVersioning,
     Versioning,
 )
-
-Category: TypeAlias = str
 
 
 class EventStore:
@@ -150,37 +142,8 @@ class EventStore:
     ) -> list[RawEvent]:
         return [self._serde.serialize(event=e, stream_id=stream_id) for e in events]
 
-    def subscribe_to_all(self, start_from: Position) -> Iterator[Recorded]:
-        return map(
-            self._serde.deserialize_record,
-            self._storage_strategy.subscribe_to_all(start_from),
-        )
-
-    def subscribe_to_category(
-        self,
-        start_from: Position,
-        to: Category,
-    ) -> Iterator[Recorded]:
-        return map(
-            self._serde.deserialize_record,
-            self._storage_strategy.subscribe_to_category(
-                start_from,
-                category=str(to),
-            ),
-        )
-
-    def subscribe_to_events(
-        self,
-        start_from: Position,
-        to: list[Type[Event]],
-    ) -> Iterator[Recorded]:
-        return map(
-            self._serde.deserialize_record,
-            self._storage_strategy.subscribe_to_events(
-                start_from,
-                [self._serde.registry.name_for_type(et) for et in to],
-            ),
-        )
+    def subscriber(self, from_position: Position) -> Subscriber:
+        return Subscriber(from_position, self._storage_strategy, self._serde)
 
     @property
     def position(self) -> Position | None:

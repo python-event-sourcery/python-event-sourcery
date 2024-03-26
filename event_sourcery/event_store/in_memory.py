@@ -1,13 +1,14 @@
+import time
 from contextlib import contextmanager
 from copy import copy
 from dataclasses import dataclass, field
+from datetime import timedelta
 from operator import getitem
 from typing import ContextManager, Dict, Generator, Iterator
 
 from typing_extensions import Self
 
-from event_sourcery.event_store import Position
-from event_sourcery.event_store.event import RawEvent, RecordedRaw
+from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.factory import EventStoreFactory, no_filter
 from event_sourcery.event_store.interfaces import (
@@ -16,6 +17,7 @@ from event_sourcery.event_store.interfaces import (
     StorageStrategy,
 )
 from event_sourcery.event_store.stream_id import StreamId
+from event_sourcery.event_store.subscription import Seconds
 from event_sourcery.event_store.versioning import NO_VERSIONING, Versioning
 
 
@@ -62,39 +64,65 @@ class Storage:
 
 
 @dataclass
-class InMemorySubscription(Iterator[RecordedRaw]):
+class InMemorySubscription(Iterator[list[RecordedRaw]]):
     _storage: Storage
-    _from_position: int
+    _current_position: int
+    _batch_size: int
+    _timelimit: Seconds
 
-    def __next__(self) -> RecordedRaw:
-        entry = RecordedRaw(
-            entry=copy(self._storage.events[self._from_position]),
-            position=self._from_position,
-        )
-        self._from_position += 1
-        return entry
+    def _pop_record(self) -> tuple[RawEvent, Position] | None:
+        if len(self._storage.events) <= self._current_position:
+            return None
+        record = self._storage.events[self._current_position]
+        self._current_position += 1
+        return record, self._current_position - 1
+
+    def __next__(self) -> list[RecordedRaw]:
+        batch: list[tuple[RawEvent, Position]] = []
+
+        start = time.monotonic()
+        while len(batch) < self._batch_size:
+            record = self._pop_record()
+            if record is not None:
+                batch.append(record)
+            time.sleep(0.1)
+            if time.monotonic() - start > self._timelimit:
+                break
+
+        return [
+            RecordedRaw(entry=copy(record), position=position)
+            for record, position in batch
+        ]
 
 
 @dataclass
 class InMemoryToCategorySubscription(InMemorySubscription):
     _category: str
 
-    def __next__(self) -> RecordedRaw:
-        event: RecordedRaw = super().__next__()
-        while event.entry.stream_id.category != self._category:
-            event = super().__next__()
-        return event
+    def _pop_record(self) -> tuple[RawEvent, Position] | None:
+        while True:
+            record = super()._pop_record()
+            if record is None:
+                return None
+            raw, position = record
+            if raw.stream_id.category != self._category:
+                continue
+            return record
 
 
 @dataclass
 class InMemoryToEventTypesSubscription(InMemorySubscription):
     _types: list[str]
 
-    def __next__(self) -> RecordedRaw:
-        event: RecordedRaw = super().__next__()
-        while event.entry.name not in self._types:
-            event = super().__next__()
-        return event
+    def _pop_record(self) -> tuple[RawEvent, Position] | None:
+        while True:
+            record = super()._pop_record()
+            if record is None:
+                return None
+            raw, position = record
+            if raw.name not in self._types:
+                continue
+            return record
 
 
 class InMemoryStorageStrategy(StorageStrategy):
@@ -147,22 +175,48 @@ class InMemoryStorageStrategy(StorageStrategy):
         if stream_id in self._storage:
             self._storage.delete(stream_id)
 
-    def subscribe_to_all(self, start_from: Position) -> Iterator[RecordedRaw]:
-        return InMemorySubscription(self._storage, start_from)
+    def subscribe_to_all(
+        self,
+        start_from: Position,
+        batch_size: int,
+        timelimit: timedelta,
+    ) -> Iterator[list[RecordedRaw]]:
+        return InMemorySubscription(
+            self._storage,
+            start_from,
+            batch_size,
+            timelimit.total_seconds(),
+        )
 
     def subscribe_to_category(
         self,
         start_from: Position,
+        batch_size: int,
+        timelimit: timedelta,
         category: str,
-    ) -> Iterator[RecordedRaw]:
-        return InMemoryToCategorySubscription(self._storage, start_from, category)
+    ) -> Iterator[list[RecordedRaw]]:
+        return InMemoryToCategorySubscription(
+            self._storage,
+            start_from,
+            batch_size,
+            timelimit.total_seconds(),
+            category,
+        )
 
     def subscribe_to_events(
         self,
         start_from: Position,
+        batch_size: int,
+        timelimit: timedelta,
         events: list[str],
-    ) -> Iterator[RecordedRaw]:
-        return InMemoryToEventTypesSubscription(self._storage, start_from, events)
+    ) -> Iterator[list[RecordedRaw]]:
+        return InMemoryToEventTypesSubscription(
+            self._storage,
+            start_from,
+            batch_size,
+            timelimit.total_seconds(),
+            events,
+        )
 
     @property
     def current_position(self) -> Position | None:

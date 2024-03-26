@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Iterator, cast
 from unittest.mock import ANY
 
@@ -9,6 +10,12 @@ from event_sourcery_sqlalchemy import SQLStoreFactory
 from tests.bdd import Given, Subscription, Then, When
 from tests.factories import an_event
 from tests.matchers import any_record
+
+
+@pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+def test_no_events_when_none_is_provided(given: Given, then: Then) -> None:
+    subscription = given.subscription(timelimit=1)
+    then(subscription).received_no_new_records()
 
 
 @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
@@ -38,6 +45,85 @@ def test_multiple_subscriptions_receives_events(
 
     then(subscription_1).next_received_record_is(any_record(event, stream.id))
     then(subscription_2).next_received_record_is(any_record(event, stream.id))
+
+
+@pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+def test_stop_iterating_after_given_timeout(given: Given, then: Then) -> None:
+    with given.expected_execution(seconds=1):
+        then.subscription(timelimit=1).received_no_new_records()
+
+
+@pytest.mark.parametrize(
+    "timelimit",
+    [
+        (0.999999,),
+        (0,),
+        (-1,),
+        (-1.9999,),
+        (timedelta(seconds=0.9999999),),
+        (timedelta(seconds=-10),),
+    ],
+)
+def test_wont_accept_timebox_shorten_than_1_second(
+    event_store: EventStore,
+    timelimit: int | float | timedelta,
+) -> None:
+    with pytest.raises(ValueError):
+        event_store.subscriber(0).build_iter(timelimit=0.99999)
+
+
+class TestBatch:
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_receives_requested_batch_size(
+        self,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        subscription = given.batch_subscription(of_size=2)
+        when.stream().receives(first := an_event(), second := an_event(), an_event())
+        then(subscription).next_batch_is([any_record(first), any_record(second)])
+
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_returns_smaller_batch_when_timelimit_hits(
+        self,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        timebox = given.expected_execution(seconds=1)
+        subscription = given.batch_subscription(of_size=2, timelimit=1)
+
+        when.stream().receives(event := an_event())
+
+        with timebox:
+            then(subscription).next_batch_is([any_record(event)])
+
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_subscription_continuously_awaits_for_new_events(
+        self,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        subscription = given.batch_subscription(of_size=2)
+
+        when.stream().receives(
+            first := an_event(),
+            second := an_event(),
+            third := an_event(),
+        )
+        then(subscription).next_batch_is([any_record(first), any_record(second)])
+
+        when.stream().receives(fourth := an_event(), fifth := an_event())
+        then(subscription).next_batch_is([any_record(third), any_record(fourth)])
+        then(subscription).next_batch_is([any_record(fifth)])
+        then(subscription).next_batch_is_empty()
+
+        when.stream().receives(sixth := an_event(), seventh := an_event())
+        then(subscription).next_batch_is([any_record(sixth), any_record(seventh)])
+        then(subscription).next_batch_is_empty()
+        then(subscription).next_batch_is_empty()
 
 
 class TestFromPositionSubscription:
@@ -166,6 +252,36 @@ class TestSubscriptionToCategory:
 
         then(subscription).next_received_record_is(any_record(new_event, stream.id))
 
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_stop_iterating_after_given_timeout(
+        self,
+        given: Given,
+        then: Then,
+    ) -> None:
+        timebox = given.expected_execution(seconds=1)
+        subscription = given.subscription(to_category="Category", timelimit=1)
+        with timebox:
+            then(subscription).received_no_new_records()
+
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_receiving_in_batches(
+        self,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        subscription = given.batch_subscription(of_size=2, to_category="Category")
+        stream = given.stream(StreamId(category="Category"))
+        other_stream = given.stream(StreamId(category="Other"))
+
+        when(stream).receives(first := an_event(), second := an_event())
+        when(other_stream).receives(an_event(), an_event())
+        when(stream).receives(third := an_event())
+
+        then(subscription).next_batch_is([any_record(first), any_record(second)])
+        then(subscription).next_batch_is([any_record(third)])
+        then(subscription).next_batch_is_empty()
+
 
 class TestSubscribeToEventTypes:
     class FirstType(Event):
@@ -236,6 +352,32 @@ class TestSubscribeToEventTypes:
 
         then(subscription).next_received_record_is(any_record(first, stream_1.id))
         then(subscription).next_received_record_is(any_record(second, stream_2.id))
+
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_stop_iterating_after_given_timeout(self, given: Given, then: Then) -> None:
+        timebox = given.expected_execution(seconds=1)
+        subscription = given.subscription(to_events=[self.FirstType], timelimit=1)
+        with timebox:
+            then(subscription).received_no_new_records()
+
+    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    def test_receiving_in_batches(
+        self,
+        given: Given,
+        when: When,
+        then: Then,
+    ) -> None:
+        subscription = given.batch_subscription(of_size=2, to_events=[self.FirstType])
+
+        when.stream().receives(first := self.FirstType(), self.SecondType())
+        when.stream().receives(self.ThirdType(), second := self.FirstType())
+        then(subscription).next_batch_is([any_record(first), any_record(second)])
+
+        when.stream().receives(third := self.FirstType(), fourth := self.FirstType())
+        when.stream().receives(fifth := self.FirstType(), self.SecondType())
+        then(subscription).next_batch_is([any_record(third), any_record(fourth)])
+        then(subscription).next_batch_is([any_record(fifth)])
+        then(subscription).next_batch_is_empty()
 
 
 class TestInTransactionSubscription:
