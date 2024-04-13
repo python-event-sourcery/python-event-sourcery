@@ -51,10 +51,10 @@ source = [
     "event_sourcery",
     "event_sourcery_esdb",
     "event_sourcery_sqlalchemy",
-    "event_sourcery_kombu",
 ]
 omit = [
     "event_sourcery_kombu/*",
+    "tests/*",
 ]
 
 [tool.coverage.report]
