@@ -18,9 +18,10 @@ __all__ = [
     "exceptions",
     "factory",
     "interfaces",
+    "subscription",
 ]
 
-from event_sourcery.event_store import exceptions, factory, interfaces
+from event_sourcery.event_store import exceptions, factory, interfaces, subscription
 from event_sourcery.event_store.event import (
     Entry,
     Event,
