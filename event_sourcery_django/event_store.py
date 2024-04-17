@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Sequence, cast
 
 from more_itertools import first, first_true
 
@@ -37,7 +37,25 @@ class DjangoStorageStrategy(StorageStrategy):
         if stop is not None:
             events_query = events_query.filter(version__lt=stop)
 
-        return [dto.raw_event(event, stream) for event in events_query.all()]
+        events: Sequence[models.Event | models.Snapshot]
+
+        snapshot_query = models.Snapshot.objects.filter(stream=stream).order_by(
+            "-created_at"
+        )
+        if start is not None:
+            snapshot_query = snapshot_query.filter(version__gte=start)
+        if stop is not None:
+            snapshot_query = snapshot_query.filter(version__lt=stop)
+        latest_snapshot = snapshot_query.first()
+        if latest_snapshot is None:
+            events = events_query.all()
+        else:
+            newer_events = events_query.filter(
+                version__gt=latest_snapshot.version
+            ).all()
+            events = [latest_snapshot] + list(newer_events)
+
+        return [dto.raw_event(event, stream) for event in events]
 
     def insert_events(
         self,
@@ -81,7 +99,9 @@ class DjangoStorageStrategy(StorageStrategy):
                 raise ConcurrentStreamWriteError
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
-        raise NotImplementedError
+        stream = models.Stream.objects.by_stream_id(stream_id=snapshot.stream_id).get()
+        entry = dto.snapshot(from_raw=snapshot, to_stream=stream)
+        entry.save()
 
     def delete_stream(self, stream_id: StreamId) -> None:
         models.Stream.objects.by_stream_id(stream_id=stream_id).delete()

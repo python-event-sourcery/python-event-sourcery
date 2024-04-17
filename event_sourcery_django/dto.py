@@ -1,5 +1,5 @@
 from event_sourcery.event_store import RawEvent, StreamId
-from event_sourcery_django.models import Event, Stream
+from event_sourcery_django.models import Event, Snapshot, Stream
 
 
 def raw_event(from_entry: Event, in_stream: Stream) -> RawEvent:
@@ -20,6 +20,18 @@ def raw_event(from_entry: Event, in_stream: Stream) -> RawEvent:
 
 def entry(from_raw: RawEvent, to_stream: Stream) -> Event:
     return Event(
+        uuid=from_raw.uuid,
+        created_at=from_raw.created_at,
+        name=from_raw.name,
+        data=from_raw.data,
+        event_context=from_raw.context,
+        version=from_raw.version,
+        stream=to_stream,
+    )
+
+
+def snapshot(from_raw: RawEvent, to_stream: Stream) -> Snapshot:
+    return Snapshot(
         uuid=from_raw.uuid,
         created_at=from_raw.created_at,
         name=from_raw.name,

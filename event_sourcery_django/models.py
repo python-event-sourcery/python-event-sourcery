@@ -52,3 +52,19 @@ class Event(models.Model):
                 fields=["stream", "version"], name="ix_events_stream_id_version"
             ),
         ]
+
+
+class Snapshot(models.Model):
+    objects: models.Manager
+
+    uuid = models.UUIDField(primary_key=True)
+    version = models.IntegerField()
+    stream = models.ForeignKey(
+        Stream,
+        related_name="snapshots",
+        on_delete=models.CASCADE,
+    )
+    name = models.CharField(max_length=50)
+    data = models.JSONField()
+    event_context = models.JSONField()
+    created_at = models.DateTimeField()
