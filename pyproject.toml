@@ -19,8 +19,9 @@ esdbclient = ">=1.0b3"
 kombu = {version = "*", optional = true}
 cloudevents = {version = "*", optional = true}
 more-itertools = "*"
+django = {version = ">=4,<6", optional = true}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "*"
 isort = "*"
 flake8 = "*"
@@ -30,10 +31,12 @@ pytest = "*"
 pytest-cov = "*"
 mkdocs-material = "^8.3.9"
 psycopg2-binary = "^2.9.3"
+pytest-django = {version = "*"}
 
 [tool.poetry.extras]
 kombu = ["kombu"]
 cloudevents = ["cloudevents"]
+django = ["django"]
 
 [tool.pytest]
 addopts = ""
