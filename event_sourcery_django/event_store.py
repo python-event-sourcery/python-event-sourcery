@@ -84,7 +84,7 @@ class DjangoStorageStrategy(StorageStrategy):
         raise NotImplementedError
 
     def delete_stream(self, stream_id: StreamId) -> None:
-        raise NotImplementedError
+        models.Stream.objects.by_stream_id(stream_id=stream_id).delete()
 
     @property
     def current_position(self) -> Position | None:

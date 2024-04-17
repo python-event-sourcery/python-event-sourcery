@@ -57,7 +57,6 @@ def test_different_streams_when_same_name_but_different_category(
     assert then.stream(stream_1).events != then.stream(stream_2).events
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_removes_stream_with_category(given: Given, when: When, then: Then) -> None:
     given.stream(stream_1 := StreamId(name="name", category="c1"))
     given.stream(stream_2 := StreamId(name="name", category="c2"))
