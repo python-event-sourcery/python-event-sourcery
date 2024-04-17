@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Sequence, cast
 
 from more_itertools import first, first_true
@@ -15,9 +16,13 @@ from event_sourcery.event_store.exceptions import (
 )
 from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery_django import dto, models
+from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
 
 
+@dataclass(repr=True)
 class DjangoStorageStrategy(StorageStrategy):
+    _outbox: DjangoOutboxStorageStrategy | None = None
+
     def fetch_events(
         self,
         stream_id: StreamId,
@@ -67,6 +72,8 @@ class DjangoStorageStrategy(StorageStrategy):
         event = cast(RawEvent, first(events))
         stream = models.Stream.objects.by_stream_id(stream_id=event.stream_id).get()
         models.Event.objects.bulk_create(dto.entry(event, stream) for event in events)
+        if self._outbox:
+            self._outbox.put_into_outbox(events)
 
     def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         initial_version = versioning.initial_version

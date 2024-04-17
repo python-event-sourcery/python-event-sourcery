@@ -35,19 +35,18 @@ class DjangoStoreFactory(EventStoreFactory):
 
     def build(self) -> Engine:
         from event_sourcery_django.event_store import DjangoStorageStrategy
+        from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
         from event_sourcery_django.subscription import DjangoSubscriptionStrategy
 
+        outbox = cast(DjangoOutboxStorageStrategy | None, self._outbox_strategy)
         engine = Engine()
         engine.event_store = EventStore(
-            DjangoStorageStrategy(),
-            self._outbox_strategy or NoOutboxStorageStrategy(),
+            DjangoStorageStrategy(outbox),
+            outbox or NoOutboxStorageStrategy(),
             DjangoSubscriptionStrategy(),
             self._serde,
         )
-        engine.outbox = Outbox(
-            self._outbox_strategy or NoOutboxStorageStrategy(),
-            self._serde,
-        )
+        engine.outbox = Outbox(outbox or NoOutboxStorageStrategy(), self._serde)
         engine.subscriber = cast(
             es.subscription.Positioner,
             partial(

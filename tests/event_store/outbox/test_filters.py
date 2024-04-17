@@ -22,7 +22,6 @@ def event_store(
     return engine.event_store
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_no_entries_when_everything_was_filtered(
     publisher: PublisherMock,
     event_store: EventStore,

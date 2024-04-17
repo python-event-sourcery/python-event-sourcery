@@ -68,3 +68,13 @@ class Snapshot(models.Model):
     data = models.JSONField()
     event_context = models.JSONField()
     created_at = models.DateTimeField()
+
+
+class OutboxEntry(models.Model):
+    objects: models.Manager
+
+    id = models.BigAutoField(primary_key=True)
+    created_at = models.DateTimeField()
+    data = models.JSONField()
+    stream_name = models.CharField(max_length=255, null=True, blank=True)
+    tries_left = models.IntegerField(default=3)
