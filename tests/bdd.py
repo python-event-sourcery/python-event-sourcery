@@ -118,11 +118,11 @@ class Step:
         assert to_category is None or to_events is None
         start_from = self.store.position or 0 if to is None else to
         if to_category:
-            builder = self.store.subscriber(start_from).to_category(to_category)
+            builder = self.engine.subscriber(start_from).to_category(to_category)
         elif to_events:
-            builder = self.store.subscriber(start_from).to_events(to_events)
+            builder = self.engine.subscriber(start_from).to_events(to_events)
         else:
-            builder = self.store.subscriber(start_from)
+            builder = self.engine.subscriber(start_from)
         return builder
 
     def subscription(

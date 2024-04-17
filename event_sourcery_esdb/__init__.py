@@ -12,17 +12,14 @@ from typing_extensions import Self
 
 from event_sourcery import event_store as es
 from event_sourcery.event_store import (
+    Engine,
     Event,
     EventRegistry,
     EventStore,
     EventStoreFactory,
 )
 from event_sourcery.event_store.event import Serde
-from event_sourcery.event_store.factory import (
-    Engine,
-    NoOutboxStorageStrategy,
-    no_filter,
-)
+from event_sourcery.event_store.factory import NoOutboxStorageStrategy, no_filter
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
@@ -43,8 +40,6 @@ class ESDBStoreFactory(EventStoreFactory):
         engine = Engine()
         engine.event_store = EventStore(
             storage_strategy=ESDBStorageStrategy(self.esdb_client),
-            outbox_storage_strategy=self._outbox_strategy,
-            subscription_strategy=ESDBSubscriptionStrategy(self.esdb_client),
             serde=self._serde,
         )
         engine.outbox = Outbox(self._outbox_strategy, self._serde)

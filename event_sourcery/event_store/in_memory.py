@@ -289,8 +289,6 @@ class InMemoryEventStoreFactory(EventStoreFactory):
         engine = Engine()
         engine.event_store = EventStore(
             InMemoryStorageStrategy(self._storage, self._outbox_strategy),
-            self._outbox_strategy or NoOutboxStorageStrategy(),
-            self._subscription_strategy,
             self.serde,
         )
         engine.outbox = Outbox(

@@ -10,7 +10,7 @@ class Outbox:
         self._strategy = strategy
         self._serde = serde
 
-    def run_outbox(
+    def run(
         self,
         publisher: Callable[[Metadata, StreamId], None],
         limit: int = 100,

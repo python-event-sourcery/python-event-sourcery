@@ -6,6 +6,7 @@ import pytest
 from _pytest.fixtures import SubRequest
 
 from event_sourcery.event_store import Entry, Event, EventStore, StreamId
+from event_sourcery.event_store.factory import Engine
 from event_sourcery_sqlalchemy import SQLEngine, SQLStoreFactory
 from tests.bdd import Given, Subscription, Then, When
 from tests.factories import an_event
@@ -65,11 +66,11 @@ def test_stop_iterating_after_given_timeout(given: Given, then: Then) -> None:
     ],
 )
 def test_wont_accept_timebox_shorten_than_1_second(
-    event_store: EventStore,
+    engine: Engine,
     timelimit: int | float | timedelta,
 ) -> None:
     with pytest.raises(ValueError):
-        event_store.subscriber(0).build_iter(timelimit=0.99999)
+        engine.subscriber(start_from=0).build_iter(timelimit=0.99999)
 
 
 class TestBatch:

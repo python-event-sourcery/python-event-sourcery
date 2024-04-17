@@ -10,11 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store import (
-    EventStore,
-    EventStoreFactory,
-    InMemoryEventStoreFactory,
-)
+from event_sourcery.event_store import EventStoreFactory, InMemoryEventStoreFactory
 from event_sourcery_django import DjangoStoreFactory
 from event_sourcery_esdb import ESDBStoreFactory
 from event_sourcery_sqlalchemy import SQLStoreFactory
@@ -137,8 +133,3 @@ def django_factory(transactional_db: None, request: SubRequest) -> DjangoStoreFa
 )
 def event_store_factory(request: SubRequest) -> EventStoreFactory:
     return cast(EventStoreFactory, request.getfixturevalue(request.param))
-
-
-@pytest.fixture()
-def event_store(event_store_factory: EventStoreFactory) -> EventStore:
-    return event_store_factory.build().event_store

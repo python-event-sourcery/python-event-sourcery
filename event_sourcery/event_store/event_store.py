@@ -1,15 +1,9 @@
 from functools import singledispatchmethod
-from typing import Callable, Sequence, cast
+from typing import Sequence, cast
 
 from event_sourcery.event_store.event import Event, Metadata, Position, RawEvent, Serde
-from event_sourcery.event_store.interfaces import (
-    OutboxStorageStrategy,
-    StorageStrategy,
-    SubscriptionStrategy,
-)
-from event_sourcery.event_store.outbox import Outbox
+from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery.event_store.stream_id import StreamId
-from event_sourcery.event_store.subscription import Engine, Kind
 from event_sourcery.event_store.versioning import (
     NO_VERSIONING,
     ExplicitVersioning,
@@ -18,24 +12,9 @@ from event_sourcery.event_store.versioning import (
 
 
 class EventStore:
-    def __init__(
-        self,
-        storage_strategy: StorageStrategy,
-        outbox_storage_strategy: OutboxStorageStrategy,
-        subscription_strategy: SubscriptionStrategy,
-        serde: Serde,
-    ) -> None:
+    def __init__(self, storage_strategy: StorageStrategy, serde: Serde) -> None:
         self._storage_strategy = storage_strategy
-        self._outbox = Outbox(outbox_storage_strategy, serde)
-        self._subscription_strategy = subscription_strategy
         self._serde = serde
-
-    def run_outbox(
-        self,
-        publisher: Callable[[Metadata, StreamId], None],
-        limit: int = 100,
-    ) -> None:
-        self._outbox.run_outbox(publisher, limit)
 
     def load_stream(
         self,
@@ -143,9 +122,6 @@ class EventStore:
         stream_id: StreamId,
     ) -> list[RawEvent]:
         return [self._serde.serialize(event=e, stream_id=stream_id) for e in events]
-
-    def subscriber(self, from_position: Position) -> Kind:
-        return Engine(self._subscription_strategy, self._serde, from_position)
 
     @property
     def position(self) -> Position | None:

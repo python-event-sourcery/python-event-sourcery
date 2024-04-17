@@ -49,9 +49,9 @@ class Positioner(abc.ABC):
 
 @dataclass(repr=False)
 class Engine(Kind, Builder):
+    start_from: Position
     strategy: SubscriptionStrategy
     serde: Serde
-    start_from: Position
     _build: Callable[..., Iterator[list[RecordedRaw]]] = field(init=False)
 
     def __post_init__(self) -> None:

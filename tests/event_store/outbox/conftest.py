@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery.event_store import EventStore, EventStoreFactory, Metadata
+from event_sourcery.event_store import Engine, EventStoreFactory, Metadata
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery_esdb import ESDBStoreFactory
 from event_sourcery_esdb.outbox import ESDBOutboxStorageStrategy
@@ -20,8 +20,8 @@ def esdb_factory(
 
 
 @pytest.fixture()
-def event_store(event_store_factory: EventStoreFactory) -> EventStore:
-    return event_store_factory.with_outbox().build().event_store
+def engine(event_store_factory: EventStoreFactory) -> Engine:
+    return event_store_factory.with_outbox().build()
 
 
 class PublisherMock(Mock):

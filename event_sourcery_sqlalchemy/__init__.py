@@ -15,17 +15,14 @@ from typing_extensions import Self
 
 from event_sourcery import event_store as es
 from event_sourcery.event_store import (
+    Engine,
     Event,
     EventRegistry,
     EventStore,
     EventStoreFactory,
 )
 from event_sourcery.event_store.event import Serde
-from event_sourcery.event_store.factory import (
-    Engine,
-    NoOutboxStorageStrategy,
-    no_filter,
-)
+from event_sourcery.event_store.factory import NoOutboxStorageStrategy, no_filter
 from event_sourcery.event_store.interfaces import OutboxFiltererStrategy
 from event_sourcery.event_store.outbox import Outbox
 from event_sourcery_sqlalchemy import models
@@ -53,8 +50,6 @@ class SQLStoreFactory(EventStoreFactory):
         engine = SQLEngine()
         engine.event_store = EventStore(
             SqlAlchemyStorageStrategy(self._session, self._outbox_strategy),
-            self._outbox_strategy or NoOutboxStorageStrategy(),
-            SqlAlchemySubscriptionStrategy(),
             self._serde,
         )
         engine.outbox = Outbox(
