@@ -17,7 +17,6 @@ def registry() -> EventRegistry:
     return EventRegistry()
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_can_work_with_custom_events_with_custom_registry(
     event_store_factory: EventStoreFactory,
     registry: EventRegistry,

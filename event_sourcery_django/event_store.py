@@ -1,5 +1,20 @@
-from event_sourcery.event_store import Position, RawEvent, StreamId, Versioning
+from typing import cast
+
+from more_itertools import first, first_true
+
+from event_sourcery.event_store import (
+    NO_VERSIONING,
+    Position,
+    RawEvent,
+    StreamId,
+    Versioning,
+)
+from event_sourcery.event_store.exceptions import (
+    AnotherStreamWithThisNameButOtherIdExists,
+    ConcurrentStreamWriteError,
+)
 from event_sourcery.event_store.interfaces import StorageStrategy
+from event_sourcery_django import dto, models
 
 
 class DjangoStorageStrategy(StorageStrategy):
@@ -9,7 +24,20 @@ class DjangoStorageStrategy(StorageStrategy):
         start: int | None = None,
         stop: int | None = None,
     ) -> list[RawEvent]:
-        raise NotImplementedError
+        try:
+            stream = models.Stream.objects.by_stream_id(stream_id=stream_id).get()
+        except models.Stream.DoesNotExist:
+            return []
+
+        events_query = models.Event.objects.filter(stream=stream).order_by("version")
+
+        if start is not None:
+            events_query = events_query.filter(version__gte=start)
+
+        if stop is not None:
+            events_query = events_query.filter(version__lt=stop)
+
+        return [dto.raw_event(event, stream) for event in events_query.all()]
 
     def insert_events(
         self,
@@ -17,7 +45,40 @@ class DjangoStorageStrategy(StorageStrategy):
         versioning: Versioning,
         events: list[RawEvent],
     ) -> None:
-        raise NotImplementedError
+        self._ensure_stream(stream_id=stream_id, versioning=versioning)
+        event = cast(RawEvent, first(events))
+        stream = models.Stream.objects.by_stream_id(stream_id=event.stream_id).get()
+        models.Event.objects.bulk_create(dto.entry(event, stream) for event in events)
+
+    def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
+        initial_version = versioning.initial_version
+
+        matching_streams = models.Stream.objects.by_stream_id(stream_id=stream_id).all()
+        if stream_id.name and matching_streams:
+            stream_with_same_name = first_true(
+                matching_streams, pred=lambda stream: stream.name == stream_id.name
+            )
+            if (
+                stream_with_same_name is not None
+                and stream_with_same_name.uuid != stream_id
+            ):
+                raise AnotherStreamWithThisNameButOtherIdExists()
+
+        model, created = models.Stream.objects.get_or_create(
+            uuid=stream_id,
+            name=stream_id.name,
+            category=stream_id.category or "",
+            defaults={"version": initial_version},
+        )
+
+        versioning.validate_if_compatible(model.version)
+
+        if versioning.expected_version and versioning is not NO_VERSIONING:
+            result = models.Stream.objects.filter(
+                id=model.id, version=versioning.expected_version
+            ).update(version=versioning.initial_version)
+            if result != 1:
+                raise ConcurrentStreamWriteError
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
         raise NotImplementedError

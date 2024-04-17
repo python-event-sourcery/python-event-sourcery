@@ -1,22 +1,18 @@
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
-import pytest
-
 from event_sourcery.event_store import EventStore, Metadata, StreamId
 from tests.bdd import Given, Then, When
 from tests.factories import NastyEventWithJsonUnfriendlyTypes, an_event
 from tests.matchers import any_metadata
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_save_retrieve(given: Given, when: When, then: Then) -> None:
     given.stream(stream_id := StreamId())
     when.appends(event := an_event(), to=stream_id)
     then.stream(stream_id).loads_only([event])
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_save_retrieve_multiple_times(given: Given, when: When, then: Then) -> None:
     given.stream(stream_id := StreamId())
     when.appends(event_1 := an_event(), event_2 := an_event(), to=stream_id)
@@ -24,7 +20,6 @@ def test_save_retrieve_multiple_times(given: Given, when: When, then: Then) -> N
     then.stream(stream_id).loads_only([event_1, event_2, event_3])
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_save_retrieve_part_of_stream(given: Given, then: Then) -> None:
     given.stream(stream_id := StreamId())
     given.events(
@@ -39,14 +34,12 @@ def test_save_retrieve_part_of_stream(given: Given, then: Then) -> None:
     assert loaded == [second_event, third_event, fourth_event]
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_loading_not_existing_stream_returns_empty_list(
     event_store: EventStore,
 ) -> None:
     assert event_store.load_stream(stream_id=StreamId()) == []
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_stores_retrieves_extra_contextual_metadata(
     given: Given, when: When, then: Then
 ) -> None:
@@ -59,7 +52,6 @@ def test_stores_retrieves_extra_contextual_metadata(
     then.stream(stream_id).loads_only([event])
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_is_able_to_handle_non_trivial_formats(
     given: Given,
     when: When,
@@ -81,7 +73,6 @@ def test_is_able_to_handle_non_trivial_formats(
     then.stream(stream_id).loads_only([nasty_event])
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_is_able_to_handle_events_without_metadata(
     given: Given,
     event_store: EventStore,

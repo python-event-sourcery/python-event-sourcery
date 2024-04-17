@@ -14,14 +14,12 @@ class AnEvent(Event):
     pass
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_can_append_then_load_with_named_stream(given: Given, then: Then) -> None:
     given.stream(stream_id := StreamId(name="Test #1"))
     given.event(an_event := AnEvent(), on=stream_id)
     then.stream(stream_id).loads([an_event])
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_can_append_then_load_with_named_stream_with_assigned_uuid(
     given: Given,
     then: Then,
@@ -32,7 +30,6 @@ def test_can_append_then_load_with_named_stream_with_assigned_uuid(
     then.stream(StreamId(name="Test #2")).loads([an_event])
 
 
-@pytest.mark.not_implemented(storage=["django"])
 @pytest.mark.skip_esdb(reason="ESDB can't use both ids")
 def test_lets_appending_by_both_id_and_name_then_just_name(
     given: Given,
@@ -45,7 +42,6 @@ def test_lets_appending_by_both_id_and_name_then_just_name(
     then.stream(StreamId(name="Test #3")).loads([stored_by_id, stored_by_name])
 
 
-@pytest.mark.not_implemented(storage=["django"])
 @pytest.mark.skip_in_memory(reason="InMemory can't use both ids")
 @pytest.mark.skip_esdb(reason="ESDB can't use both ids")
 def test_blocks_new_stream_uuid_with_same_name_as_other(
@@ -61,7 +57,6 @@ def test_blocks_new_stream_uuid_with_same_name_as_other(
         when.appends(AnEvent(), to=CorruptedStreamId(name="Test #4"))
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_esdb_cant_use_category_with_dash(esdb_factory: EventStoreFactory) -> None:
     when = When(esdb_factory.build())
 

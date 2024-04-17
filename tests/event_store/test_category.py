@@ -11,7 +11,6 @@ class AnEvent(Event):
     pass
 
 
-@pytest.mark.not_implemented(storage=["django"])
 @pytest.mark.parametrize(
     ["stream_id"],
     [
@@ -29,7 +28,6 @@ def test_can_append_and_load_with_category(
     then.stream(stream_id).loads_only([any_metadata(an_event)])
 
 
-@pytest.mark.not_implemented(storage=["django"])
 @pytest.mark.parametrize(
     ["stream_1", "stream_2"],
     [

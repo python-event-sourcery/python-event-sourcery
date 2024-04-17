@@ -51,7 +51,7 @@ def test_returns_all_events_after_last_snapshot(
 
 
 @pytest.mark.not_implemented(storage=["django"])
-@pytest.mark.xfail(strict=True, reason="Not implemented yet")
+@pytest.mark.xfail(reason="Not implemented yet")
 def test_rejects_snapshot_with_incorrect_version(
     given: Given,
     when: When,

@@ -11,7 +11,6 @@ def event_store(event_store_factory: EventStoreFactory) -> EventStore:
     return engine.event_store
 
 
-@pytest.mark.not_implemented(storage=["django"])
 def test_nothing_when_using_outbox_on_eventstore_without_outbox(
     publisher: PublisherMock,
     event_store: EventStore,
