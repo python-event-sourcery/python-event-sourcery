@@ -12,13 +12,13 @@ from tests.factories import an_event
 from tests.matchers import any_record
 
 
-@pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+@pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
 def test_no_events_when_none_is_provided(given: Given, then: Then) -> None:
     subscription = given.subscription(timelimit=1)
     then(subscription).received_no_new_records()
 
 
-@pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+@pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
 def test_receives_all_events(given: Given, when: When, then: Then) -> None:
     subscription = given.subscription()
 
@@ -31,7 +31,7 @@ def test_receives_all_events(given: Given, when: When, then: Then) -> None:
     then(subscription).next_received_record_is(any_record(third_event, first_stream))
 
 
-@pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+@pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
 def test_multiple_subscriptions_receives_events(
     given: Given,
     when: When,
@@ -47,7 +47,7 @@ def test_multiple_subscriptions_receives_events(
     then(subscription_2).next_received_record_is(any_record(event, stream.id))
 
 
-@pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+@pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
 def test_stop_iterating_after_given_timeout(given: Given, then: Then) -> None:
     with given.expected_execution(seconds=1):
         then.subscription(timelimit=1).received_no_new_records()
@@ -73,7 +73,7 @@ def test_wont_accept_timebox_shorten_than_1_second(
 
 
 class TestBatch:
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_receives_requested_batch_size(
         self,
         given: Given,
@@ -84,7 +84,7 @@ class TestBatch:
         when.stream().receives(first := an_event(), second := an_event(), an_event())
         then(subscription).next_batch_is([any_record(first), any_record(second)])
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_returns_smaller_batch_when_timelimit_hits(
         self,
         given: Given,
@@ -99,7 +99,7 @@ class TestBatch:
         with timebox:
             then(subscription).next_batch_is([any_record(event)])
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_subscription_continuously_awaits_for_new_events(
         self,
         given: Given,
@@ -127,7 +127,7 @@ class TestBatch:
 
 
 class TestFromPositionSubscription:
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_receives_all_events_from_selected_position(
         self,
         event_store: EventStore,
@@ -144,7 +144,7 @@ class TestFromPositionSubscription:
         then(subscription).next_received_record_is(any_record(old_event, stream.id))
         then(subscription).next_received_record_is(any_record(new_event, stream.id))
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_receives_events_after_passed_position(
         self,
         event_store: EventStore,
@@ -159,7 +159,7 @@ class TestFromPositionSubscription:
 
         then(subscription).next_received_record_is(any_record(new_event, stream.id))
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_receives_events_from_multiple_streams_after_passed_position(
         self,
         event_store: EventStore,
@@ -187,7 +187,7 @@ class TestFromPositionSubscription:
 
 
 class TestSubscriptionToCategory:
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_receives_only_events_from_selected_category(
         self,
         given: Given,
@@ -209,7 +209,7 @@ class TestSubscriptionToCategory:
             any_record(second_event, stream_in_category.id)
         )
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_receives_all_events_from_selected_category(
         self,
         given: Given,
@@ -232,7 +232,7 @@ class TestSubscriptionToCategory:
         )
         then(subscription).next_received_record_is(any_record(third_event, stream_1.id))
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_receives_events_after_passed_position(
         self,
         event_store: EventStore,
@@ -252,7 +252,7 @@ class TestSubscriptionToCategory:
 
         then(subscription).next_received_record_is(any_record(new_event, stream.id))
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_stop_iterating_after_given_timeout(
         self,
         given: Given,
@@ -263,7 +263,7 @@ class TestSubscriptionToCategory:
         with timebox:
             then(subscription).received_no_new_records()
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_receiving_in_batches(
         self,
         given: Given,
@@ -293,7 +293,7 @@ class TestSubscribeToEventTypes:
     class ThirdType(Event):
         pass
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_receives_only_events_with_subscribed_types(
         self,
         given: Given,
@@ -311,7 +311,7 @@ class TestSubscribeToEventTypes:
         then(subscription).next_received_record_is(any_record(first_event, stream_id))
         then(subscription).next_received_record_is(any_record(third_event, stream_id))
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_receives_subscribed_types_from_multiple_streams(
         self,
         given: Given,
@@ -332,7 +332,7 @@ class TestSubscribeToEventTypes:
         then(subscription).next_received_record_is(any_record(first_event, stream_1.id))
         then(subscription).next_received_record_is(any_record(last_event, stream_2.id))
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_receives_events_after_passed_position(
         self,
         event_store: EventStore,
@@ -353,14 +353,14 @@ class TestSubscribeToEventTypes:
         then(subscription).next_received_record_is(any_record(first, stream_1.id))
         then(subscription).next_received_record_is(any_record(second, stream_2.id))
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_stop_iterating_after_given_timeout(self, given: Given, then: Then) -> None:
         timebox = given.expected_execution(seconds=1)
         subscription = given.subscription(to_events=[self.FirstType], timelimit=1)
         with timebox:
             then(subscription).received_no_new_records()
 
-    @pytest.mark.not_implemented(storage=["sqlite", "postgres"])
+    @pytest.mark.not_implemented(storage=["django", "sqlite", "postgres"])
     def test_receiving_in_batches(
         self,
         given: Given,

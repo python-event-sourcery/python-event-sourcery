@@ -6,6 +6,7 @@ from tests.bdd import Given, Then, When
 from tests.factories import an_event
 
 
+@pytest.mark.not_implemented(storage=["django"])
 def test_concurrency_error(given: Given, when: When) -> None:
     given.stream(stream_id := StreamId())
 
@@ -13,6 +14,7 @@ def test_concurrency_error(given: Given, when: When) -> None:
         when.store.append(an_event(version=1), stream_id=stream_id, expected_version=10)
 
 
+@pytest.mark.not_implemented(storage=["django"])
 def test_does_not_raise_concurrency_error_if_adding_two_events_at_a_time(
     given: Given,
     then: Then,
@@ -30,6 +32,7 @@ def test_does_not_raise_concurrency_error_if_adding_two_events_at_a_time(
         pytest.fail("Should NOT raise an exception!")
 
 
+@pytest.mark.not_implemented(storage=["django"])
 def test_does_not_raise_concurrency_error_if_no_one_bumped_up_version(
     given: Given,
     then: Then,

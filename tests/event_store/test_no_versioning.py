@@ -12,6 +12,7 @@ class AnEvent(Event):
     pass
 
 
+@pytest.mark.not_implemented(storage=["django"])
 def test_versionless_stream_is_supported(given: Given, when: When, then: Then) -> None:
     given.stream(stream_id := StreamId())
     when.store.append(
@@ -27,6 +28,7 @@ def test_versionless_stream_is_supported(given: Given, when: When, then: Then) -
     then.stream(stream_id).loads([first, second])
 
 
+@pytest.mark.not_implemented(storage=["django"])
 @pytest.mark.skip_esdb(reason="ESDB is auto versioning")
 def test_does_not_allow_for_mixing_versioning_with_no_versioning(
     given: Given,
@@ -43,6 +45,7 @@ def test_does_not_allow_for_mixing_versioning_with_no_versioning(
         )
 
 
+@pytest.mark.not_implemented(storage=["django"])
 @pytest.mark.skip_esdb(reason="ESDB is auto versioning")
 def test_does_not_allow_for_mixing_no_versioning_with_versioning(
     given: Given,

@@ -5,6 +5,7 @@ from tests.bdd import Given, Then, When
 from tests.factories import a_snapshot, an_event
 
 
+@pytest.mark.not_implemented(storage=["django"])
 def test_handles_snapshots(given: Given, when: When, then: Then) -> None:
     given.stream(stream_id := StreamId())
     given.events(an_event(), an_event(), an_event(), on=stream_id)
@@ -14,6 +15,7 @@ def test_handles_snapshots(given: Given, when: When, then: Then) -> None:
     then.stream(stream_id).loads_only([snapshot])
 
 
+@pytest.mark.not_implemented(storage=["django"])
 def test_handles_multiple_snapshots(given: Given, when: When, then: Then) -> None:
     given.stream(stream_id := StreamId())
     given.event(an_event(), on=stream_id)
@@ -25,6 +27,7 @@ def test_handles_multiple_snapshots(given: Given, when: When, then: Then) -> Non
     then.stream(stream_id).loads_only([latest_snapshot])
 
 
+@pytest.mark.not_implemented(storage=["django"])
 def test_returns_all_events_after_last_snapshot(
     given: Given,
     when: When,
@@ -47,6 +50,7 @@ def test_returns_all_events_after_last_snapshot(
     )
 
 
+@pytest.mark.not_implemented(storage=["django"])
 @pytest.mark.xfail(strict=True, reason="Not implemented yet")
 def test_rejects_snapshot_with_incorrect_version(
     given: Given,
