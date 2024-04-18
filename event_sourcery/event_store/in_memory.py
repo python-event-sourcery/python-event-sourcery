@@ -3,13 +3,19 @@ from contextlib import contextmanager
 from copy import copy
 from dataclasses import dataclass, field
 from datetime import timedelta
-from functools import partial
 from operator import getitem
-from typing import ContextManager, Dict, Generator, Iterator, cast
+from types import TracebackType
+from typing import ContextManager, Dict, Generator, Iterator, Type
 
 from typing_extensions import Self
 
-from event_sourcery.event_store import Event, EventRegistry, EventStore, subscription
+from event_sourcery.event_store import (
+    Entry,
+    Event,
+    EventRegistry,
+    EventStore,
+    subscription,
+)
 from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw, Serde
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.factory import (
@@ -274,6 +280,25 @@ class InMemoryStorageStrategy(StorageStrategy):
         return current_position and Position(current_position)
 
 
+class InMemoryInTransactionSubscription(
+    ContextManager[Iterator[Entry]],
+    Iterator[Entry],
+):
+    def __enter__(self) -> Iterator[Entry]:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        pass
+
+    def __next__(self) -> Entry:
+        raise NotImplementedError
+
+
 @dataclass(repr=False)
 class InMemoryEventStoreFactory(EventStoreFactory):
     serde = Serde(Event.__registry__)
@@ -295,13 +320,10 @@ class InMemoryEventStoreFactory(EventStoreFactory):
             self._outbox_strategy or NoOutboxStorageStrategy(),
             self.serde,
         )
-        engine.subscriber = cast(
-            subscription.Positioner,
-            partial(
-                subscription.Engine,
-                strategy=self._subscription_strategy,
-                serde=self.serde,
-            ),
+        engine.subscriber = subscription.Engine(
+            _serde=self.serde,
+            _strategy=self._subscription_strategy,
+            in_transaction=InMemoryInTransactionSubscription(),
         )
         return engine
 

@@ -1,5 +1,6 @@
 from datetime import timedelta
-from typing import Iterator
+from types import TracebackType
+from typing import ContextManager, Iterator, Type
 
 from sqlalchemy import Connection, event
 from sqlalchemy.orm import Mapper
@@ -46,21 +47,29 @@ class SqlAlchemySubscriptionStrategy(SubscriptionStrategy):
         raise NotImplementedError
 
 
-class InTransactionSubscription(Iterator[Entry]):
+class InTransactionSubscription(ContextManager[Iterator[Entry]]):
     def __init__(self, serde: Serde) -> None:
         self._serde = serde
         self._events: list[Entry] = []
-        event.listen(models.Event, "before_insert", self.append)
 
-    def close(self) -> None:
-        event.remove(models.Event, "before_insert", self.append)
+    def __enter__(self) -> Iterator[Entry]:
+        event.listen(models.Event, "before_insert", self._append)
+        return self.iter()
 
-    def __next__(self) -> Entry:
-        if not self._events:
-            raise StopIteration
-        return self._events.pop(0)
+    def __exit__(
+        self,
+        exc_type: Type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        event.remove(models.Event, "before_insert", self._append)
+        self._events = []
 
-    def append(self, mapper: Mapper, conn: Connection, model: models.Event) -> None:
+    def iter(self) -> Iterator[Entry]:
+        while self._events:
+            yield self._events.pop(0)
+
+    def _append(self, mapper: Mapper, conn: Connection, model: models.Event) -> None:
         raw = RawEvent(
             uuid=model.uuid,
             stream_id=model.stream_id,

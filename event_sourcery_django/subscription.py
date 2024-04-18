@@ -1,7 +1,8 @@
 from datetime import timedelta
-from typing import Iterator
+from types import TracebackType
+from typing import ContextManager, Iterator, Type
 
-from event_sourcery.event_store import Position, RecordedRaw
+from event_sourcery.event_store import Entry, Position, RecordedRaw
 from event_sourcery.event_store.interfaces import SubscriptionStrategy
 
 
@@ -30,4 +31,20 @@ class DjangoSubscriptionStrategy(SubscriptionStrategy):
         timelimit: timedelta,
         events: list[str],
     ) -> Iterator[list[RecordedRaw]]:
+        raise NotImplementedError
+
+
+class DjangoInTransactionSubscription(ContextManager[Iterator[Entry]], Iterator[Entry]):
+    def __enter__(self) -> Iterator[Entry]:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        pass
+
+    def __next__(self) -> Entry:
         raise NotImplementedError

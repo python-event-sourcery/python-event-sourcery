@@ -3,7 +3,6 @@ __all__ = [
 ]
 
 from dataclasses import dataclass
-from functools import partial
 from typing import cast
 
 from typing_extensions import Self
@@ -36,19 +35,19 @@ class DjangoStoreFactory(EventStoreFactory):
     def build(self) -> Engine:
         from event_sourcery_django.event_store import DjangoStorageStrategy
         from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
-        from event_sourcery_django.subscription import DjangoSubscriptionStrategy
+        from event_sourcery_django.subscription import (
+            DjangoInTransactionSubscription,
+            DjangoSubscriptionStrategy,
+        )
 
         outbox = cast(DjangoOutboxStorageStrategy | None, self._outbox_strategy)
         engine = Engine()
         engine.event_store = EventStore(DjangoStorageStrategy(outbox), self._serde)
         engine.outbox = Outbox(outbox or NoOutboxStorageStrategy(), self._serde)
-        engine.subscriber = cast(
-            es.subscription.Positioner,
-            partial(
-                es.subscription.Engine,
-                strategy=DjangoSubscriptionStrategy(),
-                serde=self._serde,
-            ),
+        engine.subscriber = es.subscription.Engine(
+            _serde=self._serde,
+            _strategy=DjangoSubscriptionStrategy(),
+            in_transaction=DjangoInTransactionSubscription(),
         )
         engine.serde = self._serde
         return engine

@@ -1,13 +1,11 @@
 from datetime import timedelta
-from typing import Iterator, cast
+from typing import Iterator
 from unittest.mock import ANY
 
 import pytest
-from _pytest.fixtures import SubRequest
 
 from event_sourcery.event_store import Entry, Event, EventStore, StreamId
 from event_sourcery.event_store.factory import Engine
-from event_sourcery_sqlalchemy import SQLEngine, SQLStoreFactory
 from tests.bdd import Given, Subscription, Then, When
 from tests.factories import an_event
 from tests.matchers import any_record
@@ -70,7 +68,7 @@ def test_wont_accept_timebox_shorten_than_1_second(
     timelimit: int | float | timedelta,
 ) -> None:
     with pytest.raises(ValueError):
-        engine.subscriber(start_from=0).build_iter(timelimit=0.99999)
+        engine.subscriber.start_from(0).build_iter(timelimit=0.99999)
 
 
 class TestBatch:
@@ -381,11 +379,9 @@ class TestSubscribeToEventTypes:
         then(subscription).next_batch_is_empty()
 
 
+@pytest.mark.skip_esdb(reason="ESDB don't have transactions")
+@pytest.mark.not_implemented(storage=["django", "in_memory"])
 class TestInTransactionSubscription:
-    @pytest.fixture(autouse=True)
-    def setup(self, engine: SQLEngine) -> None:
-        self.engine = engine
-
     def test_receive_all_events(
         self,
         subscription: Subscription,
@@ -446,11 +442,6 @@ class TestInTransactionSubscription:
         then(subscription).received_no_new_records()
 
     @pytest.fixture()
-    def subscription(self) -> Iterator[Subscription]:
-        in_transaction = self.engine.subscribe_in_transaction()
-        yield Subscription(in_transaction)
-        in_transaction.close()
-
-    @pytest.fixture(params=["sqlite_factory", "postgres_factory"])
-    def event_store_factory(self, request: SubRequest) -> SQLStoreFactory:
-        return cast(SQLStoreFactory, request.getfixturevalue(request.param))
+    def subscription(self, engine: Engine) -> Iterator[Subscription]:
+        with engine.subscriber.in_transaction as in_transaction:
+            yield Subscription(in_transaction)

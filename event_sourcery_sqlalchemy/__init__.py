@@ -3,12 +3,9 @@ __all__ = [
     "models",
     "SqlAlchemyStorageStrategy",
     "SQLStoreFactory",
-    "SQLEngine",
 ]
 
 from dataclasses import dataclass
-from functools import partial
-from typing import cast
 
 from sqlalchemy.orm import Session
 from typing_extensions import Self
@@ -35,19 +32,14 @@ from event_sourcery_sqlalchemy.subscription import (
 )
 
 
-class SQLEngine(Engine):
-    def subscribe_in_transaction(self) -> InTransactionSubscription:
-        return InTransactionSubscription(self.serde)
-
-
 @dataclass(repr=False)
 class SQLStoreFactory(EventStoreFactory):
     _session: Session
     _serde: Serde = Serde(Event.__registry__)
     _outbox_strategy: SqlAlchemyOutboxStorageStrategy | None = None
 
-    def build(self) -> SQLEngine:
-        engine = SQLEngine()
+    def build(self) -> Engine:
+        engine = Engine()
         engine.event_store = EventStore(
             SqlAlchemyStorageStrategy(self._session, self._outbox_strategy),
             self._serde,
@@ -56,13 +48,10 @@ class SQLStoreFactory(EventStoreFactory):
             self._outbox_strategy or NoOutboxStorageStrategy(),
             self._serde,
         )
-        engine.subscriber = cast(
-            es.subscription.Positioner,
-            partial(
-                es.subscription.Engine,
-                strategy=SqlAlchemySubscriptionStrategy(),
-                serde=self._serde,
-            ),
+        engine.subscriber = es.subscription.Engine(
+            _serde=self._serde,
+            _strategy=SqlAlchemySubscriptionStrategy(),
+            in_transaction=InTransactionSubscription(self._serde),
         )
         engine.serde = self._serde
         return engine

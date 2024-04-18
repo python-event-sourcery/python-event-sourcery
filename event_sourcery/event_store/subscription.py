@@ -1,10 +1,13 @@
 import abc
+import contextlib
+import sys
 from dataclasses import dataclass, field
 from datetime import timedelta
 from functools import partial
-from typing import Callable, Iterator, Type, TypeAlias
+from typing import Callable, ContextManager, Iterator, Type, TypeAlias
 
 from event_sourcery.event_store.event import (
+    Entry,
     Event,
     Position,
     Recorded,
@@ -31,7 +34,7 @@ class Builder(abc.ABC):
         ...
 
 
-class Kind(Builder):
+class Filter(Builder):
     @abc.abstractmethod
     def to_category(self, category: Category) -> Builder:
         ...
@@ -41,38 +44,43 @@ class Kind(Builder):
         ...
 
 
-class Positioner(abc.ABC):
+class Subscriber(abc.ABC):
+    in_transaction: ContextManager[Iterator[Entry]]
+
     @abc.abstractmethod
-    def __call__(self, start_from: Position) -> Kind:
+    def start_from(self, position: Position) -> Filter:
         ...
 
 
 @dataclass(repr=False)
-class Engine(Kind, Builder):
-    start_from: Position
-    strategy: SubscriptionStrategy
-    serde: Serde
+class Engine(Subscriber, Filter, Builder):
+    _serde: Serde
+    _strategy: SubscriptionStrategy
+    _position: Position = field(init=False, default=sys.maxsize)
     _build: Callable[..., Iterator[list[RecordedRaw]]] = field(init=False)
+    in_transaction: ContextManager[Iterator[Entry]] = contextlib.nullcontext(iter([]))
 
     def __post_init__(self) -> None:
-        self._build = partial(
-            self.strategy.subscribe_to_all,
-            start_from=self.start_from,
-        )
+        self._build = partial(self._strategy.subscribe_to_all)
+
+    def start_from(self, position: Position) -> Filter:
+        self._build = partial(self._build, start_from=position)
+        self._position = position
+        return self
 
     def to_category(self, category: Category) -> Builder:
         self._build = partial(
-            self.strategy.subscribe_to_category,
-            start_from=self.start_from,
+            self._strategy.subscribe_to_category,
+            start_from=self._position,
             category=category,
         )
         return self
 
     def to_events(self, events: list[Type[Event]]) -> Builder:
         self._build = partial(
-            self.strategy.subscribe_to_events,
-            start_from=self.start_from,
-            events=[self.serde.registry.name_for_type(event) for event in events],
+            self._strategy.subscribe_to_events,
+            start_from=self._position,
+            events=[self._serde.registry.name_for_type(event) for event in events],
         )
         return self
 
@@ -100,7 +108,7 @@ class Engine(Kind, Builder):
     ) -> Iterator[Recorded | None]:
         while True:
             batch = next(subscription)
-            yield self.serde.deserialize_record(batch[0]) if batch else None
+            yield self._serde.deserialize_record(batch[0]) if batch else None
 
     def build_batch(
         self,
@@ -110,5 +118,5 @@ class Engine(Kind, Builder):
         seconds = self._to_timedelta(timelimit)
         subscription = self._build(batch_size=size, timelimit=seconds)
         return (
-            [self.serde.deserialize_record(e) for e in batch] for batch in subscription
+            [self._serde.deserialize_record(e) for e in batch] for batch in subscription
         )

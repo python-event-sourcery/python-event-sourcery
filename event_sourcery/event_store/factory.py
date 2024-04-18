@@ -26,7 +26,7 @@ class Engine:
     serde: Serde
     event_store: EventStore
     outbox: Outbox
-    subscriber: subscription.Positioner
+    subscriber: subscription.Subscriber
 
 
 class EventStoreFactory(abc.ABC):

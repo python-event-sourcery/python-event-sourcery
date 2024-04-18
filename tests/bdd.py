@@ -11,7 +11,7 @@ from typing_extensions import Self
 from event_sourcery import event_store as es
 from event_sourcery.event_store import Event, Position, Recorded
 from event_sourcery.event_store.factory import Engine
-from event_sourcery.event_store.subscription import Builder
+from event_sourcery.event_store.subscription import Builder, Subscriber
 from tests.matchers import any_metadata
 
 
@@ -106,6 +106,10 @@ class Step:
     def store(self) -> es.EventStore:
         return self.engine.event_store
 
+    @property
+    def subscriber(self) -> Subscriber:
+        return self.engine.subscriber
+
     def __call__(self, value: T) -> T:
         return value
 
@@ -118,11 +122,11 @@ class Step:
         assert to_category is None or to_events is None
         start_from = self.store.position or 0 if to is None else to
         if to_category:
-            builder = self.engine.subscriber(start_from).to_category(to_category)
+            builder = self.subscriber.start_from(start_from).to_category(to_category)
         elif to_events:
-            builder = self.engine.subscriber(start_from).to_events(to_events)
+            builder = self.subscriber.start_from(start_from).to_events(to_events)
         else:
-            builder = self.engine.subscriber(start_from)
+            builder = self.subscriber.start_from(start_from)
         return builder
 
     def subscription(

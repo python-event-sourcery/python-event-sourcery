@@ -4,8 +4,6 @@ __all__ = [
 ]
 
 from dataclasses import dataclass
-from functools import partial
-from typing import cast
 
 from esdbclient import EventStoreDBClient
 from typing_extensions import Self
@@ -43,13 +41,9 @@ class ESDBStoreFactory(EventStoreFactory):
             serde=self._serde,
         )
         engine.outbox = Outbox(self._outbox_strategy, self._serde)
-        engine.subscriber = cast(
-            es.subscription.Positioner,
-            partial(
-                es.subscription.Engine,
-                strategy=ESDBSubscriptionStrategy(self.esdb_client),
-                serde=self._serde,
-            ),
+        engine.subscriber = es.subscription.Engine(
+            _serde=self._serde,
+            _strategy=ESDBSubscriptionStrategy(self.esdb_client),
         )
         engine.serde = self._serde
         return engine
