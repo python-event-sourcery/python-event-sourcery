@@ -280,12 +280,15 @@ class InMemoryStorageStrategy(StorageStrategy):
         return current_position and Position(current_position)
 
 
-class InMemoryInTransactionSubscription(
-    ContextManager[Iterator[Entry]],
-    Iterator[Entry],
-):
+@dataclass(repr=False)
+class InMemoryInTransactionSubscription(ContextManager[Iterator[Entry]]):
+    _storage: Storage
+    _serde: Serde
+    _current_position = 0
+
     def __enter__(self) -> Iterator[Entry]:
-        return self
+        self._current_position = self._storage.current_position
+        return self.iter()
 
     def __exit__(
         self,
@@ -295,8 +298,11 @@ class InMemoryInTransactionSubscription(
     ) -> None:
         pass
 
-    def __next__(self) -> Entry:
-        raise NotImplementedError
+    def iter(self) -> Iterator[Entry]:
+        while self._storage.current_position > self._current_position:
+            raw = self._storage.events[self._current_position]
+            self._current_position += 1
+            yield Entry(metadata=self._serde.deserialize(raw), stream_id=raw.stream_id)
 
 
 @dataclass(repr=False)
@@ -323,7 +329,10 @@ class InMemoryEventStoreFactory(EventStoreFactory):
         engine.subscriber = subscription.Engine(
             _serde=self.serde,
             _strategy=self._subscription_strategy,
-            in_transaction=InMemoryInTransactionSubscription(),
+            in_transaction=InMemoryInTransactionSubscription(
+                self._storage,
+                self.serde,
+            ),
         )
         return engine
 
