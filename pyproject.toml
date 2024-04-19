@@ -47,7 +47,7 @@ markers = [
     "skip_esdb: skip features not supported by esdb or our implementation on top of it",
     "skip_in_memory: skip features not supported by in-memory event store",
 ]
-DJANGO_SETTINGS_MODULE = "tests.event_store.django_settings"
+DJANGO_SETTINGS_MODULE = "tests.backend.django"
 
 [tool.coverage.run]
 branch = true

@@ -6,8 +6,8 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    from tests.event_store import django_settings
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", django_settings.__name__)
+    from tests.backend import django as django_backend
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", django_backend.__name__)
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
