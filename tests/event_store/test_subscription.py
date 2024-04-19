@@ -380,7 +380,6 @@ class TestSubscribeToEventTypes:
 
 
 @pytest.mark.skip_esdb(reason="ESDB don't have transactions")
-@pytest.mark.not_implemented(storage=["django"])
 class TestInTransactionSubscription:
     def test_receive_all_events(
         self,

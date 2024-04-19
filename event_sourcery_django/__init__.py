@@ -47,7 +47,7 @@ class DjangoStoreFactory(EventStoreFactory):
         engine.subscriber = es.subscription.Engine(
             _serde=self._serde,
             _strategy=DjangoSubscriptionStrategy(),
-            in_transaction=DjangoInTransactionSubscription(),
+            in_transaction=DjangoInTransactionSubscription(self._serde),
         )
         engine.serde = self._serde
         return engine
