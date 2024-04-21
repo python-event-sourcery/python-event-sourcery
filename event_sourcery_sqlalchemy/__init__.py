@@ -2,30 +2,24 @@ __all__ = [
     "configure_models",
     "models",
     "SqlAlchemyStorageStrategy",
-    "SQLStoreFactory",
-    "SQLEngine",
+    "SQLAlchemyBackendFactory",
 ]
 
 from dataclasses import dataclass
-from functools import partial
-from typing import cast
 
 from sqlalchemy.orm import Session
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
 from event_sourcery.event_store import (
+    Backend,
+    BackendFactory,
     Event,
     EventRegistry,
     EventStore,
-    EventStoreFactory,
 )
 from event_sourcery.event_store.event import Serde
-from event_sourcery.event_store.factory import (
-    Engine,
-    NoOutboxStorageStrategy,
-    no_filter,
-)
+from event_sourcery.event_store.factory import NoOutboxStorageStrategy, no_filter
 from event_sourcery.event_store.interfaces import OutboxFiltererStrategy
 from event_sourcery.event_store.outbox import Outbox
 from event_sourcery_sqlalchemy import models
@@ -38,39 +32,29 @@ from event_sourcery_sqlalchemy.subscription import (
 )
 
 
-class SQLEngine(Engine):
-    def subscribe_in_transaction(self) -> InTransactionSubscription:
-        return InTransactionSubscription(self.serde)
-
-
 @dataclass(repr=False)
-class SQLStoreFactory(EventStoreFactory):
+class SQLAlchemyBackendFactory(BackendFactory):
     _session: Session
     _serde: Serde = Serde(Event.__registry__)
     _outbox_strategy: SqlAlchemyOutboxStorageStrategy | None = None
 
-    def build(self) -> SQLEngine:
-        engine = SQLEngine()
-        engine.event_store = EventStore(
+    def build(self) -> Backend:
+        backend = Backend()
+        backend.event_store = EventStore(
             SqlAlchemyStorageStrategy(self._session, self._outbox_strategy),
-            self._outbox_strategy or NoOutboxStorageStrategy(),
-            SqlAlchemySubscriptionStrategy(),
             self._serde,
         )
-        engine.outbox = Outbox(
+        backend.outbox = Outbox(
             self._outbox_strategy or NoOutboxStorageStrategy(),
             self._serde,
         )
-        engine.subscriber = cast(
-            es.subscription.Positioner,
-            partial(
-                es.subscription.Engine,
-                strategy=SqlAlchemySubscriptionStrategy(),
-                serde=self._serde,
-            ),
+        backend.subscriber = es.subscription.SubscriptionBuilder(
+            _serde=self._serde,
+            _strategy=SqlAlchemySubscriptionStrategy(),
+            in_transaction=InTransactionSubscription(self._serde),
         )
-        engine.serde = self._serde
-        return engine
+        backend.serde = self._serde
+        return backend
 
     def with_event_registry(self, event_registry: EventRegistry) -> Self:
         self._serde = Serde(event_registry)

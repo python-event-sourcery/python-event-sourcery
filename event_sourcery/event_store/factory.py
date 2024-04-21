@@ -22,16 +22,16 @@ class NoOutboxStorageStrategy(OutboxStorageStrategy):
         return iter([])
 
 
-class Engine:
+class Backend:
     serde: Serde
     event_store: EventStore
     outbox: Outbox
-    subscriber: subscription.Positioner
+    subscriber: subscription.PositionPhase
 
 
-class EventStoreFactory(abc.ABC):
+class BackendFactory(abc.ABC):
     @abc.abstractmethod
-    def build(self) -> Engine:
+    def build(self) -> Backend:
         pass
 
     @abc.abstractmethod

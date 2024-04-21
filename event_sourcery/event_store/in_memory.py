@@ -3,18 +3,24 @@ from contextlib import contextmanager
 from copy import copy
 from dataclasses import dataclass, field
 from datetime import timedelta
-from functools import partial
 from operator import getitem
-from typing import ContextManager, Dict, Generator, Iterator, cast
+from types import TracebackType
+from typing import ContextManager, Dict, Generator, Iterator, Type
 
 from typing_extensions import Self
 
-from event_sourcery.event_store import Event, EventRegistry, EventStore, subscription
+from event_sourcery.event_store import (
+    Entry,
+    Event,
+    EventRegistry,
+    EventStore,
+    subscription,
+)
 from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw, Serde
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.factory import (
-    Engine,
-    EventStoreFactory,
+    Backend,
+    BackendFactory,
     NoOutboxStorageStrategy,
     no_filter,
 )
@@ -275,7 +281,32 @@ class InMemoryStorageStrategy(StorageStrategy):
 
 
 @dataclass(repr=False)
-class InMemoryEventStoreFactory(EventStoreFactory):
+class InMemoryInTransactionSubscription(ContextManager[Iterator[Entry]]):
+    _storage: Storage
+    _serde: Serde
+    _current_position = 0
+
+    def __enter__(self) -> Iterator[Entry]:
+        self._current_position = self._storage.current_position
+        return self.iter()
+
+    def __exit__(
+        self,
+        exc_type: Type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        pass
+
+    def iter(self) -> Iterator[Entry]:
+        while self._storage.current_position > self._current_position:
+            raw = self._storage.events[self._current_position]
+            self._current_position += 1
+            yield Entry(metadata=self._serde.deserialize(raw), stream_id=raw.stream_id)
+
+
+@dataclass(repr=False)
+class InMemoryBackendFactory(BackendFactory):
     serde = Serde(Event.__registry__)
 
     _storage: Storage = field(default_factory=Storage)
@@ -285,27 +316,25 @@ class InMemoryEventStoreFactory(EventStoreFactory):
     def __post_init__(self) -> None:
         self._subscription_strategy = InMemorySubscriptionStrategy(self._storage)
 
-    def build(self) -> Engine:
-        engine = Engine()
-        engine.event_store = EventStore(
+    def build(self) -> Backend:
+        backend = Backend()
+        backend.event_store = EventStore(
             InMemoryStorageStrategy(self._storage, self._outbox_strategy),
-            self._outbox_strategy or NoOutboxStorageStrategy(),
-            self._subscription_strategy,
             self.serde,
         )
-        engine.outbox = Outbox(
+        backend.outbox = Outbox(
             self._outbox_strategy or NoOutboxStorageStrategy(),
             self.serde,
         )
-        engine.subscriber = cast(
-            subscription.Positioner,
-            partial(
-                subscription.Engine,
-                strategy=self._subscription_strategy,
-                serde=self.serde,
+        backend.subscriber = subscription.SubscriptionBuilder(
+            _serde=self.serde,
+            _strategy=self._subscription_strategy,
+            in_transaction=InMemoryInTransactionSubscription(
+                self._storage,
+                self.serde,
             ),
         )
-        return engine
+        return backend
 
     def with_event_registry(self, event_registry: EventRegistry) -> Self:
         self.serde = Serde(event_registry)

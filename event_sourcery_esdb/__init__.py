@@ -1,28 +1,23 @@
 __all__ = [
-    "ESDBStoreFactory",
+    "ESDBBackendFactory",
     "ESDBStorageStrategy",
 ]
 
 from dataclasses import dataclass
-from functools import partial
-from typing import cast
 
 from esdbclient import EventStoreDBClient
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
 from event_sourcery.event_store import (
+    Backend,
+    BackendFactory,
     Event,
     EventRegistry,
     EventStore,
-    EventStoreFactory,
 )
 from event_sourcery.event_store.event import Serde
-from event_sourcery.event_store.factory import (
-    Engine,
-    NoOutboxStorageStrategy,
-    no_filter,
-)
+from event_sourcery.event_store.factory import NoOutboxStorageStrategy, no_filter
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
@@ -34,30 +29,24 @@ from event_sourcery_esdb.subscription import ESDBSubscriptionStrategy
 
 
 @dataclass(repr=False)
-class ESDBStoreFactory(EventStoreFactory):
+class ESDBBackendFactory(BackendFactory):
     esdb_client: EventStoreDBClient
     _serde: Serde = Serde(Event.__registry__)
     _outbox_strategy: OutboxStorageStrategy = NoOutboxStorageStrategy()
 
-    def build(self) -> Engine:
-        engine = Engine()
-        engine.event_store = EventStore(
+    def build(self) -> Backend:
+        backend = Backend()
+        backend.event_store = EventStore(
             storage_strategy=ESDBStorageStrategy(self.esdb_client),
-            outbox_storage_strategy=self._outbox_strategy,
-            subscription_strategy=ESDBSubscriptionStrategy(self.esdb_client),
             serde=self._serde,
         )
-        engine.outbox = Outbox(self._outbox_strategy, self._serde)
-        engine.subscriber = cast(
-            es.subscription.Positioner,
-            partial(
-                es.subscription.Engine,
-                strategy=ESDBSubscriptionStrategy(self.esdb_client),
-                serde=self._serde,
-            ),
+        backend.outbox = Outbox(self._outbox_strategy, self._serde)
+        backend.subscriber = es.subscription.SubscriptionBuilder(
+            _serde=self._serde,
+            _strategy=ESDBSubscriptionStrategy(self.esdb_client),
         )
-        engine.serde = self._serde
-        return engine
+        backend.serde = self._serde
+        return backend
 
     def with_event_registry(self, event_registry: EventRegistry) -> Self:
         self._serde = Serde(event_registry)

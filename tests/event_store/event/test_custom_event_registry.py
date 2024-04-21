@@ -4,12 +4,7 @@ from uuid import uuid4
 import pytest
 from pydantic import BaseModel
 
-from event_sourcery.event_store import (
-    EventRegistry,
-    EventStoreFactory,
-    Metadata,
-    StreamId,
-)
+from event_sourcery.event_store import BackendFactory, EventRegistry, Metadata, StreamId
 
 
 @pytest.fixture()
@@ -18,7 +13,7 @@ def registry() -> EventRegistry:
 
 
 def test_can_work_with_custom_events_with_custom_registry(
-    event_store_factory: EventStoreFactory,
+    event_store_factory: BackendFactory,
     registry: EventRegistry,
 ) -> None:
     @registry.add  # type: ignore

@@ -1,20 +1,19 @@
 from contextlib import contextmanager
 from typing import Iterator, cast
 
+import django
 import pytest
 from _pytest.fixtures import SubRequest
+from django.core.management import call_command as django_command
 from esdbclient import EventStoreDBClient, StreamState
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store import (
-    EventStore,
-    EventStoreFactory,
-    InMemoryEventStoreFactory,
-)
-from event_sourcery_esdb import ESDBStoreFactory
-from event_sourcery_sqlalchemy import SQLStoreFactory
+from event_sourcery.event_store import BackendFactory, InMemoryBackendFactory
+from event_sourcery_django import DjangoBackendFactory
+from event_sourcery_esdb import ESDBBackendFactory
+from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
 from tests.conftest import DeclarativeBase
 from tests.mark import xfail_if_not_implemented_yet
 
@@ -49,8 +48,8 @@ def sqlite_session(
 @pytest.fixture()
 def sqlite_factory(
     sqlite_session: Session,
-) -> SQLStoreFactory:
-    return SQLStoreFactory(sqlite_session)
+) -> SQLAlchemyBackendFactory:
+    return SQLAlchemyBackendFactory(sqlite_session)
 
 
 @pytest.fixture()
@@ -66,8 +65,8 @@ def postgres_session(
 @pytest.fixture()
 def postgres_factory(
     postgres_session: Session,
-) -> SQLStoreFactory:
-    return SQLStoreFactory(postgres_session)
+) -> SQLAlchemyBackendFactory:
+    return SQLAlchemyBackendFactory(postgres_session)
 
 
 @pytest.fixture()
@@ -89,25 +88,38 @@ def esdb() -> Iterator[EventStoreDBClient]:
 def esdb_factory(
     request: pytest.FixtureRequest,
     esdb: EventStoreDBClient,
-) -> ESDBStoreFactory:
+) -> ESDBBackendFactory:
     skip_esdb = request.node.get_closest_marker("skip_esdb")
     if skip_esdb:
         reason = skip_esdb.kwargs.get("reason", "")
         pytest.skip(f"Skipping ESDB tests: {reason}")
 
     xfail_if_not_implemented_yet(request, "esdb")
-    return ESDBStoreFactory(esdb)
+    return ESDBBackendFactory(esdb)
 
 
 @pytest.fixture()
-def in_memory_factory(request: pytest.FixtureRequest) -> EventStoreFactory:
+def in_memory_factory(request: pytest.FixtureRequest) -> BackendFactory:
     skip_in_memory = request.node.get_closest_marker("skip_in_memory")
     if skip_in_memory:
         reason = skip_in_memory.kwargs.get("reason", "")
         pytest.skip(f"Skipping InMemory tests: {reason}")
 
     xfail_if_not_implemented_yet(request, "in_memory")
-    return InMemoryEventStoreFactory()
+    return InMemoryBackendFactory()
+
+
+@pytest.fixture()
+def django_factory(transactional_db: None, request: SubRequest) -> DjangoBackendFactory:
+    django.setup()
+    django_command("migrate")
+    skip_django = request.node.get_closest_marker("skip_django")
+    if skip_django:
+        reason = skip_django.kwargs.get("reason", "")
+        pytest.skip(f"Skipping Django tests: {reason}")
+
+    xfail_if_not_implemented_yet(request, "django")
+    return DjangoBackendFactory()
 
 
 @pytest.fixture(
@@ -116,12 +128,8 @@ def in_memory_factory(request: pytest.FixtureRequest) -> EventStoreFactory:
         "esdb_factory",
         "sqlite_factory",
         "postgres_factory",
+        "django_factory",
     ]
 )
-def event_store_factory(request: SubRequest) -> EventStoreFactory:
-    return cast(EventStoreFactory, request.getfixturevalue(request.param))
-
-
-@pytest.fixture()
-def event_store(event_store_factory: EventStoreFactory) -> EventStore:
-    return event_store_factory.build().event_store
+def event_store_factory(request: SubRequest) -> BackendFactory:
+    return cast(BackendFactory, request.getfixturevalue(request.param))

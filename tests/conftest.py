@@ -4,11 +4,11 @@ import pytest
 from sqlalchemy import MetaData
 
 from event_sourcery.event_store import (
+    BackendFactory,
     EventStore,
-    EventStoreFactory,
-    InMemoryEventStoreFactory,
+    InMemoryBackendFactory,
 )
-from event_sourcery.event_store.factory import Engine
+from event_sourcery.event_store.factory import Backend
 from tests import bdd
 
 
@@ -32,30 +32,30 @@ def declarative_base() -> DeclarativeBase:
 
 
 @pytest.fixture()
-def event_store_factory() -> EventStoreFactory:
-    return InMemoryEventStoreFactory()
+def event_store_factory() -> BackendFactory:
+    return InMemoryBackendFactory()
 
 
 @pytest.fixture()
-def engine(event_store_factory: EventStoreFactory) -> Engine:
+def backend(event_store_factory: BackendFactory) -> Backend:
     return event_store_factory.build()
 
 
 @pytest.fixture()
-def event_store(engine: Engine) -> EventStore:
-    return engine.event_store
+def event_store(backend: Backend) -> EventStore:
+    return backend.event_store
 
 
 @pytest.fixture()
-def given(engine: Engine) -> bdd.Given:
-    return bdd.Given(engine)
+def given(backend: Backend) -> bdd.Given:
+    return bdd.Given(backend)
 
 
 @pytest.fixture()
-def when(engine: Engine) -> bdd.When:
-    return bdd.When(engine)
+def when(backend: Backend) -> bdd.When:
+    return bdd.When(backend)
 
 
 @pytest.fixture()
-def then(engine: Engine) -> bdd.Then:
-    return bdd.Then(engine)
+def then(backend: Backend) -> bdd.Then:
+    return bdd.Then(backend)
