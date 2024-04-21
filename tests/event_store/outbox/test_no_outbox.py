@@ -1,12 +1,12 @@
 import pytest
 
-from event_sourcery.event_store import Backend, EventStoreFactory, StreamId
+from event_sourcery.event_store import Backend, BackendFactory, StreamId
 from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import an_event
 
 
 @pytest.fixture()
-def backend(event_store_factory: EventStoreFactory) -> Backend:
+def backend(event_store_factory: BackendFactory) -> Backend:
     return event_store_factory.without_outbox().build()
 
 

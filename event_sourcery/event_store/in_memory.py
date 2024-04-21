@@ -20,7 +20,7 @@ from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw, Se
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.factory import (
     Backend,
-    EventStoreFactory,
+    BackendFactory,
     NoOutboxStorageStrategy,
     no_filter,
 )
@@ -306,7 +306,7 @@ class InMemoryInTransactionSubscription(ContextManager[Iterator[Entry]]):
 
 
 @dataclass(repr=False)
-class InMemoryEventStoreFactory(EventStoreFactory):
+class InMemoryBackendFactory(BackendFactory):
     serde = Serde(Event.__registry__)
 
     _storage: Storage = field(default_factory=Storage)

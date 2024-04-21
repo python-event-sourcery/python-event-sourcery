@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery.event_store import EventStoreFactory, StreamId
+from event_sourcery.event_store import BackendFactory, StreamId
 from event_sourcery.event_store.factory import Backend
 from event_sourcery.event_store.interfaces import OutboxFiltererStrategy
 from tests.event_store.outbox.conftest import PublisherMock
@@ -17,7 +17,7 @@ def filter_everything() -> OutboxFiltererStrategy:
 @pytest.fixture()
 def backend(
     filter_everything: OutboxFiltererStrategy,
-    event_store_factory: EventStoreFactory,
+    event_store_factory: BackendFactory,
 ) -> Backend:
     return event_store_factory.with_outbox(filterer=filter_everything).build()
 

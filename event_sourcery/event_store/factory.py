@@ -29,7 +29,7 @@ class Backend:
     subscriber: subscription.PositionPhase
 
 
-class EventStoreFactory(abc.ABC):
+class BackendFactory(abc.ABC):
     @abc.abstractmethod
     def build(self) -> Backend:
         pass

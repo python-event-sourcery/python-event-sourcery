@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery.event_store import Event, EventStoreFactory, StreamId
+from event_sourcery.event_store import BackendFactory, Event, StreamId
 from event_sourcery.event_store.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     IllegalCategoryName,
@@ -57,7 +57,7 @@ def test_blocks_new_stream_uuid_with_same_name_as_other(
         when.appends(AnEvent(), to=CorruptedStreamId(name="Test #4"))
 
 
-def test_esdb_cant_use_category_with_dash(esdb_factory: EventStoreFactory) -> None:
+def test_esdb_cant_use_category_with_dash(esdb_factory: BackendFactory) -> None:
     when = When(esdb_factory.build())
 
     with pytest.raises(IllegalCategoryName):

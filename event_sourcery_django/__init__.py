@@ -1,5 +1,5 @@
 __all__ = [
-    "DjangoStoreFactory",
+    "DjangoBackendFactory",
 ]
 
 from dataclasses import dataclass
@@ -8,12 +8,7 @@ from typing import cast
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
-from event_sourcery.event_store import (
-    Event,
-    EventRegistry,
-    EventStore,
-    EventStoreFactory,
-)
+from event_sourcery.event_store import BackendFactory, Event, EventRegistry, EventStore
 from event_sourcery.event_store.event import Serde
 from event_sourcery.event_store.factory import (
     Backend,
@@ -28,7 +23,7 @@ from event_sourcery.event_store.outbox import Outbox
 
 
 @dataclass(repr=False)
-class DjangoStoreFactory(EventStoreFactory):
+class DjangoBackendFactory(BackendFactory):
     _serde: Serde = Serde(Event.__registry__)
     _outbox_strategy: OutboxStorageStrategy | None = None
 

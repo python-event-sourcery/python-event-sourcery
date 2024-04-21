@@ -4,9 +4,9 @@ import pytest
 from sqlalchemy import MetaData
 
 from event_sourcery.event_store import (
+    BackendFactory,
     EventStore,
-    EventStoreFactory,
-    InMemoryEventStoreFactory,
+    InMemoryBackendFactory,
 )
 from event_sourcery.event_store.factory import Backend
 from tests import bdd
@@ -32,12 +32,12 @@ def declarative_base() -> DeclarativeBase:
 
 
 @pytest.fixture()
-def event_store_factory() -> EventStoreFactory:
-    return InMemoryEventStoreFactory()
+def event_store_factory() -> BackendFactory:
+    return InMemoryBackendFactory()
 
 
 @pytest.fixture()
-def backend(event_store_factory: EventStoreFactory) -> Backend:
+def backend(event_store_factory: BackendFactory) -> Backend:
     return event_store_factory.build()
 
 

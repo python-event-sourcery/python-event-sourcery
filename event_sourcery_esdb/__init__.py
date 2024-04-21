@@ -1,5 +1,5 @@
 __all__ = [
-    "ESDBStoreFactory",
+    "ESDBBackendFactory",
     "ESDBStorageStrategy",
 ]
 
@@ -11,10 +11,10 @@ from typing_extensions import Self
 from event_sourcery import event_store as es
 from event_sourcery.event_store import (
     Backend,
+    BackendFactory,
     Event,
     EventRegistry,
     EventStore,
-    EventStoreFactory,
 )
 from event_sourcery.event_store.event import Serde
 from event_sourcery.event_store.factory import NoOutboxStorageStrategy, no_filter
@@ -29,7 +29,7 @@ from event_sourcery_esdb.subscription import ESDBSubscriptionStrategy
 
 
 @dataclass(repr=False)
-class ESDBStoreFactory(EventStoreFactory):
+class ESDBBackendFactory(BackendFactory):
     esdb_client: EventStoreDBClient
     _serde: Serde = Serde(Event.__registry__)
     _outbox_strategy: OutboxStorageStrategy = NoOutboxStorageStrategy()
