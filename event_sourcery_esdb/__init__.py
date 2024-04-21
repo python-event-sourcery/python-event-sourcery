@@ -10,7 +10,7 @@ from typing_extensions import Self
 
 from event_sourcery import event_store as es
 from event_sourcery.event_store import (
-    Engine,
+    Backend,
     Event,
     EventRegistry,
     EventStore,
@@ -34,19 +34,19 @@ class ESDBStoreFactory(EventStoreFactory):
     _serde: Serde = Serde(Event.__registry__)
     _outbox_strategy: OutboxStorageStrategy = NoOutboxStorageStrategy()
 
-    def build(self) -> Engine:
-        engine = Engine()
-        engine.event_store = EventStore(
+    def build(self) -> Backend:
+        backend = Backend()
+        backend.event_store = EventStore(
             storage_strategy=ESDBStorageStrategy(self.esdb_client),
             serde=self._serde,
         )
-        engine.outbox = Outbox(self._outbox_strategy, self._serde)
-        engine.subscriber = es.subscription.SubscriptionBuilder(
+        backend.outbox = Outbox(self._outbox_strategy, self._serde)
+        backend.subscriber = es.subscription.SubscriptionBuilder(
             _serde=self._serde,
             _strategy=ESDBSubscriptionStrategy(self.esdb_client),
         )
-        engine.serde = self._serde
-        return engine
+        backend.serde = self._serde
+        return backend
 
     def with_event_registry(self, event_registry: EventRegistry) -> Self:
         self._serde = Serde(event_registry)

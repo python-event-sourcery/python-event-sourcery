@@ -12,7 +12,7 @@ from typing_extensions import Self
 
 from event_sourcery import event_store as es
 from event_sourcery.event_store import (
-    Engine,
+    Backend,
     Event,
     EventRegistry,
     EventStore,
@@ -38,23 +38,23 @@ class SQLStoreFactory(EventStoreFactory):
     _serde: Serde = Serde(Event.__registry__)
     _outbox_strategy: SqlAlchemyOutboxStorageStrategy | None = None
 
-    def build(self) -> Engine:
-        engine = Engine()
-        engine.event_store = EventStore(
+    def build(self) -> Backend:
+        backend = Backend()
+        backend.event_store = EventStore(
             SqlAlchemyStorageStrategy(self._session, self._outbox_strategy),
             self._serde,
         )
-        engine.outbox = Outbox(
+        backend.outbox = Outbox(
             self._outbox_strategy or NoOutboxStorageStrategy(),
             self._serde,
         )
-        engine.subscriber = es.subscription.SubscriptionBuilder(
+        backend.subscriber = es.subscription.SubscriptionBuilder(
             _serde=self._serde,
             _strategy=SqlAlchemySubscriptionStrategy(),
             in_transaction=InTransactionSubscription(self._serde),
         )
-        engine.serde = self._serde
-        return engine
+        backend.serde = self._serde
+        return backend
 
     def with_event_registry(self, event_registry: EventRegistry) -> Self:
         self._serde = Serde(event_registry)

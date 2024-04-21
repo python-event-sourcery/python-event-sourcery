@@ -10,7 +10,7 @@ from typing_extensions import Self
 
 from event_sourcery import event_store as es
 from event_sourcery.event_store import Event, Position, Recorded
-from event_sourcery.event_store.factory import Engine
+from event_sourcery.event_store.factory import Backend
 from event_sourcery.event_store.subscription import BuildPhase, PositionPhase
 from tests.matchers import any_metadata
 
@@ -100,15 +100,15 @@ T = TypeVar("T")
 
 @dataclass
 class Step:
-    engine: Engine
+    backend: Backend
 
     @property
     def store(self) -> es.EventStore:
-        return self.engine.event_store
+        return self.backend.event_store
 
     @property
     def subscriber(self) -> PositionPhase:
-        return self.engine.subscriber
+        return self.backend.subscriber
 
     def __call__(self, value: T) -> T:
         return value

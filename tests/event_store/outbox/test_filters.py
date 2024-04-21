@@ -3,7 +3,7 @@ from uuid import uuid4
 import pytest
 
 from event_sourcery.event_store import EventStoreFactory, StreamId
-from event_sourcery.event_store.factory import Engine
+from event_sourcery.event_store.factory import Backend
 from event_sourcery.event_store.interfaces import OutboxFiltererStrategy
 from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import an_event
@@ -15,17 +15,17 @@ def filter_everything() -> OutboxFiltererStrategy:
 
 
 @pytest.fixture()
-def engine(
+def backend(
     filter_everything: OutboxFiltererStrategy,
     event_store_factory: EventStoreFactory,
-) -> Engine:
+) -> Backend:
     return event_store_factory.with_outbox(filterer=filter_everything).build()
 
 
 def test_no_entries_when_everything_was_filtered(
     publisher: PublisherMock,
-    engine: Engine,
+    backend: Backend,
 ) -> None:
-    engine.event_store.publish(an_event(version=1), stream_id=StreamId(uuid4()))
-    engine.outbox.run(publisher)
+    backend.event_store.publish(an_event(version=1), stream_id=StreamId(uuid4()))
+    backend.outbox.run(publisher)
     publisher.assert_not_called()

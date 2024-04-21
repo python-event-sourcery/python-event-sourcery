@@ -19,7 +19,7 @@ from event_sourcery.event_store import (
 from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw, Serde
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.factory import (
-    Engine,
+    Backend,
     EventStoreFactory,
     NoOutboxStorageStrategy,
     no_filter,
@@ -316,17 +316,17 @@ class InMemoryEventStoreFactory(EventStoreFactory):
     def __post_init__(self) -> None:
         self._subscription_strategy = InMemorySubscriptionStrategy(self._storage)
 
-    def build(self) -> Engine:
-        engine = Engine()
-        engine.event_store = EventStore(
+    def build(self) -> Backend:
+        backend = Backend()
+        backend.event_store = EventStore(
             InMemoryStorageStrategy(self._storage, self._outbox_strategy),
             self.serde,
         )
-        engine.outbox = Outbox(
+        backend.outbox = Outbox(
             self._outbox_strategy or NoOutboxStorageStrategy(),
             self.serde,
         )
-        engine.subscriber = subscription.SubscriptionBuilder(
+        backend.subscriber = subscription.SubscriptionBuilder(
             _serde=self.serde,
             _strategy=self._subscription_strategy,
             in_transaction=InMemoryInTransactionSubscription(
@@ -334,7 +334,7 @@ class InMemoryEventStoreFactory(EventStoreFactory):
                 self.serde,
             ),
         )
-        return engine
+        return backend
 
     def with_event_registry(self, event_registry: EventRegistry) -> Self:
         self.serde = Serde(event_registry)

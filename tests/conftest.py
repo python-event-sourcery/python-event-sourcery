@@ -8,7 +8,7 @@ from event_sourcery.event_store import (
     EventStoreFactory,
     InMemoryEventStoreFactory,
 )
-from event_sourcery.event_store.factory import Engine
+from event_sourcery.event_store.factory import Backend
 from tests import bdd
 
 
@@ -37,25 +37,25 @@ def event_store_factory() -> EventStoreFactory:
 
 
 @pytest.fixture()
-def engine(event_store_factory: EventStoreFactory) -> Engine:
+def backend(event_store_factory: EventStoreFactory) -> Backend:
     return event_store_factory.build()
 
 
 @pytest.fixture()
-def event_store(engine: Engine) -> EventStore:
-    return engine.event_store
+def event_store(backend: Backend) -> EventStore:
+    return backend.event_store
 
 
 @pytest.fixture()
-def given(engine: Engine) -> bdd.Given:
-    return bdd.Given(engine)
+def given(backend: Backend) -> bdd.Given:
+    return bdd.Given(backend)
 
 
 @pytest.fixture()
-def when(engine: Engine) -> bdd.When:
-    return bdd.When(engine)
+def when(backend: Backend) -> bdd.When:
+    return bdd.When(backend)
 
 
 @pytest.fixture()
-def then(engine: Engine) -> bdd.Then:
-    return bdd.Then(engine)
+def then(backend: Backend) -> bdd.Then:
+    return bdd.Then(backend)
