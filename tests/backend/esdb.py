@@ -5,7 +5,6 @@ import pytest
 from esdbclient import EventStoreDBClient, StreamState
 
 from event_sourcery_esdb import ESDBBackendFactory
-from tests.mark import xfail_if_not_implemented_yet
 
 
 @contextmanager
@@ -25,11 +24,5 @@ def esdb_client() -> Iterator[EventStoreDBClient]:
 
 @pytest.fixture()
 def esdb(request: pytest.FixtureRequest) -> Iterator[ESDBBackendFactory]:
-    skip_esdb = request.node.get_closest_marker("skip_esdb")
-    if skip_esdb:
-        reason = skip_esdb.kwargs.get("reason", "")
-        pytest.skip(f"Skipping ESDB tests: {reason}")
-
-    xfail_if_not_implemented_yet(request, "esdb")
     with esdb_client() as client:
         yield ESDBBackendFactory(client)

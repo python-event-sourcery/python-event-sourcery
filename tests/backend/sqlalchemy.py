@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session, as_declarative
 
 from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
 from event_sourcery_sqlalchemy.models import configure_models
-from tests.mark import xfail_if_not_implemented_yet
 
 
 @as_declarative()
@@ -40,7 +39,6 @@ def sql_session(
 def sqlalchemy_sqlite(
     request: pytest.FixtureRequest,
 ) -> Iterator[SQLAlchemyBackendFactory]:
-    xfail_if_not_implemented_yet(request, "sqlalchemy_sqlite")
     with sql_session("sqlite:///:memory:") as session:
         yield SQLAlchemyBackendFactory(session)
 
@@ -49,6 +47,5 @@ def sqlalchemy_sqlite(
 def sqlalchemy_postgres(
     request: pytest.FixtureRequest,
 ) -> Iterator[SQLAlchemyBackendFactory]:
-    xfail_if_not_implemented_yet(request, "sqlalchemy_postgres")
     with sql_session("postgresql://es:es@localhost:5432/es") as session:
         yield SQLAlchemyBackendFactory(session)
