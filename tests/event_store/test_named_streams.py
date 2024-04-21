@@ -57,8 +57,8 @@ def test_blocks_new_stream_uuid_with_same_name_as_other(
         when.appends(AnEvent(), to=CorruptedStreamId(name="Test #4"))
 
 
-def test_esdb_cant_use_category_with_dash(esdb_factory: BackendFactory) -> None:
-    when = When(esdb_factory.build())
+def test_esdb_cant_use_category_with_dash(esdb: BackendFactory) -> None:
+    when = When(esdb.build())
 
     with pytest.raises(IllegalCategoryName):
         when.appends(AnEvent(), to=StreamId(category="with-dash"))

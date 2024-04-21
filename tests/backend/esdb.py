@@ -24,7 +24,7 @@ def esdb_client() -> Iterator[EventStoreDBClient]:
 
 
 @pytest.fixture()
-def esdb_factory(request: pytest.FixtureRequest) -> Iterator[ESDBBackendFactory]:
+def esdb(request: pytest.FixtureRequest) -> Iterator[ESDBBackendFactory]:
     skip_esdb = request.node.get_closest_marker("skip_esdb")
     if skip_esdb:
         reason = skip_esdb.kwargs.get("reason", "")

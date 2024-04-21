@@ -4,19 +4,19 @@ import pytest
 from _pytest.fixtures import SubRequest
 
 from event_sourcery.event_store import BackendFactory
-from tests.backend.django import django_factory
-from tests.backend.esdb import esdb_factory
-from tests.backend.in_memory import in_memory_factory
-from tests.backend.sqlalchemy import postgres_factory, sqlite_factory
+from tests.backend.django import django
+from tests.backend.esdb import esdb
+from tests.backend.in_memory import in_memory
+from tests.backend.sqlalchemy import sqlalchemy_postgres, sqlalchemy_sqlite
 
 
 @pytest.fixture(
     params=[
-        django_factory,
-        esdb_factory,
-        in_memory_factory,
-        sqlite_factory,
-        postgres_factory,
+        django,
+        esdb,
+        in_memory,
+        sqlalchemy_sqlite,
+        sqlalchemy_postgres,
     ]
 )
 def event_store_factory(request: SubRequest) -> BackendFactory:

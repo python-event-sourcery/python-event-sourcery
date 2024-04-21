@@ -37,18 +37,18 @@ def sql_session(
 
 
 @pytest.fixture()
-def sqlite_factory(
+def sqlalchemy_sqlite(
     request: pytest.FixtureRequest,
 ) -> Iterator[SQLAlchemyBackendFactory]:
-    xfail_if_not_implemented_yet(request, "sqlite")
+    xfail_if_not_implemented_yet(request, "sqlalchemy_sqlite")
     with sql_session("sqlite:///:memory:") as session:
         yield SQLAlchemyBackendFactory(session)
 
 
 @pytest.fixture()
-def postgres_factory(
+def sqlalchemy_postgres(
     request: pytest.FixtureRequest,
 ) -> Iterator[SQLAlchemyBackendFactory]:
-    xfail_if_not_implemented_yet(request, "postgres")
+    xfail_if_not_implemented_yet(request, "sqlalchemy_postgres")
     with sql_session("postgresql://es:es@localhost:5432/es") as session:
         yield SQLAlchemyBackendFactory(session)
