@@ -30,7 +30,7 @@ def test_can_append_then_load_with_named_stream_with_assigned_uuid(
     then.stream(StreamId(name="Test #2")).loads([an_event])
 
 
-@pytest.mark.skip_esdb(reason="ESDB can't use both ids")
+@pytest.mark.skip_backend(backend="esdb", reason="ESDB can't use both ids")
 def test_lets_appending_by_both_id_and_name_then_just_name(
     given: Given,
     then: Then,
@@ -42,8 +42,7 @@ def test_lets_appending_by_both_id_and_name_then_just_name(
     then.stream(StreamId(name="Test #3")).loads([stored_by_id, stored_by_name])
 
 
-@pytest.mark.skip_in_memory(reason="InMemory can't use both ids")
-@pytest.mark.skip_esdb(reason="ESDB can't use both ids")
+@pytest.mark.skip_backend(backend=["esdb", "in_memory"], reason="Can't use both ids")
 def test_blocks_new_stream_uuid_with_same_name_as_other(
     given: Given,
     when: When,
@@ -57,8 +56,8 @@ def test_blocks_new_stream_uuid_with_same_name_as_other(
         when.appends(AnEvent(), to=CorruptedStreamId(name="Test #4"))
 
 
-def test_esdb_cant_use_category_with_dash(esdb_factory: BackendFactory) -> None:
-    when = When(esdb_factory.build())
+def test_esdb_cant_use_category_with_dash(esdb: BackendFactory) -> None:
+    when = When(esdb.build())
 
     with pytest.raises(IllegalCategoryName):
         when.appends(AnEvent(), to=StreamId(category="with-dash"))
