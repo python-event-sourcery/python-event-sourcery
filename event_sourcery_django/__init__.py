@@ -44,7 +44,7 @@ class DjangoStoreFactory(EventStoreFactory):
         engine = Engine()
         engine.event_store = EventStore(DjangoStorageStrategy(outbox), self._serde)
         engine.outbox = Outbox(outbox or NoOutboxStorageStrategy(), self._serde)
-        engine.subscriber = es.subscription.Engine(
+        engine.subscriber = es.subscription.SubscriptionBuilder(
             _serde=self._serde,
             _strategy=DjangoSubscriptionStrategy(),
             in_transaction=DjangoInTransactionSubscription(self._serde),

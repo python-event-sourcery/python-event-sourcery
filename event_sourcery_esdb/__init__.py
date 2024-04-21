@@ -41,7 +41,7 @@ class ESDBStoreFactory(EventStoreFactory):
             serde=self._serde,
         )
         engine.outbox = Outbox(self._outbox_strategy, self._serde)
-        engine.subscriber = es.subscription.Engine(
+        engine.subscriber = es.subscription.SubscriptionBuilder(
             _serde=self._serde,
             _strategy=ESDBSubscriptionStrategy(self.esdb_client),
         )

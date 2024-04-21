@@ -11,7 +11,7 @@ from typing_extensions import Self
 from event_sourcery import event_store as es
 from event_sourcery.event_store import Event, Position, Recorded
 from event_sourcery.event_store.factory import Engine
-from event_sourcery.event_store.subscription import Builder, Subscriber
+from event_sourcery.event_store.subscription import BuildPhase, PositionPhase
 from tests.matchers import any_metadata
 
 
@@ -107,7 +107,7 @@ class Step:
         return self.engine.event_store
 
     @property
-    def subscriber(self) -> Subscriber:
+    def subscriber(self) -> PositionPhase:
         return self.engine.subscriber
 
     def __call__(self, value: T) -> T:
@@ -118,7 +118,7 @@ class Step:
         to: Position | None,
         to_category: str | None,
         to_events: list[Type[Event]] | None,
-    ) -> Builder:
+    ) -> BuildPhase:
         assert to_category is None or to_events is None
         start_from = self.store.position or 0 if to is None else to
         if to_category:

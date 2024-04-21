@@ -326,7 +326,7 @@ class InMemoryEventStoreFactory(EventStoreFactory):
             self._outbox_strategy or NoOutboxStorageStrategy(),
             self.serde,
         )
-        engine.subscriber = subscription.Engine(
+        engine.subscriber = subscription.SubscriptionBuilder(
             _serde=self.serde,
             _strategy=self._subscription_strategy,
             in_transaction=InMemoryInTransactionSubscription(

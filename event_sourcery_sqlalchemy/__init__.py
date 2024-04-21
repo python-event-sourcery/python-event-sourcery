@@ -48,7 +48,7 @@ class SQLStoreFactory(EventStoreFactory):
             self._outbox_strategy or NoOutboxStorageStrategy(),
             self._serde,
         )
-        engine.subscriber = es.subscription.Engine(
+        engine.subscriber = es.subscription.SubscriptionBuilder(
             _serde=self._serde,
             _strategy=SqlAlchemySubscriptionStrategy(),
             in_transaction=InTransactionSubscription(self._serde),

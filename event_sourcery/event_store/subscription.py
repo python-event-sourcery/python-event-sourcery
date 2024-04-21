@@ -20,7 +20,7 @@ from event_sourcery.event_store.stream_id import Category
 Seconds: TypeAlias = int | float
 
 
-class Builder(abc.ABC):
+class BuildPhase(abc.ABC):
     @abc.abstractmethod
     def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded | None]:
         ...
@@ -34,26 +34,26 @@ class Builder(abc.ABC):
         ...
 
 
-class Filter(Builder):
+class FilterPhase(BuildPhase):
     @abc.abstractmethod
-    def to_category(self, category: Category) -> Builder:
+    def to_category(self, category: Category) -> BuildPhase:
         ...
 
     @abc.abstractmethod
-    def to_events(self, events: list[Type[Event]]) -> Builder:
+    def to_events(self, events: list[Type[Event]]) -> BuildPhase:
         ...
 
 
-class Subscriber(abc.ABC):
+class PositionPhase(abc.ABC):
     in_transaction: ContextManager[Iterator[Entry]]
 
     @abc.abstractmethod
-    def start_from(self, position: Position) -> Filter:
+    def start_from(self, position: Position) -> FilterPhase:
         ...
 
 
 @dataclass(repr=False)
-class Engine(Subscriber, Filter, Builder):
+class SubscriptionBuilder(PositionPhase, FilterPhase, BuildPhase):
     _serde: Serde
     _strategy: SubscriptionStrategy
     _position: Position = field(init=False, default=sys.maxsize)
@@ -63,12 +63,12 @@ class Engine(Subscriber, Filter, Builder):
     def __post_init__(self) -> None:
         self._build = partial(self._strategy.subscribe_to_all)
 
-    def start_from(self, position: Position) -> Filter:
+    def start_from(self, position: Position) -> FilterPhase:
         self._build = partial(self._build, start_from=position)
         self._position = position
         return self
 
-    def to_category(self, category: Category) -> Builder:
+    def to_category(self, category: Category) -> BuildPhase:
         self._build = partial(
             self._strategy.subscribe_to_category,
             start_from=self._position,
@@ -76,7 +76,7 @@ class Engine(Subscriber, Filter, Builder):
         )
         return self
 
-    def to_events(self, events: list[Type[Event]]) -> Builder:
+    def to_events(self, events: list[Type[Event]]) -> BuildPhase:
         self._build = partial(
             self._strategy.subscribe_to_events,
             start_from=self._position,
