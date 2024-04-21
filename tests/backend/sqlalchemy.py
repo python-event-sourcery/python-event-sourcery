@@ -2,48 +2,53 @@ from contextlib import contextmanager
 from typing import Iterator
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, as_declarative
 
 from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
-from tests.conftest import DeclarativeBase
+from event_sourcery_sqlalchemy.models import configure_models
 from tests.mark import xfail_if_not_implemented_yet
+
+
+@as_declarative()
+class DeclarativeBase:
+    metadata: MetaData
+
+
+configure_models(DeclarativeBase)
 
 
 @contextmanager
 def sql_session(
     url: str,
-    declarative_base: DeclarativeBase,
 ) -> Iterator[Session]:
     engine = create_engine(url, future=True)
     try:
-        declarative_base.metadata.create_all(bind=engine)
+        DeclarativeBase.metadata.create_all(bind=engine)
     except OperationalError:
         pytest.skip(f"{engine.url.drivername} test database not available, skipping")
     else:
         with Session(bind=engine) as session:
             yield session
 
-        declarative_base.metadata.drop_all(bind=engine)
+        DeclarativeBase.metadata.drop_all(bind=engine)
         engine.dispose()
 
 
 @pytest.fixture()
 def sqlite_factory(
     request: pytest.FixtureRequest,
-    declarative_base: DeclarativeBase,
 ) -> Iterator[SQLAlchemyBackendFactory]:
     xfail_if_not_implemented_yet(request, "sqlite")
-    with sql_session("sqlite:///:memory:", declarative_base) as session:
+    with sql_session("sqlite:///:memory:") as session:
         yield SQLAlchemyBackendFactory(session)
 
 
 @pytest.fixture()
 def postgres_factory(
-    request: pytest.FixtureRequest, declarative_base: DeclarativeBase
+    request: pytest.FixtureRequest,
 ) -> Iterator[SQLAlchemyBackendFactory]:
     xfail_if_not_implemented_yet(request, "postgres")
-    url = "postgresql://es:es@localhost:5432/es"
-    with sql_session(url, declarative_base) as session:
+    with sql_session("postgresql://es:es@localhost:5432/es") as session:
         yield SQLAlchemyBackendFactory(session)
