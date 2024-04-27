@@ -12,7 +12,7 @@ from tests.matchers import any_record
 
 
 @pytest.mark.not_implemented(
-    backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+    backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
 )
 def test_no_events_when_none_is_provided(given: Given, then: Then) -> None:
     subscription = given.subscription(timelimit=1)
@@ -20,7 +20,7 @@ def test_no_events_when_none_is_provided(given: Given, then: Then) -> None:
 
 
 @pytest.mark.not_implemented(
-    backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+    backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
 )
 def test_receives_all_events(given: Given, when: When, then: Then) -> None:
     subscription = given.subscription()
@@ -35,7 +35,7 @@ def test_receives_all_events(given: Given, when: When, then: Then) -> None:
 
 
 @pytest.mark.not_implemented(
-    backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+    backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
 )
 def test_multiple_subscriptions_receives_events(
     given: Given,
@@ -53,7 +53,7 @@ def test_multiple_subscriptions_receives_events(
 
 
 @pytest.mark.not_implemented(
-    backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+    backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
 )
 def test_stop_iterating_after_given_timeout(given: Given, then: Then) -> None:
     with given.expected_execution(seconds=1):
@@ -81,7 +81,7 @@ def test_wont_accept_timebox_shorten_than_1_second(
 
 class TestBatch:
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_receives_requested_batch_size(
         self,
@@ -94,7 +94,7 @@ class TestBatch:
         then(subscription).next_batch_is([any_record(first), any_record(second)])
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_returns_smaller_batch_when_timelimit_hits(
         self,
@@ -111,7 +111,7 @@ class TestBatch:
             then(subscription).next_batch_is([any_record(event)])
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_subscription_continuously_awaits_for_new_events(
         self,
@@ -141,7 +141,7 @@ class TestBatch:
 
 class TestFromPositionSubscription:
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_receives_all_events_from_selected_position(
         self,
@@ -160,7 +160,7 @@ class TestFromPositionSubscription:
         then(subscription).next_received_record_is(any_record(new_event, stream.id))
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_receives_events_after_passed_position(
         self,
@@ -177,7 +177,7 @@ class TestFromPositionSubscription:
         then(subscription).next_received_record_is(any_record(new_event, stream.id))
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_receives_events_from_multiple_streams_after_passed_position(
         self,
@@ -207,7 +207,7 @@ class TestFromPositionSubscription:
 
 class TestSubscriptionToCategory:
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_receives_only_events_from_selected_category(
         self,
@@ -231,7 +231,7 @@ class TestSubscriptionToCategory:
         )
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_receives_all_events_from_selected_category(
         self,
@@ -256,7 +256,7 @@ class TestSubscriptionToCategory:
         then(subscription).next_received_record_is(any_record(third_event, stream_1.id))
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_receives_events_after_passed_position(
         self,
@@ -278,7 +278,7 @@ class TestSubscriptionToCategory:
         then(subscription).next_received_record_is(any_record(new_event, stream.id))
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_stop_iterating_after_given_timeout(
         self,
@@ -291,7 +291,7 @@ class TestSubscriptionToCategory:
             then(subscription).received_no_new_records()
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_receiving_in_batches(
         self,
@@ -323,7 +323,7 @@ class TestSubscribeToEventTypes:
         pass
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_receives_only_events_with_subscribed_types(
         self,
@@ -343,7 +343,7 @@ class TestSubscribeToEventTypes:
         then(subscription).next_received_record_is(any_record(third_event, stream_id))
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_receives_subscribed_types_from_multiple_streams(
         self,
@@ -366,7 +366,7 @@ class TestSubscribeToEventTypes:
         then(subscription).next_received_record_is(any_record(last_event, stream_2.id))
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_receives_events_after_passed_position(
         self,
@@ -389,7 +389,7 @@ class TestSubscribeToEventTypes:
         then(subscription).next_received_record_is(any_record(second, stream_2.id))
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_stop_iterating_after_given_timeout(self, given: Given, then: Then) -> None:
         timebox = given.expected_execution(seconds=1)
@@ -398,7 +398,7 @@ class TestSubscribeToEventTypes:
             then(subscription).received_no_new_records()
 
     @pytest.mark.not_implemented(
-        backend=["django", "sqlalchemy_sqlite", "sqlalchemy_postgres"],
+        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
     )
     def test_receiving_in_batches(
         self,
