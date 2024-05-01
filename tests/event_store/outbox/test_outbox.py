@@ -61,13 +61,14 @@ def test_sends_only_once_in_case_of_success(
 def test_tries_to_send_up_to_three_times(
     publisher: PublisherMock,
     backend: Backend,
+    max_attempts: int,
 ) -> None:
     stream_id = StreamId(uuid4())
     publisher.side_effect = ValueError
 
     backend.event_store.publish(an_event(version=1), stream_id=stream_id)
 
-    for _ in range(4):
+    for _ in range(max_attempts + 1):
         backend.outbox.run(publisher)
 
-    assert len(publisher.mock_calls) == 3
+    assert len(publisher.mock_calls) == max_attempts

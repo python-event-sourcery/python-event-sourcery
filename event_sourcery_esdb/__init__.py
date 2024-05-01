@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import TypeAlias
 
 from esdbclient import EventStoreDBClient
-from pydantic import BaseModel, ConfigDict, PositiveFloat
+from pydantic import BaseModel, ConfigDict, PositiveFloat, PositiveInt
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
@@ -30,7 +30,6 @@ from event_sourcery_esdb.event_store import ESDBStorageStrategy
 from event_sourcery_esdb.outbox import ESDBOutboxStorageStrategy
 from event_sourcery_esdb.subscription import ESDBSubscriptionStrategy
 
-
 Seconds: TypeAlias = PositiveFloat
 
 
@@ -38,6 +37,8 @@ class Config(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     timeout: Seconds | None = None
+    outbox_name: str = "pyes-outbox"
+    outbox_attempts: PositiveInt = 3
 
 
 @dataclass(repr=False)
@@ -70,7 +71,11 @@ class ESDBBackendFactory(BackendFactory):
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         strategy = ESDBOutboxStorageStrategy(
-            self.esdb_client, filterer, self.config.timeout,
+            self.esdb_client,
+            filterer,
+            self.config.outbox_name,
+            self.config.outbox_attempts,
+            self.config.timeout,
         )
         strategy.create_subscription()
         self._outbox_strategy = strategy
