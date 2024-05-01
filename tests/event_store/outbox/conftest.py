@@ -4,19 +4,20 @@ from uuid import uuid4
 
 import pytest
 
+import event_sourcery_esdb
 from event_sourcery.event_store import Backend, BackendFactory, Metadata
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery_esdb import ESDBBackendFactory
 from event_sourcery_esdb.outbox import ESDBOutboxStorageStrategy
+from tests.backend.esdb import esdb_client
 
 
 @pytest.fixture()
-def esdb_factory(
-    esdb_factory: ESDBBackendFactory,
-) -> Generator[ESDBBackendFactory, None, None]:
+def esdb() -> Generator[ESDBBackendFactory, None, None]:
     tmp_name = f"outbox-test-{uuid4().hex}"
-    with patch.object(ESDBOutboxStorageStrategy, "OUTBOX_NAME", tmp_name):
-        yield esdb_factory
+    outbox_patch = patch.object(ESDBOutboxStorageStrategy, "OUTBOX_NAME", tmp_name)
+    with esdb_client() as client, outbox_patch:
+        yield ESDBBackendFactory(client, event_sourcery_esdb.Config(timeout=4))
 
 
 @pytest.fixture()

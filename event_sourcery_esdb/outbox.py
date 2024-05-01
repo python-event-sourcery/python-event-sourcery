@@ -24,15 +24,17 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     MAX_PUBLISH_ATTEMPTS = 3
     _client: EventStoreDBClient
     _filterer: OutboxFiltererStrategy
+    _timeout: float | None
     _active_subscription: PersistentSubscription | None = None
 
     def create_subscription(self) -> None:
         try:
-            self._client.get_subscription_info(self.OUTBOX_NAME)
+            self._client.get_subscription_info(self.OUTBOX_NAME, timeout=self._timeout)
         except NotFound:
             self._client.create_subscription_to_all(
                 self.OUTBOX_NAME,
                 from_end=True,
+                timeout=self._timeout,
             )
 
     @contextmanager
@@ -42,7 +44,7 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     ) -> Generator[Iterator[RecordedEvent], None, None]:
         self._active_subscription = self._client.read_subscription_to_all(
             self.OUTBOX_NAME,
-            timeout=10,
+            timeout=self._timeout,
         )
         yield islice(self._active_subscription, limit or 100)
         self._active_subscription.stop()
@@ -54,7 +56,9 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
         return self._active_subscription
 
     def outbox_entries(self, limit: int) -> Iterator[ContextManager[RawEvent]]:
-        info = self._client.get_subscription_info(self.OUTBOX_NAME)
+        info = self._client.get_subscription_info(
+            self.OUTBOX_NAME, timeout=self._timeout,
+        )
         if info.live_buffer_count == 0:
             return
 
