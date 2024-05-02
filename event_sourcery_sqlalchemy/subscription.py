@@ -12,14 +12,6 @@ from event_sourcery_sqlalchemy import models
 
 
 class SqlAlchemySubscriptionStrategy(SubscriptionStrategy):
-    def subscribe(
-        self,
-        from_position: Position | None,
-        to_category: str | None,
-        to_events: list[str] | None,
-    ) -> Iterator[RecordedRaw]:
-        raise NotImplementedError
-
     def subscribe_to_all(
         self,
         start_from: Position,
