@@ -6,10 +6,16 @@ import django as django_framework
 import pytest
 from django.core.management import call_command as django_command
 
+import event_sourcery
 import event_sourcery_django
 import event_sourcery_esdb
 import event_sourcery_sqlalchemy
-from event_sourcery.event_store import Backend, BackendFactory, Metadata
+from event_sourcery.event_store import (
+    Backend,
+    BackendFactory,
+    InMemoryBackendFactory,
+    Metadata,
+)
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery_django import DjangoBackendFactory
 from event_sourcery_esdb import ESDBBackendFactory
@@ -68,6 +74,15 @@ def django(transactional_db: None, max_attempts: int) -> DjangoBackendFactory:
     django_command("migrate")
     return DjangoBackendFactory(
         event_sourcery_django.Config(outbox_attempts=max_attempts),
+    )
+
+
+@pytest.fixture()
+def in_memory(max_attempts: int) -> BackendFactory:
+    return InMemoryBackendFactory(
+        event_sourcery.event_store.in_memory.Config(
+            outbox_attempts=max_attempts,
+        )
     )
 
 

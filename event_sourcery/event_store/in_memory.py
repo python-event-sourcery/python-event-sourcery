@@ -7,6 +7,7 @@ from operator import getitem
 from types import TracebackType
 from typing import ContextManager, Dict, Generator, Iterator, Type
 
+from pydantic import BaseModel, ConfigDict, PositiveInt
 from typing_extensions import Self
 
 from event_sourcery.event_store import (
@@ -141,8 +142,8 @@ class InMemoryToEventTypesSubscription(InMemorySubscription):
 
 @dataclass
 class InMemoryOutboxStorageStrategy(OutboxStorageStrategy):
-    MAX_PUBLISH_ATTEMPTS = 3
     _filterer: OutboxFiltererStrategy
+    _max_publish_attempts: int
     _outbox: list[tuple[RawEvent, int]] = field(default_factory=list, init=False)
 
     def put_into_outbox(self, events: list[RawEvent]) -> None:
@@ -171,7 +172,7 @@ class InMemoryOutboxStorageStrategy(OutboxStorageStrategy):
             del self._outbox[index]
 
     def _reached_max_number_of_attempts(self, failure_count: int) -> bool:
-        return failure_count >= self.MAX_PUBLISH_ATTEMPTS
+        return failure_count >= self._max_publish_attempts
 
 
 @dataclass
@@ -305,10 +306,17 @@ class InMemoryInTransactionSubscription(ContextManager[Iterator[Entry]]):
             yield Entry(metadata=self._serde.deserialize(raw), stream_id=raw.stream_id)
 
 
+class Config(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    outbox_attempts: PositiveInt = 3
+
+
 @dataclass(repr=False)
 class InMemoryBackendFactory(BackendFactory):
     serde = Serde(Event.__registry__)
 
+    _config: Config = Config()
     _storage: Storage = field(default_factory=Storage)
     _outbox_strategy: InMemoryOutboxStorageStrategy | None = None
     _subscription_strategy: InMemorySubscriptionStrategy = field(init=False)
@@ -341,7 +349,10 @@ class InMemoryBackendFactory(BackendFactory):
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
-        self._outbox_strategy = InMemoryOutboxStorageStrategy(filterer)
+        self._outbox_strategy = InMemoryOutboxStorageStrategy(
+            filterer,
+            self._config.outbox_attempts,
+        )
         return self
 
     def without_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
