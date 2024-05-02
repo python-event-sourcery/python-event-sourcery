@@ -1,10 +1,12 @@
 __all__ = [
+    "Config",
     "DjangoBackendFactory",
 ]
 
 from dataclasses import dataclass
 from typing import cast
 
+from pydantic import BaseModel, ConfigDict, PositiveInt
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
@@ -22,8 +24,15 @@ from event_sourcery.event_store.interfaces import (
 from event_sourcery.event_store.outbox import Outbox
 
 
+class Config(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    outbox_attempts: PositiveInt = 3
+
+
 @dataclass(repr=False)
 class DjangoBackendFactory(BackendFactory):
+    _config: Config = Config()
     _serde: Serde = Serde(Event.__registry__)
     _outbox_strategy: OutboxStorageStrategy | None = None
 
@@ -54,7 +63,10 @@ class DjangoBackendFactory(BackendFactory):
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
 
-        self._outbox_strategy = DjangoOutboxStorageStrategy(filterer)
+        self._outbox_strategy = DjangoOutboxStorageStrategy(
+            filterer,
+            self._config.outbox_attempts,
+        )
         return self
 
     def without_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:

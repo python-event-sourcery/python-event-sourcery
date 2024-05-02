@@ -2,12 +2,16 @@ from typing import Callable, Generator
 from unittest.mock import Mock
 from uuid import uuid4
 
+import django as django_framework
 import pytest
+from django.core.management import call_command as django_command
 
+import event_sourcery_django
 import event_sourcery_esdb
 import event_sourcery_sqlalchemy
 from event_sourcery.event_store import Backend, BackendFactory, Metadata
 from event_sourcery.event_store.stream_id import StreamId
+from event_sourcery_django import DjangoBackendFactory
 from event_sourcery_esdb import ESDBBackendFactory
 from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
 from tests.backend.esdb import esdb_client
@@ -56,6 +60,15 @@ def sqlalchemy_postgres(
                 outbox_attempts=max_attempts,
             ),
         )
+
+
+@pytest.fixture()
+def django(transactional_db: None, max_attempts: int) -> DjangoBackendFactory:
+    django_framework.setup()
+    django_command("migrate")
+    return DjangoBackendFactory(
+        event_sourcery_django.Config(outbox_attempts=max_attempts),
+    )
 
 
 @pytest.fixture()

@@ -2,7 +2,6 @@ from pathlib import Path
 
 import django as django_framework
 import pytest
-from _pytest.fixtures import SubRequest
 from django.core.management import call_command as django_command
 
 from event_sourcery_django import DjangoBackendFactory
@@ -26,7 +25,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 @pytest.fixture()
-def django(transactional_db: None, request: SubRequest) -> DjangoBackendFactory:
+def django(transactional_db: None) -> DjangoBackendFactory:
     django_framework.setup()
     django_command("migrate")
     return DjangoBackendFactory()
