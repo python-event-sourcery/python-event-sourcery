@@ -12,7 +12,7 @@ from event_sourcery.event_store.event.registry import EventRegistry
 from event_sourcery.event_store.stream_id import StreamId
 
 
-@dataclass(repr=False)
+@dataclass(repr=False, frozen=True)
 class Serde:
     registry: EventRegistry
 
