@@ -6,18 +6,18 @@ from event_sourcery.event_store import Event
 
 class Aggregate:
     category: ClassVar[str]
-
-    def __init__(self) -> None:
-        self.__changes: list[Event] = []
+    _changes: list[Event]
 
     @contextmanager
     def __persisting_changes__(self) -> Iterator[Iterator[Event]]:
-        yield iter(self.__changes)
-        self.__changes = []
+        yield iter(getattr(self, "_changes", []))
+        self._changes = []
 
     def __apply__(self, event: Event) -> None:
         raise NotImplementedError
 
     def _emit(self, event: Event) -> None:
+        if not hasattr(self, "_changes"):
+            self._changes = []
         self.__apply__(event)
-        self.__changes.append(event)
+        self._changes.append(event)
