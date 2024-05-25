@@ -16,16 +16,18 @@ class Command(enum.Enum):
 
 
 class _Handle:
+    TIMEOUT = 3
+
     def __init__(self) -> None:
         self._commit_event = ThreadingEvent()
         self._got_until_commit = ThreadingEvent()
 
     def wait_to_commit(self) -> None:
         self._got_until_commit.set()
-        self._commit_event.wait()
+        self._commit_event.wait(timeout=self.TIMEOUT)
 
     def process_up_to_commit(self) -> None:
-        self._got_until_commit.wait()
+        self._got_until_commit.wait(timeout=self.TIMEOUT)
 
     def commit(self) -> None:
         self._commit_event.set()
