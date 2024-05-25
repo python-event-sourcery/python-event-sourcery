@@ -115,4 +115,5 @@ class DjangoStorageStrategy(StorageStrategy):
 
     @property
     def current_position(self) -> Position | None:
-        raise NotImplementedError
+        last_event = models.Event.objects.last()
+        return last_event.id if last_event else Position(0)

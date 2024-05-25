@@ -20,9 +20,11 @@ configure_models(DeclarativeBase)
 
 @contextmanager
 def sql_session(
-    url: str,
+    url: str, connect_args: dict[str, str | bool] | None = None
 ) -> Iterator[Session]:
-    engine = create_engine(url, future=True)
+    if connect_args is None:
+        connect_args = {}
+    engine = create_engine(url, connect_args=connect_args, future=True)
     try:
         DeclarativeBase.metadata.create_all(bind=engine)
     except OperationalError:
@@ -39,7 +41,9 @@ def sql_session(
 def sqlalchemy_sqlite(
     request: pytest.FixtureRequest,
 ) -> Iterator[SQLAlchemyBackendFactory]:
-    with sql_session("sqlite:///:memory:") as session:
+    with sql_session(
+        "sqlite:///:memory:", connect_args={"check_same_thread": False}
+    ) as session:
         yield SQLAlchemyBackendFactory(session)
 
 

@@ -9,6 +9,10 @@ class _Event(Event):
     pass
 
 
+class OtherEvent(Event):
+    pass
+
+
 def an_event(
     event: Event | None = None, version: int | None = None, **kwargs: Any
 ) -> Metadata[_Event]:
