@@ -87,8 +87,7 @@ class GapDetectingIterator(Iterator[list[RecordedRaw]]):
         start = time.monotonic()
         while True:
             batch = self._get_batch()
-            has_gaps = self._has_gaps(batch)
-            if not has_gaps and len(batch) == self._batch_size:
+            if self._is_continuous(batch) and len(batch) == self._batch_size:
                 self._cursor.advance(batch)
                 return self._batch_to_recorded_raw(batch)
             elif time.monotonic() - start > self._timelimit.total_seconds():
@@ -108,7 +107,7 @@ class GapDetectingIterator(Iterator[list[RecordedRaw]]):
 
         return list(query[: self._batch_size])
 
-    def _has_gaps(self, batch: list[models.Event]) -> bool:
+    def _is_continuous(self, batch: list[models.Event]) -> bool:
         if len(batch) < 2:
             return False
 
