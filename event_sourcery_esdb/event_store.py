@@ -19,6 +19,7 @@ from event_sourcery_esdb import dto, stream
 @dataclass(repr=False)
 class ESDBStorageStrategy(StorageStrategy):
     _client: EventStoreDBClient
+    _timeout: float | None
 
     def fetch_events(
         self,
@@ -36,6 +37,7 @@ class ESDBStorageStrategy(StorageStrategy):
             stream_name=str(name),
             stream_position=position,
             limit=limit,
+            timeout=self._timeout,
         )
         try:
             events = [dto.raw_event(entry) for entry in entries]
@@ -50,6 +52,7 @@ class ESDBStorageStrategy(StorageStrategy):
             name.snapshot,
             limit=1,
             backwards=True,
+            timeout=self._timeout,
         )
         try:
             last = next(iter(snapshots))
@@ -72,6 +75,7 @@ class ESDBStorageStrategy(StorageStrategy):
             str(name),
             current_version=StreamState.ANY,
             events=(dto.new_entry(e) for e in events),
+            timeout=self._timeout,
         )
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
@@ -81,6 +85,7 @@ class ESDBStorageStrategy(StorageStrategy):
             name.snapshot,
             current_version=StreamState.ANY,
             events=[dto.new_entry(snapshot, stream_position=stream_position)],
+            timeout=self._timeout,
         )
 
     def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
@@ -94,7 +99,14 @@ class ESDBStorageStrategy(StorageStrategy):
     def _get_stream_position(self, name: stream.Name) -> stream.Position | None:
         try:
             last = next(
-                iter(self._client.get_stream(str(name), backwards=True, limit=1))
+                iter(
+                    self._client.get_stream(
+                        str(name),
+                        backwards=True,
+                        limit=1,
+                        timeout=self._timeout,
+                    )
+                )
             )
             return stream.Position(last.stream_position)
         except NotFound:
@@ -103,10 +115,14 @@ class ESDBStorageStrategy(StorageStrategy):
     def delete_stream(self, stream_id: StreamId) -> None:
         name = stream.Name(stream_id)
         try:
-            self._client.delete_stream(str(name), current_version=StreamState.ANY)
+            self._client.delete_stream(
+                str(name),
+                current_version=StreamState.ANY,
+                timeout=self._timeout,
+            )
         except NotFound:
             pass
 
     @property
     def current_position(self) -> Position | None:
-        return Position(self._client.get_commit_position())
+        return Position(self._client.get_commit_position(timeout=self._timeout))

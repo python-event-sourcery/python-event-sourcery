@@ -1,4 +1,5 @@
 __all__ = [
+    "Config",
     "configure_models",
     "models",
     "SqlAlchemyStorageStrategy",
@@ -7,6 +8,7 @@ __all__ = [
 
 from dataclasses import dataclass
 
+from pydantic import BaseModel, ConfigDict, PositiveInt
 from sqlalchemy.orm import Session
 from typing_extensions import Self
 
@@ -32,9 +34,16 @@ from event_sourcery_sqlalchemy.subscription import (
 )
 
 
+class Config(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    outbox_attempts: PositiveInt = 3
+
+
 @dataclass(repr=False)
 class SQLAlchemyBackendFactory(BackendFactory):
     _session: Session
+    _config: Config = Config()
     _serde: Serde = Serde(Event.__registry__)
     _outbox_strategy: SqlAlchemyOutboxStorageStrategy | None = None
 
@@ -64,6 +73,7 @@ class SQLAlchemyBackendFactory(BackendFactory):
         self._outbox_strategy = SqlAlchemyOutboxStorageStrategy(
             self._session,
             filterer,
+            self._config.outbox_attempts,
         )
         return self
 

@@ -45,7 +45,7 @@ def snapshot(from_raw: RawEvent, to_stream: Stream) -> Snapshot:
     )
 
 
-def outbox_entry(from_raw: RawEvent) -> OutboxEntry:
+def outbox_entry(from_raw: RawEvent, max_attempts: int) -> OutboxEntry:
     return OutboxEntry(
         created_at=datetime.utcnow(),
         data={
@@ -58,6 +58,7 @@ def outbox_entry(from_raw: RawEvent) -> OutboxEntry:
             "context": from_raw.context,
         },
         stream_name=from_raw.stream_id.name,
+        tries_left=max_attempts,
     )
 
 

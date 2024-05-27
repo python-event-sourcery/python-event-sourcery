@@ -38,18 +38,14 @@ def sql_session(
 
 
 @pytest.fixture()
-def sqlalchemy_sqlite(
-    request: pytest.FixtureRequest,
-) -> Iterator[SQLAlchemyBackendFactory]:
+def sqlalchemy_sqlite() -> Iterator[SQLAlchemyBackendFactory]:
     with sql_session(
-        "sqlite:///:memory:", connect_args={"check_same_thread": False}
+        "sqlite:///:memory:", connect_args={"check_same_thread": False},
     ) as session:
         yield SQLAlchemyBackendFactory(session)
 
 
 @pytest.fixture()
-def sqlalchemy_postgres(
-    request: pytest.FixtureRequest,
-) -> Iterator[SQLAlchemyBackendFactory]:
+def sqlalchemy_postgres() -> Iterator[SQLAlchemyBackendFactory]:
     with sql_session("postgresql://es:es@localhost:5432/es") as session:
         yield SQLAlchemyBackendFactory(session)

@@ -17,10 +17,13 @@ logger = logging.getLogger(__name__)
 @dataclass(repr=False)
 class DjangoOutboxStorageStrategy(OutboxStorageStrategy):
     _filterer: OutboxFiltererStrategy
+    _max_publish_attempts: int
 
     def put_into_outbox(self, events: list[RawEvent]) -> None:
         OutboxEntry.objects.bulk_create(
-            dto.outbox_entry(event) for event in events if self._filterer(event)
+            dto.outbox_entry(event, self._max_publish_attempts)
+            for event in events
+            if self._filterer(event)
         )
 
     def outbox_entries(self, limit: int) -> Iterator[ContextManager[RawEvent]]:

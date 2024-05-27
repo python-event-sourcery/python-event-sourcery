@@ -25,7 +25,6 @@ class LightSwitch(Aggregate):
         pass
 
     def __init__(self) -> None:
-        super().__init__()
         self._shines = False
 
     def __apply__(self, event: Event) -> None:

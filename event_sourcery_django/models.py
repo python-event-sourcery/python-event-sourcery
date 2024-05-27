@@ -77,4 +77,4 @@ class OutboxEntry(models.Model):
     created_at = models.DateTimeField()
     data = models.JSONField()
     stream_name = models.CharField(max_length=255, null=True, blank=True)
-    tries_left = models.IntegerField(default=3)
+    tries_left = models.IntegerField()

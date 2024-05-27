@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
     _session: Session
     _filterer: OutboxFiltererStrategy
+    _max_publish_attempts: int
 
     def put_into_outbox(self, events: list[RawEvent]) -> None:
         rows = []
@@ -39,6 +40,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
                     "created_at": datetime.utcnow(),
                     "data": as_dict,
                     "stream_name": event.stream_id.name,
+                    "tries_left": self._max_publish_attempts,
                 }
             )
 
