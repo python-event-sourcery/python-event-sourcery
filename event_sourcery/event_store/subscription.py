@@ -1,13 +1,11 @@
 import abc
-import contextlib
 import sys
 from dataclasses import dataclass, field
 from datetime import timedelta
 from functools import partial
-from typing import Callable, ContextManager, Iterator, Type, TypeAlias
+from typing import Callable, Iterator, Type, TypeAlias
 
 from event_sourcery.event_store.event import (
-    Entry,
     Event,
     Position,
     Recorded,
@@ -45,8 +43,6 @@ class FilterPhase(BuildPhase):
 
 
 class PositionPhase(abc.ABC):
-    in_transaction: ContextManager[Iterator[Entry]]
-
     @abc.abstractmethod
     def start_from(self, position: Position) -> FilterPhase:
         ...
@@ -58,7 +54,6 @@ class SubscriptionBuilder(PositionPhase, FilterPhase, BuildPhase):
     _strategy: SubscriptionStrategy
     _position: Position = field(init=False, default=sys.maxsize)
     _build: Callable[..., Iterator[list[RecordedRaw]]] = field(init=False)
-    in_transaction: ContextManager[Iterator[Entry]] = contextlib.nullcontext(iter([]))
 
     def __post_init__(self) -> None:
         self._build = partial(self._strategy.subscribe_to_all)

@@ -10,11 +10,17 @@ from pydantic import BaseModel, ConfigDict, PositiveInt
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
-from event_sourcery.event_store import BackendFactory, Event, EventRegistry, EventStore
+from event_sourcery.event_store import (
+    BackendFactory,
+    Dispatcher,
+    Event,
+    EventRegistry,
+    EventStore,
+)
 from event_sourcery.event_store.event import Serde
 from event_sourcery.event_store.factory import (
-    Backend,
     NoOutboxStorageStrategy,
+    TransactionalBackend,
     no_filter,
 )
 from event_sourcery.event_store.interfaces import (
@@ -36,24 +42,22 @@ class DjangoBackendFactory(BackendFactory):
     _serde: Serde = Serde(Event.__registry__)
     _outbox_strategy: OutboxStorageStrategy | None = None
 
-    def build(self) -> Backend:
+    def build(self) -> TransactionalBackend:
         from event_sourcery_django.event_store import DjangoStorageStrategy
         from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
-        from event_sourcery_django.subscription import (
-            DjangoInTransactionSubscription,
-            DjangoSubscriptionStrategy,
-        )
+        from event_sourcery_django.subscription import DjangoSubscriptionStrategy
 
         outbox = cast(DjangoOutboxStorageStrategy | None, self._outbox_strategy)
-        backend = Backend()
-        backend.event_store = EventStore(DjangoStorageStrategy(outbox), self._serde)
-        backend.outbox = Outbox(outbox or NoOutboxStorageStrategy(), self._serde)
-        backend.subscriber = es.subscription.SubscriptionBuilder(
-            _serde=self._serde,
-            _strategy=DjangoSubscriptionStrategy(),
-            in_transaction=DjangoInTransactionSubscription(self._serde),
-        )
+        backend = TransactionalBackend()
         backend.serde = self._serde
+        backend.in_transaction = Dispatcher(backend.serde)
+        storage_strategy = DjangoStorageStrategy(backend.in_transaction, outbox)
+        backend.event_store = EventStore(storage_strategy, backend.serde)
+        backend.outbox = Outbox(outbox or NoOutboxStorageStrategy(), backend.serde)
+        backend.subscriber = es.subscription.SubscriptionBuilder(
+            _serde=backend.serde,
+            _strategy=DjangoSubscriptionStrategy(),
+        )
         return backend
 
     def with_event_registry(self, event_registry: EventRegistry) -> Self:

@@ -1,4 +1,5 @@
 import pytest
+from _pytest.fixtures import SubRequest
 
 from event_sourcery.event_store import (
     BackendFactory,
@@ -25,15 +26,15 @@ def event_store(backend: Backend) -> EventStore:
 
 
 @pytest.fixture()
-def given(backend: Backend) -> bdd.Given:
-    return bdd.Given(backend)
+def given(backend: Backend, request: SubRequest) -> bdd.Given:
+    return bdd.Given(backend, request)
 
 
 @pytest.fixture()
-def when(backend: Backend) -> bdd.When:
-    return bdd.When(backend)
+def when(backend: Backend, request: SubRequest) -> bdd.When:
+    return bdd.When(backend, request)
 
 
 @pytest.fixture()
-def then(backend: Backend) -> bdd.Then:
-    return bdd.Then(backend)
+def then(backend: Backend, request: SubRequest) -> bdd.Then:
+    return bdd.Then(backend, request)

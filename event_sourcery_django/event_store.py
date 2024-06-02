@@ -5,8 +5,10 @@ from more_itertools import first, first_true
 
 from event_sourcery.event_store import (
     NO_VERSIONING,
+    Dispatcher,
     Position,
     RawEvent,
+    RecordedRaw,
     StreamId,
     Versioning,
 )
@@ -21,6 +23,7 @@ from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
 
 @dataclass(repr=True)
 class DjangoStorageStrategy(StorageStrategy):
+    _dispatcher: Dispatcher
     _outbox: DjangoOutboxStorageStrategy | None = None
 
     def fetch_events(
@@ -71,9 +74,14 @@ class DjangoStorageStrategy(StorageStrategy):
         self._ensure_stream(stream_id=stream_id, versioning=versioning)
         event = cast(RawEvent, first(events))
         stream = models.Stream.objects.by_stream_id(stream_id=event.stream_id).get()
-        models.Event.objects.bulk_create(dto.entry(event, stream) for event in events)
+        entries = [dto.entry(event, stream) for event in events]
+        models.Event.objects.bulk_create(entries)
         if self._outbox:
             self._outbox.put_into_outbox(events)
+        records = (
+            RecordedRaw(entry=raw, position=db.id) for raw, db in zip(events, entries)
+        )
+        self._dispatcher.dispatch(*records)
 
     def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         initial_version = versioning.initial_version

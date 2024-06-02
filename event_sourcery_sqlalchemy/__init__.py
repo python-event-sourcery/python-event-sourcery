@@ -14,11 +14,12 @@ from typing_extensions import Self
 
 from event_sourcery import event_store as es
 from event_sourcery.event_store import (
-    Backend,
     BackendFactory,
+    Dispatcher,
     Event,
     EventRegistry,
     EventStore,
+    TransactionalBackend,
 )
 from event_sourcery.event_store.event import Serde
 from event_sourcery.event_store.factory import NoOutboxStorageStrategy, no_filter
@@ -28,10 +29,7 @@ from event_sourcery_sqlalchemy import models
 from event_sourcery_sqlalchemy.event_store import SqlAlchemyStorageStrategy
 from event_sourcery_sqlalchemy.models import configure_models
 from event_sourcery_sqlalchemy.outbox import SqlAlchemyOutboxStorageStrategy
-from event_sourcery_sqlalchemy.subscription import (
-    InTransactionSubscription,
-    SqlAlchemySubscriptionStrategy,
-)
+from event_sourcery_sqlalchemy.subscription import SqlAlchemySubscriptionStrategy
 
 
 class Config(BaseModel):
@@ -47,22 +45,26 @@ class SQLAlchemyBackendFactory(BackendFactory):
     _serde: Serde = Serde(Event.__registry__)
     _outbox_strategy: SqlAlchemyOutboxStorageStrategy | None = None
 
-    def build(self) -> Backend:
-        backend = Backend()
+    def build(self) -> TransactionalBackend:
+        backend = TransactionalBackend()
+        backend.serde = self._serde
+        backend.in_transaction = Dispatcher(backend.serde)
         backend.event_store = EventStore(
-            SqlAlchemyStorageStrategy(self._session, self._outbox_strategy),
-            self._serde,
+            SqlAlchemyStorageStrategy(
+                self._session,
+                backend.in_transaction,
+                self._outbox_strategy,
+            ),
+            backend.serde,
         )
         backend.outbox = Outbox(
             self._outbox_strategy or NoOutboxStorageStrategy(),
-            self._serde,
+            backend.serde,
         )
         backend.subscriber = es.subscription.SubscriptionBuilder(
-            _serde=self._serde,
+            _serde=backend.serde,
             _strategy=SqlAlchemySubscriptionStrategy(),
-            in_transaction=InTransactionSubscription(self._serde),
         )
-        backend.serde = self._serde
         return backend
 
     def with_event_registry(self, event_registry: EventRegistry) -> Self:

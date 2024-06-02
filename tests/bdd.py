@@ -2,15 +2,16 @@ import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
-from typing import Generator, Iterator, Sequence, Type, TypeVar
+from typing import Generator, Iterator, Sequence, Type, TypeVar, cast
 from unittest.mock import Mock
 
+from _pytest.fixtures import SubRequest
 from pytest import approx
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
-from event_sourcery.event_store import Event, Position, Recorded
-from event_sourcery.event_store.factory import Backend
+from event_sourcery.event_store import Event, Metadata, Position, Recorded, StreamId
+from event_sourcery.event_store.factory import Backend, TransactionalBackend
 from event_sourcery.event_store.subscription import BuildPhase, PositionPhase
 from tests.matchers import any_metadata
 
@@ -95,12 +96,41 @@ class BatchSubscription:
         assert received == [], f"Received {received}, instead of empty batch"
 
 
+@dataclass(unsafe_hash=True)
+class InTransactionListener:
+    _records: list[Recorded] = field(default_factory=list, hash=False)
+
+    def __call__(
+        self,
+        metadata: Metadata,
+        stream_id: StreamId,
+        position: Position | None,
+    ) -> None:
+        record = Recorded(metadata=metadata, stream_id=stream_id, position=position)
+        self._records.append(record)
+
+    def __next__(self) -> Recorded | None:
+        try:
+            return self._records.pop(0)
+        except IndexError:
+            return None
+
+    def next_received_record_is(self, expected: Recorded | es.Entry) -> None:
+        received = next(self)
+        assert expected == received, f"{expected} != {received}"
+
+    def received_no_new_records(self) -> None:
+        record = next(self)
+        assert record is None, f"Received new record: {record}"
+
+
 T = TypeVar("T")
 
 
 @dataclass
 class Step:
-    backend: Backend
+    backend: Backend | TransactionalBackend
+    request: SubRequest
 
     @property
     def store(self) -> es.EventStore:
@@ -149,6 +179,12 @@ class Step:
     ) -> BatchSubscription:
         builder = self._create_subscription_builder(to, to_category, to_events)
         return BatchSubscription(builder.build_batch(of_size, timelimit))
+
+    def in_transaction_listener(self) -> InTransactionListener:
+        backend = cast(TransactionalBackend, self.backend)
+        backend.in_transaction.register(listener := InTransactionListener())
+        self.request.addfinalizer(lambda: backend.in_transaction.remove(listener))
+        return listener
 
     def stream(self, with_id: es.StreamId | None = None) -> Stream:
         return Stream(self.store) if not with_id else Stream(self.store, with_id)
