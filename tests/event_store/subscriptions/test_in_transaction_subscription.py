@@ -3,7 +3,7 @@ from unittest.mock import ANY
 import pytest
 
 from tests.bdd import Given, Then, When
-from tests.factories import an_event
+from tests.factories import AnEvent, OtherEvent, an_event
 from tests.matchers import any_record
 
 pytestmark = pytest.mark.skip_backend(
@@ -28,6 +28,28 @@ def test_receive_all_events(
     then(in_transaction).next_received_record_is(
         any_record(event=second_event, on_stream=stream.id)
     )
+
+
+def test_receive_only_events_subscribed_to(
+    given: Given,
+    when: When,
+    then: Then,
+) -> None:
+    in_transaction = given.in_transaction_listener(to=AnEvent)
+    stream = when.stream().receives(
+        an_event(OtherEvent()),
+        second_event := an_event(),
+        an_event(OtherEvent()),
+        fourth_event := an_event(),
+    )
+
+    then(in_transaction).next_received_record_is(
+        any_record(event=second_event, on_stream=stream.id)
+    )
+    then(in_transaction).next_received_record_is(
+        any_record(event=fourth_event, on_stream=stream.id)
+    )
+    then(in_transaction).received_no_new_records()
 
 
 def test_receive_events_from_multiple_streams(

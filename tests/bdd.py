@@ -180,10 +180,15 @@ class Step:
         builder = self._create_subscription_builder(to, to_category, to_events)
         return BatchSubscription(builder.build_batch(of_size, timelimit))
 
-    def in_transaction_listener(self) -> InTransactionListener:
+    def in_transaction_listener(self, to: Type[Event] = Event) -> InTransactionListener:
         backend = cast(TransactionalBackend, self.backend)
-        backend.in_transaction.register(listener := InTransactionListener())
-        self.request.addfinalizer(lambda: backend.in_transaction.remove(listener))
+        backend.in_transaction.register(listener := InTransactionListener(), to=to)
+        self.request.addfinalizer(
+            lambda: backend.in_transaction.remove(listener, to=to)
+        )
+        self.request.addfinalizer(
+            lambda: backend.in_transaction.remove(listener, to=Event)
+        )
         return listener
 
     def stream(self, with_id: es.StreamId | None = None) -> Stream:
