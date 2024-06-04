@@ -4,14 +4,13 @@ from copy import copy
 from dataclasses import dataclass, field
 from datetime import timedelta
 from operator import getitem
-from types import TracebackType
-from typing import ContextManager, Dict, Generator, Iterator, Type
+from typing import ContextManager, Dict, Generator, Iterator
 
 from pydantic import BaseModel, ConfigDict, PositiveInt
 from typing_extensions import Self
 
 from event_sourcery.event_store import (
-    Entry,
+    Dispatcher,
     Event,
     EventRegistry,
     EventStore,
@@ -20,9 +19,9 @@ from event_sourcery.event_store import (
 from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw, Serde
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.factory import (
-    Backend,
     BackendFactory,
     NoOutboxStorageStrategy,
+    TransactionalBackend,
     no_filter,
 )
 from event_sourcery.event_store.interfaces import (
@@ -222,10 +221,12 @@ class InMemoryStorageStrategy(StorageStrategy):
     def __init__(
         self,
         storage: Storage,
+        dispatcher: Dispatcher,
         outbox_strategy: InMemoryOutboxStorageStrategy | None,
     ) -> None:
         self._names: Dict[str | None, str] = {}
         self._storage = storage
+        self._dispatcher = dispatcher
         self._outbox = outbox_strategy
 
     def fetch_events(
@@ -245,10 +246,17 @@ class InMemoryStorageStrategy(StorageStrategy):
     def insert_events(
         self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
     ) -> None:
+        position = self.current_position or 0
         self._ensure_stream(stream_id=stream_id, versioning=versioning)
         self._storage.append(events)
         if self._outbox:
             self._outbox.put_into_outbox(events)
+        self._dispatcher.dispatch(
+            *(
+                RecordedRaw(entry=raw, position=position)
+                for position, raw in enumerate(events, start=position + 1)
+            )
+        )
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
         self._storage.replace(with_snapshot=snapshot)
@@ -281,31 +289,6 @@ class InMemoryStorageStrategy(StorageStrategy):
         return current_position and Position(current_position)
 
 
-@dataclass(repr=False)
-class InMemoryInTransactionSubscription(ContextManager[Iterator[Entry]]):
-    _storage: Storage
-    _serde: Serde
-    _current_position = 0
-
-    def __enter__(self) -> Iterator[Entry]:
-        self._current_position = self._storage.current_position
-        return self.iter()
-
-    def __exit__(
-        self,
-        exc_type: Type[BaseException] | None,
-        exc: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None:
-        pass
-
-    def iter(self) -> Iterator[Entry]:
-        while self._storage.current_position > self._current_position:
-            raw = self._storage.events[self._current_position]
-            self._current_position += 1
-            yield Entry(metadata=self._serde.deserialize(raw), stream_id=raw.stream_id)
-
-
 class Config(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -324,23 +307,25 @@ class InMemoryBackendFactory(BackendFactory):
     def __post_init__(self) -> None:
         self._subscription_strategy = InMemorySubscriptionStrategy(self._storage)
 
-    def build(self) -> Backend:
-        backend = Backend()
+    def build(self) -> TransactionalBackend:
+        backend = TransactionalBackend()
+        backend.serde = self.serde
+        backend.in_transaction = Dispatcher(backend.serde)
         backend.event_store = EventStore(
-            InMemoryStorageStrategy(self._storage, self._outbox_strategy),
-            self.serde,
+            InMemoryStorageStrategy(
+                self._storage,
+                backend.in_transaction,
+                self._outbox_strategy,
+            ),
+            backend.serde,
         )
         backend.outbox = Outbox(
             self._outbox_strategy or NoOutboxStorageStrategy(),
-            self.serde,
+            backend.serde,
         )
         backend.subscriber = subscription.SubscriptionBuilder(
-            _serde=self.serde,
+            _serde=backend.serde,
             _strategy=self._subscription_strategy,
-            in_transaction=InMemoryInTransactionSubscription(
-                self._storage,
-                self.serde,
-            ),
         )
         return backend
 

@@ -40,7 +40,8 @@ def sql_session(
 @pytest.fixture()
 def sqlalchemy_sqlite() -> Iterator[SQLAlchemyBackendFactory]:
     with sql_session(
-        "sqlite:///:memory:", connect_args={"check_same_thread": False},
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
     ) as session:
         yield SQLAlchemyBackendFactory(session)
 

@@ -9,8 +9,10 @@ from sqlalchemy.orm import Session
 
 from event_sourcery.event_store import (
     NO_VERSIONING,
+    Dispatcher,
     Position,
     RawEvent,
+    RecordedRaw,
     StreamId,
     Versioning,
 )
@@ -28,6 +30,7 @@ from event_sourcery_sqlalchemy.outbox import SqlAlchemyOutboxStorageStrategy
 @dataclass(repr=False)
 class SqlAlchemyStorageStrategy(StorageStrategy):
     _session: Session
+    _dispatcher: Dispatcher
     _outbox: SqlAlchemyOutboxStorageStrategy | None = None
 
     def fetch_events(
@@ -168,8 +171,8 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             ),
         )
 
-        for event in events:
-            entry = EventModel(
+        entries = [
+            EventModel(
                 uuid=event.uuid,
                 created_at=event.created_at,
                 name=event.name,
@@ -177,10 +180,16 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 event_context=event.context,
                 version=event.version,
             )
-            stream.events.append(entry)
+            for event in events
+        ]
+        stream.events.extend(entries)
         if self._outbox:
             self._outbox.put_into_outbox(events)
         self._session.flush()
+        records = (
+            RecordedRaw(entry=raw, position=db.id) for raw, db in zip(events, entries)
+        )
+        self._dispatcher.dispatch(*records)
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
         entry = SnapshotModel(

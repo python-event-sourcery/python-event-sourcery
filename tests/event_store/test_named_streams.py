@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 import pytest
+from _pytest.fixtures import SubRequest
 
 from event_sourcery.event_store import BackendFactory, Event, StreamId
 from event_sourcery.event_store.exceptions import (
@@ -56,8 +57,11 @@ def test_blocks_new_stream_uuid_with_same_name_as_other(
         when.appends(AnEvent(), to=CorruptedStreamId(name="Test #4"))
 
 
-def test_esdb_cant_use_category_with_dash(esdb: BackendFactory) -> None:
-    when = When(esdb.build())
+def test_esdb_cant_use_category_with_dash(
+    esdb: BackendFactory,
+    request: SubRequest,
+) -> None:
+    when = When(esdb.build(), request)
 
     with pytest.raises(IllegalCategoryName):
         when.appends(AnEvent(), to=StreamId(category="with-dash"))

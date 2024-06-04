@@ -5,7 +5,7 @@ from uuid import UUID
 from event_sourcery.event_store import Event, Metadata
 
 
-class _Event(Event):
+class AnEvent(Event):
     pass
 
 
@@ -14,10 +14,12 @@ class OtherEvent(Event):
 
 
 def an_event(
-    event: Event | None = None, version: int | None = None, **kwargs: Any
-) -> Metadata[_Event]:
+    event: Event | None = None,
+    version: int | None = None,
+    **kwargs: Any,
+) -> Metadata[AnEvent]:
     return Metadata(
-        event=event or _Event(),
+        event=event or AnEvent(),
         version=version,
         **kwargs,
     )
@@ -25,9 +27,9 @@ def an_event(
 
 def a_snapshot(
     event: Event | None = None, version: int | None = None, **kwargs: Any
-) -> Metadata[_Event]:
+) -> Metadata[AnEvent]:
     return Metadata(
-        event=event or _Event(),
+        event=event or AnEvent(),
         version=version,
         **kwargs,
     )

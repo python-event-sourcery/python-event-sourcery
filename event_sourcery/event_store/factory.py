@@ -4,6 +4,7 @@ from typing import ContextManager, Iterator
 from typing_extensions import Self
 
 from event_sourcery.event_store import subscription
+from event_sourcery.event_store.dispatcher import Dispatcher
 from event_sourcery.event_store.event import EventRegistry, RawEvent, Serde
 from event_sourcery.event_store.event_store import EventStore
 from event_sourcery.event_store.interfaces import (
@@ -27,6 +28,10 @@ class Backend:
     event_store: EventStore
     outbox: Outbox
     subscriber: subscription.PositionPhase
+
+
+class TransactionalBackend(Backend):
+    in_transaction: Dispatcher
 
 
 class BackendFactory(abc.ABC):
