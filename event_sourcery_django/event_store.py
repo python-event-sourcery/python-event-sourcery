@@ -76,11 +76,11 @@ class DjangoStorageStrategy(StorageStrategy):
         stream = models.Stream.objects.by_stream_id(stream_id=event.stream_id).get()
         entries = [dto.entry(event, stream) for event in events]
         models.Event.objects.bulk_create(entries)
-        if self._outbox:
-            self._outbox.put_into_outbox(events)
-        records = (
+        records = [
             RecordedRaw(entry=raw, position=db.id) for raw, db in zip(events, entries)
-        )
+        ]
+        if self._outbox:
+            self._outbox.put_into_outbox(records)
         self._dispatcher.dispatch(*records)
 
     def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:

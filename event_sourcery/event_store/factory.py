@@ -5,7 +5,7 @@ from typing_extensions import Self
 
 from event_sourcery.event_store import subscription
 from event_sourcery.event_store.dispatcher import Dispatcher
-from event_sourcery.event_store.event import EventRegistry, RawEvent, Serde
+from event_sourcery.event_store.event import EventRegistry, RawEvent, RecordedRaw, Serde
 from event_sourcery.event_store.event_store import EventStore
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
@@ -19,7 +19,7 @@ def no_filter(entry: RawEvent) -> bool:
 
 
 class NoOutboxStorageStrategy(OutboxStorageStrategy):
-    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RawEvent]]:
+    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RecordedRaw]]:
         return iter([])
 
 

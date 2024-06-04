@@ -1,8 +1,7 @@
 from typing import Callable
 
-from event_sourcery.event_store.event import Metadata, Serde
+from event_sourcery.event_store.event import Recorded, Serde
 from event_sourcery.event_store.interfaces import OutboxStorageStrategy
-from event_sourcery.event_store.stream_id import StreamId
 
 
 class Outbox:
@@ -12,11 +11,16 @@ class Outbox:
 
     def run(
         self,
-        publisher: Callable[[Metadata, StreamId], None],
+        publisher: Callable[[Recorded], None],
         limit: int = 100,
     ) -> None:
         stream = self._strategy.outbox_entries(limit=limit)
         for entry in stream:
-            with entry as raw_event_dict:
-                event = self._serde.deserialize(raw_event_dict)
-                publisher(event, raw_event_dict.stream_id)
+            with entry as raw_record:
+                event = self._serde.deserialize(raw_record.entry)
+                record = Recorded(
+                    metadata=event,
+                    stream_id=raw_record.entry.stream_id,
+                    position=raw_record.position,
+                )
+                publisher(record)

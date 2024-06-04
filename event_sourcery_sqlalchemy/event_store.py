@@ -183,12 +183,13 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             for event in events
         ]
         stream.events.extend(entries)
-        if self._outbox:
-            self._outbox.put_into_outbox(events)
         self._session.flush()
-        records = (
+        records = [
             RecordedRaw(entry=raw, position=db.id) for raw, db in zip(events, entries)
-        )
+        ]
+        if self._outbox:
+            self._outbox.put_into_outbox(records)
+        self._session.flush()
         self._dispatcher.dispatch(*records)
 
     def save_snapshot(self, snapshot: RawEvent) -> None:

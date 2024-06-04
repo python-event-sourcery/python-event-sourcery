@@ -22,6 +22,7 @@ class Migration(migrations.Migration):
                     "stream_name",
                     models.CharField(blank=True, max_length=255, null=True),
                 ),
+                ("position", models.IntegerField()),
                 ("tries_left", models.IntegerField(default=3)),
             ],
         ),

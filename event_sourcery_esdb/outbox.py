@@ -8,7 +8,7 @@ from esdbclient import EventStoreDBClient, RecordedEvent
 from esdbclient.exceptions import DeadlineExceeded, NotFound
 from esdbclient.persistent import PersistentSubscription
 
-from event_sourcery.event_store import RawEvent
+from event_sourcery.event_store import RecordedRaw
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
@@ -55,7 +55,7 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
         assert self._active_subscription is not None
         return self._active_subscription
 
-    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RawEvent]]:
+    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RecordedRaw]]:
         info = self._client.get_subscription_info(
             self._outbox_name,
             timeout=self._timeout,
@@ -66,8 +66,9 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
         with self._context(limit) as subscription:
             try:
                 for entry in subscription:
-                    if self._filterer(event := dto.raw_event(entry)):
-                        yield self._publish_context(entry, event)
+                    record = dto.raw_record(entry)
+                    if self._filterer(record.entry):
+                        yield self._publish_context(entry, record)
             except DeadlineExceeded:
                 pass
 
@@ -75,10 +76,10 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     def _publish_context(
         self,
         entry: RecordedEvent,
-        event: RawEvent,
-    ) -> Generator[RawEvent, None, None]:
+        record: RecordedRaw,
+    ) -> Generator[RecordedRaw, None, None]:
         try:
-            yield event
+            yield record
         except Exception:
             logger.exception("Failed to publish message #%d", entry.id)
             failure_count = (entry.retry_count or 0) + 1
