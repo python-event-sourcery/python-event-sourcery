@@ -168,6 +168,7 @@ class OutboxEntry:
     created_at = mapped_column(DateTime(), nullable=False, index=True)
     data = mapped_column(JSONB(), nullable=False)
     stream_name = mapped_column(String(255), nullable=True)
+    position = mapped_column(BigInteger().with_variant(Integer(), "sqlite"))
     tries_left = mapped_column(Integer(), nullable=False)
 
 

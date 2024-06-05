@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from event_sourcery.event_store import RawEvent, StreamId
+from event_sourcery.event_store import RawEvent, RecordedRaw, StreamId
 from event_sourcery_django.models import Event, OutboxEntry, Snapshot, Stream
 
 
@@ -45,33 +45,37 @@ def snapshot(from_raw: RawEvent, to_stream: Stream) -> Snapshot:
     )
 
 
-def outbox_entry(from_raw: RawEvent, max_attempts: int) -> OutboxEntry:
+def outbox_entry(from_raw: RecordedRaw, max_attempts: int) -> OutboxEntry:
     return OutboxEntry(
         created_at=datetime.utcnow(),
         data={
-            "created_at": from_raw.created_at.isoformat(),
-            "uuid": str(from_raw.uuid),
-            "stream_id": str(from_raw.stream_id),
-            "version": from_raw.version,
-            "name": from_raw.name,
-            "data": from_raw.data,
-            "context": from_raw.context,
+            "created_at": from_raw.entry.created_at.isoformat(),
+            "uuid": str(from_raw.entry.uuid),
+            "stream_id": str(from_raw.entry.stream_id),
+            "version": from_raw.entry.version,
+            "name": from_raw.entry.name,
+            "data": from_raw.entry.data,
+            "context": from_raw.entry.context,
         },
-        stream_name=from_raw.stream_id.name,
+        stream_name=from_raw.entry.stream_id.name,
+        position=from_raw.position,
         tries_left=max_attempts,
     )
 
 
-def raw_outbox(from_entry: OutboxEntry) -> RawEvent:
-    return RawEvent(
-        uuid=UUID(from_entry.data["uuid"]),
-        stream_id=StreamId(
-            from_hex=from_entry.data["stream_id"],
-            name=from_entry.stream_name,
+def raw_outbox(from_entry: OutboxEntry) -> RecordedRaw:
+    return RecordedRaw(
+        entry=RawEvent(
+            uuid=UUID(from_entry.data["uuid"]),
+            stream_id=StreamId(
+                from_hex=from_entry.data["stream_id"],
+                name=from_entry.stream_name,
+            ),
+            created_at=datetime.fromisoformat(from_entry.data["created_at"]),
+            version=from_entry.data["version"],
+            name=from_entry.data["name"],
+            data=from_entry.data["data"],
+            context=from_entry.data["context"],
         ),
-        created_at=datetime.fromisoformat(from_entry.data["created_at"]),
-        version=from_entry.data["version"],
-        name=from_entry.data["name"],
-        data=from_entry.data["data"],
-        context=from_entry.data["context"],
+        position=from_entry.position,
     )

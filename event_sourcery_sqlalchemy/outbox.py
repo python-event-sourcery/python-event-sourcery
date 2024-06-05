@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store import RawEvent, StreamId
+from event_sourcery.event_store import RawEvent, RecordedRaw, StreamId
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
@@ -24,13 +24,13 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
     _filterer: OutboxFiltererStrategy
     _max_publish_attempts: int
 
-    def put_into_outbox(self, events: list[RawEvent]) -> None:
+    def put_into_outbox(self, records: list[RecordedRaw]) -> None:
         rows = []
-        for event in events:
-            if not self._filterer(event):
+        for record in records:
+            if not self._filterer(record.entry):
                 continue
 
-            as_dict = dict(event)
+            as_dict = dict(record.entry)
             created_at = cast(datetime, as_dict["created_at"])
             as_dict["created_at"] = created_at.isoformat()
             as_dict["uuid"] = str(as_dict["uuid"])
@@ -39,7 +39,8 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
                 {
                     "created_at": datetime.utcnow(),
                     "data": as_dict,
-                    "stream_name": event.stream_id.name,
+                    "stream_name": record.entry.stream_id.name,
+                    "position": record.position,
                     "tries_left": self._max_publish_attempts,
                 }
             )
@@ -49,7 +50,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
 
         self._session.execute(insert(OutboxEntry), rows)
 
-    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RawEvent]]:
+    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RecordedRaw]]:
         stmt = (
             select(OutboxEntry)
             .filter(OutboxEntry.tries_left > 0)
@@ -62,7 +63,9 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
             yield self._publish_context(entry)
 
     @contextmanager
-    def _publish_context(self, entry: OutboxEntry) -> Generator[RawEvent, None, None]:
+    def _publish_context(
+        self, entry: OutboxEntry
+    ) -> Generator[RecordedRaw, None, None]:
         raw = RawEvent(
             uuid=UUID(entry.data["uuid"]),
             stream_id=StreamId(
@@ -76,7 +79,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
             context=entry.data["context"],
         )
         try:
-            yield raw
+            yield RecordedRaw(entry=raw, position=entry.position)
         except Exception:
             logger.exception("Failed to publish message #%d", entry.id)
             entry.tries_left -= 1

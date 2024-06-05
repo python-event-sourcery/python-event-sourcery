@@ -143,30 +143,30 @@ class InMemoryToEventTypesSubscription(InMemorySubscription):
 class InMemoryOutboxStorageStrategy(OutboxStorageStrategy):
     _filterer: OutboxFiltererStrategy
     _max_publish_attempts: int
-    _outbox: list[tuple[RawEvent, int]] = field(default_factory=list, init=False)
+    _outbox: list[tuple[RecordedRaw, int]] = field(default_factory=list, init=False)
 
-    def put_into_outbox(self, events: list[RawEvent]) -> None:
-        self._outbox.extend([(e, 0) for e in events if self._filterer(e)])
+    def put_into_outbox(self, records: list[RecordedRaw]) -> None:
+        self._outbox.extend([(e, 0) for e in records if self._filterer(e.entry)])
 
-    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RawEvent]]:
-        for entry in self._outbox[:limit]:
-            yield self._publish_context(*entry)
+    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RecordedRaw]]:
+        for record in self._outbox[:limit]:
+            yield self._publish_context(*record)
 
     @contextmanager
     def _publish_context(
         self,
-        event: RawEvent,
+        record: RecordedRaw,
         failure_count: int,
-    ) -> Generator[RawEvent, None, None]:
-        index = self._outbox.index((event, failure_count))
+    ) -> Generator[RecordedRaw, None, None]:
+        index = self._outbox.index((record, failure_count))
         try:
-            yield event
+            yield record
         except Exception:
             failure_count += 1
             if self._reached_max_number_of_attempts(failure_count):
                 del self._outbox[index]
             else:
-                self._outbox[index] = (event, failure_count)
+                self._outbox[index] = (record, failure_count)
         else:
             del self._outbox[index]
 
@@ -249,14 +249,13 @@ class InMemoryStorageStrategy(StorageStrategy):
         position = self.current_position or 0
         self._ensure_stream(stream_id=stream_id, versioning=versioning)
         self._storage.append(events)
+        records = [
+            RecordedRaw(entry=raw, position=position)
+            for position, raw in enumerate(events, start=position + 1)
+        ]
         if self._outbox:
-            self._outbox.put_into_outbox(events)
-        self._dispatcher.dispatch(
-            *(
-                RecordedRaw(entry=raw, position=position)
-                for position, raw in enumerate(events, start=position + 1)
-            )
-        )
+            self._outbox.put_into_outbox(records)
+        self._dispatcher.dispatch(*records)
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
         self._storage.replace(with_snapshot=snapshot)

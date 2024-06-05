@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import ContextManager, Iterator
 
-from event_sourcery.event_store import RawEvent
+from event_sourcery.event_store import RecordedRaw
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
@@ -19,14 +19,14 @@ class DjangoOutboxStorageStrategy(OutboxStorageStrategy):
     _filterer: OutboxFiltererStrategy
     _max_publish_attempts: int
 
-    def put_into_outbox(self, events: list[RawEvent]) -> None:
+    def put_into_outbox(self, records: list[RecordedRaw]) -> None:
         OutboxEntry.objects.bulk_create(
-            dto.outbox_entry(event, self._max_publish_attempts)
-            for event in events
-            if self._filterer(event)
+            dto.outbox_entry(record, self._max_publish_attempts)
+            for record in records
+            if self._filterer(record.entry)
         )
 
-    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RawEvent]]:
+    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RecordedRaw]]:
         entries = (
             OutboxEntry.objects.select_for_update(skip_locked=True)
             .filter(tries_left__gt=0)
@@ -37,7 +37,7 @@ class DjangoOutboxStorageStrategy(OutboxStorageStrategy):
             yield self._publish_context(entry)
 
     @contextmanager
-    def _publish_context(self, entry: OutboxEntry) -> Iterator[RawEvent]:
+    def _publish_context(self, entry: OutboxEntry) -> Iterator[RecordedRaw]:
         raw = dto.raw_outbox(entry)
         try:
             yield raw
