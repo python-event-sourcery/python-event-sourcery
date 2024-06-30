@@ -3,8 +3,8 @@ theme:
   name: material
   palette:
     primary: deep purple
-repo_url: https://github.com/Enforcer/python-event-sourcery/
-repo_name: Enforcer/python-event-sourcery
+repo_url: https://github.com/python-event-sourcery/python-event-sourcery/
+repo_name: python-event-sourcery/python-event-sourcery
 nav:
     - 'Event Sourcery': 'index.md'
     - 'Basics': 'basics.md'

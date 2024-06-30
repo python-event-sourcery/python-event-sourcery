@@ -1,7 +1,7 @@
 
 # Python Event Sourcery
 
-Event-driven applications and Event Sourcing in Python made simpler.
+A library for event-based systems in Python. For event sourcing, CQRS, and event-driven architectures.
 
 ```python
 event = EventSourceryIsBorn()
