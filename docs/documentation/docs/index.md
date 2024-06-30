@@ -1,5 +1,3 @@
-# Event Sourcery
+# Python Event Sourcery
 
-Event-driven Architecture and Event Sourcing in Python made simpler.
-
-An implementation of Event Store and related patterns in Python, using [Pydantic](https://pydantic-docs.helpmanual.io/) and [SQLAlchemy](https://www.sqlalchemy.org/).
+A library for event-based systems in Python. For event sourcing, CQRS, and event-driven architectures.
