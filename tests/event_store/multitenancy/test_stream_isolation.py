@@ -44,8 +44,8 @@ def test_context_is_reentrant(
                 then.stream(stream.id).is_empty()
 
 
-@pytest.mark.xfail(reason="Unsure how this should behave")
-def test_streams_with_same_id_under_different_tenants(
+@pytest.mark.xfail(reason="Not implemented")
+def test_streams_with_same_id_under_different_tenants_are_allowed(
     given: Given,
     then: Then,
 ) -> None:
@@ -64,3 +64,27 @@ def test_streams_with_same_id_under_different_tenants(
 
     with event_sourcery_context(tenant_id=2):
         then.stream(stream_id).loads_only([event_of_second_tenant])
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_streams_created_in_tenant_aware_context_are_not_available_outside(
+    given: Given,
+    then: Then,
+) -> None:
+    stream_id = StreamId()
+    with event_sourcery_context(tenant_id=1):
+        given.stream(stream_id).with_events(an_event())
+
+    then.stream(stream_id).is_empty()
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_streams_created_outside_tenant_context_are_not_available_inside_it(
+    given: Given,
+    then: Then,
+) -> None:
+    stream_id = StreamId()
+    given.stream(stream_id).with_events(an_event())
+
+    with event_sourcery_context(tenant_id=1):
+        then.stream(stream_id).is_empty()
