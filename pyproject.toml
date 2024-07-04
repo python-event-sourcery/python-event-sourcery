@@ -7,7 +7,6 @@ license = "MIT"
 packages = [
     { include = "event_sourcery" },
     { include = "event_sourcery_esdb" },
-    { include = "event_sourcery_kombu" },
     { include = "event_sourcery_sqlalchemy" },
 ]
 
@@ -16,7 +15,6 @@ python = ">=3.10,<4.0"
 pydantic = ">=2.0,<3"
 SQLAlchemy = ">=2.0"
 esdbclient = ">=1.0b3"
-kombu = {version = "*", optional = true}
 cloudevents = {version = "*", optional = true}
 more-itertools = "*"
 django = {version = ">=4,<6", optional = true}
@@ -34,7 +32,6 @@ psycopg2-binary = "^2.9.3"
 pytest-django = {version = "*"}
 
 [tool.poetry.extras]
-kombu = ["kombu"]
 cloudevents = ["cloudevents"]
 django = ["django"]
 
@@ -57,7 +54,6 @@ source = [
     "event_sourcery_sqlalchemy",
 ]
 omit = [
-    "event_sourcery_kombu/*",
     "tests/*",
 ]
 
