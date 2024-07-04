@@ -10,6 +10,7 @@ env:
 
 jobs:
   bump-and-publish:
+    if: github.event.head_commit.message != 'Autobump version'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -28,13 +29,18 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install deps
+    - name: Install poetry and the plugin
       run: |
         python -m pip install --upgrade pip poetry==${{ env.POETRY_VERSION }}
         poetry self add poetry-bumpversion
     - name: Bump version
       run: |
-        poetry version prerelease
+        poetry version minor
+    - uses: EndBug/add-and-commit@v9
+      with:
+        add: pyproject.toml
+        author_name: Python Event Sourcery Bot
+        message: 'Autobump version'
     - name: Publish prerelease
       env: # Or as an environment variable
         PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
