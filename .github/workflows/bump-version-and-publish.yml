@@ -35,7 +35,7 @@ jobs:
         poetry self add poetry-bumpversion
     - name: Bump version
       run: |
-        poetry version minor
+        poetry version preminor
     - uses: EndBug/add-and-commit@v9
       with:
         add: pyproject.toml
