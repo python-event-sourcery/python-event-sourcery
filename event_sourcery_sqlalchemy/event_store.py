@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Sequence, Union, cast
 
 from more_itertools import first_true
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
@@ -221,4 +221,6 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
 
     @property
     def current_position(self) -> Position | None:
-        raise NotImplementedError
+        stmt = select(func.max(EventModel.id))
+        last_event = self._session.scalar(stmt)
+        return last_event or Position(0)
