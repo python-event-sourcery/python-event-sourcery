@@ -4,7 +4,7 @@ import os
 import sys
 
 
-def main():
+def main() -> None:
     """Run administrative tasks."""
     from tests.backend import django as django_backend
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", django_backend.__name__)

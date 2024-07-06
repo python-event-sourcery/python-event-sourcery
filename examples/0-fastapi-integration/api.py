@@ -61,7 +61,7 @@ class CustomerSubscribed(Event):
 def subscribe(
     pyes: Backend = Depends(backend),
     session: Session = Depends(db_session),
-):
+) -> None:
     # Create an event
     event = CustomerSubscribed(plan_id=1, model="yearly")
     # Put it in the event store!
@@ -69,7 +69,7 @@ def subscribe(
     session.commit()
 
 
-def test_post():
+def test_post() -> None:
     with TestClient(app) as client:
         result = client.post("/subscription")
     assert result.status_code == 200

@@ -66,26 +66,36 @@ class Inbox:
         return handle
 
 
-def agent(
-    event_store_factory: BackendFactory,
-    transaction: Callable[[], ContextManager],
-    inbox: Inbox,
-) -> None:
-    backend = event_store_factory.build()
-    event_store = backend.event_store
+class Agent(Thread):
+    def __init__(
+        self,
+        event_store_factory: BackendFactory,
+        transaction: Callable[[], ContextManager],
+        inbox: Inbox,
+    ) -> None:
+        super().__init__(daemon=True)
+        self._event_store_factory = event_store_factory
+        self._transaction = transaction
+        self._inbox = inbox
+        self.exception: Exception | None = None
 
-    while True:
-        match inbox.get():
-            case (Command.APPEND, event, stream_id, _Handle() as sync):
-                with transaction():
-                    event_store.append(event, stream_id=stream_id)
-                    # TODO: SQLAlchemy is going to need flush.
-                    #   In Django there is no UoW pattern.
-                    sync.wait_to_commit()
-            case Command.STOP:
-                break
-            case _:
-                pass
+    def run(self) -> None:
+        try:
+            backend = self._event_store_factory.build()
+            event_store = backend.event_store
+
+            while True:
+                match self._inbox.get():
+                    case (Command.APPEND, event, stream_id, _Handle() as sync):
+                        with self._transaction():
+                            event_store.append(event, stream_id=stream_id)
+                            sync.wait_to_commit()
+                    case Command.STOP:
+                        break
+                    case _:
+                        pass
+        except Exception as err:
+            self.exception = err
 
 
 class OtherClient:
@@ -95,14 +105,10 @@ class OtherClient:
         transaction: Callable[[], ContextManager],
     ) -> None:
         self._inbox = Inbox()
-        self._thread = Thread(
-            target=agent,
-            kwargs={
-                "event_store_factory": event_store_factory,
-                "transaction": transaction,
-                "inbox": self._inbox,
-            },
-            daemon=True,
+        self._thread = Agent(
+            event_store_factory,
+            transaction,
+            self._inbox,
         )
         self._thread.start()
 
@@ -111,3 +117,9 @@ class OtherClient:
 
     def stop(self) -> None:
         self._inbox.put_stop()
+        self._raise_thread_exception()
+
+    def _raise_thread_exception(self) -> None:
+        exception = self._thread.exception
+        if exception is not None:
+            raise exception
