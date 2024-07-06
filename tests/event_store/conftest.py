@@ -1,9 +1,11 @@
-from typing import cast
+from collections.abc import Callable, Iterator
+from contextlib import AbstractContextManager, contextmanager
 
 import pytest
 from _pytest.fixtures import SubRequest
 
 from event_sourcery.event_store import BackendFactory
+from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
 from tests import mark
 from tests.backend.django import django
 from tests.backend.esdb import esdb
@@ -20,8 +22,31 @@ from tests.backend.sqlalchemy import sqlalchemy_postgres, sqlalchemy_sqlite
         sqlalchemy_postgres,
     ]
 )
-def event_store_factory(request: SubRequest) -> BackendFactory:
+def create_backend_factory(
+    request: SubRequest,
+) -> Callable[[], AbstractContextManager[BackendFactory]]:
     backend_name: str = request.param.__name__
     mark.xfail_if_not_implemented_yet(request, backend_name)
     mark.skip_backend(request, backend_name)
-    return cast(BackendFactory, request.getfixturevalue(backend_name))
+
+    @contextmanager
+    def with_backend_factory() -> Iterator[BackendFactory]:
+        match backend_name:
+            case "sqlalchemy_sqlite" | "sqlalchemy_postgres":
+                sessionmaker = request.getfixturevalue(backend_name)
+                with sessionmaker() as session:
+                    yield SQLAlchemyBackendFactory(session)
+            case "django" | "in_memory" | "esdb":
+                yield request.getfixturevalue(backend_name)
+            case _:
+                raise NotImplementedError
+
+    return with_backend_factory
+
+
+@pytest.fixture()
+def event_store_factory(
+    create_backend_factory: Callable[[], AbstractContextManager[BackendFactory]]
+) -> Iterator[BackendFactory]:
+    with create_backend_factory() as backend_factory:
+        yield backend_factory

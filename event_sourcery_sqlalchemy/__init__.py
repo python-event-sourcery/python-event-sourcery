@@ -7,6 +7,7 @@ __all__ = [
 ]
 
 from dataclasses import dataclass
+from datetime import timedelta
 
 from pydantic import BaseModel, ConfigDict, PositiveInt
 from sqlalchemy.orm import Session
@@ -36,6 +37,7 @@ class Config(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     outbox_attempts: PositiveInt = 3
+    gap_retry_interval: timedelta = timedelta(seconds=0.5)
 
 
 @dataclass(repr=False)
@@ -63,7 +65,9 @@ class SQLAlchemyBackendFactory(BackendFactory):
         )
         backend.subscriber = es.subscription.SubscriptionBuilder(
             _serde=backend.serde,
-            _strategy=SqlAlchemySubscriptionStrategy(),
+            _strategy=SqlAlchemySubscriptionStrategy(
+                self._session, self._config.gap_retry_interval
+            ),
         )
         return backend
 

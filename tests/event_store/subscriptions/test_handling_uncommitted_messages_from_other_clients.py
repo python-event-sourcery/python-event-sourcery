@@ -13,9 +13,6 @@ pytestmark = pytest.mark.skip_backend(
 
 
 class TestGetsEventsAfterOtherTransactionGetsCommitted:
-    @pytest.mark.not_implemented(
-        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
-    )
     def test_no_filtering(
         self,
         given: Given,
@@ -32,9 +29,6 @@ class TestGetsEventsAfterOtherTransactionGetsCommitted:
         other_transaction.commit()
         then(subscription).next_received_record_is(any_record(event, stream))
 
-    @pytest.mark.not_implemented(
-        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
-    )
     def test_filtering_by_event_types(
         self,
         given: Given,
@@ -55,9 +49,6 @@ class TestGetsEventsAfterOtherTransactionGetsCommitted:
         other_transaction.commit()
         then(subscription).next_received_record_is(any_record(event, stream))
 
-    @pytest.mark.not_implemented(
-        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
-    )
     def test_filtering_by_category(
         self,
         given: Given,
@@ -79,9 +70,6 @@ class TestGetsEventsAfterOtherTransactionGetsCommitted:
 
 
 class TestIgnoresEventsFromPendingTransactions:
-    @pytest.mark.not_implemented(
-        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
-    )
     def test_no_filtering(
         self,
         given: Given,
@@ -94,9 +82,6 @@ class TestIgnoresEventsFromPendingTransactions:
 
         then(subscription).received_no_new_records()
 
-    @pytest.mark.not_implemented(
-        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
-    )
     def test_filtering_by_event_types(
         self,
         given: Given,
@@ -110,9 +95,6 @@ class TestIgnoresEventsFromPendingTransactions:
 
         then(subscription).received_no_new_records()
 
-    @pytest.mark.not_implemented(
-        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
-    )
     def test_filtering_by_category(
         self,
         given: Given,
@@ -128,10 +110,12 @@ class TestIgnoresEventsFromPendingTransactions:
         then(subscription).received_no_new_records()
 
 
+@pytest.mark.skip_backend(
+    backend=["esdb", "in_memory", "sqlalchemy_sqlite"],
+    reason="Required only for SQL-based backends with transactions. "
+    "For 'sqlalchemy_sqlite' tests raise 'database table is locked'",
+)
 class TestMissesEventsThatWereNotCommittedWithinSpecifiedTimeout:
-    @pytest.mark.not_implemented(
-        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
-    )
     def test_no_filtering(
         self,
         given: Given,
@@ -151,9 +135,6 @@ class TestMissesEventsThatWereNotCommittedWithinSpecifiedTimeout:
         other_transaction.commit()
         then(subscription).received_no_new_records()
 
-    @pytest.mark.not_implemented(
-        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
-    )
     def test_filtering_by_event_types(
         self,
         given: Given,
@@ -175,9 +156,6 @@ class TestMissesEventsThatWereNotCommittedWithinSpecifiedTimeout:
         other_transaction.commit()
         then(subscription).received_no_new_records()
 
-    @pytest.mark.not_implemented(
-        backend=["sqlalchemy_sqlite", "sqlalchemy_postgres"],
-    )
     def test_filtering_by_category(
         self,
         given: Given,

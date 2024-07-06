@@ -1,9 +1,12 @@
+from collections.abc import Iterator
+from contextlib import AbstractContextManager, contextmanager
 from typing import Callable, Generator
 from unittest.mock import Mock
 from uuid import uuid4
 
 import django as django_framework
 import pytest
+from _pytest.fixtures import SubRequest
 from django.core.management import call_command as django_command
 
 import event_sourcery
@@ -20,8 +23,9 @@ from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery_django import DjangoBackendFactory
 from event_sourcery_esdb import ESDBBackendFactory
 from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
+from tests import mark
 from tests.backend.esdb import esdb_client
-from tests.backend.sqlalchemy import sql_session
+from tests.backend.sqlalchemy import sqlalchemy_postgres, sqlalchemy_sqlite
 
 
 @pytest.fixture()
@@ -43,32 +47,6 @@ def esdb(max_attempts: int) -> Generator[ESDBBackendFactory, None, None]:
 
 
 @pytest.fixture()
-def sqlalchemy_sqlite(
-    max_attempts: int,
-) -> Generator[SQLAlchemyBackendFactory, None, None]:
-    with sql_session("sqlite:///:memory:") as session:
-        yield SQLAlchemyBackendFactory(
-            session,
-            event_sourcery_sqlalchemy.Config(
-                outbox_attempts=max_attempts,
-            ),
-        )
-
-
-@pytest.fixture()
-def sqlalchemy_postgres(
-    max_attempts: int,
-) -> Generator[SQLAlchemyBackendFactory, None, None]:
-    with sql_session("postgresql://es:es@localhost:5432/es") as session:
-        yield SQLAlchemyBackendFactory(
-            session,
-            event_sourcery_sqlalchemy.Config(
-                outbox_attempts=max_attempts,
-            ),
-        )
-
-
-@pytest.fixture()
 def django(transactional_db: None, max_attempts: int) -> DjangoBackendFactory:
     django_framework.setup()
     django_command("migrate")
@@ -84,6 +62,40 @@ def in_memory(max_attempts: int) -> BackendFactory:
             outbox_attempts=max_attempts,
         )
     )
+
+
+@pytest.fixture(
+    params=[
+        django,
+        esdb,
+        in_memory,
+        sqlalchemy_sqlite,
+        sqlalchemy_postgres,
+    ]
+)
+def create_backend_factory(
+    request: SubRequest, max_attempts: int
+) -> Callable[[], AbstractContextManager[BackendFactory]]:
+    backend_name: str = request.param.__name__
+    mark.xfail_if_not_implemented_yet(request, backend_name)
+    mark.skip_backend(request, backend_name)
+
+    @contextmanager
+    def with_backend_factory() -> Iterator[BackendFactory]:
+        match backend_name:
+            case "sqlalchemy_sqlite" | "sqlalchemy_postgres":
+                sessionmaker = request.getfixturevalue(backend_name)
+                with sessionmaker() as session:
+                    yield SQLAlchemyBackendFactory(
+                        session,
+                        event_sourcery_sqlalchemy.Config(
+                            outbox_attempts=max_attempts,
+                        ),
+                    )
+            case "django" | "in_memory" | "esdb":
+                yield request.getfixturevalue(backend_name)
+
+    return with_backend_factory
 
 
 @pytest.fixture()

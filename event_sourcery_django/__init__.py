@@ -4,6 +4,7 @@ __all__ = [
 ]
 
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import cast
 
 from pydantic import BaseModel, ConfigDict, PositiveInt
@@ -34,6 +35,7 @@ class Config(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     outbox_attempts: PositiveInt = 3
+    gap_retry_interval: timedelta = timedelta(seconds=0.5)
 
 
 @dataclass(repr=False)
@@ -56,7 +58,7 @@ class DjangoBackendFactory(BackendFactory):
         backend.outbox = Outbox(outbox or NoOutboxStorageStrategy(), backend.serde)
         backend.subscriber = es.subscription.SubscriptionBuilder(
             _serde=backend.serde,
-            _strategy=DjangoSubscriptionStrategy(),
+            _strategy=DjangoSubscriptionStrategy(self._config.gap_retry_interval),
         )
         return backend
 
