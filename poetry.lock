@@ -15,7 +15,7 @@ files = [
 name = "asgiref"
 version = "3.8.1"
 description = "ASGI specs, helper code, and adapters"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "asgiref-3.8.1-py3-none-any.whl", hash = "sha256:3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47"},
@@ -328,7 +328,7 @@ toml = ["tomli"]
 name = "django"
 version = "5.0.4"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
-optional = false
+optional = true
 python-versions = ">=3.10"
 files = [
     {file = "Django-5.0.4-py3-none-any.whl", hash = "sha256:916423499d75d62da7aa038d19aef23d23498d8df229775eb0a6309ee1013775"},
@@ -1475,7 +1475,7 @@ sqlcipher = ["sqlcipher3-binary"]
 name = "sqlparse"
 version = "0.5.0"
 description = "A non-validating SQL parser."
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "sqlparse-0.5.0-py3-none-any.whl", hash = "sha256:c204494cd97479d0e39f28c93d46c0b2d5959c7b9ab904762ea6c7af211c8663"},
@@ -1526,7 +1526,7 @@ files = [
 name = "tzdata"
 version = "2024.1"
 description = "Provider of IANA time zone data"
-optional = false
+optional = true
 python-versions = ">=2"
 files = [
     {file = "tzdata-2024.1-py2.py3-none-any.whl", hash = "sha256:9068bc196136463f5245e51efda838afa15aaeca9903f49050dfa2679db4d252"},
@@ -1590,10 +1590,11 @@ files = [
 watchmedo = ["PyYAML (>=3.10)"]
 
 [extras]
+django = ["django"]
 esdb = ["esdbclient"]
 sqlalchemy = ["SQLAlchemy"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4.0"
-content-hash = "741cf0757034faf4395e9a8c4347f00ed3b51ab302359446bb96bdae0075d297"
+content-hash = "9f5a043cff04d5fa470c910b202744ea601c669a3b65c96fa5d01a5aba9e0676"

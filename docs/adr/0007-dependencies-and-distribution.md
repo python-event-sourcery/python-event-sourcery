@@ -26,7 +26,7 @@ To control optional dependencies, we'll use optional dependencies + "extras" fea
 
 We already have it implemented for Django - when someone installs our library using "pip install python-event-sourcery[django]", we'll also install Django framework.
 
-**NOTE** This particular example is not great, because real-world Django projects already have Django installed FIRST and they'll be adding our library. In the end, Django should be part of extras but only for development installation.
+**NOTE** Real-world Django projects would already have Django installed FIRST and they'll be adding our library LATER. However, it still makes sense to have Django as an optional dependency and extra to cross-validate the supported version. If someone has Django installed and its version frozen, but it's not compatible with our library, they'll see an error.
 
 Extras propositions for the current project structure:
 - `sqlalchemy` - SQLAlchemy adapter
