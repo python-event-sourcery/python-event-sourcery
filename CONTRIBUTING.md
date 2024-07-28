@@ -1,5 +1,16 @@
 # Basics
 
+## Prerequisites
+
+- docker + docker compose / any compatible replacement
+- poetry
+
+## Installation
+
+```bash
+poetry install --with=dev --all-extras
+```
+
 ## Running tests
 
 ```bash
