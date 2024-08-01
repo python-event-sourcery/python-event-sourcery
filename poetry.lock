@@ -239,23 +239,6 @@ files = [
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
-name = "cloudevents"
-version = "1.9.0"
-description = "CloudEvents Python SDK"
-optional = true
-python-versions = "*"
-files = [
-    {file = "cloudevents-1.9.0-py3-none-any.whl", hash = "sha256:1011459d56d8f0184a46456f5d72632a2565f18171e51b33e06f643e723d30c9"},
-    {file = "cloudevents-1.9.0.tar.gz", hash = "sha256:8beb27503f97e215f886f73c17671012e96bb6268137fb3b2f9ef552727ab5b1"},
-]
-
-[package.dependencies]
-deprecation = ">=2.0,<3.0"
-
-[package.extras]
-pydantic = ["pydantic (>=1.0.0,<2.0)"]
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -342,20 +325,6 @@ tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.1
 toml = ["tomli"]
 
 [[package]]
-name = "deprecation"
-version = "2.1.0"
-description = "A library to handle automated deprecations"
-optional = true
-python-versions = "*"
-files = [
-    {file = "deprecation-2.1.0-py2.py3-none-any.whl", hash = "sha256:a10811591210e1fb0e768a8c25517cabeabcba6f0bf96564f8ff45189f90b14a"},
-    {file = "deprecation-2.1.0.tar.gz", hash = "sha256:72b3bde64e5d778694b0cf68178aed03d15e15477116add3fb773e581f9518ff"},
-]
-
-[package.dependencies]
-packaging = "*"
-
-[[package]]
 name = "django"
 version = "5.0.4"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
@@ -379,7 +348,7 @@ bcrypt = ["bcrypt"]
 name = "dnspython"
 version = "2.3.0"
 description = "DNS toolkit"
-optional = false
+optional = true
 python-versions = ">=3.7,<4.0"
 files = [
     {file = "dnspython-2.3.0-py3-none-any.whl", hash = "sha256:89141536394f909066cabd112e3e1a37e4e654db00a25308b0f130bc3152eb46"},
@@ -399,7 +368,7 @@ wmi = ["wmi (>=1.5.1,<2.0.0)"]
 name = "esdbclient"
 version = "1.0b3"
 description = "Python gRPC Client for EventStoreDB"
-optional = false
+optional = true
 python-versions = ">=3.7,<4.0"
 files = [
     {file = "esdbclient-1.0b3-py3-none-any.whl", hash = "sha256:2211058f08b9e730f3b5cdc6f234f82938a884ea79d26956c8da1c30592b5828"},
@@ -442,6 +411,23 @@ files = [
 mccabe = ">=0.7.0,<0.8.0"
 pycodestyle = ">=2.10.0,<2.11.0"
 pyflakes = ">=3.0.0,<3.1.0"
+
+[[package]]
+name = "flake8-pyproject"
+version = "1.2.3"
+description = "Flake8 plug-in loading the configuration from pyproject.toml"
+optional = false
+python-versions = ">= 3.6"
+files = [
+    {file = "flake8_pyproject-1.2.3-py3-none-any.whl", hash = "sha256:6249fe53545205af5e76837644dc80b4c10037e73a0e5db87ff562d75fb5bd4a"},
+]
+
+[package.dependencies]
+Flake8 = ">=5"
+TOMLi = {version = "*", markers = "python_version < \"3.11\""}
+
+[package.extras]
+dev = ["pyTest", "pyTest-cov"]
 
 [[package]]
 name = "ghp-import"
@@ -492,7 +478,7 @@ gitdb = ">=4.0.1,<5"
 name = "greenlet"
 version = "2.0.1"
 description = "Lightweight in-process concurrent programming"
-optional = false
+optional = true
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
 files = [
     {file = "greenlet-2.0.1-cp27-cp27m-macosx_10_14_x86_64.whl", hash = "sha256:9ed358312e63bf683b9ef22c8e442ef6c5c02973f0c2a939ec1d7b50c974015c"},
@@ -565,7 +551,7 @@ test = ["faulthandler", "objgraph", "psutil"]
 name = "grpcio"
 version = "1.56.0"
 description = "HTTP/2-based RPC framework"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "grpcio-1.56.0-cp310-cp310-linux_armv7l.whl", hash = "sha256:fb34ace11419f1ae321c36ccaa18d81cd3f20728cd191250be42949d6845bb2d"},
@@ -962,7 +948,7 @@ testing = ["pytest", "pytest-benchmark"]
 name = "protobuf"
 version = "4.23.3"
 description = ""
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "protobuf-4.23.3-cp310-abi3-win32.whl", hash = "sha256:514b6bbd54a41ca50c86dd5ad6488afe9505901b3557c5e0f7823a0cf67106fb"},
@@ -1429,7 +1415,7 @@ files = [
 name = "sqlalchemy"
 version = "2.0.4"
 description = "Database Abstraction Library"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "SQLAlchemy-2.0.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:b67d6e626caa571fb53accaac2fba003ef4f7317cb3481e9ab99dad6e89a70d6"},
@@ -1621,10 +1607,11 @@ files = [
 watchmedo = ["PyYAML (>=3.10)"]
 
 [extras]
-cloudevents = ["cloudevents"]
 django = ["django"]
+esdb = ["esdbclient"]
+sqlalchemy = ["SQLAlchemy"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4.0"
-content-hash = "30fa0b522090bf5e0ed477b786374fabcd1eeb5555eee598419972993dfcc880"
+content-hash = "8e4a45581c39ecea07cbfc7e0ac4c0d0712166d15e413dc93bdf6b4a6476d890"
