@@ -63,7 +63,7 @@ class SQLAlchemyBackendFactory(BackendFactory):
         )
         backend.subscriber = es.subscription.SubscriptionBuilder(
             _serde=backend.serde,
-            _strategy=SqlAlchemySubscriptionStrategy(),
+            _strategy=SqlAlchemySubscriptionStrategy(self._session),
         )
         return backend
 
