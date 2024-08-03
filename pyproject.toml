@@ -30,6 +30,7 @@ mkdocs-material = "^8.3.9"
 psycopg2-binary = "^2.9.3"
 pytest-django = {version = "*"}
 flake8-pyproject = "*"
+mkdocstrings = {version = "*", extras = ["python"]}
 
 [tool.poetry.extras]
 sqlalchemy = ["SQLAlchemy"]
