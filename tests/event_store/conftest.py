@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterator
-from contextlib import _GeneratorContextManager, contextmanager
+from contextlib import AbstractContextManager, contextmanager
 
 import pytest
 from _pytest.fixtures import SubRequest
@@ -24,7 +24,7 @@ from tests.backend.sqlalchemy import sqlalchemy_postgres, sqlalchemy_sqlite
 )
 def create_backend_factory(
     request: SubRequest,
-) -> Callable[[], _GeneratorContextManager[BackendFactory]]:
+) -> Callable[[], AbstractContextManager[BackendFactory]]:
     backend_name: str = request.param.__name__
     mark.xfail_if_not_implemented_yet(request, backend_name)
     mark.skip_backend(request, backend_name)
@@ -46,15 +46,7 @@ def create_backend_factory(
 
 @pytest.fixture()
 def event_store_factory(
-    create_backend_factory: Callable[[], _GeneratorContextManager[BackendFactory]]
-) -> Iterator[BackendFactory]:
-    with create_backend_factory() as backend_factory:
-        yield backend_factory
-
-
-@pytest.fixture()
-def other_client_event_store_factory(
-    create_backend_factory: Callable[[], _GeneratorContextManager[BackendFactory]]
+    create_backend_factory: Callable[[], AbstractContextManager[BackendFactory]]
 ) -> Iterator[BackendFactory]:
     with create_backend_factory() as backend_factory:
         yield backend_factory

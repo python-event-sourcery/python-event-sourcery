@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from contextlib import _GeneratorContextManager, contextmanager
+from contextlib import AbstractContextManager, contextmanager
 from typing import Callable, Generator
 from unittest.mock import Mock
 from uuid import uuid4
@@ -75,7 +75,7 @@ def in_memory(max_attempts: int) -> BackendFactory:
 )
 def create_backend_factory(
     request: SubRequest, max_attempts: int
-) -> Callable[[], _GeneratorContextManager[BackendFactory]]:
+) -> Callable[[], AbstractContextManager[BackendFactory]]:
     backend_name: str = request.param.__name__
     mark.xfail_if_not_implemented_yet(request, backend_name)
     mark.skip_backend(request, backend_name)

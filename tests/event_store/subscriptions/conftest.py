@@ -1,4 +1,4 @@
-from contextlib import nullcontext
+from contextlib import AbstractContextManager, nullcontext
 from typing import Callable, ContextManager, Iterator
 
 import pytest
@@ -8,6 +8,14 @@ from event_sourcery.event_store import BackendFactory
 from event_sourcery_django import DjangoBackendFactory
 from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
 from tests.event_store.subscriptions.other_client import OtherClient
+
+
+@pytest.fixture()
+def other_client_event_store_factory(
+    create_backend_factory: Callable[[], AbstractContextManager[BackendFactory]]
+) -> Iterator[BackendFactory]:
+    with create_backend_factory() as backend_factory:
+        yield backend_factory
 
 
 @pytest.fixture
