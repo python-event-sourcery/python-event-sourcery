@@ -13,6 +13,12 @@ nav:
         - 'Event-Driven Architecture - Intro': 'tutorial_eda/index.md'
     - 'Tutorial - Event Sourcing':
         - 'Event Sourcing - Intro': 'tutorial_event_sourcing/index.md'
+    - 'API Reference':
+        - 'Event Store': 'reference/event_store.md'
+
+plugins:
+- search
+- mkdocstrings
 
 markdown_extensions:
   - admonition
@@ -24,3 +30,4 @@ markdown_extensions:
   - pymdownx.snippets
   - pymdownx.superfences
   - tables
+
