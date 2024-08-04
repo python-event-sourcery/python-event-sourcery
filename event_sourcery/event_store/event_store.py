@@ -13,6 +13,8 @@ from event_sourcery.event_store.versioning import (
 
 
 class EventStore:
+    """EventStore is a high-level API for working with events."""
+
     def __init__(self, storage_strategy: StorageStrategy, serde: Serde) -> None:
         self._storage_strategy = storage_strategy
         self._serde = serde
@@ -23,6 +25,24 @@ class EventStore:
         start: int | None = None,
         stop: int | None = None,
     ) -> Sequence[Metadata]:
+        """Load events from a given stream.
+
+        Examples:
+            >>> load_stream(stream_id=StreamId(name="not_existing_stream"))
+            []
+            >>> load_stream(stream_id=StreamId(name="existing_stream"))
+            [Metadata(..., version=1), Metadata(...), Metadata(..., version=3)]
+            >>> load_stream(stream_id=StreamId(name="existing_stream"), start=2, stop=3)
+            [Metadata(..., version=2)]
+
+        Args:
+            stream_id: The stream identifier to load events from.
+            start: The stream version to start loading from (including).
+            stop: The stream version to stop loading at (excluding).
+
+        Returns:
+            A sequence of events or empty list if the stream doesn't exist.
+        """
         events = self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
         return self._deserialize_events(events)
 
