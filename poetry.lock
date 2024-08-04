@@ -47,6 +47,17 @@ tests = ["attrs[tests-no-zope]", "zope.interface"]
 tests-no-zope = ["cloudpickle", "cloudpickle", "hypothesis", "hypothesis", "mypy (>=0.971,<0.990)", "mypy (>=0.971,<0.990)", "pympler", "pympler", "pytest (>=4.3.0)", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-mypy-plugins", "pytest-xdist[psutil]", "pytest-xdist[psutil]"]
 
 [[package]]
+name = "backports-strenum"
+version = "1.3.1"
+description = "Base class for creating enumerated constants that are also subclasses of str"
+optional = false
+python-versions = ">=3.8.6,<3.11"
+files = [
+    {file = "backports_strenum-1.3.1-py3-none-any.whl", hash = "sha256:cdcfe36dc897e2615dc793b7d3097f54d359918fc448754a517e6f23044ccf83"},
+    {file = "backports_strenum-1.3.1.tar.gz", hash = "sha256:77c52407342898497714f0596e86188bb7084f89063226f4ba66863482f42414"},
+]
+
+[[package]]
 name = "bandit"
 version = "1.7.4"
 description = "Security oriented static analyser for python code."
@@ -548,6 +559,21 @@ docs = ["Sphinx", "docutils (<0.18)"]
 test = ["faulthandler", "objgraph", "psutil"]
 
 [[package]]
+name = "griffe"
+version = "0.48.0"
+description = "Signatures for entire Python programs. Extract the structure, the frame, the skeleton of your project, to generate API documentation or find breaking changes in your API."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "griffe-0.48.0-py3-none-any.whl", hash = "sha256:f944c6ff7bd31cf76f264adcd6ab8f3d00a2f972ae5cc8db2d7b6dcffeff65a2"},
+    {file = "griffe-0.48.0.tar.gz", hash = "sha256:f099461c02f016b6be4af386d5aa92b01fb4efe6c1c2c360dda9a5d0a863bb7f"},
+]
+
+[package.dependencies]
+backports-strenum = {version = ">=1.3", markers = "python_version < \"3.11\""}
+colorama = ">=0.4"
+
+[[package]]
 name = "grpcio"
 version = "1.56.0"
 description = "HTTP/2-based RPC framework"
@@ -783,6 +809,22 @@ i18n = ["babel (>=2.9.0)"]
 min-versions = ["babel (==2.9.0)", "click (==7.0)", "colorama (==0.4)", "ghp-import (==1.0)", "importlib-metadata (==4.3)", "jinja2 (==2.11.1)", "markdown (==3.2.1)", "markupsafe (==2.0.1)", "mergedeep (==1.3.4)", "packaging (==20.5)", "pyyaml (==5.1)", "pyyaml-env-tag (==0.1)", "typing-extensions (==3.10)", "watchdog (==2.0)"]
 
 [[package]]
+name = "mkdocs-autorefs"
+version = "1.0.1"
+description = "Automatically link across pages in MkDocs."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "mkdocs_autorefs-1.0.1-py3-none-any.whl", hash = "sha256:aacdfae1ab197780fb7a2dac92ad8a3d8f7ca8049a9cbe56a4218cd52e8da570"},
+    {file = "mkdocs_autorefs-1.0.1.tar.gz", hash = "sha256:f684edf847eced40b570b57846b15f0bf57fb93ac2c510450775dcf16accb971"},
+]
+
+[package.dependencies]
+Markdown = ">=3.3"
+markupsafe = ">=2.0.1"
+mkdocs = ">=1.1"
+
+[[package]]
 name = "mkdocs-material"
 version = "8.5.11"
 description = "Documentation that simply works"
@@ -812,6 +854,48 @@ files = [
     {file = "mkdocs_material_extensions-1.1.1-py3-none-any.whl", hash = "sha256:e41d9f38e4798b6617ad98ca8f7f1157b1e4385ac1459ca1e4ea219b556df945"},
     {file = "mkdocs_material_extensions-1.1.1.tar.gz", hash = "sha256:9c003da71e2cc2493d910237448c672e00cefc800d3d6ae93d2fc69979e3bd93"},
 ]
+
+[[package]]
+name = "mkdocstrings"
+version = "0.25.2"
+description = "Automatic documentation from sources, for MkDocs."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "mkdocstrings-0.25.2-py3-none-any.whl", hash = "sha256:9e2cda5e2e12db8bb98d21e3410f3f27f8faab685a24b03b06ba7daa5b92abfc"},
+    {file = "mkdocstrings-0.25.2.tar.gz", hash = "sha256:5cf57ad7f61e8be3111a2458b4e49c2029c9cb35525393b179f9c916ca8042dc"},
+]
+
+[package.dependencies]
+click = ">=7.0"
+Jinja2 = ">=2.11.1"
+Markdown = ">=3.3"
+MarkupSafe = ">=1.1"
+mkdocs = ">=1.4"
+mkdocs-autorefs = ">=0.3.1"
+mkdocstrings-python = {version = ">=0.5.2", optional = true, markers = "extra == \"python\""}
+platformdirs = ">=2.2.0"
+pymdown-extensions = ">=6.3"
+
+[package.extras]
+crystal = ["mkdocstrings-crystal (>=0.3.4)"]
+python = ["mkdocstrings-python (>=0.5.2)"]
+python-legacy = ["mkdocstrings-python-legacy (>=0.2.1)"]
+
+[[package]]
+name = "mkdocstrings-python"
+version = "1.10.7"
+description = "A Python handler for mkdocstrings."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "mkdocstrings_python-1.10.7-py3-none-any.whl", hash = "sha256:8999acb8e2cb6ae5edb844ce1ed6a5fcc14285f85cfd9df374d9a0f0be8a40b6"},
+    {file = "mkdocstrings_python-1.10.7.tar.gz", hash = "sha256:bfb5e29acfc69c9177d2b11c18d3127d16e553b8da9bb6d184e428d54795600b"},
+]
+
+[package.dependencies]
+griffe = ">=0.48"
+mkdocstrings = ">=0.25"
 
 [[package]]
 name = "more-itertools"
@@ -1614,4 +1698,4 @@ sqlalchemy = ["SQLAlchemy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4.0"
-content-hash = "8e4a45581c39ecea07cbfc7e0ac4c0d0712166d15e413dc93bdf6b4a6476d890"
+content-hash = "2b1aa7c4743d5b2f3fa1ecfe21878cb7acd5199d01388298f853127befa4b7bf"
