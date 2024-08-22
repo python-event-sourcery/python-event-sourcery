@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Type, cast
+from typing import Any, cast
 from uuid import UUID
 
 from sqlalchemy import (
@@ -30,7 +30,7 @@ from event_sourcery_sqlalchemy.guid import GUID
 from event_sourcery_sqlalchemy.jsonb import JSONB
 
 
-def configure_models(base: Type) -> None:
+def configure_models(base: type[Any]) -> None:
     for model_cls in (Stream, Event, Snapshot, OutboxEntry, ProjectorCursor):
         registry(metadata=base.metadata, class_registry={}).map_declaratively(model_cls)
 

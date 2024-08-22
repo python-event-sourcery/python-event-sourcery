@@ -6,7 +6,7 @@ __all__ = [
     "SQLAlchemyBackendFactory",
 ]
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timedelta
 
 from pydantic import BaseModel, ConfigDict, PositiveInt
@@ -43,8 +43,8 @@ class Config(BaseModel):
 @dataclass(repr=False)
 class SQLAlchemyBackendFactory(BackendFactory):
     _session: Session
-    _config: Config = Config()
-    _serde: Serde = Serde(Event.__registry__)
+    _config: Config = field(default_factory=Config)
+    _serde: Serde = field(default_factory=lambda: Serde(Event.__registry__))
     _outbox_strategy: SqlAlchemyOutboxStorageStrategy | None = None
 
     def build(self) -> TransactionalBackend:

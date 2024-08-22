@@ -19,17 +19,13 @@ esdbclient = {version = ">=1.0b3", optional = true}
 django = {version = ">=4,<6", optional = true}
 
 [tool.poetry.group.dev.dependencies]
-black = "*"
-isort = "*"
-flake8 = "*"
-bandit = "*"
+ruff = "*"
 mypy = "*"
 pytest = "*"
 pytest-cov = "*"
+pytest-django = {version = "*"}
 mkdocs-material = "^8.3.9"
 psycopg2-binary = "^2.9.3"
-pytest-django = {version = "*"}
-flake8-pyproject = "*"
 
 [tool.poetry.extras]
 sqlalchemy = ["SQLAlchemy"]
@@ -82,11 +78,22 @@ warn_return_any = true
 warn_unused_ignores = true
 show_error_codes = true
 
-[tool.flake8]
-max-line-length = 88
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+show-fixes = true
+exclude = ["**/migrations"]
 
-[tool.isort]
-profile = "black"
+[tool.ruff.lint]
+select = ["A", "B", "C", "E", "F", "G", "I", "N", "Q", "S", "W", "PL", "UP", "RUF"]
+ignore = ["COM812", "N818", "PLR2004"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+"event_sourcery_django/models.py" = ["RUF012"]
+
+[tool.ruff.lint.pylint]
+max-args = 10
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -44,7 +44,6 @@ def test_can_append_and_load_with_category(
 )
 def test_different_streams_when_same_name_but_different_category(
     given: Given,
-    when: When,
     then: Then,
     stream_1: StreamId,
     stream_2: StreamId,

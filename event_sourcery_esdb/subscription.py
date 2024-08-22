@@ -1,7 +1,7 @@
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from datetime import timedelta
 from functools import partial
-from typing import Callable, Iterator
 
 import esdbclient.exceptions
 from esdbclient import EventStoreDBClient, RecordedEvent

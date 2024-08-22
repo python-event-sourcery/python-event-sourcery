@@ -3,7 +3,7 @@ __all__ = [
     "DjangoBackendFactory",
 ]
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import cast
 
@@ -40,8 +40,8 @@ class Config(BaseModel):
 
 @dataclass(repr=False)
 class DjangoBackendFactory(BackendFactory):
-    _config: Config = Config()
-    _serde: Serde = Serde(Event.__registry__)
+    _config: Config = field(default_factory=Config)
+    _serde: Serde = field(default_factory=lambda: Serde(Event.__registry__))
     _outbox_strategy: OutboxStorageStrategy | None = None
 
     def build(self) -> TransactionalBackend:

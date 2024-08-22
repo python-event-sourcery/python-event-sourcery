@@ -1,5 +1,6 @@
 import abc
-from typing import ContextManager, Iterator
+from collections.abc import Iterator
+from contextlib import AbstractContextManager
 
 from typing_extensions import Self
 
@@ -19,7 +20,9 @@ def no_filter(entry: RawEvent) -> bool:
 
 
 class NoOutboxStorageStrategy(OutboxStorageStrategy):
-    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RecordedRaw]]:
+    def outbox_entries(
+        self, limit: int
+    ) -> Iterator[AbstractContextManager[RecordedRaw]]:
         return iter([])
 
 

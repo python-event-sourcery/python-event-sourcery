@@ -1,8 +1,10 @@
 import enum
+from collections.abc import Callable
+from contextlib import AbstractContextManager
 from queue import Queue
 from threading import Event as ThreadingEvent
 from threading import Thread
-from typing import Callable, ContextManager, Literal
+from typing import Literal
 from weakref import WeakSet
 
 from typing_extensions import Protocol
@@ -39,11 +41,9 @@ Message = (
 
 
 class Handle(Protocol):
-    def commit(self) -> None:
-        ...
+    def commit(self) -> None: ...
 
-    def process_up_to_commit(self) -> None:
-        ...
+    def process_up_to_commit(self) -> None: ...
 
 
 class Inbox:
@@ -70,7 +70,7 @@ class Agent(Thread):
     def __init__(
         self,
         event_store_factory: BackendFactory,
-        transaction: Callable[[], ContextManager],
+        transaction: Callable[[], AbstractContextManager],
         inbox: Inbox,
     ) -> None:
         super().__init__(daemon=True)
@@ -102,7 +102,7 @@ class OtherClient:
     def __init__(
         self,
         event_store_factory: BackendFactory,
-        transaction: Callable[[], ContextManager],
+        transaction: Callable[[], AbstractContextManager],
     ) -> None:
         self._inbox = Inbox()
         self._thread = Agent(

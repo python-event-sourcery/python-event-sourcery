@@ -1,4 +1,4 @@
-from typing import Type, cast
+from typing import cast
 
 import pytest
 
@@ -20,9 +20,9 @@ def test_detects_duplicated_events_from_custom_registry() -> None:
 def test_detects_duplicates_event_names_from_custom_registry() -> None:
     registry = EventRegistry()
 
-    first = cast(Type[Event], type("Duplicate", (Event,), {}))
+    first = cast(type[Event], type("Duplicate", (Event,), {}))
     registry.add(first)
 
     with pytest.raises(DuplicatedEvent):
-        second = cast(Type[Event], type("Duplicate", (Event,), {}))
+        second = cast(type[Event], type("Duplicate", (Event,), {}))
         registry.add(second)

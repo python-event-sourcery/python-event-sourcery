@@ -1,11 +1,10 @@
 SRC_DIRS ?= ${wildcard event_sourcery*}
 
-.PHONY: test
+.PHONY: lint
 lint:
-	isort $(SRC_DIRS) tests/
-	black $(SRC_DIRS) tests/
+	ruff format $(SRC_DIRS) tests/
+	ruff check $(SRC_DIRS) tests/ --fix
 	mypy $(SRC_DIRS) tests/
-	flake8 $(SRC_DIRS) tests/
 
 .PHONY: test
 test:

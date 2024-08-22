@@ -48,8 +48,9 @@ class TestStreamIdEQ:
         assert StreamId() != StreamId()
 
     def test_uuid_equality(self) -> None:
+        same_uuid = uuid4()
         assert StreamId(uuid4()) != StreamId(uuid4())
-        assert StreamId(same := uuid4()) == StreamId(same)
+        assert StreamId(same_uuid) == StreamId(same_uuid)
 
     def test_name_equality(self) -> None:
         assert StreamId(name="Name") == StreamId(name="Name")
@@ -72,15 +73,18 @@ class TestStreamIdHash:
         assert hash(StreamId()) != hash(StreamId())
 
     def test_same_uuid_gives_same_hashes(self) -> None:
-        assert hash(StreamId(same_uuid := uuid4())) == hash(StreamId(same_uuid))
+        same = uuid4()
+        assert hash(StreamId(same)) == hash(StreamId(same))
 
     def test_same_uuid_and_category_gives_same_hashes(self) -> None:
-        assert hash(StreamId(same_uuid := uuid4(), category="Category")) == hash(
+        same_uuid = uuid4()
+        assert hash(StreamId(same_uuid, category="Category")) == hash(
             StreamId(same_uuid, category="Category")
         )
 
     def test_same_uuid_and_different_category_gives_different_hashes(self) -> None:
-        assert hash(StreamId(same_uuid := uuid4(), category="Category")) != hash(
+        same_uuid = uuid4()
+        assert hash(StreamId(same_uuid, category="Category")) != hash(
             StreamId(same_uuid, category="Different")
         )
 

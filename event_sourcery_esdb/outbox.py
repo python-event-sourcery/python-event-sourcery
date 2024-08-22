@@ -1,8 +1,8 @@
 import logging
-from contextlib import contextmanager
+from collections.abc import Generator, Iterator
+from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
 from itertools import islice
-from typing import ContextManager, Generator, Iterator
 
 from esdbclient import EventStoreDBClient, RecordedEvent
 from esdbclient.exceptions import DeadlineExceeded, NotFound
@@ -52,10 +52,12 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
 
     @property
     def active_subscription(self) -> PersistentSubscription:
-        assert self._active_subscription is not None
+        assert self._active_subscription is not None  # noqa: S101
         return self._active_subscription
 
-    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RecordedRaw]]:
+    def outbox_entries(
+        self, limit: int
+    ) -> Iterator[AbstractContextManager[RecordedRaw]]:
         info = self._client.get_subscription_info(
             self._outbox_name,
             timeout=self._timeout,

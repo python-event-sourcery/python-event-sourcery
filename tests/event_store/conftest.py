@@ -46,7 +46,7 @@ def create_backend_factory(
 
 @pytest.fixture()
 def event_store_factory(
-    create_backend_factory: Callable[[], AbstractContextManager[BackendFactory]]
+    create_backend_factory: Callable[[], AbstractContextManager[BackendFactory]],
 ) -> Iterator[BackendFactory]:
     with create_backend_factory() as backend_factory:
         yield backend_factory

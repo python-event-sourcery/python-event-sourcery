@@ -1,7 +1,7 @@
 import logging
-from contextlib import contextmanager
+from collections.abc import Iterator
+from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
-from typing import ContextManager, Iterator
 
 from event_sourcery.event_store import RecordedRaw
 from event_sourcery.event_store.interfaces import (
@@ -26,7 +26,9 @@ class DjangoOutboxStorageStrategy(OutboxStorageStrategy):
             if self._filterer(record.entry)
         )
 
-    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RecordedRaw]]:
+    def outbox_entries(
+        self, limit: int
+    ) -> Iterator[AbstractContextManager[RecordedRaw]]:
         entries = (
             OutboxEntry.objects.select_for_update(skip_locked=True)
             .filter(tries_left__gt=0)

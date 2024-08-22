@@ -1,5 +1,5 @@
+from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager, nullcontext
-from typing import Callable, ContextManager, Iterator
 
 import pytest
 from django.db import transaction as django_transaction
@@ -12,7 +12,7 @@ from tests.event_store.subscriptions.other_client import OtherClient
 
 @pytest.fixture()
 def other_client_event_store_factory(
-    create_backend_factory: Callable[[], AbstractContextManager[BackendFactory]]
+    create_backend_factory: Callable[[], AbstractContextManager[BackendFactory]],
 ) -> Iterator[BackendFactory]:
     with create_backend_factory() as backend_factory:
         yield backend_factory
@@ -22,7 +22,7 @@ def other_client_event_store_factory(
 def other_client(
     other_client_event_store_factory: BackendFactory,
 ) -> Iterator[OtherClient]:
-    transaction_ctx: Callable[[], ContextManager]
+    transaction_ctx: Callable[[], AbstractContextManager]
     match other_client_event_store_factory:
         case DjangoBackendFactory():
             transaction_ctx = django_transaction.atomic

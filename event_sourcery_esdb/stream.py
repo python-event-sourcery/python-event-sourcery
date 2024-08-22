@@ -1,6 +1,6 @@
 import sys
 from collections import UserString
-from typing import Tuple, cast
+from typing import cast
 
 from event_sourcery.event_store import StreamId
 from event_sourcery.event_store.exceptions import IllegalCategoryName
@@ -57,7 +57,7 @@ MAX_POSITION = Position(sys.maxsize)
 def scope(
     start_version: int | None,
     stop_version: int | None,
-) -> Tuple[Position | None, int]:
+) -> tuple[Position | None, int]:
     start = cast(
         Position | None, start_version and Position.from_version(start_version)
     )

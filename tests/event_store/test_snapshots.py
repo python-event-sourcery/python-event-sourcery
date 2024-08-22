@@ -51,15 +51,14 @@ def test_returns_all_events_after_last_snapshot(
 def test_rejects_snapshot_with_incorrect_version(
     given: Given,
     when: When,
-    then: Then,
 ) -> None:
     given.stream(stream_id := StreamId())
     given.events(an_event(), an_event(), an_event(), on=stream_id)
 
     ahead = 3 + 2
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         when.snapshots(a_snapshot(version=ahead), on=stream_id)
 
     outdated = 3 - 1
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         when.snapshots(a_snapshot(version=outdated), on=stream_id)

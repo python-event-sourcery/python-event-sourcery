@@ -1,5 +1,5 @@
 import inspect
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING
 
 from event_sourcery.event_store.exceptions import (
     ClassModuleUnavailable,
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from event_sourcery.event_store.event.dto import Event
 
 
-def event_name(cls: Type) -> str:
+def event_name(cls: type) -> str:
     event_module = inspect.getmodule(cls)
     if event_module is None:  # pragma: no cover
         raise ClassModuleUnavailable
@@ -19,10 +19,10 @@ def event_name(cls: Type) -> str:
 
 class EventRegistry:
     def __init__(self) -> None:
-        self._types_to_names: dict[Type["Event"], str] = {}
-        self._names_to_types: dict[str, Type["Event"]] = {}
+        self._types_to_names: dict[type["Event"], str] = {}
+        self._names_to_types: dict[str, type["Event"]] = {}
 
-    def add(self, event: Type["Event"]) -> Type["Event"]:
+    def add(self, event: type["Event"]) -> type["Event"]:
         if event in self._types_to_names:
             raise DuplicatedEvent(f"Duplicated Event detected! {event}")
 
@@ -34,8 +34,8 @@ class EventRegistry:
         self._names_to_types[name] = event
         return event  # for use as a decorator
 
-    def type_for_name(self, name: str) -> Type["Event"]:
+    def type_for_name(self, name: str) -> type["Event"]:
         return self._names_to_types[name]
 
-    def name_for_type(self, event: Type["Event"]) -> str:
+    def name_for_type(self, event: type["Event"]) -> str:
         return self._types_to_names[event]

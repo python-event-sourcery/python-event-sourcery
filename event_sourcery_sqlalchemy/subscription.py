@@ -1,7 +1,8 @@
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Iterator, Protocol, cast
+from typing import Protocol, cast
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -62,8 +63,7 @@ class SqlAlchemySubscriptionStrategy(SubscriptionStrategy):
 
 
 class GetBatch(Protocol):
-    def __call__(self, position: Position) -> list[models.Event]:
-        ...
+    def __call__(self, position: Position) -> list[models.Event]: ...
 
 
 class GetBatchToAll(GetBatch):

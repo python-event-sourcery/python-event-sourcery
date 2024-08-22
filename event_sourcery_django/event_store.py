@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence, cast
+from typing import cast
 
 from more_itertools import first, first_true
 
@@ -61,7 +62,7 @@ class DjangoStorageStrategy(StorageStrategy):
             newer_events = events_query.filter(
                 version__gt=latest_snapshot.version
             ).all()
-            events = [latest_snapshot] + list(newer_events)
+            events = [latest_snapshot, *list(newer_events)]
 
         return [dto.raw_event(event, stream) for event in events]
 
@@ -77,7 +78,8 @@ class DjangoStorageStrategy(StorageStrategy):
         entries = [dto.entry(event, stream) for event in events]
         models.Event.objects.bulk_create(entries)
         records = [
-            RecordedRaw(entry=raw, position=db.id) for raw, db in zip(events, entries)
+            RecordedRaw(entry=raw, position=db.id)
+            for raw, db in zip(events, entries, strict=False)
         ]
         if self._outbox:
             self._outbox.put_into_outbox(records)

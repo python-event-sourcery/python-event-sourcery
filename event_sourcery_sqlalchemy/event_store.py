@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence, Union, cast
+from typing import cast
 
 from more_itertools import first_true
 from sqlalchemy import delete, func, select, update
@@ -51,7 +52,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         if stop is not None:
             events_stmt = events_stmt.filter(EventModel.version < stop)
 
-        events: Sequence[Union[EventModel, SnapshotModel]]
+        events: Sequence[EventModel | SnapshotModel]
         try:
             snapshot_stmt = (
                 select(SnapshotModel)
@@ -74,7 +75,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 EventModel.version > latest_snapshot.version
             )
             newer_events = list(self._session.execute(events_stmt).scalars().all())
-            events = [latest_snapshot] + newer_events  # type: ignore
+            events = [latest_snapshot, *newer_events]
 
         if not events:
             return []
@@ -185,7 +186,8 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         stream.events.extend(entries)
         self._session.flush()
         records = [
-            RecordedRaw(entry=raw, position=db.id) for raw, db in zip(events, entries)
+            RecordedRaw(entry=raw, position=db.id)
+            for raw, db in zip(events, entries, strict=False)
         ]
         if self._outbox:
             self._outbox.put_into_outbox(records)

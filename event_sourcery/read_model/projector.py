@@ -1,4 +1,5 @@
-from typing import Callable, TypeAlias
+from collections.abc import Callable
+from typing import TypeAlias
 
 from event_sourcery.event_store import Event, EventStore, Metadata, StreamId
 from event_sourcery.read_model.cursors_dao import CursorsDao

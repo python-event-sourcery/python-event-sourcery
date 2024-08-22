@@ -1,4 +1,4 @@
-from typing import Generator
+from collections.abc import Generator
 from uuid import uuid4
 
 import pytest

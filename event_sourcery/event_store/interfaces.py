@@ -1,6 +1,8 @@
 import abc
+from collections.abc import Iterator
+from contextlib import AbstractContextManager
 from datetime import timedelta
-from typing import ContextManager, Iterator, Protocol
+from typing import Protocol
 
 from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw
 from event_sourcery.event_store.stream_id import StreamId
@@ -8,13 +10,14 @@ from event_sourcery.event_store.versioning import Versioning
 
 
 class OutboxFiltererStrategy(Protocol):
-    def __call__(self, entry: RawEvent) -> bool:
-        ...
+    def __call__(self, entry: RawEvent) -> bool: ...
 
 
 class OutboxStorageStrategy(abc.ABC):
     @abc.abstractmethod
-    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RecordedRaw]]:
+    def outbox_entries(
+        self, limit: int
+    ) -> Iterator[AbstractContextManager[RecordedRaw]]:
         pass
 
 

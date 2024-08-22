@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 
 from event_sourcery.event_store.event import Recorded, Serde
 from event_sourcery.event_store.interfaces import OutboxStorageStrategy

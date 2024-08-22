@@ -45,8 +45,10 @@ class Config(BaseModel):
 class ESDBBackendFactory(BackendFactory):
     esdb_client: EventStoreDBClient
     config: Config = field(default_factory=Config)
-    _serde: Serde = Serde(Event.__registry__)
-    _outbox_strategy: OutboxStorageStrategy = NoOutboxStorageStrategy()
+    _serde: Serde = field(default_factory=lambda: Serde(Event.__registry__))
+    _outbox_strategy: OutboxStorageStrategy = field(
+        default_factory=NoOutboxStorageStrategy
+    )
 
     def build(self) -> Backend:
         backend = Backend()
