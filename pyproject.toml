@@ -85,12 +85,34 @@ show-fixes = true
 exclude = ["**/migrations"]
 
 [tool.ruff.lint]
-select = ["A", "B", "C", "E", "F", "G", "I", "N", "Q", "S", "W", "PL", "UP", "RUF"]
-ignore = ["COM812", "N818", "PLR2004"]
+select = [
+    "A",  # flake8-builtins
+    "B",  # flake8-bugbear
+    "C",  # Convention
+    "E",  # Error
+    "F",  # Pyflakes
+    "G",  # flake8-logging-format
+    "I",  # isort
+    "N",  # pep8-naming
+    "Q",  # flake8-quotes
+    "S",  # flake8-bandit
+    "W",  # Warning
+    "PL",  # Pylint
+    "UP",  # pyupgrade
+    "RUF",  # Ruff-specific rules
+]
+ignore = [
+    "N818",  # error-suffix-on-exception-name
+    "PLR2004",  # magic-value-comparison
+]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101"]
-"event_sourcery_django/models.py" = ["RUF012"]
+"tests/*" = [
+    "S101",  # Use of assert detected
+]
+"event_sourcery_django/models.py" = [
+    "RUF012",  # Mutable class attributes should be annotated with typing.ClassVar
+]
 
 [tool.ruff.lint.pylint]
 max-args = 10
