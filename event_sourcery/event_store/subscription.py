@@ -1,9 +1,10 @@
 import abc
 import sys
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from datetime import timedelta
 from functools import partial
-from typing import Callable, Iterator, Type, TypeAlias
+from typing import TypeAlias
 
 from event_sourcery.event_store.event import (
     Event,
@@ -20,32 +21,29 @@ Seconds: TypeAlias = int | float
 
 class BuildPhase(abc.ABC):
     @abc.abstractmethod
-    def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded | None]:
-        ...
+    def build_iter(
+        self, timelimit: Seconds | timedelta
+    ) -> Iterator[Recorded | None]: ...
 
     @abc.abstractmethod
     def build_batch(
         self,
         size: int,
         timelimit: Seconds | timedelta,
-    ) -> Iterator[list[Recorded]]:
-        ...
+    ) -> Iterator[list[Recorded]]: ...
 
 
 class FilterPhase(BuildPhase):
     @abc.abstractmethod
-    def to_category(self, category: Category) -> BuildPhase:
-        ...
+    def to_category(self, category: Category) -> BuildPhase: ...
 
     @abc.abstractmethod
-    def to_events(self, events: list[Type[Event]]) -> BuildPhase:
-        ...
+    def to_events(self, events: list[type[Event]]) -> BuildPhase: ...
 
 
 class PositionPhase(abc.ABC):
     @abc.abstractmethod
-    def start_from(self, position: Position) -> FilterPhase:
-        ...
+    def start_from(self, position: Position) -> FilterPhase: ...
 
 
 @dataclass(repr=False)
@@ -71,7 +69,7 @@ class SubscriptionBuilder(PositionPhase, FilterPhase, BuildPhase):
         )
         return self
 
-    def to_events(self, events: list[Type[Event]]) -> BuildPhase:
+    def to_events(self, events: list[type[Event]]) -> BuildPhase:
         self._build = partial(
             self._strategy.subscribe_to_events,
             start_from=self._position,

@@ -42,7 +42,7 @@ class ESDBStorageStrategy(StorageStrategy):
         try:
             events = [dto.raw_event(entry) for entry in entries]
             if snapshot:
-                return [snapshot] + events
+                return [snapshot, *events]
             return events
         except NotFound:
             return []
@@ -63,14 +63,13 @@ class ESDBStorageStrategy(StorageStrategy):
     def insert_events(
         self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
     ) -> None:
-        self._ensure_stream(stream_id=stream_id, versioning=versioning)
-        for stream_id in {e.stream_id for e in events}:
-            stream_name = stream.Name(stream_id)
-            stream_events = [e for e in events if e.stream_id == stream_id]
+        for sid in {e.stream_id for e in events}:
+            self._ensure_stream(stream_id=sid, versioning=versioning)
+            stream_name = stream.Name(sid)
+            stream_events = [e for e in events if e.stream_id == sid]
             self._append_events(stream_name, events=stream_events)
 
     def _append_events(self, name: stream.Name, events: list[RawEvent]) -> int:
-        assert all(e.stream_id == name.uuid for e in events)
         return self._client.append_events(
             str(name),
             current_version=StreamState.ANY,

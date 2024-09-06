@@ -1,5 +1,6 @@
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import ClassVar, Iterator
+from typing import ClassVar
 
 from event_sourcery.event_store import Event
 

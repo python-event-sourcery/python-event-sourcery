@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from functools import singledispatchmethod
-from typing import Sequence, cast
+from typing import cast
 
 from event_sourcery.event_store.event import Event, Metadata, Position, RawEvent, Serde
 from event_sourcery.event_store.interfaces import StorageStrategy
@@ -35,7 +36,7 @@ class EventStore:
     ) -> None:
         self._append(
             stream_id=stream_id,
-            events=(first,) + events,
+            events=(first, *events),
             expected_version=expected_version,
         )
 
@@ -80,7 +81,7 @@ class EventStore:
     ) -> None:
         self._append(
             stream_id=stream_id,
-            events=(first,) + events,
+            events=(first, *events),
             expected_version=expected_version,
         )
 

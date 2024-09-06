@@ -1,5 +1,5 @@
 import json
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy.dialects.postgresql import JSONB as POSTGRES_JSONB
 from sqlalchemy.types import Text, TypeDecorator
@@ -14,13 +14,13 @@ class JSONB(TypeDecorator):
         else:
             return dialect.type_descriptor(Text())
 
-    def process_bind_param(self, value: Any, dialect: Any) -> Optional[Any]:
+    def process_bind_param(self, value: Any, dialect: Any) -> Any | None:
         if dialect.name == "postgresql":
             return value
         else:
             return json.dumps(value)
 
-    def process_result_value(self, value: Any, dialect: Any) -> Optional[Any]:
+    def process_result_value(self, value: Any, dialect: Any) -> Any | None:
         if dialect.name == "postgresql":
             return value
         else:

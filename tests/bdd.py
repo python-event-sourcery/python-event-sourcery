@@ -1,8 +1,9 @@
 import time
+from collections.abc import Generator, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import singledispatchmethod
-from typing import Generator, Iterator, Sequence, Type, TypeVar, cast
+from typing import TypeVar, cast
 from unittest.mock import Mock
 
 from _pytest.fixtures import SubRequest
@@ -147,7 +148,7 @@ class Step:
         self,
         to: Position | None,
         to_category: str | None,
-        to_events: list[Type[Event]] | None,
+        to_events: list[type[Event]] | None,
     ) -> BuildPhase:
         assert to_category is None or to_events is None
         start_from = self.store.position or 0 if to is None else to
@@ -163,7 +164,7 @@ class Step:
         self,
         to: Position | None = None,
         to_category: str | None = None,
-        to_events: list[Type[Event]] | None = None,
+        to_events: list[type[Event]] | None = None,
         timelimit: int | float = 1,
     ) -> Subscription:
         builder = self._create_subscription_builder(to, to_category, to_events)
@@ -174,13 +175,13 @@ class Step:
         of_size: int,
         to: Position | None = None,
         to_category: str | None = None,
-        to_events: list[Type[Event]] | None = None,
+        to_events: list[type[Event]] | None = None,
         timelimit: int | float = 1,
     ) -> BatchSubscription:
         builder = self._create_subscription_builder(to, to_category, to_events)
         return BatchSubscription(builder.build_batch(of_size, timelimit))
 
-    def in_transaction_listener(self, to: Type[Event] = Event) -> InTransactionListener:
+    def in_transaction_listener(self, to: type[Event] = Event) -> InTransactionListener:
         backend = cast(TransactionalBackend, self.backend)
         backend.in_transaction.register(listener := InTransactionListener(), to=to)
         self.request.addfinalizer(

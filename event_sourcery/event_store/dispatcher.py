@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Callable, Type
+from collections.abc import Callable
 
 from event_sourcery.event_store.event import (
     Event,
@@ -15,7 +15,7 @@ Listener = Callable[[Metadata, StreamId, Position | None], None]
 
 class Dispatcher:
     def __init__(self, serde: Serde) -> None:
-        self._listeners: dict[Type[Event], set[Listener]] = defaultdict(set)
+        self._listeners: dict[type[Event], set[Listener]] = defaultdict(set)
         self._serde = serde
 
     def dispatch(self, *raws: RecordedRaw) -> None:
@@ -27,9 +27,9 @@ class Dispatcher:
                 for listener in listeners:
                     listener(record.metadata, record.stream_id, record.position)
 
-    def register(self, listener: Listener, to: Type[Event]) -> None:
+    def register(self, listener: Listener, to: type[Event]) -> None:
         self._listeners[to].add(listener)
 
-    def remove(self, listener: Listener, to: Type[Event]) -> None:
+    def remove(self, listener: Listener, to: type[Event]) -> None:
         if listener in self._listeners[to]:
             self._listeners[to].remove(listener)

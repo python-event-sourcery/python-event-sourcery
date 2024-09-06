@@ -1,10 +1,10 @@
 import time
-from contextlib import contextmanager
+from collections.abc import Generator, Iterator
+from contextlib import AbstractContextManager, contextmanager
 from copy import copy
 from dataclasses import dataclass, field
 from datetime import timedelta
 from operator import getitem
-from typing import ContextManager, Dict, Generator, Iterator
 
 from pydantic import BaseModel, ConfigDict, PositiveInt
 from typing_extensions import Self
@@ -148,7 +148,9 @@ class InMemoryOutboxStorageStrategy(OutboxStorageStrategy):
     def put_into_outbox(self, records: list[RecordedRaw]) -> None:
         self._outbox.extend([(e, 0) for e in records if self._filterer(e.entry)])
 
-    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RecordedRaw]]:
+    def outbox_entries(
+        self, limit: int
+    ) -> Iterator[AbstractContextManager[RecordedRaw]]:
         for record in self._outbox[:limit]:
             yield self._publish_context(*record)
 
@@ -224,7 +226,7 @@ class InMemoryStorageStrategy(StorageStrategy):
         dispatcher: Dispatcher,
         outbox_strategy: InMemoryOutboxStorageStrategy | None,
     ) -> None:
-        self._names: Dict[str | None, str] = {}
+        self._names: dict[str | None, str] = {}
         self._storage = storage
         self._dispatcher = dispatcher
         self._outbox = outbox_strategy
@@ -298,7 +300,7 @@ class Config(BaseModel):
 class InMemoryBackendFactory(BackendFactory):
     serde = Serde(Event.__registry__)
 
-    _config: Config = Config()
+    _config: Config = field(default_factory=Config)
     _storage: Storage = field(default_factory=Storage)
     _outbox_strategy: InMemoryOutboxStorageStrategy | None = None
     _subscription_strategy: InMemorySubscriptionStrategy = field(init=False)

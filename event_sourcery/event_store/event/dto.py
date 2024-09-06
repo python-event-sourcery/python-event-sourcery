@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, ClassVar, Generic, Optional, TypeAlias, TypeVar
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -43,7 +43,7 @@ class Context(BaseModel, extra="allow"):
 
 class Metadata(BaseModel, Generic[TEvent], extra="forbid"):
     event: TEvent
-    version: Optional[int]
+    version: int | None
     uuid: UUID = Field(default_factory=uuid4)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     context: Context = Field(default_factory=Context)

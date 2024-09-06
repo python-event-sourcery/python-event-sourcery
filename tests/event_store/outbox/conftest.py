@@ -1,6 +1,5 @@
-from collections.abc import Iterator
+from collections.abc import Callable, Generator, Iterator
 from contextlib import AbstractContextManager, contextmanager
-from typing import Callable, Generator
 from unittest.mock import Mock
 from uuid import uuid4
 

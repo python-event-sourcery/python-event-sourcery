@@ -1,8 +1,9 @@
 import logging
-from contextlib import contextmanager
+from collections.abc import Generator, Iterator
+from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
 from datetime import datetime
-from typing import ContextManager, Generator, Iterator, cast
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy import insert, select
@@ -50,7 +51,9 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
 
         self._session.execute(insert(OutboxEntry), rows)
 
-    def outbox_entries(self, limit: int) -> Iterator[ContextManager[RecordedRaw]]:
+    def outbox_entries(
+        self, limit: int
+    ) -> Iterator[AbstractContextManager[RecordedRaw]]:
         stmt = (
             select(OutboxEntry)
             .filter(OutboxEntry.tries_left > 0)

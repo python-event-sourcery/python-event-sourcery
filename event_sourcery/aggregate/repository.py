@@ -1,5 +1,6 @@
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Generic, Iterator, TypeVar, cast
+from typing import Generic, TypeVar, cast
 
 from event_sourcery.aggregate import Aggregate
 from event_sourcery.event_store import Event, EventStore, Metadata, StreamId, StreamUUID
