@@ -38,6 +38,7 @@ jobs:
     - name: Bump version
       run: |
         poetry version preminor
+        poetry version prerelease
     - uses: EndBug/add-and-commit@v9
       with:
         add: pyproject.toml
