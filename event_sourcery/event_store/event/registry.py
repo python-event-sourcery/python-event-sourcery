@@ -19,8 +19,8 @@ def event_name(cls: type) -> str:
 
 class EventRegistry:
     def __init__(self) -> None:
-        self._types_to_names: dict[type["Event"], str] = {}
-        self._names_to_types: dict[str, type["Event"]] = {}
+        self._types_to_names: dict[type[Event], str] = {}
+        self._names_to_types: dict[str, type[Event]] = {}
 
     def add(self, event: type["Event"]) -> type["Event"]:
         if event in self._types_to_names:
