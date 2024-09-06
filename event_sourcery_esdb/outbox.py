@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Generator, Iterator
 from contextlib import AbstractContextManager, contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import islice
 
 from esdbclient import EventStoreDBClient, RecordedEvent
@@ -25,7 +25,7 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     _outbox_name: str
     _max_publish_attempts: int
     _timeout: float | None
-    _active_subscription: PersistentSubscription | None = None
+    _active_subscription: PersistentSubscription = field(init=False)
 
     def create_subscription(self) -> None:
         try:
@@ -48,11 +48,10 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
         )
         yield islice(self._active_subscription, limit or 100)
         self._active_subscription.stop()
-        self._active_subscription = None
+        delattr(self, "_active_subscription")
 
     @property
     def active_subscription(self) -> PersistentSubscription:
-        assert self._active_subscription is not None  # noqa: S101
         return self._active_subscription
 
     def outbox_entries(
