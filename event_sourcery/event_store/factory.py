@@ -38,6 +38,8 @@ class TransactionalBackend(Backend):
 
 
 class BackendFactory(abc.ABC):
+    """Abstract base class to configure EventStore."""
+
     @abc.abstractmethod
     def build(self) -> Backend:
         pass

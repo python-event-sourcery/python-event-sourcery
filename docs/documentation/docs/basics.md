@@ -87,7 +87,7 @@ First thing is to ask Event Store to not only save the event, but also to put it
 an_event = SomeEvent(first_name="John")
 
 # publish additionally puts an event in outbox
-event_store.publish(stream_id=uuid4(), events=[an_event])
+event_store.append(stream_id=uuid4(), events=[an_event])
 ```
 
 Then, one has to implement publishing mechanism - e.g. publishing to Kafka or RabbitMQ, depending on your stack. Event Sourcery does not provide this out of the box. What it does provide is `Outbox` class that accepts `publisher` argument to send the message.

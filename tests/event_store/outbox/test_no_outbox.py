@@ -14,6 +14,6 @@ def test_nothing_when_using_outbox_on_eventstore_without_outbox(
     publisher: PublisherMock,
     backend: Backend,
 ) -> None:
-    backend.event_store.publish(an_event(version=1), stream_id=StreamId())
+    backend.event_store.append(an_event(version=1), stream_id=StreamId())
     backend.outbox.run(publisher)
     publisher.assert_not_called()
