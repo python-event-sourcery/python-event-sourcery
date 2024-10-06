@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store import Event, EventStore, Metadata, StreamId
+from event_sourcery.event_store import Event, EventStore, StreamId, WrappedEvent
 from event_sourcery.read_model import CursorsDao, Projector
 from event_sourcery_sqlalchemy.cursors_dao import SqlAlchemyCursorsDao
 from tests.backend.sqlalchemy import DeclarativeBase
@@ -29,7 +29,7 @@ class AllEventsReadModel:
     def __init__(self) -> None:
         self._data: list[dict] = []
 
-    def __call__(self, event: Metadata[Event], stream_id: StreamId) -> None:
+    def __call__(self, event: WrappedEvent[Event], stream_id: StreamId) -> None:
         if isinstance(event.event, AccountCreated):
             self._data.append(
                 {
@@ -239,7 +239,7 @@ def test_raises_exception_when_trying_to_project_unversioned_event(
         cursors_dao=cursors_dao,
         read_model=read_model,
     )
-    unversioned_event = Metadata[Event](
+    unversioned_event = WrappedEvent[Event](
         event=AccountCreated(
             national_id="#333", first_last_names="Mark", initial_deposit=5
         ),

@@ -19,7 +19,7 @@ class Outbox:
             with entry as raw_record:
                 event = self._serde.deserialize(raw_record.entry)
                 record = Recorded(
-                    metadata=event,
+                    wrapped_event=event,
                     stream_id=raw_record.entry.stream_id,
                     position=raw_record.position,
                 )

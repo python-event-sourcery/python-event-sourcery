@@ -2,7 +2,7 @@ from typing import Any, TypeVar
 from unittest.mock import ANY
 from uuid import UUID
 
-from event_sourcery.event_store import Event, Metadata, Recorded, StreamId
+from event_sourcery.event_store import Event, Recorded, StreamId, WrappedEvent
 
 TEvent = TypeVar("TEvent", bound=Event)
 
@@ -12,8 +12,8 @@ class AnyUUID:
         return isinstance(other, UUID)
 
 
-def any_metadata(for_event: TEvent) -> Metadata[TEvent]:
-    return Metadata[TEvent].model_construct(
+def any_metadata(for_event: TEvent) -> WrappedEvent[TEvent]:
+    return WrappedEvent[TEvent].model_construct(
         event=for_event,
         version=ANY,
         uuid=ANY,
@@ -22,7 +22,7 @@ def any_metadata(for_event: TEvent) -> Metadata[TEvent]:
     )
 
 
-def any_record(event: Metadata | Event, on_stream: StreamId = ANY) -> Recorded:
+def any_record(event: WrappedEvent | Event, on_stream: StreamId = ANY) -> Recorded:
     if isinstance(event, Event):
         event = any_metadata(event)
     return Recorded.model_construct(metadata=event, stream_id=on_stream, position=ANY)

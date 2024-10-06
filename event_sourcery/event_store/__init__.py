@@ -9,7 +9,7 @@ __all__ = [
     "ExplicitVersioning",
     "InMemoryBackendFactory",
     "Listener",
-    "Metadata",
+    "WrappedEvent",
     "NO_VERSIONING",
     "Position",
     "RawEvent",
@@ -31,11 +31,11 @@ from event_sourcery.event_store.event import (
     Entry,
     Event,
     EventRegistry,
-    Metadata,
     Position,
     RawEvent,
     Recorded,
     RecordedRaw,
+    WrappedEvent,
 )
 from event_sourcery.event_store.event_store import EventStore
 from event_sourcery.event_store.factory import (

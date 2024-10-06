@@ -35,6 +35,7 @@ class Event(BaseModel, extra="forbid"):
         order_id: OrderId
     ```
     """
+
     __registry__: ClassVar = EventRegistry()
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -49,7 +50,7 @@ class Context(BaseModel, extra="allow"):
     causation_id: UUID | None = None
 
 
-class Metadata(BaseModel, Generic[TEvent], extra="forbid"):
+class WrappedEvent(BaseModel, Generic[TEvent], extra="forbid"):
     """Wrapper for events with all relevant metadata.
 
     Returned from EventStore when loading events from a stream.
@@ -60,9 +61,10 @@ class Metadata(BaseModel, Generic[TEvent], extra="forbid"):
         order_id: OrderId
 
     event = OrderCancelled(order_id=OrderId("#123"))
-    metadata = Metadata.wrap(event, version=1)
+    wrapped_event = WrappedEvent.wrap(event, version=1)
     ```
     """
+
     event: TEvent
     version: int | None
     uuid: UUID = Field(default_factory=uuid4)
@@ -70,12 +72,12 @@ class Metadata(BaseModel, Generic[TEvent], extra="forbid"):
     context: Context = Field(default_factory=Context)
 
     @classmethod
-    def wrap(cls, event: TEvent, version: int | None) -> "Metadata[TEvent]":
-        return Metadata[TEvent](event=event, version=version)
+    def wrap(cls, event: TEvent, version: int | None) -> "WrappedEvent[TEvent]":
+        return WrappedEvent[TEvent](event=event, version=version)
 
 
 class Entry(BaseModel):
-    metadata: Metadata
+    wrapped_event: WrappedEvent
     stream_id: StreamId
 
 

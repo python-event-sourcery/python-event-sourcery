@@ -11,7 +11,7 @@ from pytest import approx
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
-from event_sourcery.event_store import Event, Metadata, Position, Recorded, StreamId
+from event_sourcery.event_store import Event, Position, Recorded, StreamId, WrappedEvent
 from event_sourcery.event_store.factory import Backend, TransactionalBackend
 from event_sourcery.event_store.subscription import BuildPhase, PositionPhase
 from tests.matchers import any_metadata
@@ -23,34 +23,36 @@ class Stream:
     id: es.StreamId = field(default_factory=es.StreamId)
 
     @singledispatchmethod
-    def receives(self, *events: es.Metadata) -> Self:
+    def receives(self, *events: es.WrappedEvent) -> Self:
         self.autoversion(*events)
         self.store.append(*events, stream_id=self.id)
         return self
 
     @receives.register
     def receives_base_events(self, *events: es.Event) -> Self:
-        metadata = (es.Metadata.wrap(e, version=None) for e in events)
+        metadata = (es.WrappedEvent.wrap(e, version=None) for e in events)
         return self.receives(*metadata)
 
-    def with_events(self, *events: es.Metadata | es.Event) -> Self:
+    def with_events(self, *events: es.WrappedEvent | es.Event) -> Self:
         return self.receives(*events)
 
-    def snapshots(self, snapshot: es.Metadata) -> Self:
+    def snapshots(self, snapshot: es.WrappedEvent) -> Self:
         if not snapshot.version:
             snapshot.version = self.current_version
         self.store.save_snapshot(self.id, snapshot)
         return self
 
     @property
-    def events(self) -> list[es.Metadata]:
+    def events(self) -> list[es.WrappedEvent]:
         return list(self.store.load_stream(self.id))
 
-    def loads_only(self, events: Sequence[es.Metadata]) -> None:
+    def loads_only(self, events: Sequence[es.WrappedEvent]) -> None:
         assert self.events == list(events)
 
-    def loads(self, events: Sequence[es.Metadata | es.Event]) -> None:
-        events = [e if isinstance(e, es.Metadata) else any_metadata(e) for e in events]
+    def loads(self, events: Sequence[es.WrappedEvent | es.Event]) -> None:
+        events = [
+            e if isinstance(e, es.WrappedEvent) else any_metadata(e) for e in events
+        ]
         assert self.events == list(events)
 
     def is_empty(self) -> None:
@@ -60,7 +62,7 @@ class Stream:
     def current_version(self) -> int | None:
         return (self.events or [Mock(version=0)])[-1].version
 
-    def autoversion(self, *events: es.Metadata) -> None:
+    def autoversion(self, *events: es.WrappedEvent) -> None:
         if any(e.version is not None for e in events):
             return
 
@@ -103,7 +105,7 @@ class InTransactionListener:
 
     def __call__(
         self,
-        metadata: Metadata,
+        metadata: WrappedEvent,
         stream_id: StreamId,
         position: Position | None,
     ) -> None:
@@ -197,15 +199,15 @@ class Step:
 
 
 class Given(Step):
-    def events(self, *events: es.Metadata, on: es.StreamId) -> Self:
+    def events(self, *events: es.WrappedEvent, on: es.StreamId) -> Self:
         self.stream(on).receives(*events)
         return self
 
-    def event(self, event: es.Metadata | es.Event, on: es.StreamId) -> Self:
+    def event(self, event: es.WrappedEvent | es.Event, on: es.StreamId) -> Self:
         self.stream(on).receives(event)
         return self
 
-    def snapshot(self, snapshot: es.Metadata, on: es.StreamId) -> Self:
+    def snapshot(self, snapshot: es.WrappedEvent, on: es.StreamId) -> Self:
         self.stream(on).snapshots(snapshot)
         return self
 
@@ -220,11 +222,11 @@ class Given(Step):
 
 
 class When(Step):
-    def snapshots(self, with_: es.Metadata, on: es.StreamId) -> Self:
+    def snapshots(self, with_: es.WrappedEvent, on: es.StreamId) -> Self:
         self.stream(on).snapshots(with_)
         return self
 
-    def appends(self, *events: es.Metadata | es.Event, to: es.StreamId) -> Self:
+    def appends(self, *events: es.WrappedEvent | es.Event, to: es.StreamId) -> Self:
         self.stream(to).receives(*events)
         return self
 

@@ -1,7 +1,7 @@
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
-from event_sourcery.event_store import EventStore, Metadata, StreamId
+from event_sourcery.event_store import EventStore, StreamId, WrappedEvent
 from tests.bdd import Given, Then, When
 from tests.factories import NastyEventWithJsonUnfriendlyTypes, an_event
 from tests.matchers import any_metadata
@@ -59,7 +59,7 @@ def test_is_able_to_handle_non_trivial_formats(
 ) -> None:
     given.stream(stream_id := StreamId())
     when.appends(
-        nasty_event := Metadata.wrap(
+        nasty_event := WrappedEvent.wrap(
             NastyEventWithJsonUnfriendlyTypes(
                 uuid=uuid4(),
                 a_datetime=datetime.now(tz=timezone.utc),
