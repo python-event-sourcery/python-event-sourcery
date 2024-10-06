@@ -1,7 +1,8 @@
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import timedelta
 from functools import partial
+from typing import Protocol
 
 import esdbclient.exceptions
 from esdbclient import EventStoreDBClient, RecordedEvent
@@ -11,13 +12,19 @@ from event_sourcery.event_store.interfaces import SubscriptionStrategy
 from event_sourcery_esdb import dto
 
 
+class BuilderCallable(Protocol):
+    def __call__(
+        self, commit_position: Position | None = None
+    ) -> Iterator[RecordedEvent]: ...
+
+
 @dataclass(repr=False)
 class ESDBSubscriptionStrategy(SubscriptionStrategy):
     _client: EventStoreDBClient
 
     @staticmethod
     def _iterator(
-        builder: Callable[[], Iterator[RecordedEvent]],
+        builder: BuilderCallable,
         size: int,
     ) -> Iterator[list[RecordedRaw]]:
         subscription = builder()

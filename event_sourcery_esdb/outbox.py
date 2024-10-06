@@ -6,7 +6,7 @@ from itertools import islice
 
 from esdbclient import EventStoreDBClient, RecordedEvent
 from esdbclient.exceptions import DeadlineExceeded, NotFound
-from esdbclient.persistent import PersistentSubscription
+from esdbclient.persistent import AbstractPersistentSubscription
 
 from event_sourcery.event_store import RecordedRaw
 from event_sourcery.event_store.interfaces import (
@@ -25,7 +25,7 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
     _outbox_name: str
     _max_publish_attempts: int
     _timeout: float | None
-    _active_subscription: PersistentSubscription = field(init=False)
+    _active_subscription: AbstractPersistentSubscription = field(init=False)
 
     def create_subscription(self) -> None:
         try:
@@ -51,7 +51,7 @@ class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
         delattr(self, "_active_subscription")
 
     @property
-    def active_subscription(self) -> PersistentSubscription:
+    def active_subscription(self) -> AbstractPersistentSubscription:
         return self._active_subscription
 
     def outbox_entries(
