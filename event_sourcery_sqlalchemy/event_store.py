@@ -155,7 +155,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             )
             result = self._session.execute(bump_version_stmt)
 
-            if result.rowcount != 1:  # type: ignore
+            if result.rowcount != 1:
                 # optimistic lock failed
                 raise ConcurrentStreamWriteError
 

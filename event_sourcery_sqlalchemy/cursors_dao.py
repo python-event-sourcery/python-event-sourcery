@@ -38,7 +38,7 @@ class SqlAlchemyCursorsDao(CursorsDao):
             .values({ProjectorCursor.version: version})
         )
         result = self._session.execute(update_stmt)
-        if result.rowcount == 1:  # type: ignore
+        if result.rowcount == 1:
             return
         else:
             current_version = self._current_version(name, stream_id)
