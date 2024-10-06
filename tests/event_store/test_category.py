@@ -4,7 +4,7 @@ import pytest
 
 from event_sourcery.event_store import Event, StreamId
 from tests.bdd import Given, Then, When
-from tests.matchers import any_metadata
+from tests.matchers import any_wrapped_event
 
 
 class AnEvent(Event):
@@ -25,7 +25,7 @@ def test_can_append_and_load_with_category(
     stream_id: StreamId,
 ) -> None:
     given.event(an_event := AnEvent(), on=stream_id)
-    then.stream(stream_id).loads_only([any_metadata(an_event)])
+    then.stream(stream_id).loads_only([any_wrapped_event(an_event)])
 
 
 @pytest.mark.parametrize(
@@ -51,8 +51,8 @@ def test_different_streams_when_same_name_but_different_category(
     given.event(an_event := AnEvent(), on=stream_1)
     given.event(an_event, on=stream_2)
 
-    then.stream(stream_1).loads_only([any_metadata(an_event)])
-    then.stream(stream_2).loads_only([any_metadata(an_event)])
+    then.stream(stream_1).loads_only([any_wrapped_event(an_event)])
+    then.stream(stream_2).loads_only([any_wrapped_event(an_event)])
     assert then.stream(stream_1).events != then.stream(stream_2).events
 
 
@@ -65,4 +65,4 @@ def test_removes_stream_with_category(given: Given, when: When, then: Then) -> N
     when.deletes(stream_1)
 
     then.stream(stream_1).is_empty()
-    then.stream(stream_2).loads_only([any_metadata(an_event)])
+    then.stream(stream_2).loads_only([any_wrapped_event(an_event)])

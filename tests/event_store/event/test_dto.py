@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from event_sourcery.event_store.event.dto import Event, WrappedEvent
 
 
-def test_metadata_doesnt_accept_extra_fields() -> None:
+def test_wrapped_event_doesnt_accept_extra_fields() -> None:
     with pytest.raises(ValidationError):
         WrappedEvent(this_field_is_not_defined=True)
 
@@ -14,7 +14,7 @@ def test_event_doesnt_accept_extra_fields() -> None:
         Event(this_field_is_not_defined_either=True)
 
 
-def test_extra_data_can_be_passed_to_metadata_context() -> None:
+def test_extra_data_can_be_passed_to_wrapped_event_context() -> None:
     an_event: WrappedEvent[Event] = WrappedEvent(
         event=Event(), version=1, context={"extra": {"age": 2**5}}
     )

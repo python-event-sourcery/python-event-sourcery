@@ -12,7 +12,7 @@ class AnyUUID:
         return isinstance(other, UUID)
 
 
-def any_metadata(for_event: TEvent) -> WrappedEvent[TEvent]:
+def any_wrapped_event(for_event: TEvent) -> WrappedEvent[TEvent]:
     return WrappedEvent[TEvent].model_construct(
         event=for_event,
         version=ANY,
@@ -24,7 +24,7 @@ def any_metadata(for_event: TEvent) -> WrappedEvent[TEvent]:
 
 def any_record(event: WrappedEvent | Event, on_stream: StreamId = ANY) -> Recorded:
     if isinstance(event, Event):
-        event = any_metadata(event)
+        event = any_wrapped_event(event)
     return Recorded.model_construct(
         wrapped_event=event, stream_id=on_stream, position=ANY
     )

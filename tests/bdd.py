@@ -14,7 +14,7 @@ from event_sourcery import event_store as es
 from event_sourcery.event_store import Event, Position, Recorded, StreamId, WrappedEvent
 from event_sourcery.event_store.factory import Backend, TransactionalBackend
 from event_sourcery.event_store.subscription import BuildPhase, PositionPhase
-from tests.matchers import any_metadata
+from tests.matchers import any_wrapped_event
 
 
 @dataclass
@@ -30,8 +30,8 @@ class Stream:
 
     @receives.register
     def receives_base_events(self, *events: es.Event) -> Self:
-        metadata = (es.WrappedEvent.wrap(e, version=None) for e in events)
-        return self.receives(*metadata)
+        wrapped_events = (es.WrappedEvent.wrap(e, version=None) for e in events)
+        return self.receives(*wrapped_events)
 
     def with_events(self, *events: es.WrappedEvent | es.Event) -> Self:
         return self.receives(*events)
@@ -51,7 +51,7 @@ class Stream:
 
     def loads(self, events: Sequence[es.WrappedEvent | es.Event]) -> None:
         events = [
-            e if isinstance(e, es.WrappedEvent) else any_metadata(e) for e in events
+            e if isinstance(e, es.WrappedEvent) else any_wrapped_event(e) for e in events
         ]
         assert self.events == list(events)
 
@@ -105,11 +105,11 @@ class InTransactionListener:
 
     def __call__(
         self,
-        metadata: WrappedEvent,
+        wrapped_event: WrappedEvent,
         stream_id: StreamId,
         position: Position | None,
     ) -> None:
-        record = Recorded(metadata=metadata, stream_id=stream_id, position=position)
+        record = Recorded(wrapped_event=wrapped_event, stream_id=stream_id, position=position)
         self._records.append(record)
 
     def __next__(self) -> Recorded | None:

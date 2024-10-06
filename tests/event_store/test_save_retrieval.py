@@ -4,7 +4,7 @@ from uuid import uuid4
 from event_sourcery.event_store import EventStore, StreamId, WrappedEvent
 from tests.bdd import Given, Then, When
 from tests.factories import NastyEventWithJsonUnfriendlyTypes, an_event
-from tests.matchers import any_metadata
+from tests.matchers import any_wrapped_event
 
 
 def test_save_retrieve(given: Given, when: When, then: Then) -> None:
@@ -73,11 +73,11 @@ def test_is_able_to_handle_non_trivial_formats(
     then.stream(stream_id).loads_only([nasty_event])
 
 
-def test_is_able_to_handle_events_without_metadata(
+def test_is_able_to_handle_bare_events(
     given: Given,
     event_store: EventStore,
     then: Then,
 ) -> None:
     given.stream(stream_id := StreamId())
     event_store.append(event := an_event().event, stream_id=stream_id)
-    then.stream(stream_id).loads_only([any_metadata(for_event=event)])
+    then.stream(stream_id).loads_only([any_wrapped_event(for_event=event)])
