@@ -13,6 +13,8 @@ from event_sourcery.event_store.versioning import (
 
 
 class EventStore:
+    """API for working with events."""
+
     def __init__(self, storage_strategy: StorageStrategy, serde: Serde) -> None:
         self._storage_strategy = storage_strategy
         self._serde = serde
@@ -23,6 +25,24 @@ class EventStore:
         start: int | None = None,
         stop: int | None = None,
     ) -> Sequence[Metadata]:
+        """Loads events from a given stream.
+
+        Examples:
+            >>> load_stream(stream_id=StreamId(name="not_existing_stream"))
+            []
+            >>> load_stream(stream_id=StreamId(name="existing_stream"))
+            [Metadata(..., version=1), Metadata(...), Metadata(..., version=3)]
+            >>> load_stream(stream_id=StreamId(name="existing_stream"), start=2, stop=3)
+            [Metadata(..., version=2)]
+
+        Args:
+            stream_id: The stream identifier to load events from.
+            start: The stream version to start loading from (including).
+            stop: The stream version to stop loading at (excluding).
+
+        Returns:
+            A sequence of events or empty list if the stream doesn't exist.
+        """
         events = self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
         return self._deserialize_events(events)
 
@@ -34,6 +54,26 @@ class EventStore:
         stream_id: StreamId,
         expected_version: int | Versioning = 0,
     ) -> None:
+        """Appends events to a stream with a given ID.
+
+        Implements optimistic locking to ensure stream wasn't modified since last read.
+        To use it, pass the expected version of the stream.
+
+        Examples:
+            >>> append(Metadata(...), stream_id=StreamId())
+            None
+            >>> append(Metadata(...), stream_id=StreamId(), expected_version=1)
+            None
+
+        Args:
+            first: The first event to append (Metadata or Event).
+            *events: The rest of the events to append (same type as first argument).
+            stream_id: The stream identifier to append events to.
+            expected_version: The expected version of the stream
+
+        Returns:
+            None
+        """
         self._append(
             stream_id=stream_id,
             events=(first, *events),
@@ -71,20 +111,6 @@ class EventStore:
     ) -> Sequence[Metadata]:
         return [Metadata.wrap(event=event, version=None) for event in events]
 
-    @singledispatchmethod
-    def publish(
-        self,
-        first: Metadata,
-        *events: Metadata,
-        stream_id: StreamId,
-        expected_version: int | Versioning = 0,
-    ) -> None:
-        self._append(
-            stream_id=stream_id,
-            events=(first, *events),
-            expected_version=expected_version,
-        )
-
     def _append(
         self,
         stream_id: StreamId,
@@ -108,9 +134,41 @@ class EventStore:
         )
 
     def delete_stream(self, stream_id: StreamId) -> None:
+        """Deletes a stream with a given ID.
+
+        If a stream does not exist, this method does nothing.
+
+        Examples:
+            >>> delete_stream(StreamId())
+            None
+            >>> delete_stream(StreamId(name="not_existing_stream"))
+            None
+
+        Args:
+            stream_id: The stream identifier to delete.
+
+        Returns:
+            None
+        """
         self._storage_strategy.delete_stream(stream_id)
 
     def save_snapshot(self, stream_id: StreamId, snapshot: Metadata) -> None:
+        """Saves a snapshot of the stream.
+
+        Examples:
+            >>> save_snapshot(StreamId(), Metadata(...))
+            None
+            >>> save_snapshot(StreamId(name="not_existing_stream"), Metadata(...))
+            None
+
+        Args:
+            stream_id: The stream identifier to save the snapshot.
+            snapshot: The snapshot to save.
+
+        Returns:
+            None
+        """
+
         serialized = self._serde.serialize(event=snapshot, stream_id=stream_id)
         self._storage_strategy.save_snapshot(serialized)
 
@@ -126,4 +184,13 @@ class EventStore:
 
     @property
     def position(self) -> Position | None:
+        """Returns the current position of the event store.
+
+        Examples:
+            >>> position
+            None  # nothing was saved yet
+            >>> position
+            Position(15)  # Some events were saved
+
+        """
         return self._storage_strategy.current_position

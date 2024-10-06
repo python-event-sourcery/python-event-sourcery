@@ -26,6 +26,6 @@ def test_no_entries_when_everything_was_filtered(
     publisher: PublisherMock,
     backend: Backend,
 ) -> None:
-    backend.event_store.publish(an_event(version=1), stream_id=StreamId(uuid4()))
+    backend.event_store.append(an_event(version=1), stream_id=StreamId(uuid4()))
     backend.outbox.run(publisher)
     publisher.assert_not_called()

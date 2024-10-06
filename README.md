@@ -6,14 +6,14 @@ A library for event-based systems in Python. For event sourcing, CQRS, and event
 ```python
 event = EventSourceryIsBorn()
 
-event_store.publish(event, stream_id=stream_id)
+event_store.append(event, stream_id=stream_id)
 ```
 
 _Under heavy development_
 
 ---
 
-Documentation: https://enforcer.github.io/python-event-sourcery/
+Documentation: [https://python-event-sourcery.github.io/python-event-sourcery/](python-event-sourcery.github.io/python-event-sourcery)
 
 ---
 

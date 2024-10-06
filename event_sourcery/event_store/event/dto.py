@@ -27,6 +27,14 @@ class RecordedRaw(BaseModel):
 
 
 class Event(BaseModel, extra="forbid"):
+    """Base class for all events.
+
+    Example usage:
+    ```
+    class OrderCancelled(Event):
+        order_id: OrderId
+    ```
+    """
     __registry__: ClassVar = EventRegistry()
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -42,6 +50,19 @@ class Context(BaseModel, extra="allow"):
 
 
 class Metadata(BaseModel, Generic[TEvent], extra="forbid"):
+    """Wrapper for events with all relevant metadata.
+
+    Returned from EventStore when loading events from a stream.
+
+    Example usage:
+    ```
+    class OrderCancelled(Event):
+        order_id: OrderId
+
+    event = OrderCancelled(order_id=OrderId("#123"))
+    metadata = Metadata.wrap(event, version=1)
+    ```
+    """
     event: TEvent
     version: int | None
     uuid: UUID = Field(default_factory=uuid4)

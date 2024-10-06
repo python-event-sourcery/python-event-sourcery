@@ -18,11 +18,18 @@ def event_name(cls: type) -> str:
 
 
 class EventRegistry:
+    """Keeps mappings between event types and their names.
+
+    Normally, there is no need to use it directly. If one needs to have multiple
+    registries or wants more granular control, they can pass an instance
+    of EventRegistry to BackendFactory."""
+
     def __init__(self) -> None:
         self._types_to_names: dict[type[Event], str] = {}
         self._names_to_types: dict[str, type[Event]] = {}
 
     def add(self, event: type["Event"]) -> type["Event"]:
+        """Add event subclass to the registry."""
         if event in self._types_to_names:
             raise DuplicatedEvent(f"Duplicated Event detected! {event}")
 

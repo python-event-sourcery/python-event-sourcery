@@ -298,6 +298,8 @@ class Config(BaseModel):
 
 @dataclass(repr=False)
 class InMemoryBackendFactory(BackendFactory):
+    """Lightweight in-memory backend factory for testing and development."""
+
     serde = Serde(Event.__registry__)
 
     _config: Config = field(default_factory=Config)

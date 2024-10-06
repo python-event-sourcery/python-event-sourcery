@@ -49,7 +49,7 @@ class Repository(Generic[TAggregate]):
             if not events:
                 return
 
-            self._event_store.publish(
+            self._event_store.append(
                 *events,
                 stream_id=stream_id,
                 expected_version=old_version,
