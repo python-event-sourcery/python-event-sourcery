@@ -25,4 +25,6 @@ def any_metadata(for_event: TEvent) -> WrappedEvent[TEvent]:
 def any_record(event: WrappedEvent | Event, on_stream: StreamId = ANY) -> Recorded:
     if isinstance(event, Event):
         event = any_metadata(event)
-    return Recorded.model_construct(metadata=event, stream_id=on_stream, position=ANY)
+    return Recorded.model_construct(
+        wrapped_event=event, stream_id=on_stream, position=ANY
+    )
