@@ -2,7 +2,13 @@ from collections.abc import Sequence
 from functools import singledispatchmethod
 from typing import cast
 
-from event_sourcery.event_store.event import Event, Metadata, Position, RawEvent, Serde
+from event_sourcery.event_store.event import (
+    Event,
+    Position,
+    RawEvent,
+    Serde,
+    WrappedEvent,
+)
 from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.versioning import (
@@ -24,16 +30,16 @@ class EventStore:
         stream_id: StreamId,
         start: int | None = None,
         stop: int | None = None,
-    ) -> Sequence[Metadata]:
+    ) -> Sequence[WrappedEvent]:
         """Loads events from a given stream.
 
         Examples:
             >>> load_stream(stream_id=StreamId(name="not_existing_stream"))
             []
             >>> load_stream(stream_id=StreamId(name="existing_stream"))
-            [Metadata(..., version=1), Metadata(...), Metadata(..., version=3)]
+            [WrappedEvent(..., version=1), ..., WrappedEvent(..., version=3)]
             >>> load_stream(stream_id=StreamId(name="existing_stream"), start=2, stop=3)
-            [Metadata(..., version=2)]
+            [WrappedEvent(..., version=2)]
 
         Args:
             stream_id: The stream identifier to load events from.
@@ -49,8 +55,8 @@ class EventStore:
     @singledispatchmethod
     def append(
         self,
-        first: Metadata,
-        *events: Metadata,
+        first: WrappedEvent,
+        *events: WrappedEvent,
         stream_id: StreamId,
         expected_version: int | Versioning = 0,
     ) -> None:
@@ -60,13 +66,13 @@ class EventStore:
         To use it, pass the expected version of the stream.
 
         Examples:
-            >>> append(Metadata(...), stream_id=StreamId())
+            >>> append(WrappedEvent(...), stream_id=StreamId())
             None
-            >>> append(Metadata(...), stream_id=StreamId(), expected_version=1)
+            >>> append(WrappedEvent(...), stream_id=StreamId(), expected_version=1)
             None
 
         Args:
-            first: The first event to append (Metadata or Event).
+            first: The first event to append (WrappedEvent or Event).
             *events: The rest of the events to append (same type as first argument).
             stream_id: The stream identifier to append events to.
             expected_version: The expected version of the stream
@@ -99,22 +105,22 @@ class EventStore:
         self,
         expected_version: int,
         events: Sequence[Event],
-    ) -> Sequence[Metadata]:
+    ) -> Sequence[WrappedEvent]:
         return [
-            Metadata.wrap(event=event, version=version)
+            WrappedEvent.wrap(event=event, version=version)
             for version, event in enumerate(events, start=expected_version + 1)
         ]
 
     @_wrap_events.register
     def _wrap_events_versioning(
         self, expected_version: Versioning, events: Sequence[Event]
-    ) -> Sequence[Metadata]:
-        return [Metadata.wrap(event=event, version=None) for event in events]
+    ) -> Sequence[WrappedEvent]:
+        return [WrappedEvent.wrap(event=event, version=None) for event in events]
 
     def _append(
         self,
         stream_id: StreamId,
-        events: Sequence[Metadata],
+        events: Sequence[WrappedEvent],
         expected_version: int | Versioning,
     ) -> None:
         new_version = events[-1].version
@@ -152,13 +158,13 @@ class EventStore:
         """
         self._storage_strategy.delete_stream(stream_id)
 
-    def save_snapshot(self, stream_id: StreamId, snapshot: Metadata) -> None:
+    def save_snapshot(self, stream_id: StreamId, snapshot: WrappedEvent) -> None:
         """Saves a snapshot of the stream.
 
         Examples:
-            >>> save_snapshot(StreamId(), Metadata(...))
+            >>> save_snapshot(StreamId(), WrappedEvent(...))
             None
-            >>> save_snapshot(StreamId(name="not_existing_stream"), Metadata(...))
+            >>> save_snapshot(StreamId(name="not_existing_stream"), WrappedEvent(...))
             None
 
         Args:
@@ -172,12 +178,12 @@ class EventStore:
         serialized = self._serde.serialize(event=snapshot, stream_id=stream_id)
         self._storage_strategy.save_snapshot(serialized)
 
-    def _deserialize_events(self, events: list[RawEvent]) -> list[Metadata]:
+    def _deserialize_events(self, events: list[RawEvent]) -> list[WrappedEvent]:
         return [self._serde.deserialize(e) for e in events]
 
     def _serialize_events(
         self,
-        events: Sequence[Metadata],
+        events: Sequence[WrappedEvent],
         stream_id: StreamId,
     ) -> list[RawEvent]:
         return [self._serde.serialize(event=e, stream_id=stream_id) for e in events]

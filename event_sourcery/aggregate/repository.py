@@ -3,7 +3,13 @@ from contextlib import contextmanager
 from typing import Generic, TypeVar, cast
 
 from event_sourcery.aggregate import Aggregate
-from event_sourcery.event_store import Event, EventStore, Metadata, StreamId, StreamUUID
+from event_sourcery.event_store import (
+    Event,
+    EventStore,
+    StreamId,
+    StreamUUID,
+    WrappedEvent,
+)
 
 TAggregate = TypeVar("TAggregate", bound=Aggregate)
 TEvent = TypeVar("TEvent", bound=Event)
@@ -42,7 +48,7 @@ class Repository(Generic[TAggregate]):
         with aggregate.__persisting_changes__() as pending:
             start_from = old_version + 1
             events = [
-                Metadata.wrap(event, version)
+                WrappedEvent.wrap(event, version)
                 for version, event in enumerate(pending, start=start_from)
             ]
 

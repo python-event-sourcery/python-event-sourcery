@@ -9,7 +9,7 @@ from weakref import WeakSet
 
 from typing_extensions import Protocol
 
-from event_sourcery.event_store import BackendFactory, Metadata, StreamId
+from event_sourcery.event_store import BackendFactory, StreamId, WrappedEvent
 
 
 class Command(enum.Enum):
@@ -36,7 +36,8 @@ class _Handle:
 
 
 Message = (
-    Literal[Command.STOP] | tuple[Literal[Command.APPEND], Metadata, StreamId, _Handle]
+    Literal[Command.STOP]
+    | tuple[Literal[Command.APPEND], WrappedEvent, StreamId, _Handle]
 )
 
 
@@ -59,7 +60,7 @@ class Inbox:
             handle.commit()
         self._in_queue.put(Command.STOP)
 
-    def put_event_to_append(self, event: Metadata, stream_id: StreamId) -> Handle:
+    def put_event_to_append(self, event: WrappedEvent, stream_id: StreamId) -> Handle:
         handle = _Handle()
         self._in_queue.put((Command.APPEND, event, stream_id, handle))
         self._pending_handles.add(handle)
@@ -112,7 +113,9 @@ class OtherClient:
         )
         self._thread.start()
 
-    def appends_in_transaction(self, event: Metadata, stream_id: StreamId) -> Handle:
+    def appends_in_transaction(
+        self, event: WrappedEvent, stream_id: StreamId
+    ) -> Handle:
         return self._inbox.put_event_to_append(event, stream_id)
 
     def stop(self) -> None:

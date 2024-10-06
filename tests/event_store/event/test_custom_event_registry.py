@@ -4,7 +4,12 @@ from uuid import uuid4
 import pytest
 from pydantic import BaseModel
 
-from event_sourcery.event_store import BackendFactory, EventRegistry, Metadata, StreamId
+from event_sourcery.event_store import (
+    BackendFactory,
+    EventRegistry,
+    StreamId,
+    WrappedEvent,
+)
 
 
 @pytest.fixture()
@@ -28,7 +33,7 @@ def test_can_work_with_custom_events_with_custom_registry(
 
     stream_id = StreamId(uuid4())
     event_store.append(
-        Metadata[SomeDummyEvent](event=SomeDummyEvent(), version=1),  # type: ignore
+        WrappedEvent[SomeDummyEvent](event=SomeDummyEvent(), version=1),  # type: ignore
         stream_id=stream_id,
     )
 

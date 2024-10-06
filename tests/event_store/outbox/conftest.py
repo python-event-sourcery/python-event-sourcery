@@ -16,7 +16,7 @@ from event_sourcery.event_store import (
     Backend,
     BackendFactory,
     InMemoryBackendFactory,
-    Metadata,
+    WrappedEvent,
 )
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery_django import DjangoBackendFactory
@@ -103,7 +103,7 @@ def backend(event_store_factory: BackendFactory) -> Backend:
 
 
 class PublisherMock(Mock):
-    __call__: Callable[[Metadata, StreamId], None]
+    __call__: Callable[[WrappedEvent, StreamId], None]
 
 
 @pytest.fixture()

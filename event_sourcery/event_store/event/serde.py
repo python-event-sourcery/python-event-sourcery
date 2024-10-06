@@ -4,10 +4,10 @@ from typing import cast
 
 from event_sourcery.event_store.event.dto import (
     Event,
-    Metadata,
     RawEvent,
     Recorded,
     RecordedRaw,
+    WrappedEvent,
 )
 from event_sourcery.event_store.event.registry import EventRegistry
 from event_sourcery.event_store.stream_id import StreamId
@@ -17,27 +17,27 @@ from event_sourcery.event_store.stream_id import StreamId
 class Serde:
     registry: EventRegistry
 
-    def deserialize(self, event: RawEvent) -> Metadata:
+    def deserialize(self, event: RawEvent) -> WrappedEvent:
         event_as_dict = dict(event)
         del event_as_dict["stream_id"]
         del event_as_dict["name"]
         data = cast(Mapping, event_as_dict.pop("data"))
         event_type = self.registry.type_for_name(event.name)
-        return Metadata[event_type](  # type: ignore
+        return WrappedEvent[event_type](  # type: ignore
             **event_as_dict,
             event=event_type(**data),
         )
 
     def deserialize_record(self, record: RecordedRaw) -> Recorded:
         return Recorded(
-            metadata=self.deserialize(record.entry),
+            wrapped_event=self.deserialize(record.entry),
             stream_id=record.entry.stream_id,
             position=record.position,
         )
 
     def serialize(
         self,
-        event: Metadata,
+        event: WrappedEvent,
         stream_id: StreamId,
     ) -> RawEvent:
         model = cast(Event, event.event)

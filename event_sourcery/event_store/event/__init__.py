@@ -3,7 +3,7 @@ __all__ = [
     "Entry",
     "Event",
     "EventRegistry",
-    "Metadata",
+    "WrappedEvent",
     "Position",
     "RawEvent",
     "Recorded",
@@ -16,11 +16,11 @@ from event_sourcery.event_store.event.dto import (
     Context,
     Entry,
     Event,
-    Metadata,
     Position,
     RawEvent,
     Recorded,
     RecordedRaw,
+    WrappedEvent,
 )
 from event_sourcery.event_store.event.registry import EventRegistry
 from event_sourcery.event_store.event.serde import Serde
