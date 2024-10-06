@@ -20,7 +20,7 @@ nav:
         - 'WrappedEvent': 'reference/wrapped_event.md'
         - 'BackendFactory': 'reference/backend_factory.md'
         - 'EventRegistry': 'reference/event_registry.md'
-        - 'InMemoryBackendFactory': 'reference/event_registry.md'
+        - 'InMemoryBackendFactory': 'reference/in_memory_backend_factory.md'
 
 plugins:
 - search
