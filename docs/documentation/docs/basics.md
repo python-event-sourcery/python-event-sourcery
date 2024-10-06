@@ -49,7 +49,6 @@ event = SprintStarted(
 # SprintStarted(
 #     uuid=UUID('48c3ecb1-2d58-4b99-b964-2fb9ccfba601'),
 #     created_at=datetime.datetime(2022, 8, 7, 16, 56, 35, 719248),
-#     metadata=Metadata(correlation_id=None, causation_id=None),
 #     when_started=datetime.datetime(2022, 8, 7, 18, 56, 35, 719177),
 #     when_ends=datetime.datetime(2022, 8, 14, 18, 56, 35, 719184),
 #     project_key='PRO'
