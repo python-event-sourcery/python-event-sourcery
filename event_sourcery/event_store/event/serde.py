@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
 
@@ -28,6 +28,9 @@ class Serde:
             event=event_type(**data),
         )
 
+    def deserialize_many(self, events: Sequence[RawEvent]) -> list[WrappedEvent]:
+        return [self.deserialize(event) for event in events]
+
     def deserialize_record(self, record: RecordedRaw) -> Recorded:
         return Recorded(
             wrapped_event=self.deserialize(record.entry),
@@ -50,3 +53,8 @@ class Serde:
             data=model.model_dump(mode="json"),
             context=event.context.model_dump(mode="json"),
         )
+
+    def serialize_many(
+        self, events: Sequence[WrappedEvent], stream_id: StreamId
+    ) -> list[RawEvent]:
+        return [self.serialize(event, stream_id) for event in events]

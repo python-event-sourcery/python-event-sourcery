@@ -5,7 +5,6 @@ from typing import cast
 from event_sourcery.event_store.event import (
     Event,
     Position,
-    RawEvent,
     Serde,
     WrappedEvent,
 )
@@ -50,7 +49,7 @@ class EventStore:
             A sequence of events or empty list if the stream doesn't exist.
         """
         events = self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
-        return self._deserialize_events(events)
+        return self._serde.deserialize_many(events)
 
     @singledispatchmethod
     def append(
@@ -136,7 +135,7 @@ class EventStore:
         self._storage_strategy.insert_events(
             stream_id=stream_id,
             versioning=versioning,
-            events=self._serialize_events(events, stream_id),
+            events=self._serde.serialize_many(events, stream_id),
         )
 
     def delete_stream(self, stream_id: StreamId) -> None:
@@ -177,16 +176,6 @@ class EventStore:
 
         serialized = self._serde.serialize(event=snapshot, stream_id=stream_id)
         self._storage_strategy.save_snapshot(serialized)
-
-    def _deserialize_events(self, events: list[RawEvent]) -> list[WrappedEvent]:
-        return [self._serde.deserialize(e) for e in events]
-
-    def _serialize_events(
-        self,
-        events: Sequence[WrappedEvent],
-        stream_id: StreamId,
-    ) -> list[RawEvent]:
-        return [self._serde.serialize(event=e, stream_id=stream_id) for e in events]
 
     @property
     def position(self) -> Position | None:
