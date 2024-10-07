@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Any
+from typing import Any, TypeVar
 from uuid import UUID
 
 from event_sourcery.event_store import Event, WrappedEvent
@@ -13,11 +13,14 @@ class OtherEvent(Event):
     pass
 
 
+TEvent = TypeVar("TEvent", bound=Event)
+
+
 def an_event(
-    event: Event | None = None,
+    event: TEvent | AnEvent | None = None,
     version: int | None = None,
     **kwargs: Any,
-) -> WrappedEvent[AnEvent]:
+) -> WrappedEvent[TEvent | AnEvent]:
     return WrappedEvent(
         event=event or AnEvent(),
         version=version,
@@ -26,8 +29,8 @@ def an_event(
 
 
 def a_snapshot(
-    event: Event | None = None, version: int | None = None, **kwargs: Any
-) -> WrappedEvent[AnEvent]:
+    event: TEvent | AnEvent | None = None, version: int | None = None, **kwargs: Any
+) -> WrappedEvent[TEvent | AnEvent]:
     return WrappedEvent(
         event=event or AnEvent(),
         version=version,

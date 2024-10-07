@@ -110,6 +110,6 @@ class SubscriptionBuilder(PositionPhase, FilterPhase, BuildPhase):
     ) -> Iterator[list[Recorded]]:
         seconds = self._to_timedelta(timelimit)
         subscription = self._build(batch_size=size, timelimit=seconds)
-        return (
+        return (  # pragma: no cover  # apparently, bug in coverage.py
             [self._serde.deserialize_record(e) for e in batch] for batch in subscription
         )

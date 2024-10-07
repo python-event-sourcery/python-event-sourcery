@@ -51,7 +51,8 @@ class Stream:
 
     def loads(self, events: Sequence[es.WrappedEvent | es.Event]) -> None:
         events = [
-            e if isinstance(e, es.WrappedEvent) else any_wrapped_event(e) for e in events
+            e if isinstance(e, es.WrappedEvent) else any_wrapped_event(e)
+            for e in events
         ]
         assert self.events == list(events)
 
@@ -109,7 +110,11 @@ class InTransactionListener:
         stream_id: StreamId,
         position: Position | None,
     ) -> None:
-        record = Recorded(wrapped_event=wrapped_event, stream_id=stream_id, position=position)
+        record = Recorded(
+            wrapped_event=wrapped_event,
+            stream_id=stream_id,
+            position=position or 0,
+        )
         self._records.append(record)
 
     def __next__(self) -> Recorded | None:
