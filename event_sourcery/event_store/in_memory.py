@@ -231,6 +231,9 @@ class InMemoryStorageStrategy(StorageStrategy):
         self._dispatcher = dispatcher
         self._outbox = outbox_strategy
 
+    def scoped_for_tenant(self, tenant_id: str) -> Self:
+        raise NotImplementedError
+
     def fetch_events(
         self,
         stream_id: StreamId,
