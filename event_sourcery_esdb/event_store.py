@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import cast
+from typing import Self, cast
 
 from esdbclient import EventStoreDBClient, StreamState
 from esdbclient.exceptions import NotFound
@@ -20,6 +20,9 @@ from event_sourcery_esdb import dto, stream
 class ESDBStorageStrategy(StorageStrategy):
     _client: EventStoreDBClient
     _timeout: float | None
+
+    def scoped_for_tenant(self, tenant_id: str) -> Self:
+        raise NotImplementedError
 
     def fetch_events(
         self,
