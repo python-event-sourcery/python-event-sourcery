@@ -1,3 +1,6 @@
+[project]
+requires-python = ">=3.10"
+
 [tool.poetry]
 name = "python-event-sourcery"
 version = "0.4.0a7"
@@ -70,7 +73,6 @@ exclude_lines = [
 ]
 
 [tool.mypy]
-python_version = "3.10"
 ignore_missing_imports = true
 disallow_untyped_defs = true
 no_implicit_optional = true
@@ -81,7 +83,6 @@ show_error_codes = true
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
 show-fixes = true
 exclude = ["**/migrations"]
 
@@ -105,6 +106,7 @@ select = [
 ignore = [
     "N818",  # error-suffix-on-exception-name
     "PLR2004",  # magic-value-comparison
+    "E501",  # line-too-long, ruff format takes care about it
 ]
 
 [tool.ruff.lint.per-file-ignores]
