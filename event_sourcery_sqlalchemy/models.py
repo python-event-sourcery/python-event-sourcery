@@ -26,6 +26,7 @@ from sqlalchemy.orm import (
 )
 
 from event_sourcery.event_store import StreamId
+from event_sourcery.event_store.tenant_id import TenantId
 from event_sourcery_sqlalchemy.guid import GUID
 from event_sourcery_sqlalchemy.jsonb import JSONB
 
@@ -57,14 +58,15 @@ class StreamIdComparator(Comparator[StreamId]):
 class Stream:
     __tablename__ = "event_sourcery_streams"
     __table_args__ = (
-        UniqueConstraint("uuid", "category"),
-        UniqueConstraint("name", "category"),
+        UniqueConstraint("uuid", "category", "tenant_id"),
+        UniqueConstraint("name", "category", "tenant_id"),
     )
 
     id = mapped_column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     uuid = mapped_column(GUID(), nullable=False)
     name = mapped_column(String(255), nullable=True, default=None)
     category = mapped_column(String(255), nullable=False, default="")
+    tenant_id = mapped_column(String(255), nullable=False)
     version = mapped_column(BigInteger(), nullable=True)
 
     events: Mapped[list["Event"]]
@@ -119,6 +121,7 @@ class Event:
     )
     stream: Mapped[Stream] = relationship(Stream, back_populates="events")
     stream_id: AssociationProxy[StreamId] = association_proxy("stream", "stream_id")
+    tenant_id: AssociationProxy[TenantId] = association_proxy("stream", "tenant_id")
     name = mapped_column(String(200), nullable=False)
     data = mapped_column(JSONB(), nullable=False)
     event_context = mapped_column(JSONB(), nullable=False)

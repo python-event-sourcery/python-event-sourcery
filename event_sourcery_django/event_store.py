@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import cast
+from typing import Self, cast
 
 from more_itertools import first, first_true
 
@@ -26,6 +26,9 @@ from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
 class DjangoStorageStrategy(StorageStrategy):
     _dispatcher: Dispatcher
     _outbox: DjangoOutboxStorageStrategy | None = None
+
+    def scoped_for_tenant(self, tenant_id: str) -> Self:
+        raise NotImplementedError
 
     def fetch_events(
         self,
