@@ -3,7 +3,7 @@ requires-python = ">=3.10"
 
 [tool.poetry]
 name = "python-event-sourcery"
-version = "0.4.0a8"
+version = "0.4.0a9"
 description = ""
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
