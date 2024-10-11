@@ -33,11 +33,11 @@ class EventStore:
         """Loads events from a given stream.
 
         Examples:
-            >>> load_stream(stream_id=StreamId(name="not_existing_stream"))
+            >>> event_store.load_stream(stream_id=StreamId(name="not_existing_stream"))
             []
-            >>> load_stream(stream_id=StreamId(name="existing_stream"))
+            >>> event_store.load_stream(stream_id=StreamId(name="existing_stream"))
             [WrappedEvent(..., version=1), ..., WrappedEvent(..., version=3)]
-            >>> load_stream(stream_id=StreamId(name="existing_stream"), start=2, stop=3)
+            >>> event_store.load_stream(stream_id=StreamId(name="existing_stream"), start=2, stop=3)
             [WrappedEvent(..., version=2)]
 
         Args:
@@ -65,9 +65,9 @@ class EventStore:
         To use it, pass the expected version of the stream.
 
         Examples:
-            >>> append(WrappedEvent(...), stream_id=StreamId())
+            >>> event_store.append(WrappedEvent(...), stream_id=StreamId())
             None
-            >>> append(WrappedEvent(...), stream_id=StreamId(), expected_version=1)
+            >>> event_store.append(WrappedEvent(...), stream_id=StreamId(), expected_version=1)
             None
 
         Args:
@@ -144,9 +144,9 @@ class EventStore:
         If a stream does not exist, this method does nothing.
 
         Examples:
-            >>> delete_stream(StreamId())
+            >>> event_store.delete_stream(StreamId())
             None
-            >>> delete_stream(StreamId(name="not_existing_stream"))
+            >>> event_store.delete_stream(StreamId(name="not_existing_stream"))
             None
 
         Args:
@@ -161,9 +161,9 @@ class EventStore:
         """Saves a snapshot of the stream.
 
         Examples:
-            >>> save_snapshot(StreamId(), WrappedEvent(...))
+            >>> event_store.save_snapshot(StreamId(), WrappedEvent(...))
             None
-            >>> save_snapshot(StreamId(name="not_existing_stream"), WrappedEvent(...))
+            >>> event_store.save_snapshot(StreamId(name="not_existing_stream"), WrappedEvent(...))
             None
 
         Args:
@@ -182,9 +182,9 @@ class EventStore:
         """Returns the current position of the event store.
 
         Examples:
-            >>> position
+            >>> event_store.position
             None  # nothing was saved yet
-            >>> position
+            >>> event_store.position
             Position(15)  # Some events were saved
 
         """
