@@ -16,7 +16,7 @@ def raw_event(from_entry: RecordedEvent) -> RawEvent:
     position = stream.Position(from_entry.stream_position)
     return RawEvent(
         uuid=from_entry.id,
-        stream_id=stream.Name(stream_name=from_entry.stream_name).uuid,
+        stream_id=stream.Name.from_stream_name(from_entry.stream_name).uuid,
         created_at=created_at,
         version=position.as_version(),
         name=from_entry.type,

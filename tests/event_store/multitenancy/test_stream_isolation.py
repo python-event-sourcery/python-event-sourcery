@@ -1,9 +1,11 @@
 import pytest
 
-from event_sourcery.event_store import Event, EventStore, StreamId
+from event_sourcery.event_store import BackendFactory, Event, EventStore, StreamId
+from event_sourcery.event_store.exceptions import IllegalTenantId
+from tests.factories import AnEvent
 
 pytestmark = pytest.mark.skip_backend(
-    backend=["esdb", "django"],
+    backend=["django"],
     reason="Skipped for now, for the sake of PoC.",
 )
 
@@ -64,3 +66,11 @@ def test_streams_with_same_id_or_name_can_coexist(
     tenant_2_stream = tenant_2.load_stream(stream_id)
     assert len(tenant_2_stream) == 1
     assert tenant_2_stream[0].event == tenant_2_event
+
+
+def test_esdb_cant_use_tenant_id_with_dash(esdb: BackendFactory) -> None:
+    event_store = esdb.build().event_store
+    illegal_tenant_event_store = event_store.scoped_for_tenant("illegal-tenant-id")
+
+    with pytest.raises(IllegalTenantId):
+        illegal_tenant_event_store.append(AnEvent(), stream_id=StreamId())
