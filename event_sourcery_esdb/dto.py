@@ -49,7 +49,9 @@ def new_entry(from_raw: RawEvent, **metadata: Any) -> NewEvent:
 
 
 def raw_record(from_entry: RecordedEvent) -> RecordedRaw:
+    stream_name = stream.Name.from_stream_name(from_entry.stream_name)
     return RecordedRaw(
-        entry=raw_event(from_entry=from_entry),
+        entry=raw_event(from_entry),
         position=Position(from_entry.commit_position or 0),
+        tenant_id=stream_name.tenant_id,
     )

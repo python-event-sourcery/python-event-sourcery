@@ -197,7 +197,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         stream.events.extend(entries)
         self._session.flush()
         records = [
-            RecordedRaw(entry=raw, position=db.id)
+            RecordedRaw(entry=raw, position=db.id, tenant_id=db.tenant_id)
             for raw, db in zip(events, entries, strict=False)
         ]
         if self._outbox:

@@ -9,8 +9,9 @@ from event_sourcery.event_store.event import (
     WrappedEvent,
 )
 from event_sourcery.event_store.stream_id import StreamId
+from event_sourcery.event_store.tenant_id import TenantId
 
-Listener = Callable[[WrappedEvent, StreamId, Position | None], None]
+Listener = Callable[[WrappedEvent, StreamId, TenantId, Position | None], None]
 
 
 class Dispatcher:
@@ -25,7 +26,12 @@ class Dispatcher:
                 if not isinstance(record.wrapped_event.event, event_type):
                     continue
                 for listener in listeners:
-                    listener(record.wrapped_event, record.stream_id, record.position)
+                    listener(
+                        record.wrapped_event,
+                        record.stream_id,
+                        record.tenant_id,
+                        record.position,
+                    )
 
     def register(self, listener: Listener, to: type[Event]) -> None:
         self._listeners[to].add(listener)
