@@ -1,5 +1,3 @@
-import pytest
-
 from event_sourcery.event_store import EventStore
 from tests.bdd import Given, Then, When
 from tests.factories import an_event
@@ -61,7 +59,6 @@ def test_receives_events_from_multiple_streams_after_passed_position(
     )
 
 
-@pytest.mark.not_implemented(backend=["django"])
 def test_receives_events_from_all_tenants(
     event_store: EventStore,
     given: Given,

@@ -1,5 +1,3 @@
-import pytest
-
 from event_sourcery.event_store import Event, EventStore, StreamId
 from tests.bdd import Given, Then, When
 from tests.matchers import any_record
@@ -99,7 +97,6 @@ def test_receiving_in_batches(
     then(subscription).next_batch_is_empty()
 
 
-@pytest.mark.not_implemented(backend=["django"])
 def test_receives_events_from_all_tenants(given: Given, when: When, then: Then) -> None:
     subscription = given.subscription(to_events=[FirstType])
 

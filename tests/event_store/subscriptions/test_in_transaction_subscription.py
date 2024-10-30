@@ -93,7 +93,6 @@ def test_no_new_events_after_reading_all(
     then(in_transaction).received_no_new_records()
 
 
-@pytest.mark.not_implemented(backend=["django"])
 def test_receives_events_from_all_tenants(
     given: Given,
     when: When,
