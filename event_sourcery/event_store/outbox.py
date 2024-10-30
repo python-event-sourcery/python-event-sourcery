@@ -22,5 +22,6 @@ class Outbox:
                     wrapped_event=event,
                     stream_id=raw_record.entry.stream_id,
                     position=raw_record.position,
+                    tenant_id=raw_record.tenant_id,
                 )
                 publisher(record)

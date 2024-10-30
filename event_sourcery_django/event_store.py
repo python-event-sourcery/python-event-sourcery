@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import cast
 
 from more_itertools import first, first_true
+from typing_extensions import Self
 
 from event_sourcery.event_store import (
     NO_VERSIONING,
@@ -127,3 +128,6 @@ class DjangoStorageStrategy(StorageStrategy):
     def current_position(self) -> Position | None:
         last_event = models.Event.objects.last()
         return last_event.id if last_event else Position(0)
+
+    def scoped_for_tenant(self, tenant_id: str) -> Self:
+        raise NotImplementedError

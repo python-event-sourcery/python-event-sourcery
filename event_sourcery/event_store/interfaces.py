@@ -4,6 +4,8 @@ from contextlib import AbstractContextManager
 from datetime import timedelta
 from typing import Protocol
 
+from typing_extensions import Self
+
 from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.versioning import Versioning
@@ -79,4 +81,8 @@ class StorageStrategy(abc.ABC):
     @property
     @abc.abstractmethod
     def current_position(self) -> Position | None:
+        pass
+
+    @abc.abstractmethod
+    def scoped_for_tenant(self, tenant_id: str) -> Self:
         pass

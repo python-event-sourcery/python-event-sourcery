@@ -204,4 +204,7 @@ class EventStore:
         Returns:
             An event store instance scoped to the tenant.
         """
-        raise NotImplementedError
+        return EventStore(
+            storage_strategy=self._storage_strategy.scoped_for_tenant(tenant_id),
+            serde=self._serde,
+        )

@@ -36,6 +36,7 @@ class Serde:
             wrapped_event=self.deserialize(record.entry),
             stream_id=record.entry.stream_id,
             position=record.position,
+            tenant_id=record.tenant_id,
         )
 
     def serialize(

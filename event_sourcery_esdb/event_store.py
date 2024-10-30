@@ -3,6 +3,7 @@ from typing import cast
 
 from esdbclient import EventStoreDBClient, StreamState
 from esdbclient.exceptions import NotFound
+from typing_extensions import Self
 
 from event_sourcery.event_store import (
     NO_VERSIONING,
@@ -125,3 +126,6 @@ class ESDBStorageStrategy(StorageStrategy):
     @property
     def current_position(self) -> Position | None:
         return Position(self._client.get_commit_position(timeout=self._timeout))
+
+    def scoped_for_tenant(self, tenant_id: str) -> Self:
+        raise NotImplementedError
