@@ -63,3 +63,16 @@ def test_wont_accept_timebox_shorten_than_1_second(
 ) -> None:
     with pytest.raises(ValueError):
         backend.subscriber.start_from(0).build_iter(timelimit=0.99999)
+
+
+@pytest.mark.not_implemented(
+    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite", "in_memory"],
+)
+def test_receives_events_from_all_tenants(given: Given, when: When, then: Then) -> None:
+    subscription = given.subscription()
+
+    when.in_tenant_mode("first").stream().receives(first := an_event())
+    when.in_tenant_mode("second").stream().receives(second := an_event())
+
+    then(subscription).next_received_record_is(any_record(first, for_tenant="first"))
+    then(subscription).next_received_record_is(any_record(second, for_tenant="second"))

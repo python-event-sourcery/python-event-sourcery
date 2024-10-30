@@ -91,3 +91,22 @@ def test_no_new_events_after_reading_all(
     when(in_transaction).next_received_record_is(ANY)
 
     then(in_transaction).received_no_new_records()
+
+
+@pytest.mark.not_implemented(
+    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite", "in_memory"],
+)
+def test_receives_events_from_all_tenants(
+    given: Given,
+    when: When,
+    then: Then,
+) -> None:
+    in_transaction = given.in_transaction_listener()
+
+    when.in_tenant_mode("first").stream().receives(first := an_event())
+    when.in_tenant_mode("second").stream().receives(second := an_event())
+
+    then(in_transaction).next_received_record_is(any_record(first, for_tenant="first"))
+    then(in_transaction).next_received_record_is(
+        any_record(second, for_tenant="second")
+    )
