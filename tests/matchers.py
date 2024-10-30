@@ -32,5 +32,6 @@ def any_record(
     return Recorded.model_construct(
         wrapped_event=event,
         stream_id=on_stream,
+        tenant_id=for_tenant,
         position=ANY,
     )

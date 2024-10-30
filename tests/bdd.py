@@ -117,12 +117,14 @@ class InTransactionListener:
         self,
         wrapped_event: WrappedEvent,
         stream_id: StreamId,
+        tenant_id: TenantId,
         position: Position | None,
     ) -> None:
         record = Recorded(
             wrapped_event=wrapped_event,
             stream_id=stream_id,
             position=position or 0,
+            tenant_id=tenant_id,
         )
         self._records.append(record)
 

@@ -7,6 +7,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
+from typing_extensions import Self
 
 from event_sourcery.event_store import (
     NO_VERSIONING,
@@ -226,3 +227,6 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         stmt = select(func.max(EventModel.id))
         last_event = self._session.scalar(stmt)
         return last_event or Position(0)
+
+    def scoped_for_tenant(self, tenant_id: str) -> Self:
+        raise NotImplementedError

@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from event_sourcery.event_store.event.registry import EventRegistry
 from event_sourcery.event_store.stream_id import StreamId
+from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
 
 
 class RawEvent(BaseModel):
@@ -24,6 +25,7 @@ Position: TypeAlias = int
 class RecordedRaw(BaseModel):
     entry: RawEvent
     position: Position
+    tenant_id: TenantId = DEFAULT_TENANT
 
 
 class Event(BaseModel, extra="forbid"):
@@ -83,3 +85,4 @@ class Entry(BaseModel):
 
 class Recorded(Entry):
     position: Position
+    tenant_id: TenantId = DEFAULT_TENANT

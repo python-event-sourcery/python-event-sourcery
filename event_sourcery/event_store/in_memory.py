@@ -289,6 +289,9 @@ class InMemoryStorageStrategy(StorageStrategy):
         current_position = self._storage.current_position
         return current_position and Position(current_position)
 
+    def scoped_for_tenant(self, tenant_id: str) -> Self:
+        raise NotImplementedError
+
 
 class Config(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
