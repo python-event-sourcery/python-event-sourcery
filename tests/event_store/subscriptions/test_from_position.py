@@ -12,7 +12,7 @@ def test_receives_all_events_from_selected_position(
     when: When,
     then: Then,
 ) -> None:
-    starting_position = given(event_store).position
+    starting_position = given(event_store).position or 0
     stream = given.stream().with_events(old_event := an_event())
     subscription = given.subscription(to=starting_position)
 
