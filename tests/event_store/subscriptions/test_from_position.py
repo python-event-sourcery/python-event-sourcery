@@ -62,7 +62,7 @@ def test_receives_events_from_multiple_streams_after_passed_position(
 
 
 @pytest.mark.not_implemented(
-    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite", "in_memory"],
+    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite"],
 )
 def test_receives_events_from_all_tenants(
     event_store: EventStore,
