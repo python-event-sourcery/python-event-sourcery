@@ -6,7 +6,7 @@ from tests.bdd import Given, Then
 from tests.factories import AnEvent, an_event
 
 pytestmark = pytest.mark.not_implemented(
-    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite"],
+    backend=["django", "sqlalchemy_postgres", "sqlalchemy_sqlite"],
 )
 
 
@@ -40,7 +40,6 @@ def test_streams_with_same_id_or_name_can_coexist(
     then.in_tenant_mode("second").stream(with_id=stream_id).loads_only([tenant_2_event])
 
 
-@pytest.mark.xfail(strict=True, raises=NotImplementedError)
 def test_esdb_cant_use_tenant_id_with_dash(esdb: BackendFactory) -> None:
     event_store = esdb.build().event_store
     illegal_tenant_event_store = event_store.scoped_for_tenant("illegal-tenant-id")
