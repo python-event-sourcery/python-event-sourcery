@@ -18,6 +18,10 @@ class IllegalCategoryName(EventStoreException):
     pass
 
 
+class IllegalTenantId(EventStoreException):
+    pass
+
+
 class VersioningMismatch(EventStoreException):
     pass
 

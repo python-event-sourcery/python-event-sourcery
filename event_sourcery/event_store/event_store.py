@@ -10,6 +10,7 @@ from event_sourcery.event_store.event import (
 )
 from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery.event_store.stream_id import StreamId
+from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
 from event_sourcery.event_store.versioning import (
     NO_VERSIONING,
     ExplicitVersioning,
@@ -189,3 +190,18 @@ class EventStore:
 
         """
         return self._storage_strategy.current_position
+
+    def scoped_for_tenant(self, tenant_id: TenantId = DEFAULT_TENANT) -> "EventStore":
+        """Factory method to create a new event store instance scoped to a tenant.
+
+        Examples:
+            >>> event_store.scoped_for_tenant("tenant_1")
+            <EventStore ...>
+
+        Args:
+            tenant_id: The tenant identifier to work with.
+
+        Returns:
+            An event store instance scoped to the tenant.
+        """
+        raise NotImplementedError
