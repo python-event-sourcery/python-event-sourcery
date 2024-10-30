@@ -48,9 +48,7 @@ def test_returns_all_events_after_last_snapshot(
     )
 
 
-@pytest.mark.not_implemented(
-    backend=["django", "sqlalchemy_postgres", "sqlalchemy_sqlite"],
-)
+@pytest.mark.not_implemented(backend=["django"])
 def test_receives_events_from_all_tenants(given: Given, when: When, then: Then) -> None:
     given.in_tenant_mode("Tenant").stream(stream_id := StreamId())
     given.in_tenant_mode("Tenant").events(an_event(), an_event(), on=stream_id)

@@ -9,9 +9,7 @@ from tests.factories import an_event
 from tests.matchers import any_record
 
 
-@pytest.mark.not_implemented(
-    backend=["django", "sqlalchemy_postgres", "sqlalchemy_sqlite"],
-)
+@pytest.mark.not_implemented(backend=["django"])
 def test_receives_events_from_all_tenants(
     publisher: PublisherMock,
     backend: Backend,

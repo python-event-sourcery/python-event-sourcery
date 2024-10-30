@@ -54,9 +54,7 @@ def test_subscription_continuously_awaits_for_new_events(
     then(subscription).next_batch_is_empty()
 
 
-@pytest.mark.not_implemented(
-    backend=["django", "sqlalchemy_postgres", "sqlalchemy_sqlite"],
-)
+@pytest.mark.not_implemented(backend=["django"])
 def test_receives_events_from_all_tenants(given: Given, when: When, then: Then) -> None:
     subscription = given.batch_subscription(of_size=3)
 
