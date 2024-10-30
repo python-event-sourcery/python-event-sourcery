@@ -65,9 +65,7 @@ def test_wont_accept_timebox_shorten_than_1_second(
         backend.subscriber.start_from(0).build_iter(timelimit=0.99999)
 
 
-@pytest.mark.not_implemented(
-    backend=["django", "sqlalchemy_postgres", "sqlalchemy_sqlite"],
-)
+@pytest.mark.not_implemented(backend=["django"])
 def test_receives_events_from_all_tenants(given: Given, when: When, then: Then) -> None:
     subscription = given.subscription()
 

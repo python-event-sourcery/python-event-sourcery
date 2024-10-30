@@ -5,9 +5,7 @@ from event_sourcery.event_store.exceptions import IllegalTenantId
 from tests.bdd import Given, Then
 from tests.factories import AnEvent, an_event
 
-pytestmark = pytest.mark.not_implemented(
-    backend=["django", "sqlalchemy_postgres", "sqlalchemy_sqlite"],
-)
+pytestmark = pytest.mark.not_implemented(backend=["django"])
 
 
 def test_stream_created_in_default_context_cannot_be_accessed_from_tenant_context(
