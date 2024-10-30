@@ -4,15 +4,19 @@ from uuid import uuid4
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
-from event_sourcery.event_store import StreamId
+from event_sourcery.event_store import StreamId, TenantId
 
 
 class StreamManager(models.Manager):
-    def by_stream_id(self, stream_id: StreamId) -> models.QuerySet:
+    def by_stream_id(self, stream_id: StreamId, tenant_id: TenantId) -> models.QuerySet:
         category = stream_id.category or ""
-        condition = models.Q(uuid=stream_id, category=category)
+        condition = models.Q(uuid=stream_id, category=category, tenant_id=tenant_id)
         if stream_id.name:
-            condition = condition | models.Q(name=stream_id.name, category=category)
+            condition = condition | models.Q(
+                name=stream_id.name,
+                category=category,
+                tenant_id=tenant_id,
+            )
         return self.filter(condition)
 
 
@@ -23,14 +27,15 @@ class Stream(models.Model):
     uuid = models.UUIDField(default=uuid4, editable=False)
     name = models.CharField(max_length=255, null=True, blank=True)
     category = models.CharField(max_length=255, default="")
+    tenant_id = models.CharField(max_length=255)
     version = models.BigIntegerField(null=True, blank=True)
 
     objects = StreamManager()
 
     class Meta:
         unique_together = (
-            ("uuid", "category"),
-            ("name", "category"),
+            ("uuid", "category", "tenant_id"),
+            ("name", "category", "tenant_id"),
         )
 
 

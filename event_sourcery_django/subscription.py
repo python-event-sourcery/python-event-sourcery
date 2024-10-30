@@ -158,6 +158,7 @@ class GapDetectingIterator(Iterator[list[RecordedRaw]]):
             RecordedRaw(
                 entry=dto.raw_event(event, event.stream),
                 position=event.id,
+                tenant_id=event.stream.tenant_id,
             )
             for event in batch
         ]
