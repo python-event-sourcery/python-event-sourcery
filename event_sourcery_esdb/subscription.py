@@ -67,7 +67,7 @@ class ESDBSubscriptionStrategy(SubscriptionStrategy):
             commit_position=start_from,
             timeout=timelimit.total_seconds(),
             filter_include=[
-                f"{category}-\\w+",
+                f"[^$-]*-{category}-\\w+",
             ],
             filter_by_stream_name=True,
         )

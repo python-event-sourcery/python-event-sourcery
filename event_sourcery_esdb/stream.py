@@ -2,37 +2,42 @@ import sys
 from collections import UserString
 from typing import cast
 
-from event_sourcery.event_store import StreamId
-from event_sourcery.event_store.exceptions import IllegalCategoryName
+from typing_extensions import Self
+
+from event_sourcery.event_store import StreamId, TenantId
+from event_sourcery.event_store.exceptions import IllegalCategoryName, IllegalTenantId
 
 
 class Name(UserString):
+    tenant_id: TenantId
     uuid: StreamId
 
-    def __init__(
-        self,
-        stream_id: StreamId | None = None,
-        stream_name: str | None = None,
-    ) -> None:
-        self.uuid = stream_id or self._get_id(from_name=(stream_name or ""))
+    def __init__(self, tenant_id: TenantId, stream_id: StreamId) -> None:
+        if "-" in tenant_id:
+            raise IllegalTenantId("ESDB can't handle tenant id with '-'")
+        self.tenant_id = tenant_id
+        self.uuid = stream_id
         super().__init__(self._as_string(self.uuid))
 
-    @staticmethod
-    def _get_id(from_name: str) -> StreamId:
+    @classmethod
+    def from_stream_name(cls, stream_name: str) -> Self:
         category: str | None = None
-        if from_name.endswith("-snapshot"):
-            from_name, _ = from_name.rsplit("-", 1)
-        if "-" in from_name:
-            category, from_name = from_name.split("-", 1)
-        return StreamId(from_hex=from_name, category=category)
+        tenant_id, stream_name = stream_name.split("-", 1)
 
-    @staticmethod
-    def _as_string(stream_id: StreamId) -> str:
+        if stream_name.endswith("-snapshot"):
+            stream_name, _ = stream_name.rsplit("-", 1)
+
+        if "-" in stream_name:
+            category, stream_name = stream_name.split("-", 1)
+
+        return cls(tenant_id, StreamId(from_hex=stream_name, category=category))
+
+    def _as_string(self, stream_id: StreamId) -> str:
         if stream_id.category:
             if "-" in stream_id.category:
                 raise IllegalCategoryName("ESDB storage can't handle category with '-'")
-            return f"{stream_id.category}-{stream_id.hex}"
-        return stream_id.hex
+            return f"{self.tenant_id}-{stream_id.category}-{stream_id.hex}"
+        return f"{self.tenant_id}-{stream_id.hex}"
 
     @property
     def snapshot(self) -> str:
