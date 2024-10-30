@@ -6,7 +6,7 @@ from tests.bdd import Given, Then
 from tests.factories import AnEvent, an_event
 
 pytestmark = pytest.mark.not_implemented(
-    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite", "in_memory"],
+    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite"],
 )
 
 

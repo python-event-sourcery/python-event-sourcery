@@ -10,7 +10,7 @@ from tests.matchers import any_record
 
 
 @pytest.mark.not_implemented(
-    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite", "in_memory"],
+    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite"],
 )
 def test_receives_events_from_all_tenants(
     publisher: PublisherMock,
