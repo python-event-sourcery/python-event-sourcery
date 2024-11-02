@@ -10,7 +10,7 @@ def test_receives_all_events_from_selected_position(
     when: When,
     then: Then,
 ) -> None:
-    starting_position = given(event_store).position
+    starting_position = given(event_store).position or 0
     stream = given.stream().with_events(old_event := an_event())
     subscription = given.subscription(to=starting_position)
 
@@ -57,3 +57,21 @@ def test_receives_events_from_multiple_streams_after_passed_position(
     then(subscription).next_received_record_is(
         any_record(third_after_position, stream_1.id)
     )
+
+
+def test_receives_events_from_all_tenants(
+    event_store: EventStore,
+    given: Given,
+    when: When,
+    then: Then,
+) -> None:
+    given.in_tenant_mode("first").stream().receives(an_event())
+    given.in_tenant_mode("second").stream().receives(an_event())
+
+    subscription = given.subscription(to=event_store.position)
+
+    when.in_tenant_mode("first").stream().receives(first := an_event())
+    when.in_tenant_mode("second").stream().receives(second := an_event())
+
+    then(subscription).next_received_record_is(any_record(first, for_tenant="first"))
+    then(subscription).next_received_record_is(any_record(second, for_tenant="second"))

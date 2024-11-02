@@ -56,6 +56,7 @@ def outbox_entry(from_raw: RecordedRaw, max_attempts: int) -> OutboxEntry:
             "name": from_raw.entry.name,
             "data": from_raw.entry.data,
             "context": from_raw.entry.context,
+            "tenant_id": from_raw.tenant_id,
         },
         stream_name=from_raw.entry.stream_id.name,
         position=from_raw.position,
@@ -78,4 +79,5 @@ def raw_outbox(from_entry: OutboxEntry) -> RecordedRaw:
             context=from_entry.data["context"],
         ),
         position=from_entry.position,
+        tenant_id=from_entry.data["tenant_id"],
     )

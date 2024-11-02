@@ -32,18 +32,19 @@ from event_sourcery.event_store.interfaces import (
 )
 from event_sourcery.event_store.outbox import Outbox
 from event_sourcery.event_store.stream_id import StreamId
+from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
 from event_sourcery.event_store.versioning import NO_VERSIONING, Versioning
 
 
 @dataclass
 class Storage:
-    events: list[RawEvent] = field(default_factory=list, init=False)
-    _data: dict[StreamId, list[RawEvent]] = field(default_factory=dict, init=False)
+    records: list[RecordedRaw] = field(default_factory=list, init=False)
+    _data: dict[StreamId, list[RecordedRaw]] = field(default_factory=dict, init=False)
     _versions: dict[StreamId, int | None] = field(default_factory=dict, init=False)
 
     @property
-    def current_position(self) -> int:
-        return len(self.events)
+    def current_position(self) -> int | None:
+        return self.records[-1].position if self.records else None
 
     def __contains__(self, stream_id: object) -> bool:
         return stream_id in self._data
@@ -55,19 +56,19 @@ class Storage:
         else:
             self._versions[stream_id] = 0
 
-    def append(self, events: list[RawEvent]) -> None:
-        self.events.extend(events)
-        for event in events:
-            stream_id = event.stream_id
-            self._data[stream_id].append(event)
-            self._versions[stream_id] = event.version
+    def append(self, records: list[RecordedRaw]) -> None:
+        self.records.extend(records)
+        for record in records:
+            stream_id = record.entry.stream_id
+            self._data[stream_id].append(record)
+            self._versions[stream_id] = record.entry.version
 
-    def replace(self, with_snapshot: RawEvent) -> None:
-        stream_id = with_snapshot.stream_id
+    def replace(self, with_snapshot: RecordedRaw) -> None:
+        stream_id = with_snapshot.entry.stream_id
         self._data[stream_id] = [with_snapshot]
-        self._versions[stream_id] = with_snapshot.version
+        self._versions[stream_id] = with_snapshot.entry.version
 
-    def read(self, stream_id: StreamId) -> list[RawEvent]:
+    def read(self, stream_id: StreamId) -> list[RecordedRaw]:
         return copy(self._data[stream_id])
 
     def delete(self, stream_id: StreamId) -> None:
@@ -84,15 +85,15 @@ class InMemorySubscription(Iterator[list[RecordedRaw]]):
     _batch_size: int
     _timelimit: timedelta
 
-    def _pop_record(self) -> tuple[RawEvent, Position] | None:
-        if len(self._storage.events) <= self._current_position:
+    def _pop_record(self) -> RecordedRaw | None:
+        if (self._storage.current_position or 0) <= self._current_position:
             return None
-        record = self._storage.events[self._current_position]
+        record = self._storage.records[self._current_position]
         self._current_position += 1
-        return record, self._current_position - 1
+        return record
 
     def __next__(self) -> list[RecordedRaw]:
-        batch: list[tuple[RawEvent, Position]] = []
+        batch: list[RecordedRaw] = []
 
         start = time.monotonic()
         while len(batch) < self._batch_size:
@@ -103,23 +104,19 @@ class InMemorySubscription(Iterator[list[RecordedRaw]]):
             if time.monotonic() - start > self._timelimit.total_seconds():
                 break
 
-        return [
-            RecordedRaw(entry=copy(record), position=position)
-            for record, position in batch
-        ]
+        return batch
 
 
 @dataclass
 class InMemoryToCategorySubscription(InMemorySubscription):
     _category: str
 
-    def _pop_record(self) -> tuple[RawEvent, Position] | None:
+    def _pop_record(self) -> RecordedRaw | None:
         while True:
             record = super()._pop_record()
             if record is None:
                 return None
-            raw, position = record
-            if raw.stream_id.category != self._category:
+            if record.entry.stream_id.category != self._category:
                 continue
             return record
 
@@ -128,13 +125,12 @@ class InMemoryToCategorySubscription(InMemorySubscription):
 class InMemoryToEventTypesSubscription(InMemorySubscription):
     _types: list[str]
 
-    def _pop_record(self) -> tuple[RawEvent, Position] | None:
+    def _pop_record(self) -> RecordedRaw | None:
         while True:
             record = super()._pop_record()
             if record is None:
                 return None
-            raw, position = record
-            if raw.name not in self._types:
+            if record.entry.name not in self._types:
                 continue
             return record
 
@@ -225,11 +221,13 @@ class InMemoryStorageStrategy(StorageStrategy):
         storage: Storage,
         dispatcher: Dispatcher,
         outbox_strategy: InMemoryOutboxStorageStrategy | None,
+        tenant_id: TenantId = DEFAULT_TENANT,
     ) -> None:
         self._names: dict[str | None, str] = {}
         self._storage = storage
         self._dispatcher = dispatcher
         self._outbox = outbox_strategy
+        self._tenant_id = tenant_id
 
     def fetch_events(
         self,
@@ -243,24 +241,29 @@ class InMemoryStorageStrategy(StorageStrategy):
             self._storage.read(stream_id),
             slice(start and start - 1, stop and stop - 1),
         )
-        return list(stream)
+        return [r.entry for r in stream if r.tenant_id == self._tenant_id]
 
     def insert_events(
         self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
     ) -> None:
         position = self.current_position or 0
         self._ensure_stream(stream_id=stream_id, versioning=versioning)
-        self._storage.append(events)
         records = [
-            RecordedRaw(entry=raw, position=position)
+            RecordedRaw(entry=raw, position=position, tenant_id=self._tenant_id)
             for position, raw in enumerate(events, start=position + 1)
         ]
+        self._storage.append(records)
         if self._outbox:
             self._outbox.put_into_outbox(records)
         self._dispatcher.dispatch(*records)
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
-        self._storage.replace(with_snapshot=snapshot)
+        record = RecordedRaw(
+            entry=snapshot,
+            position=(self.current_position or 0) + 1,
+            tenant_id=self._tenant_id,
+        )
+        self._storage.replace(with_snapshot=record)
 
     def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         if stream_id not in self._storage:
@@ -288,6 +291,14 @@ class InMemoryStorageStrategy(StorageStrategy):
     def current_position(self) -> Position | None:
         current_position = self._storage.current_position
         return current_position and Position(current_position)
+
+    def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
+        return type(self)(
+            storage=self._storage,
+            dispatcher=self._dispatcher,
+            outbox_strategy=self._outbox,
+            tenant_id=tenant_id,
+        )
 
 
 class Config(BaseModel):

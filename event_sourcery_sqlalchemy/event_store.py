@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import cast
 
 from more_itertools import first_true
@@ -7,6 +7,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
+from typing_extensions import Self
 
 from event_sourcery.event_store import (
     NO_VERSIONING,
@@ -22,6 +23,7 @@ from event_sourcery.event_store.exceptions import (
     ConcurrentStreamWriteError,
 )
 from event_sourcery.event_store.interfaces import StorageStrategy
+from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
 from event_sourcery_sqlalchemy.models import Event as EventModel
 from event_sourcery_sqlalchemy.models import Snapshot as SnapshotModel
 from event_sourcery_sqlalchemy.models import Stream as StreamModel
@@ -33,6 +35,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
     _session: Session
     _dispatcher: Dispatcher
     _outbox: SqlAlchemyOutboxStorageStrategy | None = None
+    _tenant_id: TenantId = DEFAULT_TENANT
 
     def fetch_events(
         self,
@@ -42,7 +45,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
     ) -> list[RawEvent]:
         events_stmt = (
             select(EventModel)
-            .filter_by(stream_id=stream_id)
+            .filter_by(stream_id=stream_id, tenant_id=self._tenant_id)
             .order_by(EventModel.version)
         )
 
@@ -57,7 +60,10 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             snapshot_stmt = (
                 select(SnapshotModel)
                 .join(StreamModel)
-                .filter(StreamModel.stream_id == stream_id)
+                .filter(
+                    StreamModel.stream_id == stream_id,
+                    StreamModel.tenant_id == self._tenant_id,
+                )
                 .order_by(SnapshotModel.created_at.desc())
                 .limit(1)
             )
@@ -97,13 +103,16 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
     def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         initial_version = versioning.initial_version
 
-        condition = (StreamModel.uuid == stream_id) & (
-            StreamModel.category == (stream_id.category or "")
+        condition = (
+            (StreamModel.uuid == stream_id)
+            & (StreamModel.category == (stream_id.category or ""))
+            & (StreamModel.tenant_id == self._tenant_id)
         )
         if stream_id.name:
             condition = condition | (
                 (StreamModel.name == stream_id.name)
                 & (StreamModel.category == (stream_id.category or ""))
+                & (StreamModel.tenant_id == self._tenant_id)
             )
         matching_streams_stmt = select(StreamModel).where(condition)
         matching_streams = self._session.execute(matching_streams_stmt).scalars().all()
@@ -115,6 +124,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                     name=stream_id.name,
                     category=stream_id.category or "",
                     version=initial_version,
+                    tenant_id=self._tenant_id,
                 )
                 .on_conflict_do_nothing()
             )
@@ -163,12 +173,14 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
     ) -> None:
         self._ensure_stream(stream_id=stream_id, versioning=versioning)
+
         stream = cast(
             StreamModel,
             first_true(
                 self._session.info["strong_set"],
                 pred=lambda model: isinstance(model, StreamModel)
-                and model.stream_id == stream_id,
+                and model.stream_id == stream_id
+                and model.tenant_id == self._tenant_id,
             ),
         )
 
@@ -186,7 +198,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         stream.events.extend(entries)
         self._session.flush()
         records = [
-            RecordedRaw(entry=raw, position=db.id)
+            RecordedRaw(entry=raw, position=db.id, tenant_id=db.tenant_id)
             for raw, db in zip(events, entries, strict=False)
         ]
         if self._outbox:
@@ -226,3 +238,6 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         stmt = select(func.max(EventModel.id))
         last_event = self._session.scalar(stmt)
         return last_event or Position(0)
+
+    def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
+        return replace(self, _tenant_id=tenant_id)

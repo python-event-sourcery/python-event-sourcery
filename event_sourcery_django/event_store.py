@@ -1,8 +1,9 @@
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import cast
 
 from more_itertools import first, first_true
+from typing_extensions import Self
 
 from event_sourcery.event_store import (
     NO_VERSIONING,
@@ -11,6 +12,7 @@ from event_sourcery.event_store import (
     RawEvent,
     RecordedRaw,
     StreamId,
+    TenantId,
     Versioning,
 )
 from event_sourcery.event_store.exceptions import (
@@ -18,6 +20,7 @@ from event_sourcery.event_store.exceptions import (
     ConcurrentStreamWriteError,
 )
 from event_sourcery.event_store.interfaces import StorageStrategy
+from event_sourcery.event_store.tenant_id import DEFAULT_TENANT
 from event_sourcery_django import dto, models
 from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
 
@@ -26,6 +29,7 @@ from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
 class DjangoStorageStrategy(StorageStrategy):
     _dispatcher: Dispatcher
     _outbox: DjangoOutboxStorageStrategy | None = None
+    _tenant_id: TenantId = DEFAULT_TENANT
 
     def fetch_events(
         self,
@@ -34,7 +38,10 @@ class DjangoStorageStrategy(StorageStrategy):
         stop: int | None = None,
     ) -> list[RawEvent]:
         try:
-            stream = models.Stream.objects.by_stream_id(stream_id=stream_id).get()
+            stream = models.Stream.objects.by_stream_id(
+                stream_id=stream_id,
+                tenant_id=self._tenant_id,
+            ).get()
         except models.Stream.DoesNotExist:
             return []
 
@@ -74,11 +81,14 @@ class DjangoStorageStrategy(StorageStrategy):
     ) -> None:
         self._ensure_stream(stream_id=stream_id, versioning=versioning)
         event = cast(RawEvent, first(events))
-        stream = models.Stream.objects.by_stream_id(stream_id=event.stream_id).get()
+        stream = models.Stream.objects.by_stream_id(
+            stream_id=event.stream_id,
+            tenant_id=self._tenant_id,
+        ).get()
         entries = [dto.entry(event, stream) for event in events]
         models.Event.objects.bulk_create(entries)
         records = [
-            RecordedRaw(entry=raw, position=db.id)
+            RecordedRaw(entry=raw, position=db.id, tenant_id=self._tenant_id)
             for raw, db in zip(events, entries, strict=False)
         ]
         if self._outbox:
@@ -88,7 +98,10 @@ class DjangoStorageStrategy(StorageStrategy):
     def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         initial_version = versioning.initial_version
 
-        matching_streams = models.Stream.objects.by_stream_id(stream_id=stream_id).all()
+        matching_streams = models.Stream.objects.by_stream_id(
+            stream_id=stream_id,
+            tenant_id=self._tenant_id,
+        ).all()
         if stream_id.name and matching_streams:
             stream_with_same_name = first_true(
                 matching_streams, pred=lambda stream: stream.name == stream_id.name
@@ -103,6 +116,7 @@ class DjangoStorageStrategy(StorageStrategy):
             uuid=stream_id,
             name=stream_id.name,
             category=stream_id.category or "",
+            tenant_id=self._tenant_id,
             defaults={"version": initial_version},
         )
 
@@ -116,14 +130,22 @@ class DjangoStorageStrategy(StorageStrategy):
                 raise ConcurrentStreamWriteError
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
-        stream = models.Stream.objects.by_stream_id(stream_id=snapshot.stream_id).get()
+        stream = models.Stream.objects.by_stream_id(
+            stream_id=snapshot.stream_id,
+            tenant_id=self._tenant_id,
+        ).get()
         entry = dto.snapshot(from_raw=snapshot, to_stream=stream)
         entry.save()
 
     def delete_stream(self, stream_id: StreamId) -> None:
-        models.Stream.objects.by_stream_id(stream_id=stream_id).delete()
+        models.Stream.objects.by_stream_id(
+            stream_id=stream_id, tenant_id=self._tenant_id
+        ).delete()
 
     @property
     def current_position(self) -> Position | None:
         last_event = models.Event.objects.last()
         return last_event.id if last_event else Position(0)
+
+    def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
+        return replace(self, _tenant_id=tenant_id)

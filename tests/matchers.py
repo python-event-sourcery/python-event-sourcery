@@ -2,7 +2,7 @@ from typing import Any, TypeVar
 from unittest.mock import ANY
 from uuid import UUID
 
-from event_sourcery.event_store import Event, Recorded, StreamId, WrappedEvent
+from event_sourcery.event_store import Event, Recorded, StreamId, TenantId, WrappedEvent
 
 TEvent = TypeVar("TEvent", bound=Event)
 
@@ -22,9 +22,16 @@ def any_wrapped_event(for_event: TEvent) -> WrappedEvent[TEvent]:
     )
 
 
-def any_record(event: WrappedEvent | Event, on_stream: StreamId = ANY) -> Recorded:
+def any_record(
+    event: WrappedEvent | Event,
+    on_stream: StreamId = ANY,
+    for_tenant: TenantId = ANY,
+) -> Recorded:
     if isinstance(event, Event):
         event = any_wrapped_event(event)
     return Recorded.model_construct(
-        wrapped_event=event, stream_id=on_stream, position=ANY
+        wrapped_event=event,
+        stream_id=on_stream,
+        tenant_id=for_tenant,
+        position=ANY,
     )

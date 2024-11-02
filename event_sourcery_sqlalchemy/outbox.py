@@ -36,6 +36,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
             as_dict["created_at"] = created_at.isoformat()
             as_dict["uuid"] = str(as_dict["uuid"])
             as_dict["stream_id"] = str(as_dict["stream_id"])
+            as_dict["tenant_id"] = str(record.tenant_id)
             rows.append(
                 {
                     "created_at": datetime.utcnow(),
@@ -82,7 +83,11 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
             context=entry.data["context"],
         )
         try:
-            yield RecordedRaw(entry=raw, position=entry.position)
+            yield RecordedRaw(
+                entry=raw,
+                position=entry.position,
+                tenant_id=entry.data["tenant_id"],
+            )
         except Exception:
             logger.exception("Failed to publish message #%d", entry.id)
             entry.tries_left -= 1

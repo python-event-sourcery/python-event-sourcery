@@ -50,3 +50,19 @@ def test_subscription_continuously_awaits_for_new_events(
     then(subscription).next_batch_is([any_record(sixth), any_record(seventh)])
     then(subscription).next_batch_is_empty()
     then(subscription).next_batch_is_empty()
+
+
+def test_receives_events_from_all_tenants(given: Given, when: When, then: Then) -> None:
+    subscription = given.batch_subscription(of_size=3)
+
+    when.in_tenant_mode("first").stream().receives(first := an_event())
+    when.in_tenant_mode("second").stream().receives(second := an_event())
+    when.in_tenant_mode("third").stream().receives(third := an_event())
+
+    then(subscription).next_batch_is(
+        [
+            any_record(first, for_tenant="first"),
+            any_record(second, for_tenant="second"),
+            any_record(third, for_tenant="third"),
+        ]
+    )

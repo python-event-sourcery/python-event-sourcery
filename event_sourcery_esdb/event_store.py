@@ -1,18 +1,21 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import cast
 
 from esdbclient import EventStoreDBClient, StreamState
 from esdbclient.exceptions import NotFound
+from typing_extensions import Self
 
 from event_sourcery.event_store import (
     NO_VERSIONING,
     Position,
     RawEvent,
     StreamId,
+    TenantId,
     Versioning,
 )
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.interfaces import StorageStrategy
+from event_sourcery.event_store.tenant_id import DEFAULT_TENANT
 from event_sourcery_esdb import dto, stream
 
 
@@ -20,6 +23,7 @@ from event_sourcery_esdb import dto, stream
 class ESDBStorageStrategy(StorageStrategy):
     _client: EventStoreDBClient
     _timeout: float | None
+    _tenant_id: TenantId = DEFAULT_TENANT
 
     def fetch_events(
         self,
@@ -28,7 +32,7 @@ class ESDBStorageStrategy(StorageStrategy):
         stop: int | None = None,
     ) -> list[RawEvent]:
         snapshot = None
-        name = stream.Name(stream_id)
+        name = stream.Name(self._tenant_id, stream_id)
         if start is None and (snapshot := self._read_snapshot(name)) is not None:
             start = cast(int, snapshot.version) + 1
 
@@ -65,7 +69,7 @@ class ESDBStorageStrategy(StorageStrategy):
     ) -> None:
         for sid in {e.stream_id for e in events}:
             self._ensure_stream(stream_id=sid, versioning=versioning)
-            stream_name = stream.Name(sid)
+            stream_name = stream.Name(self._tenant_id, sid)
             stream_events = [e for e in events if e.stream_id == sid]
             self._append_events(stream_name, events=stream_events)
 
@@ -78,7 +82,7 @@ class ESDBStorageStrategy(StorageStrategy):
         )
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
-        name = stream.Name(snapshot.stream_id)
+        name = stream.Name(self._tenant_id, snapshot.stream_id)
         stream_position = stream.Position.from_version(cast(int, snapshot.version))
         self._client.append_events(
             name.snapshot,
@@ -88,7 +92,7 @@ class ESDBStorageStrategy(StorageStrategy):
         )
 
     def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
-        name = stream.Name(stream_id)
+        name = stream.Name(self._tenant_id, stream_id)
 
         if versioning is not NO_VERSIONING and versioning.expected_version:
             expected = stream.Position.from_version(versioning.expected_version)
@@ -112,7 +116,7 @@ class ESDBStorageStrategy(StorageStrategy):
             return None
 
     def delete_stream(self, stream_id: StreamId) -> None:
-        name = stream.Name(stream_id)
+        name = stream.Name(self._tenant_id, stream_id)
         try:
             self._client.delete_stream(
                 str(name),
@@ -125,3 +129,6 @@ class ESDBStorageStrategy(StorageStrategy):
     @property
     def current_position(self) -> Position | None:
         return Position(self._client.get_commit_position(timeout=self._timeout))
+
+    def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
+        return replace(self, _tenant_id=tenant_id)

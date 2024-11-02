@@ -66,9 +66,7 @@ class ESDBSubscriptionStrategy(SubscriptionStrategy):
             self._client.subscribe_to_all,
             commit_position=start_from,
             timeout=timelimit.total_seconds(),
-            filter_include=[
-                f"{category}-\\w+",
-            ],
+            filter_include=[f"{category}-[^-]*-\\w+"],
             filter_by_stream_name=True,
         )
         return self._iterator(builder, batch_size)

@@ -1,7 +1,8 @@
 import time
 from collections.abc import Generator, Iterator, Sequence
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from copy import copy
+from dataclasses import dataclass, field, replace
 from functools import singledispatchmethod
 from typing import TypeVar, cast
 from unittest.mock import Mock
@@ -11,9 +12,17 @@ from pytest import approx
 from typing_extensions import Self
 
 from event_sourcery import event_store as es
-from event_sourcery.event_store import Event, Position, Recorded, StreamId, WrappedEvent
+from event_sourcery.event_store import (
+    Event,
+    Position,
+    Recorded,
+    StreamId,
+    TenantId,
+    WrappedEvent,
+)
 from event_sourcery.event_store.factory import Backend, TransactionalBackend
 from event_sourcery.event_store.subscription import BuildPhase, PositionPhase
+from event_sourcery.event_store.tenant_id import DEFAULT_TENANT
 from tests.matchers import any_wrapped_event
 
 
@@ -108,12 +117,14 @@ class InTransactionListener:
         self,
         wrapped_event: WrappedEvent,
         stream_id: StreamId,
+        tenant_id: TenantId,
         position: Position | None,
     ) -> None:
         record = Recorded(
             wrapped_event=wrapped_event,
             stream_id=stream_id,
             position=position or 0,
+            tenant_id=tenant_id,
         )
         self._records.append(record)
 
@@ -139,6 +150,14 @@ T = TypeVar("T")
 class Step:
     backend: Backend | TransactionalBackend
     request: SubRequest
+
+    def in_tenant_mode(self, for_tenant: TenantId) -> Self:
+        backend = copy(self.backend)
+        backend.event_store = backend.event_store.scoped_for_tenant(for_tenant)
+        return replace(self, backend=backend)
+
+    def without_tenant(self) -> Self:
+        return self.in_tenant_mode(DEFAULT_TENANT)
 
     @property
     def store(self) -> es.EventStore:

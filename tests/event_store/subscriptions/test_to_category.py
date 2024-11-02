@@ -90,3 +90,17 @@ def test_receiving_in_batches(
     then(subscription).next_batch_is([any_record(first), any_record(second)])
     then(subscription).next_batch_is([any_record(third)])
     then(subscription).next_batch_is_empty()
+
+
+def test_receives_events_from_all_tenants(given: Given, when: When, then: Then) -> None:
+    subscription = given.subscription(to_category="Category")
+
+    when.in_tenant_mode("first").stream(StreamId(category="Category")).receives(
+        first := an_event()
+    )
+    when.in_tenant_mode("second").stream(StreamId(category="Category")).receives(
+        second := an_event()
+    )
+
+    then(subscription).next_received_record_is(any_record(first, for_tenant="first"))
+    then(subscription).next_received_record_is(any_record(second, for_tenant="second"))

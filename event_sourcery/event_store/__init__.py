@@ -23,6 +23,7 @@ __all__ = [
     "factory",
     "interfaces",
     "subscription",
+    "TenantId",
 ]
 
 from event_sourcery.event_store import exceptions, factory, interfaces, subscription
@@ -45,6 +46,7 @@ from event_sourcery.event_store.factory import (
 )
 from event_sourcery.event_store.in_memory import InMemoryBackendFactory
 from event_sourcery.event_store.stream_id import StreamId, StreamUUID
+from event_sourcery.event_store.tenant_id import TenantId
 from event_sourcery.event_store.versioning import (
     NO_VERSIONING,
     ExplicitVersioning,

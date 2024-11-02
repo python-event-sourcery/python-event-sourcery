@@ -48,6 +48,17 @@ def test_returns_all_events_after_last_snapshot(
     )
 
 
+def test_receives_events_from_all_tenants(given: Given, when: When, then: Then) -> None:
+    given.in_tenant_mode("Tenant").stream(stream_id := StreamId())
+    given.in_tenant_mode("Tenant").events(an_event(), an_event(), on=stream_id)
+    when.in_tenant_mode("Tenant").snapshots(snapshot := a_snapshot(), on=stream_id)
+    when.in_tenant_mode("Tenant").appends(after_snapshot := an_event(), to=stream_id)
+    then.in_tenant_mode("Tenant").stream(stream_id).loads_only(
+        [snapshot, after_snapshot]
+    )
+    then.without_tenant().stream(stream_id).is_empty()
+
+
 @pytest.mark.xfail(strict=True, reason="Not implemented yet")
 def test_rejects_snapshot_with_incorrect_version(
     given: Given,
