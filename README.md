@@ -13,7 +13,7 @@ _Under heavy development_
 
 ---
 
-Documentation: [https://python-event-sourcery.github.io/python-event-sourcery/](python-event-sourcery.github.io/python-event-sourcery)
+Documentation: [python-event-sourcery.github.io/python-event-sourcery/](https://python-event-sourcery.github.io/python-event-sourcery/)
 
 ---
 
