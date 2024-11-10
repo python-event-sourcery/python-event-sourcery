@@ -4,6 +4,7 @@ __all__ = [
     "Dispatcher",
     "Entry",
     "Event",
+    "Context",
     "EventRegistry",
     "EventStore",
     "ExplicitVersioning",
@@ -29,6 +30,7 @@ __all__ = [
 from event_sourcery.event_store import exceptions, factory, interfaces, subscription
 from event_sourcery.event_store.dispatcher import Dispatcher, Listener
 from event_sourcery.event_store.event import (
+    Context,
     Entry,
     Event,
     EventRegistry,

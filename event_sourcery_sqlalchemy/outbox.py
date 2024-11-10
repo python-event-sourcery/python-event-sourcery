@@ -2,7 +2,7 @@ import logging
 from collections.abc import Generator, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import cast
 from uuid import UUID
 
@@ -39,7 +39,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
             as_dict["tenant_id"] = str(record.tenant_id)
             rows.append(
                 {
-                    "created_at": datetime.utcnow(),
+                    "created_at": datetime.now(timezone.utc).replace(tzinfo=None),
                     "data": as_dict,
                     "stream_name": record.entry.stream_id.name,
                     "position": record.position,

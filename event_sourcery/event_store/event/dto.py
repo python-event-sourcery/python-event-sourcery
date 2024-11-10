@@ -1,9 +1,9 @@
 import dataclasses
 from datetime import datetime, timezone
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
+from typing import Any, ClassVar, TypeAlias, TypeVar
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from event_sourcery.event_store.event.registry import EventRegistry
 from event_sourcery.event_store.stream_id import StreamId
@@ -53,7 +53,8 @@ class Context(BaseModel, extra="allow"):
     causation_id: UUID | None = None
 
 
-class WrappedEvent(BaseModel, Generic[TEvent], extra="forbid"):
+@dataclasses.dataclass()
+class WrappedEvent[TEvent]:
     """Wrapper for events with all relevant metadata.
 
     Returned from EventStore when loading events from a stream.
@@ -70,11 +71,11 @@ class WrappedEvent(BaseModel, Generic[TEvent], extra="forbid"):
 
     event: TEvent
     version: int | None
-    uuid: UUID = Field(default_factory=uuid4)
-    created_at: datetime = Field(
+    uuid: UUID = dataclasses.field(default_factory=uuid4)
+    created_at: datetime = dataclasses.field(
         default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
     )
-    context: Context = Field(default_factory=Context)
+    context: Context = dataclasses.field(default_factory=Context)
 
     @classmethod
     def wrap(cls, event: TEvent, version: int | None) -> "WrappedEvent[TEvent]":
