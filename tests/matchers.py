@@ -29,7 +29,7 @@ def any_record(
 ) -> Recorded:
     if isinstance(event, Event):
         event = any_wrapped_event(event)
-    return Recorded.model_construct(
+    return Recorded(
         wrapped_event=event,
         stream_id=on_stream,
         tenant_id=for_tenant,

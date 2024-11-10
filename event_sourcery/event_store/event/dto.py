@@ -1,4 +1,5 @@
-from datetime import datetime
+import dataclasses
+from datetime import datetime, timezone
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 from uuid import UUID, uuid4
 
@@ -70,7 +71,9 @@ class WrappedEvent(BaseModel, Generic[TEvent], extra="forbid"):
     event: TEvent
     version: int | None
     uuid: UUID = Field(default_factory=uuid4)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
     context: Context = Field(default_factory=Context)
 
     @classmethod
@@ -78,11 +81,13 @@ class WrappedEvent(BaseModel, Generic[TEvent], extra="forbid"):
         return WrappedEvent[TEvent](event=event, version=version)
 
 
-class Entry(BaseModel):
+@dataclasses.dataclass(frozen=True)
+class Entry:
     wrapped_event: WrappedEvent
     stream_id: StreamId
 
 
+@dataclasses.dataclass(frozen=True)
 class Recorded(Entry):
     position: Position
     tenant_id: TenantId = DEFAULT_TENANT
