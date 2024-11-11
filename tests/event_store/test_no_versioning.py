@@ -1,15 +1,12 @@
 import pytest
 
-from event_sourcery.event_store import NO_VERSIONING, Event, StreamId
+from event_sourcery.event_store import NO_VERSIONING, StreamId
 from event_sourcery.event_store.exceptions import (
     ExpectedVersionUsedOnVersionlessStream,
     NoExpectedVersionGivenOnVersionedStream,
 )
 from tests.bdd import Given, Then, When
-
-
-class AnEvent(Event):
-    pass
+from tests.factories import AnEvent
 
 
 def test_versionless_stream_is_supported(given: Given, when: When, then: Then) -> None:
