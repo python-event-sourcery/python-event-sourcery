@@ -1,3 +1,4 @@
+import dataclasses
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
@@ -19,7 +20,7 @@ class Serde:
     registry: EventRegistry
 
     def deserialize(self, event: RawEvent) -> WrappedEvent:
-        event_as_dict = dict(event)
+        event_as_dict = dataclasses.asdict(event)
         del event_as_dict["stream_id"]
         del event_as_dict["name"]
         data = cast(Mapping, event_as_dict.pop("data"))

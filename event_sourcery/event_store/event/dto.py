@@ -10,19 +10,21 @@ from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
 
 
+@dataclasses.dataclass(frozen=True)
 class RawEvent(BaseModel):
     uuid: UUID
     stream_id: StreamId
     created_at: datetime
-    version: int | None = None
     name: str
     data: dict
     context: dict
+    version: int | None = None
 
 
 Position: TypeAlias = int
 
 
+@dataclasses.dataclass(frozen=True)
 class RecordedRaw(BaseModel):
     entry: RawEvent
     position: Position
