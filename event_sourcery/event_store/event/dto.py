@@ -1,6 +1,6 @@
 import dataclasses
 from datetime import datetime, timezone
-from typing import Any, ClassVar, TypeAlias, TypeVar
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel
@@ -56,7 +56,7 @@ class Context(BaseModel, extra="allow"):
 
 
 @dataclasses.dataclass()
-class WrappedEvent[TEvent]:
+class WrappedEvent(Generic[TEvent]):
     """Wrapper for events with all relevant metadata.
 
     Returned from EventStore when loading events from a stream.

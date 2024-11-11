@@ -33,7 +33,7 @@ def test_can_work_with_custom_events_with_custom_registry(
 
     stream_id = StreamId(uuid4())
     event_store.append(
-        WrappedEvent[SomeDummyEvent](event=SomeDummyEvent(), version=1),
+        WrappedEvent[SomeDummyEvent](event=SomeDummyEvent(), version=1),  # type: ignore
         stream_id=stream_id,
     )
 
