@@ -2,13 +2,10 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from event_sourcery.event_store import Event, StreamId
+from event_sourcery.event_store import StreamId
 from tests.bdd import Given, Then, When
+from tests.factories import AnEvent
 from tests.matchers import any_wrapped_event
-
-
-class AnEvent(Event):
-    pass
 
 
 @pytest.mark.parametrize(

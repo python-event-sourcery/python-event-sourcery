@@ -1,3 +1,4 @@
+import dataclasses
 from typing import Any, TypeVar
 from unittest.mock import ANY
 from uuid import UUID
@@ -13,7 +14,7 @@ class AnyUUID:
 
 
 def any_wrapped_event(for_event: TEvent) -> WrappedEvent[TEvent]:
-    return WrappedEvent[TEvent].model_construct(
+    return WrappedEvent[TEvent](
         event=for_event,
         version=ANY,
         uuid=ANY,
@@ -29,7 +30,10 @@ def any_record(
 ) -> Recorded:
     if isinstance(event, Event):
         event = any_wrapped_event(event)
-    return Recorded.model_construct(
+    elif event.version is None:
+        event = dataclasses.replace(event, version=ANY)
+
+    return Recorded(
         wrapped_event=event,
         stream_id=on_stream,
         tenant_id=for_tenant,

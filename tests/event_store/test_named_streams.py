@@ -3,16 +3,13 @@ from uuid import uuid4
 import pytest
 from _pytest.fixtures import SubRequest
 
-from event_sourcery.event_store import BackendFactory, Event, StreamId
+from event_sourcery.event_store import BackendFactory, StreamId
 from event_sourcery.event_store.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     IllegalCategoryName,
 )
 from tests.bdd import Given, Then, When
-
-
-class AnEvent(Event):
-    pass
+from tests.factories import AnEvent
 
 
 def test_can_append_then_load_with_named_stream(given: Given, then: Then) -> None:

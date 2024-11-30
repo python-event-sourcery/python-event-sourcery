@@ -4,7 +4,7 @@ SRC_DIRS ?= ${wildcard event_sourcery*}
 lint:
 	ruff format $(SRC_DIRS) tests/
 	ruff check $(SRC_DIRS) tests/ --fix
-	mypy $(SRC_DIRS) tests/
+	mypy --enable-incomplete-feature=NewGenericSyntax $(SRC_DIRS) tests/
 
 .PHONY: test
 test:

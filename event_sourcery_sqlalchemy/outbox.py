@@ -1,8 +1,9 @@
+import dataclasses
 import logging
 from collections.abc import Generator, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import cast
 from uuid import UUID
 
@@ -31,15 +32,17 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
             if not self._filterer(record.entry):
                 continue
 
-            as_dict = dict(record.entry)
+            stream_id = record.entry.stream_id
+            as_dict = dataclasses.asdict(record.entry)
+            as_dict.pop("stream_id")
             created_at = cast(datetime, as_dict["created_at"])
             as_dict["created_at"] = created_at.isoformat()
             as_dict["uuid"] = str(as_dict["uuid"])
-            as_dict["stream_id"] = str(as_dict["stream_id"])
+            as_dict["stream_id"] = str(stream_id)
             as_dict["tenant_id"] = str(record.tenant_id)
             rows.append(
                 {
-                    "created_at": datetime.utcnow(),
+                    "created_at": datetime.now(timezone.utc).replace(tzinfo=None),
                     "data": as_dict,
                     "stream_name": record.entry.stream_id.name,
                     "position": record.position,

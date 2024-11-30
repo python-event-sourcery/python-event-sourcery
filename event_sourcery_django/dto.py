@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from event_sourcery.event_store import RawEvent, RecordedRaw, StreamId
@@ -47,7 +47,7 @@ def snapshot(from_raw: RawEvent, to_stream: Stream) -> Snapshot:
 
 def outbox_entry(from_raw: RecordedRaw, max_attempts: int) -> OutboxEntry:
     return OutboxEntry(
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
         data={
             "created_at": from_raw.entry.created_at.isoformat(),
             "uuid": str(from_raw.entry.uuid),

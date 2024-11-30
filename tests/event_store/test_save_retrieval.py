@@ -1,7 +1,7 @@
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
-from event_sourcery.event_store import EventStore, StreamId, WrappedEvent
+from event_sourcery.event_store import Context, EventStore, StreamId, WrappedEvent
 from tests.bdd import Given, Then, When
 from tests.factories import NastyEventWithJsonUnfriendlyTypes, an_event
 from tests.matchers import any_wrapped_event
@@ -44,9 +44,10 @@ def test_stores_retrieves_extra_contextual_metadata(
     given: Given, when: When, then: Then
 ) -> None:
     extra_metadata = {"correlation_id": uuid4().hex, "ip": "127.0.0.1"}
+    context = Context(extra_metadata=extra_metadata)  # type: ignore[call-arg]
     given.stream(stream_id := StreamId())
     when.appends(
-        event := an_event(context={"extra_metadata": extra_metadata}),
+        event := an_event(context=context),
         to=stream_id,
     )
     then.stream(stream_id).loads_only([event])
@@ -63,7 +64,7 @@ def test_is_able_to_handle_non_trivial_formats(
             NastyEventWithJsonUnfriendlyTypes(
                 uuid=uuid4(),
                 a_datetime=datetime.now(tz=timezone.utc),
-                second_datetime=datetime.utcnow(),
+                second_datetime=datetime.now(tz=timezone.utc).replace(tzinfo=None),
                 a_date=date.today(),
             ),
             version=1,
