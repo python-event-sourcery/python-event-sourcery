@@ -7,13 +7,16 @@ repo_url: https://github.com/python-event-sourcery/python-event-sourcery/
 repo_name: python-event-sourcery/python-event-sourcery
 nav:
     - 'Event Sourcery': 'index.md'
-    - 'Basics': 'basics.md'
-    - 'Features': 'features.md'
-    - 'Tutorial - Event-Driven Architecture':
-        - 'Event-Driven Architecture - Intro': 'tutorial_eda/index.md'
-    - 'Tutorial - Event Sourcing':
-        - 'Event Sourcing - Intro': 'tutorial_event_sourcing/index.md'
-    - 'API Reference':
+    - '<b>Concepts</b>':
+        - 'Basics': 'concepts/basics.md'
+    - '<b>Recipes</b>':
+        - '🔗 Integrate with your app': 'recipes/integrate.md'
+        - '📝 Save and read events': 'recipes/saving_events.md'
+        - '🗞️ React to events - subscriptions': 'recipes/subscriptions.md'
+        - '📤 Publish events - outbox': 'recipes/outbox.md'
+        - '🎛️ Event Sourcing': 'recipes/event_sourcing.md'
+        - '👫️ Multitenancy': 'recipes/multitenancy.md'
+    - '<b>API Reference</b>':
         - 'Event Store': 'reference/event_store.md'
         - 'StreamId': 'reference/stream_id.md'
         - 'Event': 'reference/event.md'
@@ -33,7 +36,9 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets:
+      check_paths: true
   - pymdownx.superfences
   - tables
-
