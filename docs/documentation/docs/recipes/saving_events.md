@@ -1,0 +1,1 @@
+Once you have [EventStore](/reference/event_store/) instance after [integrating with your application](/recipes/integrate/), 
