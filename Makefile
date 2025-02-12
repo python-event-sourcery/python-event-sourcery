@@ -14,3 +14,7 @@ test:
 docs-serve:
 	mkdocs serve -f docs/documentation/mkdocs.yml
 
+.PHONY: lint-fix-docs
+lint-fix-docs:
+	ruff format docs/documentation/code tests/
+	ruff check docs/documentation/code --fix
