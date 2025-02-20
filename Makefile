@@ -18,3 +18,4 @@ docs-serve:
 lint-fix-docs:
 	poetry run ruff format docs/documentation/code tests/
 	poetry run ruff check docs/documentation/code --fix
+

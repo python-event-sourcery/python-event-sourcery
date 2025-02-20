@@ -6,4 +6,4 @@ docs/documentation/code/recipes/defining_events/example_event.py
 --8<--
 ```
 
-[Event](/reference/event/) is a pydantic model and so will be every event you define.
+[Event](/reference/event/) is a [pydantic model](https://docs.pydantic.dev/latest/api/base_model/) and so will be every event you define.
