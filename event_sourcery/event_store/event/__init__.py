@@ -3,12 +3,12 @@ __all__ = [
     "Entry",
     "Event",
     "EventRegistry",
-    "WrappedEvent",
     "Position",
     "RawEvent",
     "Recorded",
     "RecordedRaw",
     "Serde",
+    "WrappedEvent",
 ]
 
 

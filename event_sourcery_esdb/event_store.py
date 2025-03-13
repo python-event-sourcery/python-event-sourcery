@@ -74,11 +74,14 @@ class ESDBStorageStrategy(StorageStrategy):
             self._append_events(stream_name, events=stream_events)
 
     def _append_events(self, name: stream.Name, events: list[RawEvent]) -> int:
-        return self._client.append_events(
-            str(name),
-            current_version=StreamState.ANY,
-            events=(dto.new_entry(e) for e in events),
-            timeout=self._timeout,
+        return cast(
+            int,
+            self._client.append_events(
+                str(name),
+                current_version=StreamState.ANY,
+                events=(dto.new_entry(e) for e in events),
+                timeout=self._timeout,
+            ),
         )
 
     def save_snapshot(self, snapshot: RawEvent) -> None:

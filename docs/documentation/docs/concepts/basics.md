@@ -21,7 +21,7 @@ When an event occurs it cannot be denied anymore. It can be only reacted to. Let
 
 In an application that uses events explicitly, they will somehow be represented in the source code. They can be coded as simple data structures:
 ```python
-@dataclass
+@dataclass(frozen=True)
 class SprintStarted:
     when_started: datetime
     when_ends: datetime
