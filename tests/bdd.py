@@ -240,9 +240,9 @@ class Given(Step):
         start = time.monotonic()
         yield
         took = time.monotonic() - start
-        assert took == approx(
-            seconds, 0.15
-        ), f"Expected timing {seconds:.02f}s, got {took:.02f}s"
+        assert took == approx(seconds, 0.15), (
+            f"Expected timing {seconds:.02f}s, got {took:.02f}s"
+        )
 
 
 class When(Step):

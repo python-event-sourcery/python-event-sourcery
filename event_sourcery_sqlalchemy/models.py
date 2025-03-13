@@ -45,7 +45,7 @@ class StreamIdComparator(Comparator[StreamId]):
     ) -> None:
         super().__init__(Composite(uuid, name, category))
 
-    def __eq__(self, other: Any) -> ColumnElement[bool]:  # type: ignore[override]
+    def __eq__(self, other: Any) -> ColumnElement[bool]:
         uuid, name, category = cast(Composite, self.__clause_element__()).attrs
         same_uuid = cast(ColumnElement[bool], uuid == other)
         same_name = cast(

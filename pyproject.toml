@@ -20,6 +20,7 @@ more-itertools = "*"
 SQLAlchemy = {version = ">=2.0", optional = true}
 esdbclient = {version = ">=1.0b3", optional = true}
 django = {version = ">=4,<6", optional = true}
+psycopg2-binary = ">2,<3"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "*"
