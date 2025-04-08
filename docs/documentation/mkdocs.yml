@@ -23,6 +23,7 @@ nav:
         - 'StreamId': 'reference/stream_id.md'
         - 'Event': 'reference/event.md'
         - 'WrappedEvent': 'reference/wrapped_event.md'
+        - 'Recorded': 'reference/recorded.md'
         - 'BackendFactory': 'reference/backend_factory.md'
         - 'EventRegistry': 'reference/event_registry.md'
         - 'InMemoryBackendFactory': 'reference/in_memory_backend_factory.md'
@@ -42,5 +43,6 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.snippets:
       check_paths: true
+      dedent_subsections: true
   - pymdownx.superfences
   - tables

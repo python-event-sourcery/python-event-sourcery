@@ -1,0 +1,161 @@
+import typing
+from datetime import datetime
+
+import pytest
+import time_machine
+
+from event_sourcery.event_store import StreamId
+
+if typing.TYPE_CHECKING:
+    from event_sourcery.event_store import Event
+
+
+@pytest.fixture(scope="session", autouse=True)
+def event_cls() -> type["Event"]:
+    # --8<-- [start:defining_events_01]
+    from event_sourcery.event_store import Event
+
+    class InvoicePaid(Event):
+        invoice_number: str
+
+    # --8<-- [end:defining_events_01]
+    return InvoicePaid
+
+
+@pytest.fixture(scope="session", autouse=True)
+def base_with_configured_es_models():
+    from sqlalchemy.orm import declarative_base
+
+    Base = declarative_base()
+    # --8<-- [start:integrate_sql_00]
+    from event_sourcery_sqlalchemy import configure_models
+
+    configure_models(Base)  # Base is your declarative base class
+    # --8<-- [end:integrate_sql_00]
+    return Base
+
+
+def test_sqlalchemy_backend(base_with_configured_es_models):
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    engine = create_engine("sqlite:///:memory:")
+    Session = sessionmaker(bind=engine)
+    Base = base_with_configured_es_models
+    Base.metadata.create_all(engine)
+    # --8<-- [start:integrate_sql_01]
+    from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
+
+    session = Session()  # SQLAlchemy session
+    factory = SQLAlchemyBackendFactory(session)
+    backend = factory.build()
+    # --8<-- [end:integrate_sql_01]
+    # --8<-- [start:integrate_sql_02]
+    backend.event_store
+    # --8<-- [end:integrate_sql_02]
+    assert backend.event_store.position == 0
+
+
+def test_eventstore_db():
+    pass
+    # from esdbclient import EventStoreDBClient
+    # from event_sourcery_esdb import ESDBBackendFactory
+    #
+    # client = EventStoreDBClient(uri="esdb://localhost:2113?Tls=false")
+    # factory = ESDBBackendFactory(client)
+    # backend = factory.build()
+
+
+@time_machine.travel(datetime(2025, 3, 16, 10, 3, 2, 138667), tick=False)
+def test_saving(event_cls: type["Event"], base_with_configured_es_models):
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
+
+    engine = create_engine("sqlite:///:memory:")
+    Session = sessionmaker(bind=engine)
+    Base = base_with_configured_es_models
+
+    Base.metadata.create_all(engine)
+    factory = SQLAlchemyBackendFactory(Session())
+    event_store = factory.build().event_store
+    InvoicePaid = event_cls
+
+    # --8<-- [start:saving_events_01]
+    invoice_paid = InvoicePaid(invoice_number="1003")
+    stream_id = StreamId(name="invoices/1003")
+    event_store.append(invoice_paid, stream_id=stream_id)
+    # --8<-- [end:saving_events_01]
+    # --8<-- [start:saving_events_02]
+    events = event_store.load_stream(stream_id)
+    # [
+    #   WrappedEvent(
+    #       event=InvoicePaid(invoice_number='1003'),
+    #       version=1,
+    #       uuid=UUID('831cd32b-02b9-48d2-a67c-28cf7dbb37fa'),
+    #       created_at=datetime.datetime(2025, 3, 16, 10, 3, 2, 138667),
+    #       context=Context(correlation_id=None, causation_id=None)
+    #   )
+    # ]
+    # --8<-- [end:saving_events_02]
+    # TODO
+    # assert repr(events) == "[WrappedEvent(event=InvoicePaid(invoice_number='1003'), version=1, uuid=UUID('831cd32b-02b9-48d2-a67c-28cf7dbb37fa'), created_at=datetime.datetime(2025, 3, 16, 10, 3, 2, 138667), context=Context(correlation_id=None, causation_id=None))]"
+    assert len(events) == 1
+
+
+def test_subscribing(event_cls: type["Event"], base_with_configured_es_models):
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
+
+    engine = create_engine("sqlite:///:memory:")
+    Session = sessionmaker(bind=engine)
+    Base = base_with_configured_es_models
+
+    Base.metadata.create_all(engine)
+    factory = SQLAlchemyBackendFactory(Session())
+    backend = factory.build()
+    InvoicePaid = event_cls
+
+    invoice_paid = InvoicePaid(invoice_number="1004")
+    stream_id = StreamId(name="invoices/1004")
+    backend.event_store.append(invoice_paid, stream_id=stream_id)
+    # --8<-- [start:subscriptions_01]
+    subscription = (
+        backend.subscriber.start_from(0)  # read from position 0...
+        .to_events([InvoicePaid])  # ...InvoicePaid events...
+        .build_iter(timelimit=1)  # ... iterate events one by one...
+        # ...and wait up to 1 second for a new event
+    )
+    # --8<-- [end:subscriptions_01]
+    # --8<-- [start:subscriptions_02]
+    for recorded_event in subscription:
+        if recorded_event is None:  # no more events for now
+            break
+
+        # process the event
+        print(recorded_event.wrapped_event)
+        print(recorded_event.position)
+        print(recorded_event.tenant_id)
+    # --8<-- [end:subscriptions_02]
+    # --8<-- [start:subscriptions_03]
+    batch_subscription = (
+        backend.subscriber.start_from(0)
+        .to_events([InvoicePaid])
+        .build_batch(size=10, timelimit=1)  # try getting 10 events at a time
+    )
+    # --8<-- [end:subscriptions_03]
+    # --8<-- [start:subscriptions_04]
+    for batch in batch_subscription:
+        # process the batch
+        print(batch)
+        if len(batch) == 0:  # no more events at the moment
+            break
+    # --8<-- [end:subscriptions_04]
+    assert True
+
+
+if __name__ == "__main__":
+    pytest.main()

@@ -9,6 +9,7 @@ authors = ["Your Name <you@example.com>"]
 license = "MIT"
 packages = [
     { include = "event_sourcery" },
+    { include = "event_sourcery_django" },
     { include = "event_sourcery_esdb" },
     { include = "event_sourcery_sqlalchemy" },
 ]
@@ -32,6 +33,7 @@ mkdocs-material = "^8.3.9"
 psycopg2-binary = "^2.9.3"
 mkdocstrings = {version = "*", extras = ["python"]}
 pymdown-extensions = "*"
+time-machine = "*"
 
 [tool.poetry.extras]
 sqlalchemy = ["SQLAlchemy"]
@@ -117,6 +119,11 @@ ignore = [
 ]
 "event_sourcery_django/models.py" = [
     "RUF012",  # Mutable class attributes should be annotated with typing.ClassVar
+]
+"docs/documentation/code/*" = [
+   "S101",  # Use of assert detected
+   "N806",  # Variables in function should be lowercase
+   "B018",  # Useless expressions
 ]
 
 [tool.ruff.lint.pylint]
