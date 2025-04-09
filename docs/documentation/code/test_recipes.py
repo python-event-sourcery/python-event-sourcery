@@ -238,5 +238,63 @@ def test_outbox(
     # --8<-- [end:outbox_04]
 
 
+def test_event_sourcing(base_with_configured_es_models) -> None:
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
+
+    engine = create_engine("sqlite:///:memory:")
+    Session = sessionmaker(bind=engine)
+    Base = base_with_configured_es_models
+
+    Base.metadata.create_all(engine)
+    factory = SQLAlchemyBackendFactory(Session())
+    backend = factory.build()
+
+    # --8<-- [start:event_sourcing_01]
+    from event_sourcery.aggregate import Aggregate, Repository
+    from event_sourcery.event_store import Event
+
+    class SwitchedOn(Event):
+        pass
+
+    class LightSwitch(Aggregate):
+        category = "light_switch"  # 1
+
+        def __init__(self) -> None:  # 2
+            self._switched_on = False
+
+        def __apply__(self, event: Event) -> None:  # 3
+            match event:
+                case SwitchedOn():
+                    self._switched_on = True
+                case _:
+                    raise NotImplementedError(f"Unexpected event {type(event)}")
+
+        def switch_on(self) -> None:
+            if self._switched_on:
+                return  # no op
+            self._emit(SwitchedOn())
+
+    # --8<-- [end:event_sourcing_01]
+
+    # --8<-- [start:event_sourcing_02_repo]
+    repository = Repository[LightSwitch](backend.event_store)
+    # --8<-- [end:event_sourcing_02_repo]
+
+    # WTF have to pass category manually here for this to work? What is this API
+    # --8<-- [start:event_sourcing_03]
+    stream_id = StreamId(name="light_switch/1", category=LightSwitch.category)
+    with repository.aggregate(stream_id, LightSwitch()) as light_switch:
+        light_switch.switch_on()
+        light_switch.switch_on()
+    # --8<-- [end:event_sourcing_03]
+
+    events = backend.event_store.load_stream(stream_id)
+
+    assert len(events) == 1
+
+
 if __name__ == "__main__":
     pytest.main()
