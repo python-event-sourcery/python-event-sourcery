@@ -25,7 +25,7 @@ With every iteration we're getting an instance of [Recorded](../reference/record
 !!! note
 
     `subscription` is an infinite iterator. Getting `None` means that you are 'up-to-date' with Event Store
-    but as soon as new event is appended, it will be returned in another iteration of the loop.
+    but as soon as a new event is appended, it will be returned in another iteration of the loop.
 
 ## Iterating over events in batches
 
