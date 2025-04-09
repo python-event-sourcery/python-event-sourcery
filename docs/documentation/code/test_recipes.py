@@ -1,10 +1,12 @@
 import typing
+from concurrent.futures import Future
 from datetime import datetime
 
+import pika
 import pytest
 import time_machine
 
-from event_sourcery.event_store import StreamId
+from event_sourcery.event_store import Recorded, StreamId
 
 if typing.TYPE_CHECKING:
     from event_sourcery.event_store import Event
@@ -155,6 +157,85 @@ def test_subscribing(event_cls: type["Event"], base_with_configured_es_models):
             break
     # --8<-- [end:subscriptions_04]
     assert True
+
+
+def test_outbox(
+    event_cls: type["Event"],
+    base_with_configured_es_models,
+    request: pytest.FixtureRequest,
+):
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
+
+    engine = create_engine("sqlite:///:memory:")
+    Session = sessionmaker(bind=engine)
+    Base = base_with_configured_es_models
+
+    Base.metadata.create_all(engine)
+    session = Session()
+    # --8<-- [start:outbox_01]
+    factory = (
+        SQLAlchemyBackendFactory(session).with_outbox()  # enable outbox
+    )
+    backend = factory.build()
+    # --8<-- [end:outbox_01]
+    # --8<-- [start:outbox_01_filterer]
+    factory = SQLAlchemyBackendFactory(session).with_outbox(
+        filterer=lambda e: "InvoicePaid" in e.name
+    )
+    backend = factory.build()
+    # --8<-- [end:outbox_01_filterer]
+    InvoicePaid = event_cls
+
+    invoice_paid = InvoicePaid(invoice_number="an_invoice_number_outbox")
+    stream_id = StreamId(name="invoices/1004")
+    backend.event_store.append(invoice_paid, stream_id=stream_id)
+
+    # --8<-- [start:outbox_02_pika]
+    # setting up connection and queue...
+    connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
+    channel = connection.channel()
+    channel.queue_declare(queue="events")
+    # --8<-- [end:outbox_02_pika]
+
+    request.addfinalizer(lambda: connection.close())
+
+    # --8<-- [start:outbox_02_pika2]
+    def publish(recorded: Recorded) -> None:
+        as_json = recorded.wrapped_event.event.model_dump_json()
+        channel.basic_publish(exchange="", routing_key="events", body=as_json)
+
+    # --8<-- [end:outbox_02_pika2]
+
+    # --8<-- [start:outbox_03]
+    backend.outbox.run(publisher=publish)
+    # --8<-- [end:outbox_03]
+
+    # --8<-- [start:outbox_03a]
+    backend.outbox.run(publisher=publish, limit=50)
+    # --8<-- [end:outbox_03a]
+
+    fut = Future()
+
+    def callback(ch, method, properties, body):
+        print(f"pika callback {locals()}")
+        fut.set_result(body)
+        ch.stop_consuming()  # this causes start_consuming blocking call below to stop
+
+    channel.basic_consume(queue="events", auto_ack=True, on_message_callback=callback)
+    channel.start_consuming()
+
+    result: bytes = fut.result(timeout=2)
+    assert "an_invoice_number_outbox" in result.decode()
+
+    session.rollback()
+    # --8<-- [start:outbox_04]
+    with session.begin():
+        backend.outbox.run(publisher=publish)
+        session.commit()
+    # --8<-- [end:outbox_04]
 
 
 if __name__ == "__main__":
