@@ -39,7 +39,9 @@ Integrating it with your project requires following steps:
     ```
 
 === "Django"
-    In case of Django, you can create an instance of `event_sourcery_django.DjangoBackendFactory` right away and call `.build()`.
+    Your first step will be adding `"event_sourcery_django"` to the list of `INSTALLED_APPS` in your settings.
+
+    Then you can create an instance of `event_sourcery_django.DjangoBackendFactory` right away and call `.build()`.
 
     ```python
     from event_sourcery_django import DjangoBackendFactory
