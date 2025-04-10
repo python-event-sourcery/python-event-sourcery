@@ -392,5 +392,51 @@ def test_snapshots(sqlite_in_memory_backend) -> None:
     assert len(loaded_events) == 1
 
 
+def test_versioning(sqlite_in_memory_backend, event_cls) -> None:
+    event_store = sqlite_in_memory_backend.event_store
+    InvoicePaid = event_cls
+
+    # --8<-- [start:versioning_01]
+    stream_id = StreamId(name="invoices/1111")
+    an_event = InvoicePaid(invoice_number="1111")
+    event_store.append(
+        an_event, stream_id=stream_id
+    )  # no `expected_version` argument given
+    # --8<-- [end:versioning_01]
+
+    # --8<-- [start:versioning_02]
+    another_event = InvoicePaid(invoice_number="1112")
+    # 👇 this would raise an exception
+    # event_store.append(another_event, stream_id=stream_id)
+    # --8<-- [end:versioning_02]
+
+    # --8<-- [start:versioning_03]
+    present_events = event_store.load_stream(stream_id)
+    last_version = present_events[-1].version
+
+    # ... some logic
+
+    another_event = InvoicePaid(invoice_number="1112")
+    event_store.append(
+        another_event, stream_id=stream_id, expected_version=last_version
+    )
+    # --8<-- [end:versioning_03]
+
+    # --8<-- [start:versioning_01]
+    from event_sourcery.event_store import NO_VERSIONING
+
+    # --8<-- [start:versioning_04]
+    stream_id = StreamId(name="invoices/123")
+
+    an_event = InvoicePaid(invoice_number="1111")
+    event_store.append(an_event, stream_id=stream_id, expected_version=NO_VERSIONING)
+
+    another_event = InvoicePaid(invoice_number="1112")
+    event_store.append(
+        another_event, stream_id=stream_id, expected_version=NO_VERSIONING
+    )
+    # --8<-- [end:versioning_04]
+
+
 if __name__ == "__main__":
     pytest.main()
