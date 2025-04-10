@@ -91,6 +91,10 @@ while True:
 
 ## Optional filterer
 
+!!! warning
+
+    This feature and/or its API is provisional and will probably change soon.
+
 Sometimes you want only specific events to be sent. You can pass an optional `filterer` argument to `with_outbox`.
 
 It should be a callable (e.g. a function) that accepts an event instance and returns True if an event should be published. False otherwise.

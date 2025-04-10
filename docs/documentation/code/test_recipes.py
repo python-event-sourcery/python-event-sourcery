@@ -283,15 +283,18 @@ def test_event_sourcing(base_with_configured_es_models) -> None:
     repository = Repository[LightSwitch](backend.event_store)
     # --8<-- [end:event_sourcing_02_repo]
 
-    # WTF have to pass category manually here for this to work? What is this API
     # --8<-- [start:event_sourcing_03]
-    stream_id = StreamId(name="light_switch/1", category=LightSwitch.category)
+    from event_sourcery.event_store import StreamUUID
+
+    stream_id = StreamUUID(name="light_switch/1")
     with repository.aggregate(stream_id, LightSwitch()) as light_switch:
         light_switch.switch_on()
         light_switch.switch_on()
     # --8<-- [end:event_sourcing_03]
 
-    events = backend.event_store.load_stream(stream_id)
+    events = backend.event_store.load_stream(
+        StreamId(name="light_switch/1", category=LightSwitch.category)
+    )
 
     assert len(events) == 1
 
