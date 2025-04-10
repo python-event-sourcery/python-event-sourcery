@@ -96,5 +96,6 @@ class Recorded(Entry):
 
     It contains position of the event in the event store and tenant id.
     """
+
     position: Position
     tenant_id: TenantId = DEFAULT_TENANT

@@ -1,3 +1,5 @@
+## Basic usage
+
 Once you have an [EventStore](../reference/event_store.md) instance after [integrating with your application](integrate.md) and some [events defined](../recipes/defining_events.md), you can persist them:
 
 ```python

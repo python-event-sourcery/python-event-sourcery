@@ -1,4 +1,5 @@
 __all__ = [
+    "DEFAULT_TENANT",
     "NO_VERSIONING",
     "Backend",
     "BackendFactory",
@@ -18,7 +19,6 @@ __all__ = [
     "StreamId",
     "StreamUUID",
     "TenantId",
-    "DEFAULT_TENANT",
     "TransactionalBackend",
     "Versioning",
     "WrappedEvent",
@@ -49,7 +49,7 @@ from event_sourcery.event_store.factory import (
 )
 from event_sourcery.event_store.in_memory import InMemoryBackendFactory
 from event_sourcery.event_store.stream_id import StreamId, StreamUUID
-from event_sourcery.event_store.tenant_id import TenantId, DEFAULT_TENANT
+from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
 from event_sourcery.event_store.versioning import (
     NO_VERSIONING,
     ExplicitVersioning,
