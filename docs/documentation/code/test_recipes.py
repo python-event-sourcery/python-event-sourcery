@@ -6,6 +6,7 @@ import pika
 import pytest
 import time_machine
 
+from event_sourcery.aggregate import Aggregate, Repository
 from event_sourcery.event_store import Recorded, StreamId
 
 if typing.TYPE_CHECKING:
@@ -238,7 +239,8 @@ def test_outbox(
     # --8<-- [end:outbox_04]
 
 
-def test_event_sourcing(base_with_configured_es_models) -> None:
+@pytest.fixture()
+def sqlite_in_memory_backend(base_with_configured_es_models):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
@@ -250,8 +252,11 @@ def test_event_sourcing(base_with_configured_es_models) -> None:
 
     Base.metadata.create_all(engine)
     factory = SQLAlchemyBackendFactory(Session())
-    backend = factory.build()
+    return factory.build()
 
+
+def test_event_sourcing(sqlite_in_memory_backend) -> None:
+    backend = sqlite_in_memory_backend
     # --8<-- [start:event_sourcing_01]
     from event_sourcery.aggregate import Aggregate, Repository
     from event_sourcery.event_store import Event
@@ -297,6 +302,47 @@ def test_event_sourcing(base_with_configured_es_models) -> None:
     )
 
     assert len(events) == 1
+
+
+def test_multitenancy(sqlite_in_memory_backend, event_cls) -> None:
+    event_store = sqlite_in_memory_backend.event_store
+    InvoicePaid = event_cls
+
+    # --8<-- [start:multitenancy_01]
+    scoped_event_store = event_store.scoped_for_tenant("tenant123")
+    # --8<-- [end:multitenancy_01]
+    stream_id = StreamId(name="invoices/1111")
+    event_store.append(InvoicePaid(invoice_number="1111"), stream_id=stream_id)
+    subscription = (
+        sqlite_in_memory_backend.subscriber.start_from(0)
+        .to_events([InvoicePaid])
+        .build_iter(timelimit=1)
+    )
+
+    # --8<-- [start:multitenancy_02]
+    from event_sourcery.event_store import DEFAULT_TENANT
+    # --8<-- [end:multitenancy_02]
+
+    # --8<-- [start:multitenancy_03]
+    for recorded_event in subscription:
+        if recorded_event is None:
+            break
+        elif recorded_event.tenant_id == DEFAULT_TENANT:
+            print(f"Got tenant-less event! {recorded_event}")
+        else:
+            ...
+    # --8<-- [end:multitenancy_03]
+
+    class ExampleAggregate(Aggregate):
+        pass
+
+    # --8<-- [start:multitenancy_04]
+    scoped_event_store = event_store.scoped_for_tenant("tenant123")
+
+    repository = Repository[ExampleAggregate](scoped_event_store)
+    # --8<-- [end:multitenancy_04]
+
+    assert repository is not None
 
 
 if __name__ == "__main__":
