@@ -7,7 +7,7 @@ import pytest
 import time_machine
 
 from event_sourcery.aggregate import Aggregate, Repository
-from event_sourcery.event_store import Recorded, StreamId
+from event_sourcery.event_store import Recorded, StreamId, WrappedEvent
 
 if typing.TYPE_CHECKING:
     from event_sourcery.event_store import Event
@@ -343,6 +343,53 @@ def test_multitenancy(sqlite_in_memory_backend, event_cls) -> None:
     # --8<-- [end:multitenancy_04]
 
     assert repository is not None
+
+
+def test_snapshots(sqlite_in_memory_backend) -> None:
+    event_store = sqlite_in_memory_backend.event_store
+
+    from event_sourcery.event_store import Event
+
+    # --8<-- [start:snapshots_01]
+    class TemperatureChanged(Event):
+        reading_in_celsius: int
+
+    stream_id = StreamId(name="temperature_sensor/1")
+    events = [TemperatureChanged(reading_in_celsius=reading) for reading in range(100)]
+    event_store.append(*events, stream_id=stream_id)
+
+    loaded_events = event_store.load_stream(stream_id)
+    print(len(loaded_events))  # 100
+    # --8<-- [end:snapshots_01]
+
+    assert len(loaded_events) == 100
+
+    # --8<-- [start:snapshots_02]
+    class TemperatureSensorSnapshot(Event):
+        readings_so_far: int
+        last_reading_in_celsius: int
+
+    # --8<-- [end:snapshots_02]
+
+    # --8<-- [start:snapshots_03]
+    last_version = loaded_events[-1].version
+    last_event = loaded_events[-1].event
+
+    snapshot = TemperatureSensorSnapshot(
+        readings_so_far=100, last_reading_in_celsius=last_event.reading_in_celsius
+    )
+    wrapped_snapshot = WrappedEvent.wrap(snapshot, last_version)
+
+    event_store.save_snapshot(stream_id, wrapped_snapshot)
+    # --8<-- [end:snapshots_03]
+
+    # --8<-- [start:snapshots_04]
+    loaded_events = event_store.load_stream(stream_id)
+    print(len(loaded_events))  # 1
+    assert isinstance(loaded_events[-1].event, TemperatureSensorSnapshot)
+    # --8<-- [end:snapshots_04]
+
+    assert len(loaded_events) == 1
 
 
 if __name__ == "__main__":
