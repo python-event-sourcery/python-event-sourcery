@@ -24,6 +24,8 @@ All events within a stream by default have assigned version number. This can be 
 
 You have a choice whether you want to check for versions conflict or not.
 
+### Explicit versioning
+
 There is no need to add an expected version when adding some events to the stream for the first time, i.e. creating the stream:
 
 ```python
@@ -32,9 +34,7 @@ docs/documentation/code/test_recipes.py:versioning_01
 --8<--
 ```
 
-However, when you add events to the stream for the second and subsequent times, you need to pass the expected version explicitly. 
-
-Hence, it is assumed that you will use the events versioning and protection against concurrent writes.
+However, when you add events to the stream for the second and subsequent times, you need to pass the expected version explicitly.
 
 Otherwise, appending will fail with an exception:
 
@@ -43,6 +43,8 @@ Otherwise, appending will fail with an exception:
 docs/documentation/code/test_recipes.py:versioning_02
 --8<--
 ```
+
+Hence, it is assumed that you will use the events versioning and protection against concurrent writes.
 
 !!! info
 
