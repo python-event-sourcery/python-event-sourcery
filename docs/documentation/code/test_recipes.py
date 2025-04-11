@@ -6,7 +6,7 @@ import pika
 import pytest
 import time_machine
 
-from event_sourcery.aggregate import Aggregate, Repository
+from event_sourcery.event_sourcing import Aggregate, Repository
 from event_sourcery.event_store import Recorded, StreamId, WrappedEvent
 
 if typing.TYPE_CHECKING:
@@ -258,7 +258,7 @@ def sqlite_in_memory_backend(base_with_configured_es_models):
 def test_event_sourcing(sqlite_in_memory_backend) -> None:
     backend = sqlite_in_memory_backend
     # --8<-- [start:event_sourcing_01]
-    from event_sourcery.aggregate import Aggregate, Repository
+    from event_sourcery.event_sourcing import Aggregate, Repository
     from event_sourcery.event_store import Event
 
     class SwitchedOn(Event):
