@@ -13,7 +13,7 @@
     
     
       
-        <title>Event - Event Sourcery</title>
+        <title>🗞️ React to events - subscriptions - Event Sourcery</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#event_sourcery.event_store.Event" class="md-skip">
+        <a href="#iterating-over-events-one-by-one" class="md-skip">
           Skip to content
         </a>
       
@@ -101,7 +101,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Event
+              🗞️ React to events - subscriptions
             
           </span>
         </div>
@@ -272,12 +272,14 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
       
       
       
@@ -300,7 +302,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/defining_events/" class="md-nav__link">
+      <a href="../defining_events/" class="md-nav__link">
         🎞️ Defining events
       </a>
     </li>
@@ -314,7 +316,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/integrate/" class="md-nav__link">
+      <a href="../integrate/" class="md-nav__link">
         🔗 Integrate with your app
       </a>
     </li>
@@ -328,7 +330,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/saving_events/" class="md-nav__link">
+      <a href="../saving_events/" class="md-nav__link">
         📝 Save and read events
       </a>
     </li>
@@ -340,11 +342,55 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../../recipes/subscriptions/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          🗞️ React to events - subscriptions
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         🗞️ React to events - subscriptions
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#iterating-over-events-one-by-one" class="md-nav__link">
+    Iterating over events one by one
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iterating-over-events-in-batches" class="md-nav__link">
+    Iterating over events in batches
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -356,7 +402,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/outbox/" class="md-nav__link">
+      <a href="../outbox/" class="md-nav__link">
         📤 Publish events - outbox
       </a>
     </li>
@@ -370,7 +416,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/event_sourcing/" class="md-nav__link">
+      <a href="../event_sourcing/" class="md-nav__link">
         🎛️ Event Sourcing
       </a>
     </li>
@@ -384,7 +430,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/multitenancy/" class="md-nav__link">
+      <a href="../multitenancy/" class="md-nav__link">
         👫️ Multitenancy
       </a>
     </li>
@@ -398,7 +444,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/snapshots/" class="md-nav__link">
+      <a href="../snapshots/" class="md-nav__link">
         📷 Snapshots
       </a>
     </li>
@@ -418,14 +464,12 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
       
       
       
@@ -448,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../event_store/" class="md-nav__link">
+      <a href="../../reference/event_store/" class="md-nav__link">
         Event Store
       </a>
     </li>
@@ -462,7 +506,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stream_id/" class="md-nav__link">
+      <a href="../../reference/stream_id/" class="md-nav__link">
         StreamId
       </a>
     </li>
@@ -474,48 +518,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Event
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../reference/event/" class="md-nav__link">
         Event
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#event_sourcery.event_store.Event" class="md-nav__link">
-    Event
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -527,7 +534,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../wrapped_event/" class="md-nav__link">
+      <a href="../../reference/wrapped_event/" class="md-nav__link">
         WrappedEvent
       </a>
     </li>
@@ -541,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recorded/" class="md-nav__link">
+      <a href="../../reference/recorded/" class="md-nav__link">
         Recorded
       </a>
     </li>
@@ -555,7 +562,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backend_factory/" class="md-nav__link">
+      <a href="../../reference/backend_factory/" class="md-nav__link">
         BackendFactory
       </a>
     </li>
@@ -569,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../event_registry/" class="md-nav__link">
+      <a href="../../reference/event_registry/" class="md-nav__link">
         EventRegistry
       </a>
     </li>
@@ -583,7 +590,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../in_memory_backend_factory/" class="md-nav__link">
+      <a href="../../reference/in_memory_backend_factory/" class="md-nav__link">
         InMemoryBackendFactory
       </a>
     </li>
@@ -597,7 +604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../aggregate/" class="md-nav__link">
+      <a href="../../reference/aggregate/" class="md-nav__link">
         Aggregate
       </a>
     </li>
@@ -611,7 +618,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../repository/" class="md-nav__link">
+      <a href="../../reference/repository/" class="md-nav__link">
         Repository
       </a>
     </li>
@@ -650,8 +657,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#event_sourcery.event_store.Event" class="md-nav__link">
-    Event
+  <a href="#iterating-over-events-one-by-one" class="md-nav__link">
+    Iterating over events one by one
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iterating-over-events-in-batches" class="md-nav__link">
+    Iterating over events in batches
   </a>
   
 </li>
@@ -670,81 +684,61 @@
                 
                   
 
-  <a href="https://github.com/python-event-sourcery/python-event-sourcery/edit/master/docs/reference/event.md" title="Edit this page" class="md-content__button md-icon">
+  <a href="https://github.com/python-event-sourcery/python-event-sourcery/edit/master/docs/recipes/subscriptions.md" title="Edit this page" class="md-content__button md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
   </a>
 
 
-  <h1>Event</h1>
+  <h1>🗞️ React to events - subscriptions</h1>
 
-<div class="doc doc-object doc-class">
-
-
-
-<a id="event_sourcery.event_store.Event"></a>
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
-
-
-        <p>Base class for all events.</p>
-<p>Example usage:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>class OrderCancelled(Event):
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    order_id: OrderId
-</code></pre></div></p>
-
-              <details class="quote">
-                <summary>Source code in <code>event_sourcery/event_store/event/dto.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-34">34</a></span>
-<span class="normal"><a href="#__codelineno-0-35">35</a></span>
-<span class="normal"><a href="#__codelineno-0-36">36</a></span>
-<span class="normal"><a href="#__codelineno-0-37">37</a></span>
-<span class="normal"><a href="#__codelineno-0-38">38</a></span>
-<span class="normal"><a href="#__codelineno-0-39">39</a></span>
-<span class="normal"><a href="#__codelineno-0-40">40</a></span>
-<span class="normal"><a href="#__codelineno-0-41">41</a></span>
-<span class="normal"><a href="#__codelineno-0-42">42</a></span>
-<span class="normal"><a href="#__codelineno-0-43">43</a></span>
-<span class="normal"><a href="#__codelineno-0-44">44</a></span>
-<span class="normal"><a href="#__codelineno-0-45">45</a></span>
-<span class="normal"><a href="#__codelineno-0-46">46</a></span>
-<span class="normal"><a href="#__codelineno-0-47">47</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="s2">&quot;forbid&quot;</span><span class="p">):</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for all events.</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    Example usage:</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">    ```</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">    class OrderCancelled(Event):</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        order_id: OrderId</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">    ```</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="n">__registry__</span><span class="p">:</span> <span class="n">ClassVar</span> <span class="o">=</span> <span class="n">EventRegistry</span><span class="p">()</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">__registry__</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-              </details>
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
+<p>Subscriptions allow for asynchronous processing of events in another process.</p>
+<p>Having <code>backend</code> object after <a href="../integrate/">integrating with your application</a>, grab its <code>.subscriber</code> to start building a subscription.</p>
+<h2 id="iterating-over-events-one-by-one">Iterating over events one by one</h2>
+<p>Let's say we want to know about all paid invoices and we have an event for that - <code>InvoicePaid</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">subscription</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">backend</span><span class="o">.</span><span class="n">subscriber</span><span class="o">.</span><span class="n">start_from</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># read from position 0...</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="o">.</span><span class="n">to_events</span><span class="p">([</span><span class="n">InvoicePaid</span><span class="p">])</span>  <span class="c1"># ...InvoicePaid events...</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="o">.</span><span class="n">build_iter</span><span class="p">(</span><span class="n">timelimit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># ... iterate events one by one...</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="c1"># ...and wait up to 1 second for a new event</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+</code></pre></div>
+<p><code>subscription</code> is an iterable. Thus, it can be used with for loop:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">for</span> <span class="n">recorded_event</span> <span class="ow">in</span> <span class="n">subscription</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="k">if</span> <span class="n">recorded_event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># no more events for now</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>        <span class="k">break</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="c1"># process the event</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">recorded_event</span><span class="o">.</span><span class="n">wrapped_event</span><span class="p">)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">recorded_event</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">recorded_event</span><span class="o">.</span><span class="n">tenant_id</span><span class="p">)</span>
+</code></pre></div>
+<p>With every iteration we're getting an instance of <a href="../../reference/recorded/">Recorded</a> or <code>None</code> if there are no new events available.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>subscription</code> is an infinite iterator. Getting <code>None</code> means that you are 'up-to-date' with Event Store
+but as soon as a new event is appended, it will be returned in another iteration of the loop.</p>
 </div>
+<h2 id="iterating-over-events-in-batches">Iterating over events in batches</h2>
+<p>When we have to process a bigger amount of events it makes sense to do it in batches instead of processing events one by one.</p>
+<p>To do it, we need to slightly alter code responsible for building our <code>subscription</code>. Instead of <code>build_iter</code> we call <code>build_batch</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">batch_subscription</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">backend</span><span class="o">.</span><span class="n">subscriber</span><span class="o">.</span><span class="n">start_from</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="o">.</span><span class="n">to_events</span><span class="p">([</span><span class="n">InvoicePaid</span><span class="p">])</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="o">.</span><span class="n">build_batch</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">timelimit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># try getting 10 events at a time</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">)</span>
+</code></pre></div>
+<p>Then we can pass <code>subscritpion</code> to for loop:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">batch_subscription</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="c1"># process the batch</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># no more events at the moment</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="k">break</span>
+</code></pre></div>
+<p>In this example, batch is a list of <a href="../../reference/recorded/">Recorded</a>.</p>
+<p>Just like in previous case, <code>subscription</code> is an infinite iterator. It will be returning batches of given size as long as there is enough events.</p>
+<p>If there are fewer 'new' events available, batch subscription will return whatever it can. For example, if you specify batch size of 10 but get a list with 7 events, it means there were only 7 new events and time limit has passed.</p>
+<p>When batch subscription catches up with event store, it will be returning empty lists. At least until some new events are saved.</p>
 
 
 
@@ -765,7 +759,7 @@
     <nav class="md-footer__inner md-grid" aria-label="Footer" >
       
         
-        <a href="../stream_id/" class="md-footer__link md-footer__link--prev" aria-label="Previous: StreamId" rel="prev">
+        <a href="../saving_events/" class="md-footer__link md-footer__link--prev" aria-label="Previous: 📝 Save and read events" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
           </div>
@@ -774,20 +768,20 @@
               <span class="md-footer__direction">
                 Previous
               </span>
-              StreamId
+              📝 Save and read events
             </div>
           </div>
         </a>
       
       
         
-        <a href="../wrapped_event/" class="md-footer__link md-footer__link--next" aria-label="Next: WrappedEvent" rel="next">
+        <a href="../outbox/" class="md-footer__link md-footer__link--next" aria-label="Next: 📤 Publish events - outbox" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              WrappedEvent
+              📤 Publish events - outbox
             </div>
           </div>
           <div class="md-footer__button md-icon">

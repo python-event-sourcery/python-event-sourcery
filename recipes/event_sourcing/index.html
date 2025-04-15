@@ -13,7 +13,7 @@
     
     
       
-        <title>Event - Event Sourcery</title>
+        <title>🎛️ Event Sourcing - Event Sourcery</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#event_sourcery.event_store.Event" class="md-skip">
+        <a href="#building-blocks" class="md-skip">
           Skip to content
         </a>
       
@@ -101,7 +101,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Event
+              🎛️ Event Sourcing
             
           </span>
         </div>
@@ -272,12 +272,14 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
       
       
       
@@ -300,7 +302,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/defining_events/" class="md-nav__link">
+      <a href="../defining_events/" class="md-nav__link">
         🎞️ Defining events
       </a>
     </li>
@@ -314,7 +316,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/integrate/" class="md-nav__link">
+      <a href="../integrate/" class="md-nav__link">
         🔗 Integrate with your app
       </a>
     </li>
@@ -328,7 +330,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/saving_events/" class="md-nav__link">
+      <a href="../saving_events/" class="md-nav__link">
         📝 Save and read events
       </a>
     </li>
@@ -342,7 +344,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/subscriptions/" class="md-nav__link">
+      <a href="../subscriptions/" class="md-nav__link">
         🗞️ React to events - subscriptions
       </a>
     </li>
@@ -356,7 +358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/outbox/" class="md-nav__link">
+      <a href="../outbox/" class="md-nav__link">
         📤 Publish events - outbox
       </a>
     </li>
@@ -368,11 +370,55 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../../recipes/event_sourcing/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          🎛️ Event Sourcing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         🎛️ Event Sourcing
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#building-blocks" class="md-nav__link">
+    Building blocks
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -384,7 +430,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/multitenancy/" class="md-nav__link">
+      <a href="../multitenancy/" class="md-nav__link">
         👫️ Multitenancy
       </a>
     </li>
@@ -398,7 +444,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../recipes/snapshots/" class="md-nav__link">
+      <a href="../snapshots/" class="md-nav__link">
         📷 Snapshots
       </a>
     </li>
@@ -418,14 +464,12 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
       
       
       
@@ -448,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../event_store/" class="md-nav__link">
+      <a href="../../reference/event_store/" class="md-nav__link">
         Event Store
       </a>
     </li>
@@ -462,7 +506,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stream_id/" class="md-nav__link">
+      <a href="../../reference/stream_id/" class="md-nav__link">
         StreamId
       </a>
     </li>
@@ -474,48 +518,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Event
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../reference/event/" class="md-nav__link">
         Event
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#event_sourcery.event_store.Event" class="md-nav__link">
-    Event
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -527,7 +534,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../wrapped_event/" class="md-nav__link">
+      <a href="../../reference/wrapped_event/" class="md-nav__link">
         WrappedEvent
       </a>
     </li>
@@ -541,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recorded/" class="md-nav__link">
+      <a href="../../reference/recorded/" class="md-nav__link">
         Recorded
       </a>
     </li>
@@ -555,7 +562,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backend_factory/" class="md-nav__link">
+      <a href="../../reference/backend_factory/" class="md-nav__link">
         BackendFactory
       </a>
     </li>
@@ -569,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../event_registry/" class="md-nav__link">
+      <a href="../../reference/event_registry/" class="md-nav__link">
         EventRegistry
       </a>
     </li>
@@ -583,7 +590,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../in_memory_backend_factory/" class="md-nav__link">
+      <a href="../../reference/in_memory_backend_factory/" class="md-nav__link">
         InMemoryBackendFactory
       </a>
     </li>
@@ -597,7 +604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../aggregate/" class="md-nav__link">
+      <a href="../../reference/aggregate/" class="md-nav__link">
         Aggregate
       </a>
     </li>
@@ -611,7 +618,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../repository/" class="md-nav__link">
+      <a href="../../reference/repository/" class="md-nav__link">
         Repository
       </a>
     </li>
@@ -650,8 +657,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#event_sourcery.event_store.Event" class="md-nav__link">
-    Event
+  <a href="#building-blocks" class="md-nav__link">
+    Building blocks
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
   </a>
   
 </li>
@@ -670,81 +684,60 @@
                 
                   
 
-  <a href="https://github.com/python-event-sourcery/python-event-sourcery/edit/master/docs/reference/event.md" title="Edit this page" class="md-content__button md-icon">
+  <a href="https://github.com/python-event-sourcery/python-event-sourcery/edit/master/docs/recipes/event_sourcing.md" title="Edit this page" class="md-content__button md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
   </a>
 
 
-  <h1>Event</h1>
+  <h1>🎛️ Event Sourcing</h1>
 
-<div class="doc doc-object doc-class">
-
-
-
-<a id="event_sourcery.event_store.Event"></a>
-    <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
-
-
-        <p>Base class for all events.</p>
-<p>Example usage:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>class OrderCancelled(Event):
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    order_id: OrderId
-</code></pre></div></p>
-
-              <details class="quote">
-                <summary>Source code in <code>event_sourcery/event_store/event/dto.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-34">34</a></span>
-<span class="normal"><a href="#__codelineno-0-35">35</a></span>
-<span class="normal"><a href="#__codelineno-0-36">36</a></span>
-<span class="normal"><a href="#__codelineno-0-37">37</a></span>
-<span class="normal"><a href="#__codelineno-0-38">38</a></span>
-<span class="normal"><a href="#__codelineno-0-39">39</a></span>
-<span class="normal"><a href="#__codelineno-0-40">40</a></span>
-<span class="normal"><a href="#__codelineno-0-41">41</a></span>
-<span class="normal"><a href="#__codelineno-0-42">42</a></span>
-<span class="normal"><a href="#__codelineno-0-43">43</a></span>
-<span class="normal"><a href="#__codelineno-0-44">44</a></span>
-<span class="normal"><a href="#__codelineno-0-45">45</a></span>
-<span class="normal"><a href="#__codelineno-0-46">46</a></span>
-<span class="normal"><a href="#__codelineno-0-47">47</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="s2">&quot;forbid&quot;</span><span class="p">):</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for all events.</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    Example usage:</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">    ```</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">    class OrderCancelled(Event):</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        order_id: OrderId</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">    ```</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="n">__registry__</span><span class="p">:</span> <span class="n">ClassVar</span> <span class="o">=</span> <span class="n">EventRegistry</span><span class="p">()</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">__registry__</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-              </details>
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
+<h2 id="building-blocks">Building blocks</h2>
+<p>Event Sourcery provides a few building blocks to work with event sourcing.</p>
+<p>These are <a href="../../reference/aggregate/">Aggregate</a> and <a href="../../reference/repository/">Repository</a> base classes.</p>
+<h2 id="usage">Usage</h2>
+<p>You start from defining your own aggregate inheriting from <a href="../../reference/aggregate/">Aggregate</a>.</p>
+<p>There are three required attributes that need to be defined:</p>
+<ol>
+<li><code>category</code> class-level constant that will be added to all streams from all aggregates of this type</li>
+<li><code>__init__</code> if defined, must not accept any arguments</li>
+<li><code>__apply__</code> method that will change internal state of the aggregate based on the event applied during reading state from the event store </li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">event_sourcery.event_sourcing</span> <span class="kn">import</span> <span class="n">Aggregate</span><span class="p">,</span> <span class="n">Repository</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span> <span class="nn">event_sourcery.event_store</span> <span class="kn">import</span> <span class="n">Event</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">class</span> <span class="nc">SwitchedOn</span><span class="p">(</span><span class="n">Event</span><span class="p">):</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="k">pass</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="k">class</span> <span class="nc">LightSwitch</span><span class="p">(</span><span class="n">Aggregate</span><span class="p">):</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">category</span> <span class="o">=</span> <span class="s2">&quot;light_switch&quot;</span>  <span class="c1"># 1</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># 2</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_switched_on</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="k">def</span> <span class="nf">__apply__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># 3</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        <span class="k">match</span> <span class="n">event</span><span class="p">:</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>            <span class="k">case</span> <span class="n">SwitchedOn</span><span class="p">():</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_switched_on</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected event </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">event</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="k">def</span> <span class="nf">switch_on</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_switched_on</span><span class="p">:</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>            <span class="k">return</span>  <span class="c1"># no op</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_emit</span><span class="p">(</span><span class="n">SwitchedOn</span><span class="p">())</span>
+</code></pre></div>
+<p>To work with aggregate, you need to create repository. You need an instance of <a href="../../reference/event_store/">EventStore</a> to do so:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">repository</span> <span class="o">=</span> <span class="n">Repository</span><span class="p">[</span><span class="n">LightSwitch</span><span class="p">](</span><span class="n">backend</span><span class="o">.</span><span class="n">event_store</span><span class="p">)</span>
+</code></pre></div>
+<p>From now on, regardless if you want to work with a given aggregate for the first time or load existing one, you should use <code>repository.aggregate</code> context manager:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">event_sourcery.event_store</span> <span class="kn">import</span> <span class="n">StreamUUID</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">stream_id</span> <span class="o">=</span> <span class="n">StreamUUID</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;light_switch/1&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">with</span> <span class="n">repository</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">stream_id</span><span class="p">,</span> <span class="n">LightSwitch</span><span class="p">())</span> <span class="k">as</span> <span class="n">light_switch</span><span class="p">:</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">light_switch</span><span class="o">.</span><span class="n">switch_on</span><span class="p">()</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">light_switch</span><span class="o">.</span><span class="n">switch_on</span><span class="p">()</span>
+</code></pre></div>
 
 
 
@@ -765,7 +758,7 @@
     <nav class="md-footer__inner md-grid" aria-label="Footer" >
       
         
-        <a href="../stream_id/" class="md-footer__link md-footer__link--prev" aria-label="Previous: StreamId" rel="prev">
+        <a href="../outbox/" class="md-footer__link md-footer__link--prev" aria-label="Previous: 📤 Publish events - outbox" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
           </div>
@@ -774,20 +767,20 @@
               <span class="md-footer__direction">
                 Previous
               </span>
-              StreamId
+              📤 Publish events - outbox
             </div>
           </div>
         </a>
       
       
         
-        <a href="../wrapped_event/" class="md-footer__link md-footer__link--next" aria-label="Next: WrappedEvent" rel="next">
+        <a href="../multitenancy/" class="md-footer__link md-footer__link--next" aria-label="Next: 👫️ Multitenancy" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              WrappedEvent
+              👫️ Multitenancy
             </div>
           </div>
           <div class="md-footer__button md-icon">
