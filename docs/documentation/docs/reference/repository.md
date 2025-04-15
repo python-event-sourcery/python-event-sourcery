@@ -1,1 +1,1 @@
-::: event_sourcery.aggregate.Repository
+::: event_sourcery.event_sourcing.Repository

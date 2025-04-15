@@ -1,1 +1,1 @@
-::: event_sourcery.aggregate.Aggregate
+::: event_sourcery.event_sourcing.Aggregate

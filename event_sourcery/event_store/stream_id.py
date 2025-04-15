@@ -52,3 +52,14 @@ class StreamId(StreamUUID):
 
     def __hash__(self) -> int:
         return hash((self.category, super().__hash__()))
+
+
+def to_stream_id(stream_id: StreamId | str | UUID | int) -> StreamId:
+    if isinstance(stream_id, str):
+        return StreamId(name=stream_id)
+    elif isinstance(stream_id, StreamId):
+        return stream_id
+    elif isinstance(stream_id, UUID):
+        return StreamId(uuid=stream_id)
+    else:
+        return StreamId(uuid=UUID(int=stream_id))

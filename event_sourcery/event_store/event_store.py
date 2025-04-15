@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from functools import singledispatchmethod
 from typing import cast
+from uuid import UUID
 
 from event_sourcery.event_store.event import (
     Event,
@@ -9,7 +10,7 @@ from event_sourcery.event_store.event import (
     WrappedEvent,
 )
 from event_sourcery.event_store.interfaces import StorageStrategy
-from event_sourcery.event_store.stream_id import StreamId
+from event_sourcery.event_store.stream_id import StreamId, to_stream_id
 from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
 from event_sourcery.event_store.versioning import (
     NO_VERSIONING,
@@ -27,7 +28,7 @@ class EventStore:
 
     def load_stream(
         self,
-        stream_id: StreamId,
+        stream_id: StreamId | str | UUID | int,
         start: int | None = None,
         stop: int | None = None,
     ) -> Sequence[WrappedEvent]:
@@ -49,6 +50,7 @@ class EventStore:
         Returns:
             A sequence of events or empty list if the stream doesn't exist.
         """
+        stream_id = to_stream_id(stream_id)
         events = self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
         return self._serde.deserialize_many(events)
 
@@ -57,7 +59,7 @@ class EventStore:
         self,
         first: WrappedEvent,
         *events: WrappedEvent,
-        stream_id: StreamId,
+        stream_id: StreamId | str | UUID | int,
         expected_version: int | Versioning = 0,
     ) -> None:
         """Appends events to a stream with a given ID.
@@ -80,6 +82,7 @@ class EventStore:
         Returns:
             None
         """
+        stream_id = to_stream_id(stream_id)
         self._append(
             stream_id=stream_id,
             events=(first, *events),
@@ -139,7 +142,7 @@ class EventStore:
             events=self._serde.serialize_many(events, stream_id),
         )
 
-    def delete_stream(self, stream_id: StreamId) -> None:
+    def delete_stream(self, stream_id: StreamId | str | UUID | int) -> None:
         """Deletes a stream with a given ID.
 
         If a stream does not exist, this method does nothing.
@@ -156,9 +159,12 @@ class EventStore:
         Returns:
             None
         """
+        stream_id = to_stream_id(stream_id)
         self._storage_strategy.delete_stream(stream_id)
 
-    def save_snapshot(self, stream_id: StreamId, snapshot: WrappedEvent) -> None:
+    def save_snapshot(
+        self, stream_id: StreamId | str | UUID | int, snapshot: WrappedEvent
+    ) -> None:
         """Saves a snapshot of the stream.
 
         Examples:
@@ -174,7 +180,7 @@ class EventStore:
         Returns:
             None
         """
-
+        stream_id = to_stream_id(stream_id)
         serialized = self._serde.serialize(event=snapshot, stream_id=stream_id)
         self._storage_strategy.save_snapshot(serialized)
 
