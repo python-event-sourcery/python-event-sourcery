@@ -56,5 +56,5 @@ def scope(
     start = cast(
         Position | None, start_version and Position.from_version(start_version)
     )
-    stop = stop_version and Position.from_version(stop_version) or MAX_POSITION
+    stop = (stop_version and Position.from_version(stop_version)) or MAX_POSITION
     return start, stop - (start or 0)

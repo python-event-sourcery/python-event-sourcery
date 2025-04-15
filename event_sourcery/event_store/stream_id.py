@@ -32,7 +32,7 @@ class StreamUUID(UUID):
         return uuid5(self.NAMESPACE, name)
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}" f"(hex={self!s}, name={self.name})"
+        return f"{type(self).__name__}(hex={self!s}, name={self.name})"
 
 
 @dataclass(frozen=True, repr=False, eq=False)

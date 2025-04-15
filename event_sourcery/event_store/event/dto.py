@@ -92,5 +92,10 @@ class Entry:
 
 @dataclasses.dataclass(frozen=True)
 class Recorded(Entry):
+    """DTO containing events saved in the event store.
+
+    It contains position of the event in the event store and tenant id.
+    """
+
     position: Position
     tenant_id: TenantId = DEFAULT_TENANT

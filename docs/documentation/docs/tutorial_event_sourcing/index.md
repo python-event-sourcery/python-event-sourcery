@@ -1,3 +1,0 @@
-# Event Sourcing - Intro
-
-TODO
