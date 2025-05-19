@@ -147,6 +147,24 @@ T = TypeVar("T")
 
 
 @dataclass
+class Encryption:
+    encryption: es.Encryption
+
+    def store(self, key: bytes, for_subject: str) -> None:
+        self.encryption.key_storage.store(for_subject, key)
+
+    def shred_key(self, for_subject: str) -> None:
+        self.encryption.key_storage.delete(for_subject)
+
+    def rotate_key(self, key: bytes, for_subject: str) -> None:
+        raise NotImplementedError()
+
+    def key_for_subject(self, for_subject: str, is_key: bytes) -> None:
+        key = self.encryption.key_storage.get(for_subject)
+        assert key == is_key
+
+
+@dataclass
 class Step:
     backend: Backend | TransactionalBackend
     request: SubRequest
@@ -166,6 +184,10 @@ class Step:
     @property
     def subscriber(self) -> PositionPhase:
         return self.backend.subscriber
+
+    @property
+    def encryption(self) -> Encryption:
+        return Encryption(self.backend.serde.encryption)
 
     def __call__(self, value: T) -> T:
         return value

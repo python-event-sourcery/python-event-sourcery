@@ -17,6 +17,7 @@ from event_sourcery import event_store as es
 from event_sourcery.event_store import (
     BackendFactory,
     Dispatcher,
+    Encryption,
     Event,
     EventRegistry,
     EventStore,
@@ -44,7 +45,9 @@ class Config(BaseModel):
 class SQLAlchemyBackendFactory(BackendFactory):
     _session: Session
     _config: Config = field(default_factory=Config)
-    _serde: Serde = field(default_factory=lambda: Serde(Event.__registry__))
+    _serde: Serde = field(
+        default_factory=lambda: Serde(Event.__registry__, Encryption())
+    )
     _outbox_strategy: SqlAlchemyOutboxStorageStrategy | None = None
 
     def build(self) -> TransactionalBackend:
@@ -72,7 +75,7 @@ class SQLAlchemyBackendFactory(BackendFactory):
         return backend
 
     def with_event_registry(self, event_registry: EventRegistry) -> Self:
-        self._serde = Serde(event_registry)
+        self._serde = Serde(event_registry, Encryption())
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:

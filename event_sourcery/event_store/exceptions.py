@@ -47,3 +47,12 @@ class ClassModuleUnavailable(Exception):
 
 class DuplicatedEvent(Exception):
     pass
+
+
+class PrivacyError(EventStoreException):
+    pass
+
+
+@dataclass
+class KeyNotFoundError(PrivacyError):
+    subject_id: str

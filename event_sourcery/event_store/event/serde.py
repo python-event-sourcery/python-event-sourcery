@@ -3,6 +3,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
 
+from event_sourcery.event_store.encryption import Encryption
 from event_sourcery.event_store.event.dto import (
     Context,
     Event,
@@ -18,6 +19,7 @@ from event_sourcery.event_store.stream_id import StreamId
 @dataclass(repr=False, frozen=True)
 class Serde:
     registry: EventRegistry
+    encryption: Encryption
 
     def deserialize(self, event: RawEvent) -> WrappedEvent:
         event_as_dict = dataclasses.asdict(event)
