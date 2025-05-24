@@ -2,7 +2,7 @@ import abc
 from collections.abc import Iterator
 from contextlib import AbstractContextManager
 from datetime import timedelta
-from typing import Protocol
+from typing import Any, Protocol
 
 from typing_extensions import Self
 
@@ -85,4 +85,28 @@ class StorageStrategy(abc.ABC):
 
     @abc.abstractmethod
     def scoped_for_tenant(self, tenant_id: str) -> Self:
+        pass
+
+
+class KeyStorageStrategy(abc.ABC):
+    @abc.abstractmethod
+    def get(self, subject_id: str) -> bytes | None:
+        pass
+
+    @abc.abstractmethod
+    def store(self, subject_id: str, key: bytes) -> None:
+        pass
+
+    @abc.abstractmethod
+    def delete(self, subject_id: str) -> None:
+        pass
+
+
+class EncryptionStrategy(abc.ABC):
+    @abc.abstractmethod
+    def encrypt(self, data: Any, key: bytes) -> str:
+        pass
+
+    @abc.abstractmethod
+    def decrypt(self, data: str, key: bytes) -> Any:
         pass

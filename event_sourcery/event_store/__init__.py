@@ -5,6 +5,7 @@ __all__ = [
     "BackendFactory",
     "Context",
     "Dispatcher",
+    "Encryption",
     "Entry",
     "Event",
     "EventRegistry",
@@ -30,6 +31,7 @@ __all__ = [
 
 from event_sourcery.event_store import exceptions, factory, interfaces, subscription
 from event_sourcery.event_store.dispatcher import Dispatcher, Listener
+from event_sourcery.event_store.encryption import Encryption
 from event_sourcery.event_store.event import (
     Context,
     Entry,

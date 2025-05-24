@@ -9,6 +9,14 @@ from event_sourcery.event_store.event.registry import EventRegistry
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
 
+DataSubject: TypeAlias = str
+
+
+@dataclasses.dataclass(frozen=True)
+class Encrypted:
+    mask_value: Any
+    subject_field: str | None = None
+
 
 @dataclasses.dataclass(frozen=True)
 class RawEvent(BaseModel):
