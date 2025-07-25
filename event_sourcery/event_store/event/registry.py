@@ -11,6 +11,9 @@ if TYPE_CHECKING:
 
 
 def event_name(cls: type) -> str:
+    if name := getattr(cls, "__event_name__", ""):
+        return name
+
     event_module = inspect.getmodule(cls)
     if event_module is None:  # pragma: no cover
         raise ClassModuleUnavailable

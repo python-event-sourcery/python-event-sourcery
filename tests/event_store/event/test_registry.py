@@ -1,4 +1,4 @@
-from typing import ClassVar
+from typing import ClassVar, cast
 from uuid import uuid4
 
 import pytest
@@ -6,10 +6,12 @@ from pydantic import BaseModel
 
 from event_sourcery.event_store import (
     BackendFactory,
+    Event,
     EventRegistry,
     StreamId,
     WrappedEvent,
 )
+from event_sourcery.event_store.exceptions import DuplicatedEvent
 
 
 @pytest.fixture()
@@ -17,13 +19,35 @@ def registry() -> EventRegistry:
     return EventRegistry()
 
 
+def test_detects_duplicated_events_from_custom_registry(
+    registry: EventRegistry,
+) -> None:
+    @registry.add
+    class AnotherDuplicate(Event):
+        pass
+
+    with pytest.raises(DuplicatedEvent):
+        registry.add(AnotherDuplicate)
+
+
+def test_detects_duplicates_event_names_from_custom_registry(
+    registry: EventRegistry,
+) -> None:
+    first = cast(type[Event], type("Duplicate", (Event,), {}))
+    registry.add(first)
+
+    with pytest.raises(DuplicatedEvent):
+        second = cast(type[Event], type("Duplicate", (Event,), {}))
+        registry.add(second)
+
+
 def test_can_work_with_custom_events_with_custom_registry(
     event_store_factory: BackendFactory,
     registry: EventRegistry,
 ) -> None:
-    @registry.add  # type: ignore
+    @registry.add
     class SomeDummyEvent(BaseModel):
-        name: ClassVar[str] = "SomeDummyEvent"
+        __event_name__: ClassVar[str] = "SomeDummyEvent"
 
     event_store = (
         event_store_factory.with_event_registry(event_registry=registry)
