@@ -14,7 +14,6 @@ from event_sourcery import event_store as es
 from event_sourcery.event_store import (
     BackendFactory,
     Dispatcher,
-    Event,
     EventRegistry,
     EventStore,
 )
@@ -41,7 +40,7 @@ class Config(BaseModel):
 @dataclass(repr=False)
 class DjangoBackendFactory(BackendFactory):
     _config: Config = field(default_factory=Config)
-    _serde: Serde = field(default_factory=lambda: Serde(Event.__registry__))
+    _serde: Serde = field(default_factory=lambda: Serde(EventRegistry()))
     _outbox_strategy: OutboxStorageStrategy | None = None
 
     def build(self) -> TransactionalBackend:

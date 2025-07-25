@@ -63,3 +63,21 @@ def test_can_work_with_custom_events_with_custom_registry(
 
     events = event_store.load_stream(stream_id=stream_id)
     assert isinstance(events[0].event, SomeDummyEvent)
+
+
+def test_auto_register_new_defined_event_when_accessing_by_type(
+    registry: EventRegistry,
+) -> None:
+    class SomeDummyEvent(Event):
+        __event_name__: ClassVar[str] = "ExpectedName"
+
+    assert registry.name_for_type(SomeDummyEvent) == "ExpectedName"
+
+
+def test_auto_register_new_defined_event_when_accessing_by_name(
+    registry: EventRegistry,
+) -> None:
+    class SomeDummyEvent(Event):
+        __event_name__: ClassVar[str] = "EventName"
+
+    assert registry.type_for_name("EventName") == SomeDummyEvent

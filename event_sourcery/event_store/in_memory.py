@@ -11,7 +11,6 @@ from typing_extensions import Self
 
 from event_sourcery.event_store import (
     Dispatcher,
-    Event,
     EventRegistry,
     EventStore,
     subscription,
@@ -311,7 +310,7 @@ class Config(BaseModel):
 class InMemoryBackendFactory(BackendFactory):
     """Lightweight in-memory backend factory for testing and development."""
 
-    serde = Serde(Event.__registry__)
+    serde = Serde(EventRegistry())
 
     _config: Config = field(default_factory=Config)
     _storage: Storage = field(default_factory=Storage)

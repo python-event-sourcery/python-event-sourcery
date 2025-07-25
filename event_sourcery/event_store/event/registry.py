@@ -1,13 +1,15 @@
 import inspect
-from typing import TYPE_CHECKING
+from typing import TypeAlias
 
+from pydantic import BaseModel
+
+from event_sourcery.event_store.event.dto import Event
 from event_sourcery.event_store.exceptions import (
     ClassModuleUnavailable,
     DuplicatedEvent,
 )
 
-if TYPE_CHECKING:
-    from event_sourcery.event_store.event.dto import Event
+TEvent: TypeAlias = BaseModel
 
 
 def event_name(cls: type) -> str:
@@ -28,10 +30,15 @@ class EventRegistry:
     of EventRegistry to BackendFactory."""
 
     def __init__(self) -> None:
-        self._types_to_names: dict[type[Event], str] = {}
-        self._names_to_types: dict[str, type[Event]] = {}
+        self._types_to_names: dict[type[TEvent], str] = {}
+        self._names_to_types: dict[str, type[TEvent]] = {}
+        self._register_defined_events()
 
-    def add(self, event: type["Event"]) -> type["Event"]:
+    def _register_defined_events(self) -> None:
+        for event_type in Event.__subclasses__():
+            event_type not in self._types_to_names and self.add(event_type)
+
+    def add(self, event: type[TEvent]) -> type[TEvent]:
         """Add event subclass to the registry."""
         if event in self._types_to_names:
             raise DuplicatedEvent(f"Duplicated Event detected! {event}")
@@ -44,8 +51,12 @@ class EventRegistry:
         self._names_to_types[name] = event
         return event  # for use as a decorator
 
-    def type_for_name(self, name: str) -> type["Event"]:
+    def type_for_name(self, name: str) -> type[TEvent]:
+        if name not in self._names_to_types:
+            self._register_defined_events()
         return self._names_to_types[name]
 
-    def name_for_type(self, event: type["Event"]) -> str:
+    def name_for_type(self, event: type[TEvent]) -> str:
+        if event not in self._types_to_names:
+            self._register_defined_events()
         return self._types_to_names[event]

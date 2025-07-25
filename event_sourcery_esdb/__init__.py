@@ -15,7 +15,6 @@ from event_sourcery import event_store as es
 from event_sourcery.event_store import (
     Backend,
     BackendFactory,
-    Event,
     EventRegistry,
     EventStore,
 )
@@ -45,7 +44,7 @@ class Config(BaseModel):
 class ESDBBackendFactory(BackendFactory):
     esdb_client: EventStoreDBClient
     config: Config = field(default_factory=Config)
-    _serde: Serde = field(default_factory=lambda: Serde(Event.__registry__))
+    _serde: Serde = field(default_factory=lambda: Serde(EventRegistry()))
     _outbox_strategy: OutboxStorageStrategy = field(
         default_factory=NoOutboxStorageStrategy
     )

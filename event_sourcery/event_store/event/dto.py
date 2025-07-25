@@ -1,11 +1,10 @@
 import dataclasses
 from datetime import datetime, timezone
-from typing import Any, ClassVar, Generic, TypeAlias, TypeVar
+from typing import Any, Generic, TypeAlias, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel
 
-from event_sourcery.event_store.event.registry import EventRegistry
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
 
@@ -16,8 +15,8 @@ class RawEvent(BaseModel):
     stream_id: StreamId
     created_at: datetime
     name: str
-    data: dict
-    context: dict
+    data: dict[str, Any]
+    context: dict[str, Any]
     version: int | None = None
 
 
@@ -40,11 +39,6 @@ class Event(BaseModel, extra="forbid"):
         order_id: OrderId
     ```
     """
-
-    __registry__: ClassVar = EventRegistry()
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        cls.__registry__.add(cls)
 
 
 TEvent = TypeVar("TEvent", bound=Event)
@@ -86,7 +80,7 @@ class WrappedEvent(Generic[TEvent]):
 
 @dataclasses.dataclass(frozen=True)
 class Entry:
-    wrapped_event: WrappedEvent
+    wrapped_event: WrappedEvent[Event]
     stream_id: StreamId
 
 
