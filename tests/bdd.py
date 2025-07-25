@@ -4,10 +4,12 @@ from contextlib import contextmanager
 from copy import copy
 from dataclasses import dataclass, field, replace
 from functools import singledispatchmethod
+from pprint import pformat
 from typing import TypeVar, cast
-from unittest.mock import Mock
+from unittest.mock import ANY, Mock
 
 from _pytest.fixtures import SubRequest
+from deepdiff import DeepDiff
 from pytest import approx
 from typing_extensions import Self
 
@@ -56,14 +58,19 @@ class Stream:
         return list(self.store.load_stream(self.id))
 
     def loads_only(self, events: Sequence[es.WrappedEvent]) -> None:
-        assert self.events == list(events)
+        expected = list(events)
+        assert self.events == expected, pformat(
+            DeepDiff(self.events, expected, exclude_types=[type(ANY)])
+        )
 
     def loads(self, events: Sequence[es.WrappedEvent | es.Event]) -> None:
-        events = [
+        expected = [
             e if isinstance(e, es.WrappedEvent) else any_wrapped_event(e)
             for e in events
         ]
-        assert self.events == list(events)
+        assert self.events == expected, pformat(
+            DeepDiff(self.events, expected, exclude_types=[type(ANY)])
+        )
 
     def is_empty(self) -> None:
         assert self.events == []

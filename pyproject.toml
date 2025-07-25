@@ -35,6 +35,7 @@ mkdocstrings = {version = "*", extras = ["python"]}
 pymdown-extensions = "*"
 time-machine = "*"
 pika = "*"
+deepdiff = "*"
 
 [tool.poetry.extras]
 sqlalchemy = ["SQLAlchemy"]
