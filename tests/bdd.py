@@ -154,6 +154,18 @@ T = TypeVar("T")
 
 
 @dataclass
+class Encryption:
+    def store(self, key: bytes, for_subject: str) -> Self:
+        raise NotImplementedError
+
+    def shred_key(self, for_subject: str) -> Self:
+        raise NotImplementedError
+
+    def key_for_subject(self, for_subject: str, is_key: bytes) -> Self:
+        raise NotImplementedError
+
+
+@dataclass
 class Step:
     backend: Backend | TransactionalBackend
     request: SubRequest
@@ -173,6 +185,10 @@ class Step:
     @property
     def subscriber(self) -> PositionPhase:
         return self.backend.subscriber
+
+    @property
+    def encryption(self) -> Encryption:
+        return Encryption()
 
     def __call__(self, value: T) -> T:
         return value

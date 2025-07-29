@@ -1,5 +1,7 @@
 __all__ = [
     "Context",
+    "DataSubject",
+    "Encrypted",
     "Entry",
     "Event",
     "EventRegistry",
@@ -14,6 +16,8 @@ __all__ = [
 
 from event_sourcery.event_store.event.dto import (
     Context,
+    DataSubject,
+    Encrypted,
     Entry,
     Event,
     Position,

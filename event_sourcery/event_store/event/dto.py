@@ -1,4 +1,5 @@
 import dataclasses
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Generic, TypeAlias, TypeVar
 from uuid import UUID, uuid4
@@ -7,6 +8,8 @@ from pydantic import BaseModel
 
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
+
+DataSubject = object()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -93,3 +96,9 @@ class Recorded(Entry):
 
     position: Position
     tenant_id: TenantId = DEFAULT_TENANT
+
+
+@dataclass(frozen=True)
+class Encrypted:
+    mask_value: Any
+    subject_field: str | None = None
