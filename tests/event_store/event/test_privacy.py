@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Annotated
-from unittest.mock import Mock
+from typing import Annotated, Any
 
 import pytest
 from pydantic import BaseModel, Field
@@ -10,10 +9,8 @@ from event_sourcery.event_store import Event, StreamId
 from event_sourcery.event_store.event import DataSubject, Encrypted
 from event_sourcery.event_store.exceptions import KeyNotFoundError, NoSubjectIdFound
 from event_sourcery.event_store.factory import Backend, BackendFactory
-from event_sourcery.event_store.interfaces import (
-    EncryptionKeyStorageStrategy,
-    EncryptionStrategy,
-)
+from event_sourcery.event_store.in_memory import InMemoryKeyStorage
+from event_sourcery.event_store.interfaces import EncryptionStrategy
 from tests.bdd import Given, Then, When
 
 
@@ -81,9 +78,6 @@ class NoSubjectEvent(Event):
     plain: str = "plain"
 
 
-@pytest.mark.not_implemented(
-    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite", "in_memory"],
-)
 def test_encrypt_and_decrypt(given: Given, when: When, then: Then) -> None:
     given.encryption.store(b"primary-key", for_subject="subject")
     given.encryption.store(b"secondary-key", for_subject="secondary")
@@ -293,7 +287,6 @@ def test_use_stream_name_when_no_data_subject(
     )
 
 
-@pytest.mark.xfail(reason="not implemented")
 def test_error_when_no_subject_id(given: Given, when: When, then: Then) -> None:
     given.stream(not_named_stream := StreamId())
 
@@ -303,7 +296,6 @@ def test_error_when_no_subject_id(given: Given, when: When, then: Then) -> None:
     assert then_no_subject_id_found.value.stream_id == not_named_stream
 
 
-@pytest.mark.xfail(reason="not implemented")
 def test_invalid_encryption_configuration(given: Given, when: When) -> None:
     given.stream(stream_id := StreamId())
 
@@ -316,6 +308,22 @@ def test_invalid_encryption_configuration(given: Given, when: When) -> None:
 @pytest.fixture()
 def backend(event_store_factory: BackendFactory) -> Backend:
     return event_store_factory.with_encryption(
-        strategy=Mock(EncryptionStrategy),
-        key_storage=Mock(EncryptionKeyStorageStrategy),
+        strategy=XorEncryptionStrategy(),
+        key_storage=InMemoryKeyStorage(),
     ).build()
+
+
+class XorEncryptionStrategy(EncryptionStrategy):
+    """A simple XOR-based encryption for testing only (not secure)."""
+
+    def encrypt(self, data: Any, key: bytes) -> str:
+        if not isinstance(data, str):
+            raise ValueError("XorEncryptionStrategy only supports str data.")
+        data_bytes = data.encode("utf-8")
+        encrypted = bytes([b ^ key[i % len(key)] for i, b in enumerate(data_bytes)])
+        return encrypted.hex()
+
+    def decrypt(self, data: str, key: bytes) -> Any:
+        encrypted = bytes.fromhex(data)
+        decrypted = bytes([b ^ key[i % len(key)] for i, b in enumerate(encrypted)])
+        return decrypted.decode("utf-8")

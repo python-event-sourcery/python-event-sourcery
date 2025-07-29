@@ -18,7 +18,7 @@ from event_sourcery.event_store import (
     EventRegistry,
     EventStore,
 )
-from event_sourcery.event_store.event import Serde
+from event_sourcery.event_store.event import Encryption, Serde
 from event_sourcery.event_store.factory import NoOutboxStorageStrategy, no_filter
 from event_sourcery.event_store.interfaces import (
     EncryptionKeyStorageStrategy,
@@ -93,4 +93,13 @@ class ESDBBackendFactory(BackendFactory):
         strategy: EncryptionStrategy,
         key_storage: EncryptionKeyStorageStrategy,
     ) -> Self:
+        registry = self._serde.registry
+        self._serde = Serde(
+            registry,
+            encryption=Encryption(
+                registry=registry,
+                strategy=strategy,
+                key_storage=key_storage,
+            ),
+        )
         return self

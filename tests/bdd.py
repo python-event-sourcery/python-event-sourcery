@@ -193,7 +193,7 @@ class Step:
 
     @property
     def encryption(self) -> Encryption:
-        return Encryption(es.event.Encryption())
+        return Encryption(self.backend.serde.encryption)
 
     def __call__(self, value: T) -> T:
         return value

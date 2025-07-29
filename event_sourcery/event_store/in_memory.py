@@ -15,7 +15,13 @@ from event_sourcery.event_store import (
     EventStore,
     subscription,
 )
-from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw, Serde
+from event_sourcery.event_store.event import (
+    Encryption,
+    Position,
+    RawEvent,
+    RecordedRaw,
+    Serde,
+)
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.factory import (
     BackendFactory,
@@ -364,4 +370,31 @@ class InMemoryBackendFactory(BackendFactory):
         strategy: EncryptionStrategy,
         key_storage: EncryptionKeyStorageStrategy,
     ) -> Self:
+        registry = self.serde.registry
+        self.serde = Serde(
+            registry,
+            encryption=Encryption(
+                registry=registry,
+                strategy=strategy,
+                key_storage=key_storage,
+            ),
+        )
         return self
+
+
+@dataclass
+class InMemoryKeyStorage(EncryptionKeyStorageStrategy):
+    _keys: dict[tuple[TenantId, str], bytes] = field(default_factory=dict)
+    _tenant_id: TenantId = DEFAULT_TENANT
+
+    def get(self, subject_id: str) -> bytes | None:
+        return self._keys.get((self._tenant_id, subject_id))
+
+    def store(self, subject_id: str, key: bytes) -> None:
+        self._keys[(self._tenant_id, subject_id)] = key
+
+    def delete(self, subject_id: str) -> None:
+        raise NotImplementedError
+
+    def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
+        raise NotImplementedError
