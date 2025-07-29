@@ -198,7 +198,7 @@ class Step:
         to: Position | None = None,
         to_category: str | None = None,
         to_events: list[type[Event]] | None = None,
-        timelimit: int | float = 1,
+        timelimit: int | float = 0.1,
     ) -> Subscription:
         builder = self._create_subscription_builder(to, to_category, to_events)
         return Subscription(builder.build_iter(timelimit))
@@ -209,7 +209,7 @@ class Step:
         to: Position | None = None,
         to_category: str | None = None,
         to_events: list[type[Event]] | None = None,
-        timelimit: int | float = 1,
+        timelimit: int | float = 0.1,
     ) -> BatchSubscription:
         builder = self._create_subscription_builder(to, to_category, to_events)
         return BatchSubscription(builder.build_batch(of_size, timelimit))
@@ -247,7 +247,7 @@ class Given(Step):
         start = time.monotonic()
         yield
         took = time.monotonic() - start
-        assert took == approx(seconds, 0.15), (
+        assert took == approx(seconds, 0.2), (
             f"Expected timing {seconds:.02f}s, got {took:.02f}s"
         )
 

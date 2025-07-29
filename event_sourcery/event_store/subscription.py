@@ -84,9 +84,9 @@ class SubscriptionBuilder(PositionPhase, FilterPhase, BuildPhase):
             if isinstance(timelimit, timedelta)
             else timedelta(seconds=timelimit)
         )
-        if seconds.total_seconds() < 1:
+        if seconds.total_seconds() < 0.1:
             raise ValueError(
-                f"Timebox must be at least 1 second. Received: "
+                f"Timebox must be at least 100 milliseconds. Received: "
                 f"{seconds.total_seconds():.02f}",
             )
         return seconds

@@ -1,11 +1,15 @@
 from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager, contextmanager
+from datetime import timedelta
 
 import pytest
 from _pytest.fixtures import SubRequest
 
 from event_sourcery.event_store import BackendFactory
-from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
+from event_sourcery_sqlalchemy import (
+    Config as SQLAlchemyConfig,
+    SQLAlchemyBackendFactory,
+)
 from tests import mark
 from tests.backend.django import django
 from tests.backend.esdb import esdb
@@ -35,7 +39,13 @@ def create_backend_factory(
             case "sqlalchemy_sqlite" | "sqlalchemy_postgres":
                 sessionmaker = request.getfixturevalue(backend_name)
                 with sessionmaker() as session:
-                    yield SQLAlchemyBackendFactory(session)
+                    yield SQLAlchemyBackendFactory(
+                        session,
+                        SQLAlchemyConfig(
+                            outbox_attempts=1,
+                            gap_retry_interval=timedelta(seconds=0.1)
+                        ),
+                    )
             case "django" | "in_memory" | "esdb":
                 yield request.getfixturevalue(backend_name)
             case _:

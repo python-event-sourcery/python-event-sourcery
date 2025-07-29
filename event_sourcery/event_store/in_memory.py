@@ -99,7 +99,7 @@ class InMemorySubscription(Iterator[list[RecordedRaw]]):
             record = self._pop_record()
             if record is not None:
                 batch.append(record)
-            time.sleep(0.1)
+            time.sleep(0.01)
             if time.monotonic() - start > self._timelimit.total_seconds():
                 break
 

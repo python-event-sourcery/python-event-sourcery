@@ -19,7 +19,7 @@ class TestGetsEventsAfterOtherTransactionGetsCommitted:
         then: Then,
         other_client: OtherClient,
     ) -> None:
-        subscription = given.subscription(timelimit=1)
+        subscription = given.subscription()
 
         other_transaction = other_client.appends_in_transaction(
             event := an_event(version=1), stream := StreamId()
@@ -36,7 +36,7 @@ class TestGetsEventsAfterOtherTransactionGetsCommitted:
         other_client: OtherClient,
     ) -> None:
         event = an_event(version=1)
-        subscription = given.subscription(timelimit=1, to_events=[type(event.event)])
+        subscription = given.subscription(to_events=[type(event.event)])
         other_client.appends_in_transaction(
             an_event(OtherEvent(), version=1), StreamId()
         ).commit()
@@ -55,7 +55,7 @@ class TestGetsEventsAfterOtherTransactionGetsCommitted:
         then: Then,
         other_client: OtherClient,
     ) -> None:
-        subscription = given.subscription(timelimit=1, to_category="category_2")
+        subscription = given.subscription(to_category="category_2")
         other_client.appends_in_transaction(
             an_event(version=1), StreamId(category="category_1")
         ).commit()
@@ -76,7 +76,7 @@ class TestIgnoresEventsFromPendingTransactions:
         then: Then,
         other_client: OtherClient,
     ) -> None:
-        subscription = given.subscription(timelimit=1)
+        subscription = given.subscription()
 
         other_client.appends_in_transaction(an_event(version=1), StreamId())
 
@@ -89,7 +89,7 @@ class TestIgnoresEventsFromPendingTransactions:
         other_client: OtherClient,
     ) -> None:
         event = an_event(version=1)
-        subscription = given.subscription(timelimit=1, to_events=[type(event.event)])
+        subscription = given.subscription(to_events=[type(event.event)])
 
         other_client.appends_in_transaction(event, StreamId())
 
@@ -101,7 +101,7 @@ class TestIgnoresEventsFromPendingTransactions:
         then: Then,
         other_client: OtherClient,
     ) -> None:
-        subscription = given.subscription(timelimit=1, to_category="category_1")
+        subscription = given.subscription(to_category="category_1")
 
         other_client.appends_in_transaction(
             an_event(version=1), StreamId(category="category_1")
@@ -123,7 +123,7 @@ class TestMissesEventsThatWereNotCommittedWithinSpecifiedTimeout:
         when: When,
         other_client: OtherClient,
     ) -> None:
-        subscription = given.subscription(timelimit=1)
+        subscription = given.subscription()
 
         other_transaction = other_client.appends_in_transaction(
             an_event(version=1), StreamId()
@@ -146,7 +146,7 @@ class TestMissesEventsThatWereNotCommittedWithinSpecifiedTimeout:
             an_event(OtherEvent(), version=1), StreamId()
         ).commit()
         event = an_event(version=1)
-        subscription = given.subscription(timelimit=1, to_events=[type(event.event)])
+        subscription = given.subscription(to_events=[type(event.event)])
 
         other_transaction = other_client.appends_in_transaction(event, StreamId())
         other_transaction.process_up_to_commit()
@@ -165,9 +165,7 @@ class TestMissesEventsThatWereNotCommittedWithinSpecifiedTimeout:
     ) -> None:
         given.stream(StreamId(category="other_category")).with_events(an_event())
         given.stream(stream_id_with_category := StreamId(category="this_category"))
-        subscription = given.subscription(
-            timelimit=1, to_category=stream_id_with_category.category
-        )
+        subscription = given.subscription(to_category=stream_id_with_category.category)
 
         other_transaction = other_client.appends_in_transaction(
             an_event(version=1), StreamId(category=stream_id_with_category.category)

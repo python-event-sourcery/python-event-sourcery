@@ -29,7 +29,7 @@ from tests.backend.sqlalchemy import sqlalchemy_postgres, sqlalchemy_sqlite
 
 @pytest.fixture()
 def max_attempts() -> int:
-    return 3
+    return 2
 
 
 @pytest.fixture()
@@ -38,7 +38,7 @@ def esdb(max_attempts: int) -> Generator[ESDBBackendFactory, None, None]:
         yield ESDBBackendFactory(
             client,
             event_sourcery_esdb.Config(
-                timeout=4,
+                timeout=1,
                 outbox_name=f"pyes-outbox-test-{uuid4().hex}",
                 outbox_attempts=max_attempts,
             ),
