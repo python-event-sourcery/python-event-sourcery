@@ -24,6 +24,8 @@ from event_sourcery.event_store.factory import (
     no_filter,
 )
 from event_sourcery.event_store.interfaces import (
+    EncryptionKeyStorageStrategy,
+    EncryptionStrategy,
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
     StorageStrategy,
@@ -355,4 +357,11 @@ class InMemoryBackendFactory(BackendFactory):
 
     def without_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         self._outbox_strategy = None
+        return self
+
+    def with_encryption(
+        self,
+        strategy: EncryptionStrategy,
+        key_storage: EncryptionKeyStorageStrategy,
+    ) -> Self:
         return self

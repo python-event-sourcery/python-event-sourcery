@@ -9,6 +9,8 @@ from event_sourcery.event_store.dispatcher import Dispatcher
 from event_sourcery.event_store.event import EventRegistry, RawEvent, RecordedRaw, Serde
 from event_sourcery.event_store.event_store import EventStore
 from event_sourcery.event_store.interfaces import (
+    EncryptionKeyStorageStrategy,
+    EncryptionStrategy,
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
 )
@@ -54,4 +56,12 @@ class BackendFactory(abc.ABC):
 
     @abc.abstractmethod
     def without_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
+        pass
+
+    @abc.abstractmethod
+    def with_encryption(
+        self,
+        strategy: EncryptionStrategy,
+        key_storage: EncryptionKeyStorageStrategy,
+    ) -> Self:
         pass

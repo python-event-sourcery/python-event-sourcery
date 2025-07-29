@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Annotated
+from unittest.mock import Mock
 
 import pytest
 from pydantic import BaseModel, Field
@@ -8,6 +9,11 @@ from pydantic import BaseModel, Field
 from event_sourcery.event_store import Event, StreamId
 from event_sourcery.event_store.event import DataSubject, Encrypted
 from event_sourcery.event_store.exceptions import KeyNotFoundError, NoSubjectIdFound
+from event_sourcery.event_store.factory import Backend, BackendFactory
+from event_sourcery.event_store.interfaces import (
+    EncryptionKeyStorageStrategy,
+    EncryptionStrategy,
+)
 from tests.bdd import Given, Then, When
 
 
@@ -261,3 +267,11 @@ def test_invalid_encryption_configuration(given: Given, when: When) -> None:
         when.appends(EncryptedEvent(), to=stream_id)
 
     assert then_encryption_key_not_found.value.subject_id == "subject"
+
+
+@pytest.fixture()
+def backend(event_store_factory: BackendFactory) -> Backend:
+    return event_store_factory.with_encryption(
+        strategy=Mock(EncryptionStrategy),
+        key_storage=Mock(EncryptionKeyStorageStrategy),
+    ).build()

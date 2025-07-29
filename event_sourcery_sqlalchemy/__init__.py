@@ -23,7 +23,11 @@ from event_sourcery.event_store import (
 )
 from event_sourcery.event_store.event import Serde
 from event_sourcery.event_store.factory import NoOutboxStorageStrategy, no_filter
-from event_sourcery.event_store.interfaces import OutboxFiltererStrategy
+from event_sourcery.event_store.interfaces import (
+    EncryptionKeyStorageStrategy,
+    EncryptionStrategy,
+    OutboxFiltererStrategy,
+)
 from event_sourcery.event_store.outbox import Outbox
 from event_sourcery_sqlalchemy import models
 from event_sourcery_sqlalchemy.event_store import SqlAlchemyStorageStrategy
@@ -84,4 +88,11 @@ class SQLAlchemyBackendFactory(BackendFactory):
 
     def without_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         self._outbox_strategy = None
+        return self
+
+    def with_encryption(
+        self,
+        strategy: EncryptionStrategy,
+        key_storage: EncryptionKeyStorageStrategy,
+    ) -> Self:
         return self

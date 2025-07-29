@@ -2,12 +2,13 @@ import abc
 from collections.abc import Iterator
 from contextlib import AbstractContextManager
 from datetime import timedelta
-from typing import Protocol
+from typing import Any, Protocol
 
 from typing_extensions import Self
 
 from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw
 from event_sourcery.event_store.stream_id import StreamId
+from event_sourcery.event_store.tenant_id import TenantId
 from event_sourcery.event_store.versioning import Versioning
 
 
@@ -85,4 +86,32 @@ class StorageStrategy(abc.ABC):
 
     @abc.abstractmethod
     def scoped_for_tenant(self, tenant_id: str) -> Self:
+        pass
+
+
+class EncryptionKeyStorageStrategy(abc.ABC):
+    @abc.abstractmethod
+    def get(self, subject_id: str) -> bytes | None:
+        pass
+
+    @abc.abstractmethod
+    def store(self, subject_id: str, key: bytes) -> None:
+        pass
+
+    @abc.abstractmethod
+    def delete(self, subject_id: str) -> None:
+        pass
+
+    @abc.abstractmethod
+    def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
+        pass
+
+
+class EncryptionStrategy(abc.ABC):
+    @abc.abstractmethod
+    def encrypt(self, data: Any, key: bytes) -> str:
+        pass
+
+    @abc.abstractmethod
+    def decrypt(self, data: str, key: bytes) -> Any:
         pass

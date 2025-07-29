@@ -21,6 +21,8 @@ from event_sourcery.event_store import (
 from event_sourcery.event_store.event import Serde
 from event_sourcery.event_store.factory import NoOutboxStorageStrategy, no_filter
 from event_sourcery.event_store.interfaces import (
+    EncryptionKeyStorageStrategy,
+    EncryptionStrategy,
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
 )
@@ -84,4 +86,11 @@ class ESDBBackendFactory(BackendFactory):
 
     def without_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         self._outbox_strategy = NoOutboxStorageStrategy()
+        return self
+
+    def with_encryption(
+        self,
+        strategy: EncryptionStrategy,
+        key_storage: EncryptionKeyStorageStrategy,
+    ) -> Self:
         return self

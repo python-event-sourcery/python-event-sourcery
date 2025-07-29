@@ -8,6 +8,8 @@ from _pytest.fixtures import SubRequest
 from event_sourcery.event_store import BackendFactory
 from event_sourcery_sqlalchemy import (
     Config as SQLAlchemyConfig,
+)
+from event_sourcery_sqlalchemy import (
     SQLAlchemyBackendFactory,
 )
 from tests import mark
@@ -42,8 +44,7 @@ def create_backend_factory(
                     yield SQLAlchemyBackendFactory(
                         session,
                         SQLAlchemyConfig(
-                            outbox_attempts=1,
-                            gap_retry_interval=timedelta(seconds=0.1)
+                            outbox_attempts=1, gap_retry_interval=timedelta(seconds=0.1)
                         ),
                     )
             case "django" | "in_memory" | "esdb":
