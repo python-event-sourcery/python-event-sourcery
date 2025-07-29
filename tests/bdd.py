@@ -178,6 +178,7 @@ class Step:
     def in_tenant_mode(self, for_tenant: TenantId) -> Self:
         backend = copy(self.backend)
         backend.event_store = backend.event_store.scoped_for_tenant(for_tenant)
+        backend.serde = backend.serde.scoped_for_tenant(for_tenant)
         return replace(self, backend=backend)
 
     def without_tenant(self) -> Self:

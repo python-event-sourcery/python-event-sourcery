@@ -108,7 +108,9 @@ class Encryption:
 
     def _decrypt_value(self, value: str, subject_id: str, mask_value: Any) -> Any:
         key = self.key_storage.get(subject_id)
-        decrypted = self.strategy.decrypt(value, key or b"")
+        if key is None:
+            return mask_value
+        decrypted = self.strategy.decrypt(value, key)
 
         try:
             return json.loads(decrypted)
@@ -127,7 +129,7 @@ class Encryption:
         return self.strategy.encrypt(serialized, key)
 
     def shred(self, subject_id: str) -> None:
-        raise NotImplementedError
+        self.key_storage.delete(subject_id)
 
     def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
         return replace(self, key_storage=self.key_storage.scoped_for_tenant(tenant_id))

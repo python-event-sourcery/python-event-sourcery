@@ -394,7 +394,7 @@ class InMemoryKeyStorage(EncryptionKeyStorageStrategy):
         self._keys[(self._tenant_id, subject_id)] = key
 
     def delete(self, subject_id: str) -> None:
-        raise NotImplementedError
+        self._keys.pop((self._tenant_id, subject_id), None)
 
     def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
         raise NotImplementedError
