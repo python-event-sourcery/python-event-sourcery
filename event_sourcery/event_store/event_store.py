@@ -206,5 +206,5 @@ class EventStore:
         """
         return EventStore(
             storage_strategy=self._storage_strategy.scoped_for_tenant(tenant_id),
-            serde=self._serde,
+            serde=self._serde.scoped_for_tenant(tenant_id),
         )

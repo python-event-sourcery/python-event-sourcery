@@ -88,14 +88,14 @@ def test_encrypt_and_decrypt(given: Given, when: When, then: Then) -> None:
     given.encryption.store(b"primary-key", for_subject="subject")
     given.encryption.store(b"secondary-key", for_subject="secondary")
     given.stream(stream_id := StreamId())
-    when.appends(event := EncryptedEvent(), to=stream_id)
+    when.appends(event := EncryptedEvent(subject_id="subject"), to=stream_id)
     then.stream(stream_id).loads([event])
 
 
 @pytest.mark.not_implemented(
     backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite", "in_memory"],
 )
-def test_multi_tenant_encryption_isolation(
+def test_multi_tenant_encrypt_and_decrypt_isolation(
     given: Given,
     when: When,
     then: Then,
@@ -103,28 +103,72 @@ def test_multi_tenant_encryption_isolation(
     given.in_tenant_mode("tenant_a").encryption.store(b"key1", for_subject="subject")
     given.in_tenant_mode("tenant_a").encryption.store(b"key2", for_subject="secondary")
     given.in_tenant_mode("tenant_a").stream(stream_id := StreamId()).with_events(
-        EncryptedEvent(plain="first tenant")
+        first_tenant_event := EncryptedEvent(
+            plain="first tenant",
+            subject_id="subject",
+            secondary_subject_id="secondary",
+        )
     )
 
     given.in_tenant_mode("tenant_b").encryption.store(b"key3", for_subject="subject")
     given.in_tenant_mode("tenant_b").encryption.store(b"key4", for_subject="secondary")
     given.in_tenant_mode("tenant_b").stream(with_id=stream_id).with_events(
-        EncryptedEvent(plain="second tenant")
+        second_tenant_event := EncryptedEvent(
+            plain="second tenant",
+            subject_id="subject",
+            secondary_subject_id="secondary",
+        )
     )
 
     then.in_tenant_mode("tenant_a").stream(with_id=stream_id).loads(
-        [EncryptedEvent(plain="first tenant")]
+        [first_tenant_event]
     )
     then.in_tenant_mode("tenant_b").stream(with_id=stream_id).loads(
-        [EncryptedEvent(plain="second tenant")]
+        [second_tenant_event]
+    )
+
+
+@pytest.mark.not_implemented(
+    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite", "in_memory"],
+)
+def test_multi_tenant_shredding_key_isolation(
+    given: Given,
+    when: When,
+    then: Then,
+) -> None:
+    given.in_tenant_mode("tenant_a").encryption.store(b"key1", for_subject="subject")
+    given.in_tenant_mode("tenant_a").encryption.store(b"key2", for_subject="secondary")
+    given.in_tenant_mode("tenant_a").stream(stream_id := StreamId()).with_events(
+        EncryptedEvent(
+            plain="first tenant",
+            subject_id="subject",
+            secondary_subject_id="secondary",
+        )
+    )
+
+    given.in_tenant_mode("tenant_b").encryption.store(b"key3", for_subject="subject")
+    given.in_tenant_mode("tenant_b").encryption.store(b"key4", for_subject="secondary")
+    given.in_tenant_mode("tenant_b").stream(with_id=stream_id).with_events(
+        second_tenant_event := EncryptedEvent(
+            plain="second tenant",
+            subject_id="subject",
+            secondary_subject_id="secondary",
+        )
     )
 
     when.in_tenant_mode("tenant_a").encryption.shred_key(for_subject="secondary")
     then.in_tenant_mode("tenant_a").stream(with_id=stream_id).loads(
-        [EncryptedEvent(custom_subject="[TEXT_REDACTED]", plain="first tenant")]
+        [
+            EncryptedEvent(
+                custom_subject="[TEXT_REDACTED]",
+                plain="first tenant",
+                subject_id="subject",
+                secondary_subject_id="secondary",
+            )
+        ]
     )
     then.in_tenant_mode("tenant_b").stream(with_id=stream_id).loads(
-        [EncryptedEvent(plain="second tenant")]
+        [second_tenant_event]
     )
 
 
@@ -191,7 +235,7 @@ def test_withdrawn_encrypted_data_when_key_shred(
 @pytest.mark.not_implemented(
     backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite", "in_memory"],
 )
-def test_withdrawn_only_shreded_key_data(
+def test_withdrawn_only_shredded_key_data(
     given: Given,
     when: When,
     then: Then,
@@ -264,7 +308,7 @@ def test_invalid_encryption_configuration(given: Given, when: When) -> None:
     given.stream(stream_id := StreamId())
 
     with pytest.raises(KeyNotFoundError) as then_encryption_key_not_found:
-        when.appends(EncryptedEvent(), to=stream_id)
+        when.appends(EncryptedEvent(subject_id="subject"), to=stream_id)
 
     assert then_encryption_key_not_found.value.subject_id == "subject"
 

@@ -155,14 +155,19 @@ T = TypeVar("T")
 
 @dataclass
 class Encryption:
+    encryption: es.event.Encryption
+
     def store(self, key: bytes, for_subject: str) -> Self:
-        raise NotImplementedError
+        self.encryption.key_storage.store(for_subject, key)
+        return self
 
     def shred_key(self, for_subject: str) -> Self:
-        raise NotImplementedError
+        self.encryption.shred(for_subject)
+        return self
 
-    def key_for_subject(self, for_subject: str, is_key: bytes) -> Self:
-        raise NotImplementedError
+    def key_for_subject(self, for_subject: str, is_key: bytes) -> None:
+        key = self.encryption.key_storage.get(for_subject)
+        assert key == is_key
 
 
 @dataclass
@@ -188,7 +193,7 @@ class Step:
 
     @property
     def encryption(self) -> Encryption:
-        return Encryption()
+        return Encryption(es.event.Encryption())
 
     def __call__(self, value: T) -> T:
         return value
