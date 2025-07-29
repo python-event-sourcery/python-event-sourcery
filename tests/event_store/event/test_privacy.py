@@ -86,9 +86,6 @@ def test_encrypt_and_decrypt(given: Given, when: When, then: Then) -> None:
     then.stream(stream_id).loads([event])
 
 
-@pytest.mark.not_implemented(
-    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite", "in_memory"],
-)
 def test_multi_tenant_encrypt_and_decrypt_isolation(
     given: Given,
     when: When,
@@ -122,9 +119,6 @@ def test_multi_tenant_encrypt_and_decrypt_isolation(
     )
 
 
-@pytest.mark.not_implemented(
-    backend=["django", "esdb", "sqlalchemy_postgres", "sqlalchemy_sqlite", "in_memory"],
-)
 def test_multi_tenant_shredding_key_isolation(
     given: Given,
     when: When,

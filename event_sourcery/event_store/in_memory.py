@@ -2,7 +2,7 @@ import time
 from collections.abc import Generator, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from copy import copy
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import timedelta
 from operator import getitem
 
@@ -397,4 +397,4 @@ class InMemoryKeyStorage(EncryptionKeyStorageStrategy):
         self._keys.pop((self._tenant_id, subject_id), None)
 
     def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
-        raise NotImplementedError
+        return replace(self, _tenant_id=tenant_id)
