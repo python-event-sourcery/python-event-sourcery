@@ -2,15 +2,15 @@ import dataclasses
 from collections.abc import Mapping, Sequence
 from typing import cast
 
-from event_sourcery.event_store.event.dto import (
+from event_sourcery.event_store.event._dto import (
     Context,
     RawEvent,
     Recorded,
     RecordedRaw,
     WrappedEvent,
 )
-from event_sourcery.event_store.event.encryption import Encryption
-from event_sourcery.event_store.event.registry import EventRegistry
+from event_sourcery.event_store.event._encryption import Encryption
+from event_sourcery.event_store.event._registry import EventRegistry
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.tenant_id import TenantId
 

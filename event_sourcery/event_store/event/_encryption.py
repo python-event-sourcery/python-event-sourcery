@@ -6,7 +6,7 @@ from typing import Any
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from event_sourcery.event_store.event.registry import EventRegistry
+from event_sourcery.event_store.event._registry import EventRegistry
 from event_sourcery.event_store.exceptions import KeyNotFoundError, NoSubjectIdFound
 from event_sourcery.event_store.interfaces import (
     EncryptionKeyStorageStrategy,

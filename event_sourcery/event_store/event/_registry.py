@@ -3,7 +3,7 @@ from typing import Annotated, TypeAlias, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
-from event_sourcery.event_store.event.dto import DataSubject, Encrypted, Event
+from event_sourcery.event_store.event._dto import DataSubject, Encrypted, Event
 from event_sourcery.event_store.exceptions import (
     ClassModuleUnavailable,
     DuplicatedEvent,
