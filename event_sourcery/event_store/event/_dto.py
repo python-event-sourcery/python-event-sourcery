@@ -100,5 +100,38 @@ class Recorded(Entry):
 
 @dataclass(frozen=True)
 class Encrypted:
+    """Field annotation for marking event fields that should be encrypted.
+
+    This annotation is used in combination with DataSubject to implement
+    crypto-shredding, allowing for GDPR-compliant data removal in event-sourced systems.
+
+    Args:
+        mask_value: Value to display when the data is shredded (deleted).
+                    Must match the field type.
+        subject_field: Optional. Name of the field containing the subject ID for this
+                      encrypted field. If not provided, the field marked with
+                      DataSubject will be used.
+
+    Example:
+        ```python
+        class UserRegistered(Event):
+            user_id: Annotated[str, DataSubject]
+            email: Annotated[str, Encrypted(mask_value="[REDACTED]")]
+            # Custom subject field
+            other_data: Annotated[
+                str,
+                Encrypted(
+                    mask_value="[HIDDEN]",
+                    subject_field="alternative_id",
+                ),
+            ]
+        ```
+
+    Note:
+        - Every event with encrypted fields must have exactly one DataSubject field.
+        - The mask_value type must match the field type.
+        - After shredding, the field will always return its mask_value.
+    """
+
     mask_value: Any
     subject_field: str | None = None
