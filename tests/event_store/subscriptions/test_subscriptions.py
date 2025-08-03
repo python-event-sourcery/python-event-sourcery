@@ -10,7 +10,7 @@ from tests.matchers import any_record
 
 
 def test_no_events_when_none_is_provided(given: Given, then: Then) -> None:
-    subscription = given.subscription(timelimit=1)
+    subscription = given.subscription()
     then(subscription).received_no_new_records()
 
 
@@ -42,27 +42,27 @@ def test_multiple_subscriptions_receives_events(
 
 
 def test_stop_iterating_after_given_timeout(given: Given, then: Then) -> None:
-    with given.expected_execution(seconds=1):
-        then.subscription(timelimit=1).received_no_new_records()
+    with given.expected_execution(seconds=0.2):
+        then.subscription(timelimit=0.2).received_no_new_records()
 
 
 @pytest.mark.parametrize(
     "timelimit",
     [
-        (0.999999,),
-        (0,),
-        (-1,),
-        (-1.9999,),
-        (timedelta(seconds=0.9999999),),
-        (timedelta(seconds=-10),),
+        0.09,
+        0,
+        -1,
+        -1.9999,
+        timedelta(seconds=0.09),
+        timedelta(seconds=-10),
     ],
 )
-def test_wont_accept_timebox_shorten_than_1_second(
+def test_wont_accept_timebox_shorten_than_100_milliseconds(
     backend: Backend,
     timelimit: int | float | timedelta,
 ) -> None:
     with pytest.raises(ValueError):
-        backend.subscriber.start_from(0).build_iter(timelimit=0.99999)
+        backend.subscriber.start_from(0).build_iter(timelimit=timelimit)
 
 
 def test_receives_events_from_all_tenants(given: Given, when: When, then: Then) -> None:

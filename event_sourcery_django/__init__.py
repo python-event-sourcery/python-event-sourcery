@@ -14,17 +14,18 @@ from event_sourcery import event_store as es
 from event_sourcery.event_store import (
     BackendFactory,
     Dispatcher,
-    Event,
     EventRegistry,
     EventStore,
 )
-from event_sourcery.event_store.event import Serde
+from event_sourcery.event_store.event import Encryption, Serde
 from event_sourcery.event_store.factory import (
     NoOutboxStorageStrategy,
     TransactionalBackend,
     no_filter,
 )
 from event_sourcery.event_store.interfaces import (
+    EncryptionKeyStorageStrategy,
+    EncryptionStrategy,
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
 )
@@ -41,7 +42,7 @@ class Config(BaseModel):
 @dataclass(repr=False)
 class DjangoBackendFactory(BackendFactory):
     _config: Config = field(default_factory=Config)
-    _serde: Serde = field(default_factory=lambda: Serde(Event.__registry__))
+    _serde: Serde = field(default_factory=lambda: Serde(EventRegistry()))
     _outbox_strategy: OutboxStorageStrategy | None = None
 
     def build(self) -> TransactionalBackend:
@@ -77,4 +78,20 @@ class DjangoBackendFactory(BackendFactory):
 
     def without_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         self._outbox_strategy = None
+        return self
+
+    def with_encryption(
+        self,
+        strategy: EncryptionStrategy,
+        key_storage: EncryptionKeyStorageStrategy,
+    ) -> Self:
+        registry = self._serde.registry
+        self._serde = Serde(
+            registry,
+            encryption=Encryption(
+                registry=registry,
+                strategy=strategy,
+                key_storage=key_storage,
+            ),
+        )
         return self

@@ -2,7 +2,7 @@ import time
 from collections.abc import Generator, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from copy import copy
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import timedelta
 from operator import getitem
 
@@ -11,12 +11,17 @@ from typing_extensions import Self
 
 from event_sourcery.event_store import (
     Dispatcher,
-    Event,
     EventRegistry,
     EventStore,
     subscription,
 )
-from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw, Serde
+from event_sourcery.event_store.event import (
+    Encryption,
+    Position,
+    RawEvent,
+    RecordedRaw,
+    Serde,
+)
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.factory import (
     BackendFactory,
@@ -25,6 +30,8 @@ from event_sourcery.event_store.factory import (
     no_filter,
 )
 from event_sourcery.event_store.interfaces import (
+    EncryptionKeyStorageStrategy,
+    EncryptionStrategy,
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
     StorageStrategy,
@@ -100,7 +107,7 @@ class InMemorySubscription(Iterator[list[RecordedRaw]]):
             record = self._pop_record()
             if record is not None:
                 batch.append(record)
-            time.sleep(0.1)
+            time.sleep(0.01)
             if time.monotonic() - start > self._timelimit.total_seconds():
                 break
 
@@ -311,7 +318,7 @@ class Config(BaseModel):
 class InMemoryBackendFactory(BackendFactory):
     """Lightweight in-memory backend factory for testing and development."""
 
-    serde = Serde(Event.__registry__)
+    serde = Serde(EventRegistry())
 
     _config: Config = field(default_factory=Config)
     _storage: Storage = field(default_factory=Storage)
@@ -357,3 +364,37 @@ class InMemoryBackendFactory(BackendFactory):
     def without_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         self._outbox_strategy = None
         return self
+
+    def with_encryption(
+        self,
+        strategy: EncryptionStrategy,
+        key_storage: EncryptionKeyStorageStrategy,
+    ) -> Self:
+        registry = self.serde.registry
+        self.serde = Serde(
+            registry,
+            encryption=Encryption(
+                registry=registry,
+                strategy=strategy,
+                key_storage=key_storage,
+            ),
+        )
+        return self
+
+
+@dataclass
+class InMemoryKeyStorage(EncryptionKeyStorageStrategy):
+    _keys: dict[tuple[TenantId, str], bytes] = field(default_factory=dict)
+    _tenant_id: TenantId = DEFAULT_TENANT
+
+    def get(self, subject_id: str) -> bytes | None:
+        return self._keys.get((self._tenant_id, subject_id))
+
+    def store(self, subject_id: str, key: bytes) -> None:
+        self._keys[(self._tenant_id, subject_id)] = key
+
+    def delete(self, subject_id: str) -> None:
+        self._keys.pop((self._tenant_id, subject_id), None)
+
+    def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
+        return replace(self, _tenant_id=tenant_id)

@@ -1,5 +1,8 @@
 __all__ = [
     "Context",
+    "DataSubject",
+    "Encrypted",
+    "Encryption",
     "Entry",
     "Event",
     "EventRegistry",
@@ -12,8 +15,10 @@ __all__ = [
 ]
 
 
-from event_sourcery.event_store.event.dto import (
+from event_sourcery.event_store.event._dto import (
     Context,
+    DataSubject,
+    Encrypted,
     Entry,
     Event,
     Position,
@@ -22,5 +27,6 @@ from event_sourcery.event_store.event.dto import (
     RecordedRaw,
     WrappedEvent,
 )
-from event_sourcery.event_store.event.registry import EventRegistry
-from event_sourcery.event_store.event.serde import Serde
+from event_sourcery.event_store.event._encryption import Encryption
+from event_sourcery.event_store.event._registry import EventRegistry
+from event_sourcery.event_store.event._serde import Serde

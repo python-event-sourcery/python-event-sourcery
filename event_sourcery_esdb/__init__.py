@@ -15,13 +15,14 @@ from event_sourcery import event_store as es
 from event_sourcery.event_store import (
     Backend,
     BackendFactory,
-    Event,
     EventRegistry,
     EventStore,
 )
-from event_sourcery.event_store.event import Serde
+from event_sourcery.event_store.event import Encryption, Serde
 from event_sourcery.event_store.factory import NoOutboxStorageStrategy, no_filter
 from event_sourcery.event_store.interfaces import (
+    EncryptionKeyStorageStrategy,
+    EncryptionStrategy,
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
 )
@@ -45,7 +46,7 @@ class Config(BaseModel):
 class ESDBBackendFactory(BackendFactory):
     esdb_client: EventStoreDBClient
     config: Config = field(default_factory=Config)
-    _serde: Serde = field(default_factory=lambda: Serde(Event.__registry__))
+    _serde: Serde = field(default_factory=lambda: Serde(EventRegistry()))
     _outbox_strategy: OutboxStorageStrategy = field(
         default_factory=NoOutboxStorageStrategy
     )
@@ -85,4 +86,20 @@ class ESDBBackendFactory(BackendFactory):
 
     def without_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         self._outbox_strategy = NoOutboxStorageStrategy()
+        return self
+
+    def with_encryption(
+        self,
+        strategy: EncryptionStrategy,
+        key_storage: EncryptionKeyStorageStrategy,
+    ) -> Self:
+        registry = self._serde.registry
+        self._serde = Serde(
+            registry,
+            encryption=Encryption(
+                registry=registry,
+                strategy=strategy,
+                key_storage=key_storage,
+            ),
+        )
         return self

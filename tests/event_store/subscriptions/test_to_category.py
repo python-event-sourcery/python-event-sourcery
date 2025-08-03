@@ -68,8 +68,8 @@ def test_stop_iterating_after_given_timeout(
     given: Given,
     then: Then,
 ) -> None:
-    timebox = given.expected_execution(seconds=1)
-    subscription = given.subscription(to_category="Category", timelimit=1)
+    timebox = given.expected_execution(seconds=0.2)
+    subscription = given.subscription(to_category="Category", timelimit=0.2)
     with timebox:
         then(subscription).received_no_new_records()
 

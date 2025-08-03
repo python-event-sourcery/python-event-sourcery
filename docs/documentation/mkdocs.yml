@@ -18,10 +18,12 @@ nav:
         - '🎛️ Event Sourcing': 'recipes/event_sourcing.md'
         - '👫️ Multitenancy': 'recipes/multitenancy.md'
         - '📷 Snapshots': 'recipes/snapshots.md'
+        - '🔒 Data privacy': 'recipes/data_privacy.md'
     - '<b>API Reference</b>':
         - 'Event Store': 'reference/event_store.md'
         - 'StreamId': 'reference/stream_id.md'
         - 'Event': 'reference/event.md'
+        - 'Encrypted': 'reference/encrypted.md'
         - 'WrappedEvent': 'reference/wrapped_event.md'
         - 'Recorded': 'reference/recorded.md'
         - 'BackendFactory': 'reference/backend_factory.md'

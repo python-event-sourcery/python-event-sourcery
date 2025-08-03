@@ -18,8 +18,8 @@ def test_returns_smaller_batch_when_timelimit_hits(
     when: When,
     then: Then,
 ) -> None:
-    timebox = given.expected_execution(seconds=1)
-    subscription = given.batch_subscription(of_size=2, timelimit=1)
+    timebox = given.expected_execution(seconds=0.2)
+    subscription = given.batch_subscription(of_size=2, timelimit=0.2)
 
     when.stream().receives(event := an_event())
 

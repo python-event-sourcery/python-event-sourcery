@@ -1,1 +1,1 @@
-::: event_sourcery.event_store.event.dto.Recorded
+::: event_sourcery.event_store.event.Recorded

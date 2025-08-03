@@ -4,10 +4,12 @@ from contextlib import contextmanager
 from copy import copy
 from dataclasses import dataclass, field, replace
 from functools import singledispatchmethod
+from pprint import pformat
 from typing import TypeVar, cast
-from unittest.mock import Mock
+from unittest.mock import ANY, Mock
 
 from _pytest.fixtures import SubRequest
+from deepdiff import DeepDiff
 from pytest import approx
 from typing_extensions import Self
 
@@ -56,14 +58,19 @@ class Stream:
         return list(self.store.load_stream(self.id))
 
     def loads_only(self, events: Sequence[es.WrappedEvent]) -> None:
-        assert self.events == list(events)
+        expected = list(events)
+        assert self.events == expected, pformat(
+            DeepDiff(self.events, expected, exclude_types=[type(ANY)])
+        )
 
     def loads(self, events: Sequence[es.WrappedEvent | es.Event]) -> None:
-        events = [
+        expected = [
             e if isinstance(e, es.WrappedEvent) else any_wrapped_event(e)
             for e in events
         ]
-        assert self.events == list(events)
+        assert self.events == expected, pformat(
+            DeepDiff(self.events, expected, exclude_types=[type(ANY)])
+        )
 
     def is_empty(self) -> None:
         assert self.events == []
@@ -147,6 +154,23 @@ T = TypeVar("T")
 
 
 @dataclass
+class Encryption:
+    encryption: es.event.Encryption
+
+    def store(self, key: bytes, for_subject: str) -> Self:
+        self.encryption.key_storage.store(for_subject, key)
+        return self
+
+    def shred_key(self, for_subject: str) -> Self:
+        self.encryption.shred(for_subject)
+        return self
+
+    def key_for_subject(self, for_subject: str, is_key: bytes) -> None:
+        key = self.encryption.key_storage.get(for_subject)
+        assert key == is_key
+
+
+@dataclass
 class Step:
     backend: Backend | TransactionalBackend
     request: SubRequest
@@ -154,6 +178,7 @@ class Step:
     def in_tenant_mode(self, for_tenant: TenantId) -> Self:
         backend = copy(self.backend)
         backend.event_store = backend.event_store.scoped_for_tenant(for_tenant)
+        backend.serde = backend.serde.scoped_for_tenant(for_tenant)
         return replace(self, backend=backend)
 
     def without_tenant(self) -> Self:
@@ -166,6 +191,10 @@ class Step:
     @property
     def subscriber(self) -> PositionPhase:
         return self.backend.subscriber
+
+    @property
+    def encryption(self) -> Encryption:
+        return Encryption(self.backend.serde.encryption)
 
     def __call__(self, value: T) -> T:
         return value
@@ -191,7 +220,7 @@ class Step:
         to: Position | None = None,
         to_category: str | None = None,
         to_events: list[type[Event]] | None = None,
-        timelimit: int | float = 1,
+        timelimit: int | float = 0.1,
     ) -> Subscription:
         builder = self._create_subscription_builder(to, to_category, to_events)
         return Subscription(builder.build_iter(timelimit))
@@ -202,7 +231,7 @@ class Step:
         to: Position | None = None,
         to_category: str | None = None,
         to_events: list[type[Event]] | None = None,
-        timelimit: int | float = 1,
+        timelimit: int | float = 0.1,
     ) -> BatchSubscription:
         builder = self._create_subscription_builder(to, to_category, to_events)
         return BatchSubscription(builder.build_batch(of_size, timelimit))
@@ -240,7 +269,7 @@ class Given(Step):
         start = time.monotonic()
         yield
         took = time.monotonic() - start
-        assert took == approx(seconds, 0.15), (
+        assert took == approx(seconds, 0.2), (
             f"Expected timing {seconds:.02f}s, got {took:.02f}s"
         )
 
