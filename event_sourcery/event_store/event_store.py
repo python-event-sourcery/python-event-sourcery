@@ -25,7 +25,7 @@ class EventStore:
         self._storage_strategy = storage_strategy
         self._serde = serde
 
-    def load_stream(
+    async def load_stream(
         self,
         stream_id: StreamId,
         start: int | None = None,
@@ -49,11 +49,11 @@ class EventStore:
         Returns:
             A sequence of events or empty list if the stream doesn't exist.
         """
-        events = self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
+        events = await self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
         return self._serde.deserialize_many(events)
 
     @singledispatchmethod
-    def append(
+    async def append(
         self,
         first: WrappedEvent,
         *events: WrappedEvent,
@@ -117,7 +117,7 @@ class EventStore:
     ) -> Sequence[WrappedEvent]:
         return [WrappedEvent.wrap(event=event, version=None) for event in events]
 
-    def _append(
+    async def _append(
         self,
         stream_id: StreamId,
         events: Sequence[WrappedEvent],
@@ -133,13 +133,13 @@ class EventStore:
         else:
             versioning = NO_VERSIONING
 
-        self._storage_strategy.insert_events(
+        await self._storage_strategy.insert_events(
             stream_id=stream_id,
             versioning=versioning,
             events=self._serde.serialize_many(events, stream_id),
         )
 
-    def delete_stream(self, stream_id: StreamId) -> None:
+    async def delete_stream(self, stream_id: StreamId) -> None:
         """Deletes a stream with a given ID.
 
         If a stream does not exist, this method does nothing.
@@ -156,9 +156,9 @@ class EventStore:
         Returns:
             None
         """
-        self._storage_strategy.delete_stream(stream_id)
+        await self._storage_strategy.delete_stream(stream_id)
 
-    def save_snapshot(self, stream_id: StreamId, snapshot: WrappedEvent) -> None:
+    async def save_snapshot(self, stream_id: StreamId, snapshot: WrappedEvent) -> None:
         """Saves a snapshot of the stream.
 
         Examples:
@@ -176,10 +176,10 @@ class EventStore:
         """
 
         serialized = self._serde.serialize(event=snapshot, stream_id=stream_id)
-        self._storage_strategy.save_snapshot(serialized)
+        await self._storage_strategy.save_snapshot(serialized)
 
     @property
-    def position(self) -> Position | None:
+    async def position(self) -> Position | None:
         """Returns the current position of the event store.
 
         Examples:
@@ -189,7 +189,7 @@ class EventStore:
             Position(15)  # Some events were saved
 
         """
-        return self._storage_strategy.current_position
+        return await self._storage_strategy.current_position
 
     def scoped_for_tenant(self, tenant_id: TenantId = DEFAULT_TENANT) -> "EventStore":
         """Factory method to create a new event store instance scoped to a tenant.

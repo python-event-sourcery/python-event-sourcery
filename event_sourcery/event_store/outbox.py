@@ -9,13 +9,13 @@ class Outbox:
         self._strategy = strategy
         self._serde = serde
 
-    def run(
+    async def run(
         self,
         publisher: Callable[[Recorded], None],
         limit: int = 100,
     ) -> None:
-        stream = self._strategy.outbox_entries(limit=limit)
-        for entry in stream:
+        stream = await self._strategy.outbox_entries(limit=limit)
+        async for entry in stream:
             with entry as raw_record:
                 event = self._serde.deserialize(raw_record.entry)
                 record = Recorded(

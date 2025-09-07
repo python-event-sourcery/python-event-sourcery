@@ -1,28 +1,30 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
+from typing import AsyncGenerator, AsyncIterator
 
 import pytest
-from kurrentdbclient import KurrentDBClient, StreamState
+from kurrentdbclient import AsyncKurrentDBClient, StreamState
 
 from event_sourcery_kurrentdb import KurrentDBBackendFactory
 
 
 @contextmanager
-def kurrentdb_client() -> Iterator[KurrentDBClient]:
-    client = KurrentDBClient(uri="kurrentdb://localhost:2113?Tls=false")
+async def kurrentdb_client() -> AsyncGenerator[AsyncKurrentDBClient, None]:
+    client = AsyncKurrentDBClient(uri="kurrentdb://localhost:2113?Tls=false")
     commit_position = client.get_commit_position()
     yield client
     for event in client._connection.streams.read(commit_position=commit_position):
         if not event.stream_name.startswith("$"):
-            client.delete_stream(
+            await client.delete_stream(
                 event.stream_name,
                 current_version=StreamState.ANY,
             )
-    for sub in client.list_subscriptions():
-        client.delete_subscription(sub.group_name)
+    subscriptions = await client.list_subscriptions()
+    for sub in subscriptions:
+        await client.delete_subscription(sub.group_name)
 
 
 @pytest.fixture()
-def kurrentdb(request: pytest.FixtureRequest) -> Iterator[KurrentDBBackendFactory]:
-    with kurrentdb_client() as client:
+async def kurrentdb(request: pytest.FixtureRequest) -> AsyncIterator[KurrentDBBackendFactory]:
+    async with kurrentdb_client() as client:
         yield KurrentDBBackendFactory(client)

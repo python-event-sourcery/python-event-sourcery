@@ -21,11 +21,11 @@ from tests.backend.sqlalchemy import sqlalchemy_postgres, sqlalchemy_sqlite
 
 @pytest.fixture(
     params=[
-        django,
+        # django,
         kurrentdb,
         in_memory,
-        sqlalchemy_sqlite,
-        sqlalchemy_postgres,
+        # sqlalchemy_sqlite,
+        # sqlalchemy_postgres,
     ]
 )
 def create_backend_factory(

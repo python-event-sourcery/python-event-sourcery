@@ -2,7 +2,7 @@ import abc
 from collections.abc import Iterator
 from contextlib import AbstractContextManager
 from datetime import timedelta
-from typing import Any, Protocol
+from typing import Any, Protocol, AsyncIterator
 
 from typing_extensions import Self
 
@@ -18,15 +18,15 @@ class OutboxFiltererStrategy(Protocol):
 
 class OutboxStorageStrategy(abc.ABC):
     @abc.abstractmethod
-    def outbox_entries(
+    async def outbox_entries(
         self, limit: int
-    ) -> Iterator[AbstractContextManager[RecordedRaw]]:
+    ) -> AsyncIterator[AbstractContextManager[RecordedRaw]]:
         pass
 
 
 class SubscriptionStrategy(abc.ABC):
     @abc.abstractmethod
-    def subscribe_to_all(
+    async def subscribe_to_all(
         self,
         start_from: Position,
         batch_size: int,
@@ -35,7 +35,7 @@ class SubscriptionStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def subscribe_to_category(
+    async def subscribe_to_category(
         self,
         start_from: Position,
         batch_size: int,
@@ -45,7 +45,7 @@ class SubscriptionStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def subscribe_to_events(
+    async def subscribe_to_events(
         self,
         start_from: Position,
         batch_size: int,
@@ -57,7 +57,7 @@ class SubscriptionStrategy(abc.ABC):
 
 class StorageStrategy(abc.ABC):
     @abc.abstractmethod
-    def fetch_events(
+    async def fetch_events(
         self,
         stream_id: StreamId,
         start: int | None = None,
@@ -66,22 +66,22 @@ class StorageStrategy(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def insert_events(
+    async def insert_events(
         self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
     ) -> None:
         pass
 
     @abc.abstractmethod
-    def save_snapshot(self, snapshot: RawEvent) -> None:
+    async def save_snapshot(self, snapshot: RawEvent) -> None:
         pass
 
     @abc.abstractmethod
-    def delete_stream(self, stream_id: StreamId) -> None:
+    async def delete_stream(self, stream_id: StreamId) -> None:
         pass
 
     @property
     @abc.abstractmethod
-    def current_position(self) -> Position | None:
+    async def current_position(self) -> Position | None:
         pass
 
     @abc.abstractmethod
@@ -91,15 +91,15 @@ class StorageStrategy(abc.ABC):
 
 class EncryptionKeyStorageStrategy(abc.ABC):
     @abc.abstractmethod
-    def get(self, subject_id: str) -> bytes | None:
+    async def get(self, subject_id: str) -> bytes | None:
         pass
 
     @abc.abstractmethod
-    def store(self, subject_id: str, key: bytes) -> None:
+    async def store(self, subject_id: str, key: bytes) -> None:
         pass
 
     @abc.abstractmethod
-    def delete(self, subject_id: str) -> None:
+    async def delete(self, subject_id: str) -> None:
         pass
 
     @abc.abstractmethod
@@ -109,9 +109,9 @@ class EncryptionKeyStorageStrategy(abc.ABC):
 
 class EncryptionStrategy(abc.ABC):
     @abc.abstractmethod
-    def encrypt(self, data: Any, key: bytes) -> str:
+    async def encrypt(self, data: Any, key: bytes) -> str:
         pass
 
     @abc.abstractmethod
-    def decrypt(self, data: str, key: bytes) -> Any:
+    async def decrypt(self, data: str, key: bytes) -> Any:
         pass

@@ -7,7 +7,7 @@ __all__ = [
 from dataclasses import dataclass, field
 from typing import TypeAlias
 
-from kurrentdbclient import KurrentDBClient
+from kurrentdbclient import AsyncKurrentDBClient
 from pydantic import BaseModel, ConfigDict, PositiveFloat, PositiveInt
 from typing_extensions import Self
 
@@ -44,7 +44,7 @@ class Config(BaseModel):
 
 @dataclass(repr=False)
 class KurrentDBBackendFactory(BackendFactory):
-    kurrentdb_client: KurrentDBClient
+    kurrentdb_client: AsyncKurrentDBClient
     config: Config = field(default_factory=Config)
     _serde: Serde = field(default_factory=lambda: Serde(EventRegistry()))
     _outbox_strategy: OutboxStorageStrategy = field(

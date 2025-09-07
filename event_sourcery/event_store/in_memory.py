@@ -5,6 +5,7 @@ from copy import copy
 from dataclasses import dataclass, field, replace
 from datetime import timedelta
 from operator import getitem
+from typing import AsyncIterator
 
 from pydantic import BaseModel, ConfigDict, PositiveInt
 from typing_extensions import Self
@@ -151,9 +152,9 @@ class InMemoryOutboxStorageStrategy(OutboxStorageStrategy):
     def put_into_outbox(self, records: list[RecordedRaw]) -> None:
         self._outbox.extend([(e, 0) for e in records if self._filterer(e.entry)])
 
-    def outbox_entries(
+    async def outbox_entries(
         self, limit: int
-    ) -> Iterator[AbstractContextManager[RecordedRaw]]:
+    ) -> AsyncIterator[AbstractContextManager[RecordedRaw]]:
         for record in self._outbox[:limit]:
             yield self._publish_context(*record)
 
@@ -183,7 +184,7 @@ class InMemoryOutboxStorageStrategy(OutboxStorageStrategy):
 class InMemorySubscriptionStrategy(SubscriptionStrategy):
     _storage: Storage
 
-    def subscribe_to_all(
+    async def subscribe_to_all(
         self,
         start_from: Position,
         batch_size: int,
@@ -191,7 +192,7 @@ class InMemorySubscriptionStrategy(SubscriptionStrategy):
     ) -> Iterator[list[RecordedRaw]]:
         return InMemorySubscription(self._storage, start_from, batch_size, timelimit)
 
-    def subscribe_to_category(
+    async def subscribe_to_category(
         self,
         start_from: Position,
         batch_size: int,
@@ -206,7 +207,7 @@ class InMemorySubscriptionStrategy(SubscriptionStrategy):
             category,
         )
 
-    def subscribe_to_events(
+    async def subscribe_to_events(
         self,
         start_from: Position,
         batch_size: int,
@@ -236,7 +237,7 @@ class InMemoryStorageStrategy(StorageStrategy):
         self._outbox = outbox_strategy
         self._tenant_id = tenant_id
 
-    def fetch_events(
+    async def fetch_events(
         self,
         stream_id: StreamId,
         start: int | None = None,
@@ -250,11 +251,11 @@ class InMemoryStorageStrategy(StorageStrategy):
         )
         return [r.entry for r in stream if r.tenant_id == self._tenant_id]
 
-    def insert_events(
+    async def insert_events(
         self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
     ) -> None:
         position = self.current_position or 0
-        self._ensure_stream(stream_id=stream_id, versioning=versioning)
+        await self._ensure_stream(stream_id=stream_id, versioning=versioning)
         records = [
             RecordedRaw(entry=raw, position=position, tenant_id=self._tenant_id)
             for position, raw in enumerate(events, start=position + 1)
@@ -264,7 +265,7 @@ class InMemoryStorageStrategy(StorageStrategy):
             self._outbox.put_into_outbox(records)
         self._dispatcher.dispatch(*records)
 
-    def save_snapshot(self, snapshot: RawEvent) -> None:
+    async def save_snapshot(self, snapshot: RawEvent) -> None:
         record = RecordedRaw(
             entry=snapshot,
             position=(self.current_position or 0) + 1,
@@ -272,7 +273,7 @@ class InMemoryStorageStrategy(StorageStrategy):
         )
         self._storage.replace(with_snapshot=record)
 
-    def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
+    async def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         if stream_id not in self._storage:
             self._storage.create(stream_id, versioning)
 
@@ -290,12 +291,12 @@ class InMemoryStorageStrategy(StorageStrategy):
                     versioning.expected_version,
                 )
 
-    def delete_stream(self, stream_id: StreamId) -> None:
+    async def delete_stream(self, stream_id: StreamId) -> None:
         if stream_id in self._storage:
             self._storage.delete(stream_id)
 
     @property
-    def current_position(self) -> Position | None:
+    async def current_position(self) -> Position | None:
         current_position = self._storage.current_position
         return current_position and Position(current_position)
 
@@ -387,14 +388,14 @@ class InMemoryKeyStorage(EncryptionKeyStorageStrategy):
     _keys: dict[tuple[TenantId, str], bytes] = field(default_factory=dict)
     _tenant_id: TenantId = DEFAULT_TENANT
 
-    def get(self, subject_id: str) -> bytes | None:
+    async def get(self, subject_id: str) -> bytes | None:
         return self._keys.get((self._tenant_id, subject_id))
 
-    def store(self, subject_id: str, key: bytes) -> None:
+    async def store(self, subject_id: str, key: bytes) -> None:
         self._keys[(self._tenant_id, subject_id)] = key
 
-    def delete(self, subject_id: str) -> None:
+    async def delete(self, subject_id: str) -> None:
         self._keys.pop((self._tenant_id, subject_id), None)
 
-    def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
+    async def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
         return replace(self, _tenant_id=tenant_id)
