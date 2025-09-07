@@ -27,9 +27,9 @@ from event_sourcery.event_store.interfaces import (
     OutboxStorageStrategy,
 )
 from event_sourcery.event_store.outbox import Outbox
-from event_sourcery_esdb.event_store import ESDBStorageStrategy
-from event_sourcery_esdb.outbox import ESDBOutboxStorageStrategy
-from event_sourcery_esdb.subscription import ESDBSubscriptionStrategy
+from event_sourcery_kurrentdb.event_store import ESDBStorageStrategy
+from event_sourcery_kurrentdb.outbox import ESDBOutboxStorageStrategy
+from event_sourcery_kurrentdb.subscription import ESDBSubscriptionStrategy
 
 Seconds: TypeAlias = PositiveFloat
 

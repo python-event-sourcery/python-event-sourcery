@@ -4,11 +4,11 @@ from contextlib import contextmanager
 import pytest
 from esdbclient import EventStoreDBClient, StreamState
 
-from event_sourcery_esdb import ESDBBackendFactory
+from event_sourcery_kurrentdb import ESDBBackendFactory
 
 
 @contextmanager
-def esdb_client() -> Iterator[EventStoreDBClient]:
+def kurrentdb_client() -> Iterator[EventStoreDBClient]:
     client = EventStoreDBClient(uri="esdb://localhost:2113?Tls=false")
     commit_position = client.get_commit_position()
     yield client
@@ -23,6 +23,6 @@ def esdb_client() -> Iterator[EventStoreDBClient]:
 
 
 @pytest.fixture()
-def esdb(request: pytest.FixtureRequest) -> Iterator[ESDBBackendFactory]:
-    with esdb_client() as client:
+def kurrentdb(request: pytest.FixtureRequest) -> Iterator[ESDBBackendFactory]:
+    with kurrentdb_client() as client:
         yield ESDBBackendFactory(client)

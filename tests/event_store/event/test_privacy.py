@@ -253,7 +253,9 @@ def test_withdrawn_only_events_with_shreded_key(
     )
 
 
-@pytest.mark.skip_backend(backend="esdb", reason="ESDB cannot use stream names")
+@pytest.mark.skip_backend(
+    backend="kurrentdb", reason="KurrentDB cannot use stream names"
+)
 def test_use_stream_name_when_no_data_subject(
     given: Given,
     when: When,

@@ -16,7 +16,7 @@ from event_sourcery.event_store import (
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery.event_store.tenant_id import DEFAULT_TENANT
-from event_sourcery_esdb import dto, stream
+from event_sourcery_kurrentdb import dto, stream
 
 
 @dataclass(repr=False)

@@ -14,15 +14,15 @@ from event_sourcery_sqlalchemy import (
 )
 from tests import mark
 from tests.backend.django import django
-from tests.backend.esdb import esdb
 from tests.backend.in_memory import in_memory
+from tests.backend.kurrentdb import kurrentdb
 from tests.backend.sqlalchemy import sqlalchemy_postgres, sqlalchemy_sqlite
 
 
 @pytest.fixture(
     params=[
         django,
-        esdb,
+        kurrentdb,
         in_memory,
         sqlalchemy_sqlite,
         sqlalchemy_postgres,
@@ -47,7 +47,7 @@ def create_backend_factory(
                             outbox_attempts=1, gap_retry_interval=timedelta(seconds=0.1)
                         ),
                     )
-            case "django" | "in_memory" | "esdb":
+            case "django" | "in_memory" | "kurrentdb":
                 yield request.getfixturevalue(backend_name)
             case _:
                 raise NotImplementedError

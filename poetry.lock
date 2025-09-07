@@ -311,7 +311,7 @@ description = "Python gRPC Client for EventStoreDB"
 optional = true
 python-versions = "<4.0,>=3.8"
 groups = ["main"]
-markers = "extra == \"esdb\""
+markers = "extra == \"kurrentdb\""
 files = [
     {file = "esdbclient-1.1.4-py3-none-any.whl", hash = "sha256:a186859a57e364ff61cf53bb1ce5893dd8fd89c10f006c69c5724923af504df9"},
     {file = "esdbclient-1.1.4.tar.gz", hash = "sha256:2b18a33a4e005996cf86b5c23e39fb81418d8a1286edd4cdb432e74dda07548a"},
@@ -469,7 +469,7 @@ description = "HTTP/2-based RPC framework"
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "extra == \"esdb\""
+markers = "extra == \"kurrentdb\""
 files = [
     {file = "grpcio-1.68.1-cp310-cp310-linux_armv7l.whl", hash = "sha256:d35740e3f45f60f3c37b1e6f2f4702c23867b9ce21c6410254c9c682237da68d"},
     {file = "grpcio-1.68.1-cp310-cp310-macosx_12_0_universal2.whl", hash = "sha256:d99abcd61760ebb34bdff37e5a3ba333c5cc09feda8c1ad42547bea0416ada78"},
@@ -995,7 +995,7 @@ description = ""
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "extra == \"esdb\""
+markers = "extra == \"kurrentdb\""
 files = [
     {file = "protobuf-5.28.2-cp310-abi3-win32.whl", hash = "sha256:eeea10f3dc0ac7e6b4933d32db20662902b4ab81bf28df12218aa389e9c2102d"},
     {file = "protobuf-5.28.2-cp310-abi3-win_amd64.whl", hash = "sha256:2c69461a7fcc8e24be697624c09a839976d82ae75062b11a0972e41fd2cd9132"},
@@ -1740,10 +1740,10 @@ watchmedo = ["PyYAML (>=3.10)"]
 
 [extras]
 django = ["django"]
-esdb = ["esdbclient"]
+kurrentdb = ["esdbclient"]
 sqlalchemy = ["SQLAlchemy"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "1467add4583ad2481e6df9be901937bcd51cb77a7cd78827ee378206dc7b3351"
+content-hash = "8509204b5524ec411798123df5460063ab2f34cca53d3738d5cd633bac72c69b"

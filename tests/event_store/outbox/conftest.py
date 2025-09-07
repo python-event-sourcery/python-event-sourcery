@@ -10,7 +10,7 @@ from django.core.management import call_command as django_command
 
 import event_sourcery
 import event_sourcery_django
-import event_sourcery_esdb
+import event_sourcery_kurrentdb
 import event_sourcery_sqlalchemy
 from event_sourcery.event_store import (
     Backend,
@@ -20,10 +20,10 @@ from event_sourcery.event_store import (
 )
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery_django import DjangoBackendFactory
-from event_sourcery_esdb import ESDBBackendFactory
+from event_sourcery_kurrentdb import ESDBBackendFactory
 from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
 from tests import mark
-from tests.backend.esdb import esdb_client
+from tests.backend.kurrentdb import kurrentdb_client
 from tests.backend.sqlalchemy import sqlalchemy_postgres, sqlalchemy_sqlite
 
 
@@ -33,11 +33,11 @@ def max_attempts() -> int:
 
 
 @pytest.fixture()
-def esdb(max_attempts: int) -> Generator[ESDBBackendFactory, None, None]:
-    with esdb_client() as client:
+def kurrentdb(max_attempts: int) -> Generator[ESDBBackendFactory, None, None]:
+    with kurrentdb_client() as client:
         yield ESDBBackendFactory(
             client,
-            event_sourcery_esdb.Config(
+            event_sourcery_kurrentdb.Config(
                 timeout=1,
                 outbox_name=f"pyes-outbox-test-{uuid4().hex}",
                 outbox_attempts=max_attempts,
@@ -66,7 +66,7 @@ def in_memory(max_attempts: int) -> BackendFactory:
 @pytest.fixture(
     params=[
         django,
-        esdb,
+        kurrentdb,
         in_memory,
         sqlalchemy_sqlite,
         sqlalchemy_postgres,
@@ -91,7 +91,7 @@ def create_backend_factory(
                             outbox_attempts=max_attempts,
                         ),
                     )
-            case "django" | "in_memory" | "esdb":
+            case "django" | "in_memory" | "kurrentdb":
                 yield request.getfixturevalue(backend_name)
 
     return with_backend_factory

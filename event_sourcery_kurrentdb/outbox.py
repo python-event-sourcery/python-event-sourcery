@@ -13,7 +13,7 @@ from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
 )
-from event_sourcery_esdb import dto
+from event_sourcery_kurrentdb import dto
 
 logger = logging.getLogger(__name__)
 
