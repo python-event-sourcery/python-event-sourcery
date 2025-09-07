@@ -20,7 +20,7 @@ from event_sourcery_kurrentdb import dto, stream
 
 
 @dataclass(repr=False)
-class ESDBStorageStrategy(StorageStrategy):
+class KurrentDBStorageStrategy(StorageStrategy):
     _client: EventStoreDBClient
     _timeout: float | None
     _tenant_id: TenantId = DEFAULT_TENANT

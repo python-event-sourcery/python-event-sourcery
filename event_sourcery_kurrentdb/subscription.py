@@ -19,7 +19,7 @@ class BuilderCallable(Protocol):
 
 
 @dataclass(repr=False)
-class ESDBSubscriptionStrategy(SubscriptionStrategy):
+class KurrentDBSubscriptionStrategy(SubscriptionStrategy):
     _client: EventStoreDBClient
 
     @staticmethod

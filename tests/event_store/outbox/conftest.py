@@ -20,7 +20,7 @@ from event_sourcery.event_store import (
 )
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery_django import DjangoBackendFactory
-from event_sourcery_kurrentdb import ESDBBackendFactory
+from event_sourcery_kurrentdb import KurrentDBBackendFactory
 from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
 from tests import mark
 from tests.backend.kurrentdb import kurrentdb_client
@@ -33,9 +33,9 @@ def max_attempts() -> int:
 
 
 @pytest.fixture()
-def kurrentdb(max_attempts: int) -> Generator[ESDBBackendFactory, None, None]:
+def kurrentdb(max_attempts: int) -> Generator[KurrentDBBackendFactory, None, None]:
     with kurrentdb_client() as client:
-        yield ESDBBackendFactory(
+        yield KurrentDBBackendFactory(
             client,
             event_sourcery_kurrentdb.Config(
                 timeout=1,

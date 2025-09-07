@@ -14,7 +14,7 @@ class Name(UserString):
 
     def __init__(self, tenant_id: TenantId, stream_id: StreamId) -> None:
         if "-" in tenant_id:
-            raise IllegalTenantId("ESDB can't handle tenant id with '-'")
+            raise IllegalTenantId("KurrentDB can't handle tenant id with '-'")
         self.tenant_id = tenant_id
         self.uuid = stream_id
         super().__init__(self._as_string(self.uuid))
@@ -29,7 +29,9 @@ class Name(UserString):
 
     def _as_string(self, stream_id: StreamId) -> str:
         if stream_id.category and "-" in stream_id.category:
-            raise IllegalCategoryName("ESDB storage can't handle category with '-'")
+            raise IllegalCategoryName(
+                "KurrentDB storage can't handle category with '-'"
+            )
         return f"{stream_id.category or ''}-{self.tenant_id}-{stream_id.hex}"
 
     @property

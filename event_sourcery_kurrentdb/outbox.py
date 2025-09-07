@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(repr=False)
-class ESDBOutboxStorageStrategy(OutboxStorageStrategy):
+class KurrentDBOutboxStorageStrategy(OutboxStorageStrategy):
     _client: EventStoreDBClient
     _filterer: OutboxFiltererStrategy
     _outbox_name: str

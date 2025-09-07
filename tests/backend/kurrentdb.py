@@ -4,7 +4,7 @@ from contextlib import contextmanager
 import pytest
 from esdbclient import EventStoreDBClient, StreamState
 
-from event_sourcery_kurrentdb import ESDBBackendFactory
+from event_sourcery_kurrentdb import KurrentDBBackendFactory
 
 
 @contextmanager
@@ -23,6 +23,6 @@ def kurrentdb_client() -> Iterator[EventStoreDBClient]:
 
 
 @pytest.fixture()
-def kurrentdb(request: pytest.FixtureRequest) -> Iterator[ESDBBackendFactory]:
+def kurrentdb(request: pytest.FixtureRequest) -> Iterator[KurrentDBBackendFactory]:
     with kurrentdb_client() as client:
-        yield ESDBBackendFactory(client)
+        yield KurrentDBBackendFactory(client)
