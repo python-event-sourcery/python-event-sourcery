@@ -7,7 +7,7 @@ from tests.factories import OtherEvent, an_event
 from tests.matchers import any_record
 
 pytestmark = pytest.mark.skip_backend(
-    backend=["esdb", "in_memory"],
+    backend=["kurrentdb", "in_memory"],
     reason="Required only for SQL-based backends with transactions",
 )
 
@@ -111,7 +111,7 @@ class TestIgnoresEventsFromPendingTransactions:
 
 
 @pytest.mark.skip_backend(
-    backend=["esdb", "in_memory", "sqlalchemy_sqlite"],
+    backend=["kurrentdb", "in_memory", "sqlalchemy_sqlite"],
     reason="Required only for SQL-based backends with transactions. "
     "For 'sqlalchemy_sqlite' tests raise 'database table is locked'",
 )

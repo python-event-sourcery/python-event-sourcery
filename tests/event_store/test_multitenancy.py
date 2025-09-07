@@ -36,8 +36,8 @@ def test_streams_with_same_id_or_name_can_coexist(
     then.in_tenant_mode("second").stream(with_id=stream_id).loads_only([tenant_2_event])
 
 
-def test_esdb_cant_use_tenant_id_with_dash(esdb: BackendFactory) -> None:
-    event_store = esdb.build().event_store
+def test_kurrentdb_cant_use_tenant_id_with_dash(kurrentdb: BackendFactory) -> None:
+    event_store = kurrentdb.build().event_store
     illegal_tenant_event_store = event_store.scoped_for_tenant("illegal-tenant-id")
 
     with pytest.raises(IllegalTenantId):

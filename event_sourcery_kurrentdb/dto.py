@@ -2,10 +2,10 @@ import json
 from datetime import datetime
 from typing import Any, Literal, cast
 
-from esdbclient import NewEvent, RecordedEvent
+from kurrentdbclient import NewEvent, RecordedEvent
 
 from event_sourcery.event_store import Position, RawEvent, RecordedRaw
-from event_sourcery_esdb import stream
+from event_sourcery_kurrentdb import stream
 
 ES_PREFIX = "$es-"
 

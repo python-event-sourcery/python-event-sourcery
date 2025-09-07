@@ -1,8 +1,8 @@
 from dataclasses import dataclass, replace
 from typing import cast
 
-from esdbclient import EventStoreDBClient, StreamState
-from esdbclient.exceptions import NotFound
+from kurrentdbclient import KurrentDBClient, StreamState
+from kurrentdbclient.exceptions import NotFoundError
 from typing_extensions import Self
 
 from event_sourcery.event_store import (
@@ -16,12 +16,12 @@ from event_sourcery.event_store import (
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery.event_store.tenant_id import DEFAULT_TENANT
-from event_sourcery_esdb import dto, stream
+from event_sourcery_kurrentdb import dto, stream
 
 
 @dataclass(repr=False)
-class ESDBStorageStrategy(StorageStrategy):
-    _client: EventStoreDBClient
+class KurrentDBStorageStrategy(StorageStrategy):
+    _client: KurrentDBClient
     _timeout: float | None
     _tenant_id: TenantId = DEFAULT_TENANT
 
@@ -48,7 +48,7 @@ class ESDBStorageStrategy(StorageStrategy):
             if snapshot:
                 return [snapshot, *events]
             return events
-        except NotFound:
+        except NotFoundError:
             return []
 
     def _read_snapshot(self, name: stream.Name) -> RawEvent | None:
@@ -61,7 +61,7 @@ class ESDBStorageStrategy(StorageStrategy):
         try:
             last = next(iter(snapshots))
             return dto.snapshot(last)
-        except NotFound:
+        except NotFoundError:
             return None
 
     def insert_events(
@@ -115,7 +115,7 @@ class ESDBStorageStrategy(StorageStrategy):
                 )
             )
             return stream.Position(last.stream_position)
-        except NotFound:
+        except NotFoundError:
             return None
 
     def delete_stream(self, stream_id: StreamId) -> None:
@@ -126,7 +126,7 @@ class ESDBStorageStrategy(StorageStrategy):
                 current_version=StreamState.ANY,
                 timeout=self._timeout,
             )
-        except NotFound:
+        except NotFoundError:
             pass
 
     @property

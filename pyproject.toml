@@ -10,7 +10,7 @@ license = "MIT"
 packages = [
     { include = "event_sourcery" },
     { include = "event_sourcery_django" },
-    { include = "event_sourcery_esdb" },
+    { include = "event_sourcery_kurrentdb" },
     { include = "event_sourcery_sqlalchemy" },
 ]
 
@@ -19,7 +19,7 @@ python = ">=3.10,<4.0"
 pydantic = ">=2.0,<3"
 more-itertools = "*"
 SQLAlchemy = {version = ">=2.0", optional = true}
-esdbclient = {version = ">=1.0b3", optional = true}
+kurrentdbclient = {version = ">=1.0.6", optional = true}
 django = {version = ">=4,<6", optional = true}
 psycopg2-binary = ">2,<3"
 
@@ -39,7 +39,7 @@ deepdiff = "*"
 
 [tool.poetry.extras]
 sqlalchemy = ["SQLAlchemy"]
-esdb = ["esdbclient"]
+kurrentdb = ["kurrentdbclient"]
 django = ["django"]
 
 [tool.pytest]
@@ -57,7 +57,7 @@ branch = true
 source = [
     "event_sourcery",
     "event_sourcery_django",
-    "event_sourcery_esdb",
+    "event_sourcery_kurrentdb",
     "event_sourcery_sqlalchemy",
 ]
 omit = [

@@ -4,12 +4,12 @@ from datetime import timedelta
 from functools import partial
 from typing import Protocol
 
-import esdbclient.exceptions
-from esdbclient import EventStoreDBClient, RecordedEvent
+import kurrentdbclient.exceptions
+from kurrentdbclient import KurrentDBClient, RecordedEvent
 
 from event_sourcery.event_store import Position, RecordedRaw
 from event_sourcery.event_store.interfaces import SubscriptionStrategy
-from event_sourcery_esdb import dto
+from event_sourcery_kurrentdb import dto
 
 
 class BuilderCallable(Protocol):
@@ -19,8 +19,8 @@ class BuilderCallable(Protocol):
 
 
 @dataclass(repr=False)
-class ESDBSubscriptionStrategy(SubscriptionStrategy):
-    _client: EventStoreDBClient
+class KurrentDBSubscriptionStrategy(SubscriptionStrategy):
+    _client: KurrentDBClient
 
     @staticmethod
     def _iterator(
@@ -37,7 +37,7 @@ class ESDBSubscriptionStrategy(SubscriptionStrategy):
                 if len(batch) == size:
                     yield batch
                     batch = []
-            except esdbclient.exceptions.DeadlineExceeded:
+            except kurrentdbclient.exceptions.DeadlineExceededError:
                 yield batch
                 batch = []
                 subscription = builder()
