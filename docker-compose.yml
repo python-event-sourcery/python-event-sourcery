@@ -15,15 +15,14 @@ services:
       - '5672:5672'
       - '15672:15672'
 
-  eventstoredb:
-    image: eventstore/eventstore:latest
+  kurrentdb:
+    image: kurrentplatform/kurrentdb
     environment:
-      - EVENTSTORE_MEM_DB=True
-      - EVENTSTORE_CLUSTER_SIZE=1
-      - EVENTSTORE_RUN_PROJECTIONS=All
-      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
-      - EVENTSTORE_INSECURE=true
-      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+      - KURRENTDB_CLUSTER_SIZE=1
+      - KURRENTDB_RUN_PROJECTIONS=All
+      - KURRENTDB_START_STANDARD_PROJECTIONS=true
+      - KURRENTDB_INSECURE=true
+      - KURRENTDB_ENABLE_ATOM_PUB_OVER_HTTP=true
+      - KURRENTDB_NODE_PORT=2113
     ports:
-      - '1113:1113'
-      - '2113:2113'
+      - "2113:2113"

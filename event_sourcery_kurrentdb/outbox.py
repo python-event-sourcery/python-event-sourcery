@@ -4,9 +4,9 @@ from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass, field
 from itertools import islice
 
-from esdbclient import EventStoreDBClient, RecordedEvent
-from esdbclient.exceptions import DeadlineExceeded, NotFound
-from esdbclient.persistent import AbstractPersistentSubscription
+from kurrentdbclient import KurrentDBClient, RecordedEvent
+from kurrentdbclient.exceptions import DeadlineExceededError, NotFoundError
+from kurrentdbclient.persistent import AbstractPersistentSubscription
 
 from event_sourcery.event_store import RecordedRaw
 from event_sourcery.event_store.interfaces import (
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass(repr=False)
 class KurrentDBOutboxStorageStrategy(OutboxStorageStrategy):
-    _client: EventStoreDBClient
+    _client: KurrentDBClient
     _filterer: OutboxFiltererStrategy
     _outbox_name: str
     _max_publish_attempts: int
@@ -30,7 +30,7 @@ class KurrentDBOutboxStorageStrategy(OutboxStorageStrategy):
     def create_subscription(self) -> None:
         try:
             self._client.get_subscription_info(self._outbox_name, timeout=self._timeout)
-        except NotFound:
+        except NotFoundError:
             self._client.create_subscription_to_all(
                 self._outbox_name,
                 from_end=True,
@@ -70,7 +70,7 @@ class KurrentDBOutboxStorageStrategy(OutboxStorageStrategy):
                     record = dto.raw_record(entry)
                     if self._filterer(record.entry):
                         yield self._publish_context(entry, record)
-            except DeadlineExceeded:
+            except DeadlineExceededError:
                 pass
 
     @contextmanager

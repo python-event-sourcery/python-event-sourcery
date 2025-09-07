@@ -2,14 +2,14 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 
 import pytest
-from esdbclient import EventStoreDBClient, StreamState
+from kurrentdbclient import KurrentDBClient, StreamState
 
 from event_sourcery_kurrentdb import KurrentDBBackendFactory
 
 
 @contextmanager
-def kurrentdb_client() -> Iterator[EventStoreDBClient]:
-    client = EventStoreDBClient(uri="esdb://localhost:2113?Tls=false")
+def kurrentdb_client() -> Iterator[KurrentDBClient]:
+    client = KurrentDBClient(uri="kurrentdb://localhost:2113?Tls=false")
     commit_position = client.get_commit_position()
     yield client
     for event in client._connection.streams.read(commit_position=commit_position):

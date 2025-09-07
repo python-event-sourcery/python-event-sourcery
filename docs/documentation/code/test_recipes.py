@@ -61,11 +61,11 @@ def test_sqlalchemy_backend(base_with_configured_es_models):
 
 def test_kurrent_db():
     pass
-    # from esdbclient import EventStoreDBClient
-    # from event_sourcery_kurrentdb import ESDBBackendFactory
+    # from kurrentdb import KurrentDBClient
+    # from event_sourcery_kurrentdb import KurrentDBBackendFactory
     #
-    # client = EventStoreDBClient(uri="esdb://localhost:2113?Tls=false")
-    # factory = ESDBBackendFactory(client)
+    # client = KurrentDBClient(uri="kurrentdb://localhost:2113?Tls=false")
+    # factory = KurrentDBBackendFactory(client)
     # backend = factory.build()
 
 
