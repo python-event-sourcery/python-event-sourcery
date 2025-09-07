@@ -67,7 +67,9 @@ class EventRegistry:
 
     def _register_defined_events(self) -> None:
         for event_type in Event.__subclasses__():
-            event_type not in self._types_to_names and self.add(event_type)
+            not_registered_type = event_type not in self._types_to_names
+            not_registered_name = event_name(event_type) not in self._names_to_types
+            not_registered_type and not_registered_name and self.add(event_type)
 
     def add(self, event: type[TEvent]) -> type[TEvent]:
         """Add event subclass to the registry."""
