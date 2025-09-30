@@ -12,20 +12,16 @@ from event_sourcery.event_store.event._dto import (
 from event_sourcery.event_store.event._encryption import Encryption
 from event_sourcery.event_store.event._registry import EventRegistry
 from event_sourcery.event_store.stream_id import StreamId
-from event_sourcery.event_store.tenant_id import TenantId
 
 
 class Serde:
-    registry: EventRegistry
-    encryption: Encryption
-
     def __init__(
         self,
         registry: EventRegistry,
-        encryption: Encryption | None = None,
+        encryption: Encryption,
     ) -> None:
         self.registry = registry
-        self.encryption = encryption or Encryption(registry)
+        self.encryption = encryption
 
     def deserialize(self, event: RawEvent) -> WrappedEvent:
         event_as_dict = dataclasses.asdict(event)
@@ -77,6 +73,3 @@ class Serde:
         self, events: Sequence[WrappedEvent], stream_id: StreamId
     ) -> list[RawEvent]:
         return [self.serialize(event, stream_id) for event in events]
-
-    def scoped_for_tenant(self, tenant_id: TenantId) -> "Serde":
-        return Serde(self.registry, self.encryption.scoped_for_tenant(tenant_id))

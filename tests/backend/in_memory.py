@@ -1,8 +1,8 @@
 import pytest
 
-from event_sourcery.event_store import BackendFactory, InMemoryBackendFactory
+from event_sourcery.event_store import Backend, InMemoryBackend
 
 
 @pytest.fixture()
-def in_memory() -> BackendFactory:
-    return InMemoryBackendFactory()
+def in_memory() -> Backend:
+    return InMemoryBackend()

@@ -1,4 +1,3 @@
-from collections import defaultdict
 from collections.abc import Callable
 
 from event_sourcery.event_store.event import (
@@ -14,10 +13,14 @@ from event_sourcery.event_store.tenant_id import TenantId
 Listener = Callable[[WrappedEvent, StreamId, TenantId, Position | None], None]
 
 
+class DispatcherState(dict[type[Event], set[Listener]]):
+    pass
+
+
 class Dispatcher:
-    def __init__(self, serde: Serde) -> None:
-        self._listeners: dict[type[Event], set[Listener]] = defaultdict(set)
+    def __init__(self, serde: Serde, _state: DispatcherState) -> None:
         self._serde = serde
+        self._listeners: DispatcherState = _state
 
     def dispatch(self, *raws: RecordedRaw) -> None:
         for raw in raws:
@@ -34,8 +37,10 @@ class Dispatcher:
                     )
 
     def register(self, listener: Listener, to: type[Event]) -> None:
+        if to not in self._listeners:
+            self._listeners[to] = set()
         self._listeners[to].add(listener)
 
     def remove(self, listener: Listener, to: type[Event]) -> None:
-        if listener in self._listeners[to]:
+        if to in self._listeners and listener in self._listeners[to]:
             self._listeners[to].remove(listener)

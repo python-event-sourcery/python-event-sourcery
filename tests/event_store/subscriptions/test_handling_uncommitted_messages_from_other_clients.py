@@ -1,15 +1,64 @@
-import pytest
+from collections.abc import Iterator
+from pathlib import Path
 
-from event_sourcery.event_store import StreamId
+import pytest
+from django.db import transaction as django_transaction
+
+from event_sourcery.event_store import Backend, StreamId
+from event_sourcery_django import DjangoBackend
+from event_sourcery_sqlalchemy import SQLAlchemyBackend
+from tests import mark
+from tests.backend.django import django
+from tests.backend.sqlalchemy import (
+    sqlalchemy_postgres,
+    sqlalchemy_postgres_session,
+    sqlalchemy_sqlite,
+    sqlalchemy_sqlite_session,
+)
 from tests.bdd import Given, Then, When
 from tests.event_store.subscriptions.other_client import OtherClient
 from tests.factories import OtherEvent, an_event
 from tests.matchers import any_record
 
-pytestmark = pytest.mark.skip_backend(
-    backend=["kurrentdb", "in_memory"],
-    reason="Required only for SQL-based backends with transactions",
-)
+
+@pytest.fixture(params=[django, sqlalchemy_postgres, sqlalchemy_sqlite])
+def clients(
+    request: pytest.FixtureRequest,
+    tmp_path: Path,
+) -> Iterator[tuple[Backend, OtherClient]]:
+    backend_name: str = request.param.__name__
+    backend: Backend = request.getfixturevalue(backend_name)
+    mark.skip_backend(request, backend_name)
+
+    match backend_name:
+        case "django":
+            other = OtherClient(DjangoBackend(), django_transaction.atomic)
+            yield backend, other
+            other.stop()
+        case "sqlalchemy_postgres":
+            with sqlalchemy_postgres_session() as session:
+                with session as s:
+                    other = OtherClient(SQLAlchemyBackend().configure(s), s.begin)
+                    yield backend, other
+                    other.stop()
+        case "sqlalchemy_sqlite":
+            with sqlalchemy_sqlite_session(tmp_path) as session:
+                with session as s:
+                    other = OtherClient(SQLAlchemyBackend().configure(s), s.begin)
+                    yield backend, other
+                    other.stop()
+
+
+@pytest.fixture()
+def backend(clients: tuple[Backend, OtherClient]) -> Backend:
+    return clients[0]
+
+
+@pytest.fixture()
+def other_client(clients: tuple[Backend, OtherClient]) -> Iterator[OtherClient]:
+    other = clients[1]
+    yield other
+    other.stop()
 
 
 class TestGetsEventsAfterOtherTransactionGetsCommitted:
@@ -111,7 +160,7 @@ class TestIgnoresEventsFromPendingTransactions:
 
 
 @pytest.mark.skip_backend(
-    backend=["kurrentdb", "in_memory", "sqlalchemy_sqlite"],
+    backend=["in_memory", "sqlalchemy_sqlite"],
     reason="Required only for SQL-based backends with transactions. "
     "For 'sqlalchemy_sqlite' tests raise 'database table is locked'",
 )

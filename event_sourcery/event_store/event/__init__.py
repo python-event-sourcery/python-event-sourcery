@@ -6,6 +6,8 @@ __all__ = [
     "Entry",
     "Event",
     "EventRegistry",
+    "NoEncryptionStrategy",
+    "NoKeyStorageStrategy",
     "Position",
     "RawEvent",
     "Recorded",
@@ -27,6 +29,10 @@ from event_sourcery.event_store.event._dto import (
     RecordedRaw,
     WrappedEvent,
 )
-from event_sourcery.event_store.event._encryption import Encryption
+from event_sourcery.event_store.event._encryption import (
+    Encryption,
+    NoEncryptionStrategy,
+    NoKeyStorageStrategy,
+)
 from event_sourcery.event_store.event._registry import EventRegistry
 from event_sourcery.event_store.event._serde import Serde

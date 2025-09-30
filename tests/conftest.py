@@ -2,22 +2,16 @@ import pytest
 from _pytest.fixtures import SubRequest
 
 from event_sourcery.event_store import (
-    BackendFactory,
+    Backend,
     EventStore,
-    InMemoryBackendFactory,
+    InMemoryBackend,
 )
-from event_sourcery.event_store.factory import Backend
 from tests import bdd
 
 
 @pytest.fixture()
-def event_store_factory() -> BackendFactory:
-    return InMemoryBackendFactory()
-
-
-@pytest.fixture()
-def backend(event_store_factory: BackendFactory) -> Backend:
-    return event_store_factory.build()
+def backend() -> Backend:
+    return InMemoryBackend()
 
 
 @pytest.fixture()

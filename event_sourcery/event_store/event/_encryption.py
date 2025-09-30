@@ -1,6 +1,6 @@
 import json
 from collections import UserDict
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass
 from typing import Any
 
 from pydantic import BaseModel
@@ -68,11 +68,9 @@ class Encryption:
       - Processing event encryption/decryption with field annotations
     """
 
-    registry: EventRegistry = field(default_factory=EventRegistry)
-    strategy: EncryptionStrategy = field(default_factory=NoEncryptionStrategy)
-    key_storage: EncryptionKeyStorageStrategy = field(
-        default_factory=NoKeyStorageStrategy
-    )
+    registry: EventRegistry
+    strategy: EncryptionStrategy
+    key_storage: EncryptionKeyStorageStrategy
 
     def encrypt(self, event: BaseModel, stream_id: StreamId) -> dict[str, Any]:
         event_type = type(event)
@@ -111,7 +109,6 @@ class Encryption:
         if key is None:
             return mask_value
         decrypted = self.strategy.decrypt(value, key)
-
         try:
             return json.loads(decrypted)
         except (json.JSONDecodeError, TypeError):
@@ -130,6 +127,3 @@ class Encryption:
 
     def shred(self, subject_id: str) -> None:
         self.key_storage.delete(subject_id)
-
-    def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
-        return replace(self, key_storage=self.key_storage.scoped_for_tenant(tenant_id))

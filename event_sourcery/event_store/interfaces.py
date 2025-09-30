@@ -2,7 +2,7 @@ import abc
 from collections.abc import Iterator
 from contextlib import AbstractContextManager
 from datetime import timedelta
-from typing import Any, Protocol
+from typing import Any, Protocol, runtime_checkable
 
 from typing_extensions import Self
 
@@ -12,6 +12,7 @@ from event_sourcery.event_store.tenant_id import TenantId
 from event_sourcery.event_store.versioning import Versioning
 
 
+@runtime_checkable
 class OutboxFiltererStrategy(Protocol):
     def __call__(self, entry: RawEvent) -> bool: ...
 

@@ -2,6 +2,7 @@ from unittest.mock import ANY
 
 import pytest
 
+from event_sourcery.event_store import Event, TransactionalBackend
 from tests.bdd import Given, Then, When
 from tests.factories import AnEvent, OtherEvent, an_event
 from tests.matchers import any_record
@@ -107,3 +108,19 @@ def test_receives_events_from_all_tenants(
     then(in_transaction).next_received_record_is(
         any_record(second, for_tenant="second")
     )
+
+
+def test_listener_is_registered_to_event_only_once(
+    backend: TransactionalBackend,
+    given: Given,
+    when: When,
+    then: Then,
+) -> None:
+    listener = given.in_transaction_listener()
+    backend.in_transaction.register(listener, to=Event)
+    backend.in_transaction.register(listener, to=Event)
+
+    when.stream().receives(event := an_event())
+
+    then(listener).next_received_record_is(any_record(event))
+    then(listener).received_no_new_records()

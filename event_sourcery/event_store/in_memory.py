@@ -2,42 +2,33 @@ import time
 from collections.abc import Generator, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from copy import copy
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from datetime import timedelta
 from operator import getitem
 
 from pydantic import BaseModel, ConfigDict, PositiveInt
 from typing_extensions import Self
 
-from event_sourcery.event_store import (
-    Dispatcher,
-    EventRegistry,
-    EventStore,
-    subscription,
+from event_sourcery.event_store import Dispatcher
+from event_sourcery.event_store.backend import (
+    TransactionalBackend,
+    no_filter,
+    not_configured,
+    singleton,
 )
 from event_sourcery.event_store.event import (
-    Encryption,
     Position,
     RawEvent,
     RecordedRaw,
-    Serde,
 )
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
-from event_sourcery.event_store.factory import (
-    BackendFactory,
-    NoOutboxStorageStrategy,
-    TransactionalBackend,
-    no_filter,
-)
 from event_sourcery.event_store.interfaces import (
     EncryptionKeyStorageStrategy,
-    EncryptionStrategy,
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
     StorageStrategy,
     SubscriptionStrategy,
 )
-from event_sourcery.event_store.outbox import Outbox
 from event_sourcery.event_store.stream_id import StreamId
 from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
 from event_sourcery.event_store.versioning import NO_VERSIONING, Versioning
@@ -228,13 +219,12 @@ class InMemoryStorageStrategy(StorageStrategy):
         storage: Storage,
         dispatcher: Dispatcher,
         outbox_strategy: InMemoryOutboxStorageStrategy | None,
-        tenant_id: TenantId = DEFAULT_TENANT,
     ) -> None:
         self._names: dict[str | None, str] = {}
         self._storage = storage
         self._dispatcher = dispatcher
         self._outbox = outbox_strategy
-        self._tenant_id = tenant_id
+        self._tenant_id = DEFAULT_TENANT
 
     def fetch_events(
         self,
@@ -300,85 +290,42 @@ class InMemoryStorageStrategy(StorageStrategy):
         return current_position and Position(current_position)
 
     def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
-        return type(self)(
-            storage=self._storage,
-            dispatcher=self._dispatcher,
-            outbox_strategy=self._outbox,
-            tenant_id=tenant_id,
-        )
+        self._tenant_id = tenant_id
+        return self
 
 
 class Config(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
-
     outbox_attempts: PositiveInt = 3
 
 
-@dataclass(repr=False)
-class InMemoryBackendFactory(BackendFactory):
+class InMemoryBackend(TransactionalBackend):
     """Lightweight in-memory backend factory for testing and development."""
 
-    serde = Serde(EventRegistry())
+    def __init__(self) -> None:
+        super().__init__()
+        self[Config] = not_configured("Configure backend with `.configure(config)`")
+        self[Storage] = Storage()
+        self[StorageStrategy] = lambda c: InMemoryStorageStrategy(
+            c[Storage],
+            c[Dispatcher],
+            outbox_strategy=c.get(InMemoryOutboxStorageStrategy),
+        ).scoped_for_tenant(c.tenant_id)
+        self[SubscriptionStrategy] = lambda c: InMemorySubscriptionStrategy(c[Storage])
 
-    _config: Config = field(default_factory=Config)
-    _storage: Storage = field(default_factory=Storage)
-    _outbox_strategy: InMemoryOutboxStorageStrategy | None = None
-    _subscription_strategy: InMemorySubscriptionStrategy = field(init=False)
-
-    def __post_init__(self) -> None:
-        self._subscription_strategy = InMemorySubscriptionStrategy(self._storage)
-
-    def build(self) -> TransactionalBackend:
-        backend = TransactionalBackend()
-        backend.serde = self.serde
-        backend.in_transaction = Dispatcher(backend.serde)
-        backend.event_store = EventStore(
-            InMemoryStorageStrategy(
-                self._storage,
-                backend.in_transaction,
-                self._outbox_strategy,
-            ),
-            backend.serde,
-        )
-        backend.outbox = Outbox(
-            self._outbox_strategy or NoOutboxStorageStrategy(),
-            backend.serde,
-        )
-        backend.subscriber = subscription.SubscriptionBuilder(
-            _serde=backend.serde,
-            _strategy=self._subscription_strategy,
-        )
-        return backend
-
-    def with_event_registry(self, event_registry: EventRegistry) -> Self:
-        self.serde = Serde(event_registry)
+    def configure(self, config: Config | None = None) -> Self:
+        self[Config] = config or Config()
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
-        self._outbox_strategy = InMemoryOutboxStorageStrategy(
-            filterer,
-            self._config.outbox_attempts,
+        self[OutboxFiltererStrategy] = filterer
+        self[InMemoryOutboxStorageStrategy] = singleton(
+            lambda c: InMemoryOutboxStorageStrategy(
+                c[OutboxFiltererStrategy],
+                c[Config].outbox_attempts,
+            )
         )
-        return self
-
-    def without_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
-        self._outbox_strategy = None
-        return self
-
-    def with_encryption(
-        self,
-        strategy: EncryptionStrategy,
-        key_storage: EncryptionKeyStorageStrategy,
-    ) -> Self:
-        registry = self.serde.registry
-        self.serde = Serde(
-            registry,
-            encryption=Encryption(
-                registry=registry,
-                strategy=strategy,
-                key_storage=key_storage,
-            ),
-        )
+        self[OutboxStorageStrategy] = lambda c: c[InMemoryOutboxStorageStrategy]
         return self
 
 
@@ -396,5 +343,5 @@ class InMemoryKeyStorage(EncryptionKeyStorageStrategy):
     def delete(self, subject_id: str) -> None:
         self._keys.pop((self._tenant_id, subject_id), None)
 
-    def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
-        return replace(self, _tenant_id=tenant_id)
+    def scoped_for_tenant(self, tenant_id: TenantId) -> "InMemoryKeyStorage":
+        return InMemoryKeyStorage(self._keys, tenant_id)
