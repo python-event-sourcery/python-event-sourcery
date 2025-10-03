@@ -8,7 +8,7 @@ from typing import NoReturn, Protocol, TypeVar, cast
 from typing_extensions import Self
 
 from event_sourcery.event_store import subscription
-from event_sourcery.event_store.dispatcher import Dispatcher, DispatcherState
+from event_sourcery.event_store.dispatcher import Dispatcher, Listeners
 from event_sourcery.event_store.event import (
     Encryption,
     EventRegistry,
@@ -166,9 +166,9 @@ class Backend(_Container):
 class TransactionalBackend(Backend, abc.ABC):
     def __init__(self) -> None:
         super().__init__()
-        self[DispatcherState] = singleton(lambda _: DispatcherState())
-        self[Dispatcher] = lambda c: Dispatcher(c[Serde], c[DispatcherState])
+        self[Listeners] = singleton(lambda _: Listeners())
+        self[Dispatcher] = lambda c: Dispatcher(c[Serde], c[Listeners])
 
     @property
-    def in_transaction(self) -> Dispatcher:
-        return cast(Dispatcher, self[Dispatcher])
+    def in_transaction(self) -> Listeners:
+        return cast(Listeners, self[Listeners])

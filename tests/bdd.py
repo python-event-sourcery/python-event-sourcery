@@ -15,7 +15,6 @@ from typing_extensions import Self
 from event_sourcery import event_store as es
 from event_sourcery.event_store import (
     Backend,
-    Dispatcher,
     Event,
     Position,
     Recorded,
@@ -244,9 +243,11 @@ class Step:
     def in_transaction_listener(self, to: type[Event] = Event) -> InTransactionListener:
         backend = cast(TransactionalBackend, self.backend)
         backend.in_transaction.register(listener := InTransactionListener(), to=to)
-        self.request.addfinalizer(lambda: backend[Dispatcher].remove(listener, to=to))
         self.request.addfinalizer(
-            lambda: backend[Dispatcher].remove(listener, to=Event)
+            lambda: backend.in_transaction.remove(listener, to=to)
+        )
+        self.request.addfinalizer(
+            lambda: backend.in_transaction.remove(listener, to=Event)
         )
         return listener
 
