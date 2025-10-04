@@ -1,7 +1,16 @@
-from typing import Any
+from typing import Protocol
 
+from sqlalchemy import MetaData
 from sqlalchemy.orm import registry
+from sqlalchemy.orm.clsregistry import ClsRegistryToken
 
+from event_sourcery_sqlalchemy.models.base import (
+    BaseEvent,
+    BaseOutboxEntry,
+    BaseProjectorCursor,
+    BaseSnapshot,
+    BaseStream,
+)
 from event_sourcery_sqlalchemy.models.default import (
     DefaultEvent,
     DefaultOutboxEntry,
@@ -11,16 +20,34 @@ from event_sourcery_sqlalchemy.models.default import (
 )
 
 
-def configure_models(base: type[Any]) -> None:
-    DefaultEvent.__set_mapping_information__(DefaultStream)
-    DefaultSnapshot.__set_mapping_information__(DefaultStream)
-    DefaultStream.__set_mapping_information__(DefaultEvent, DefaultSnapshot)
+class BaseProto(Protocol):
+    metadata: MetaData
 
+
+_class_registry: dict[str, type | ClsRegistryToken] = {}
+
+
+def configure_models(
+    base: type[BaseProto],
+    event_model: type[BaseEvent] = DefaultEvent,
+    stream_model: type[BaseStream] = DefaultStream,
+    snapshot_model: type[BaseSnapshot] = DefaultSnapshot,
+    outbox_entry_model: type[BaseOutboxEntry] = DefaultOutboxEntry,
+    projector_cursor_model: type[BaseProjectorCursor] = DefaultProjectorCursor,
+) -> None:
+    event_model.__set_mapping_information__(DefaultStream)
+    snapshot_model.__set_mapping_information__(DefaultStream)
+    stream_model.__set_mapping_information__(DefaultEvent, DefaultSnapshot)
+
+    mapping_registry = registry(metadata=base.metadata, class_registry=_class_registry)
     for model_cls in (
-        DefaultStream,
-        DefaultEvent,
-        DefaultSnapshot,
-        DefaultOutboxEntry,
-        DefaultProjectorCursor,
+        stream_model,
+        event_model,
+        snapshot_model,
+        outbox_entry_model,
+        projector_cursor_model,
     ):
-        registry(metadata=base.metadata, class_registry={}).map_declaratively(model_cls)
+        if model_cls in _class_registry.values():
+            continue
+
+        mapping_registry.map_declaratively(model_cls)

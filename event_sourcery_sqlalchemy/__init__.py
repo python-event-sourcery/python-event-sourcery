@@ -1,4 +1,9 @@
 __all__ = [
+    "BaseEvent",
+    "BaseOutboxEntry",
+    "BaseProjectorCursor",
+    "BaseSnapshot",
+    "BaseStream",
     "Config",
     "SQLAlchemyBackend",
     "SqlAlchemyStorageStrategy",
@@ -23,6 +28,13 @@ from event_sourcery.event_store.interfaces import (
 from event_sourcery_sqlalchemy import models
 from event_sourcery_sqlalchemy.event_store import SqlAlchemyStorageStrategy
 from event_sourcery_sqlalchemy.models import configure_models
+from event_sourcery_sqlalchemy.models.base import (
+    BaseEvent,
+    BaseOutboxEntry,
+    BaseProjectorCursor,
+    BaseSnapshot,
+    BaseStream,
+)
 from event_sourcery_sqlalchemy.outbox import SqlAlchemyOutboxStorageStrategy
 from event_sourcery_sqlalchemy.subscription import SqlAlchemySubscriptionStrategy
 
