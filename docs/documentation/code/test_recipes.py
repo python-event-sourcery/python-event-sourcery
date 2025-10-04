@@ -47,11 +47,10 @@ def test_sqlalchemy_backend(base_with_configured_es_models):
     Base = base_with_configured_es_models
     Base.metadata.create_all(engine)
     # --8<-- [start:integrate_sql_01]
-    from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
+    from event_sourcery_sqlalchemy import SQLAlchemyBackend
 
     session = Session()  # SQLAlchemy session
-    factory = SQLAlchemyBackendFactory(session)
-    backend = factory.build()
+    backend = SQLAlchemyBackend(session)
     # --8<-- [end:integrate_sql_01]
     # --8<-- [start:integrate_sql_02]
     backend.event_store
@@ -65,8 +64,7 @@ def test_kurrent_db():
     # from event_sourcery_kurrentdb import KurrentDBBackendFactory
     #
     # client = KurrentDBClient(uri="kurrentdb://localhost:2113?Tls=false")
-    # factory = KurrentDBBackendFactory(client)
-    # backend = factory.build()
+    # backend = KurrentDBBackendFactory(client)
 
 
 @time_machine.travel(datetime(2025, 3, 16, 10, 3, 2, 138667), tick=False)
@@ -74,15 +72,15 @@ def test_saving(event_cls: type["Event"], base_with_configured_es_models):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
-    from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
+    from event_sourcery_sqlalchemy import SQLAlchemyBackend
 
     engine = create_engine("sqlite:///:memory:")
     Session = sessionmaker(bind=engine)
     Base = base_with_configured_es_models
 
     Base.metadata.create_all(engine)
-    factory = SQLAlchemyBackendFactory(Session())
-    event_store = factory.build().event_store
+    backend = SQLAlchemyBackend(Session())
+    event_store = backend.event_store
     InvoicePaid = event_cls
 
     # --8<-- [start:saving_events_01]
@@ -111,15 +109,14 @@ def test_subscribing(event_cls: type["Event"], base_with_configured_es_models):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
-    from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
+    from event_sourcery_sqlalchemy import SQLAlchemyBackend
 
     engine = create_engine("sqlite:///:memory:")
     Session = sessionmaker(bind=engine)
     Base = base_with_configured_es_models
 
     Base.metadata.create_all(engine)
-    factory = SQLAlchemyBackendFactory(Session())
-    backend = factory.build()
+    backend = SQLAlchemyBackend(Session())
     InvoicePaid = event_cls
 
     invoice_paid = InvoicePaid(invoice_number="1004")
@@ -168,7 +165,7 @@ def test_outbox(
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
-    from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
+    from event_sourcery_sqlalchemy import SQLAlchemyBackend
 
     engine = create_engine("sqlite:///:memory:")
     Session = sessionmaker(bind=engine)
@@ -177,16 +174,14 @@ def test_outbox(
     Base.metadata.create_all(engine)
     session = Session()
     # --8<-- [start:outbox_01]
-    factory = (
-        SQLAlchemyBackendFactory(session).with_outbox()  # enable outbox
+    backend = (
+        SQLAlchemyBackend(session).with_outbox()  # enable outbox
     )
-    backend = factory.build()
     # --8<-- [end:outbox_01]
     # --8<-- [start:outbox_01_filterer]
-    factory = SQLAlchemyBackendFactory(session).with_outbox(
+    backend = SQLAlchemyBackend(session).with_outbox(
         filterer=lambda e: "InvoicePaid" in e.name
     )
-    backend = factory.build()
     # --8<-- [end:outbox_01_filterer]
     InvoicePaid = event_cls
 
@@ -244,15 +239,14 @@ def sqlite_in_memory_backend(base_with_configured_es_models):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
-    from event_sourcery_sqlalchemy import SQLAlchemyBackendFactory
+    from event_sourcery_sqlalchemy import SQLAlchemyBackend
 
     engine = create_engine("sqlite:///:memory:")
     Session = sessionmaker(bind=engine)
     Base = base_with_configured_es_models
 
     Base.metadata.create_all(engine)
-    factory = SQLAlchemyBackendFactory(Session())
-    return factory.build()
+    return SQLAlchemyBackend(Session())
 
 
 def test_event_sourcing(sqlite_in_memory_backend) -> None:

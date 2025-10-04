@@ -2,7 +2,7 @@ from unittest.mock import call
 
 import pytest
 
-from event_sourcery.event_store import Backend, BackendFactory, StreamId
+from event_sourcery.event_store import Backend, StreamId
 from tests.bdd import Given
 from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import an_event
@@ -28,5 +28,5 @@ def test_receives_events_from_all_tenants(
 
 
 @pytest.fixture()
-def backend(event_store_factory: BackendFactory) -> Backend:
-    return event_store_factory.with_outbox().build()
+def backend(backend: Backend) -> Backend:
+    return backend.with_outbox()

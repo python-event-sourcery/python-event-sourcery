@@ -9,7 +9,7 @@ from weakref import WeakSet
 
 from typing_extensions import Protocol
 
-from event_sourcery.event_store import BackendFactory, StreamId, WrappedEvent
+from event_sourcery.event_store import Backend, StreamId, WrappedEvent
 
 
 class Command(enum.Enum):
@@ -70,20 +70,19 @@ class Inbox:
 class Agent(Thread):
     def __init__(
         self,
-        event_store_factory: BackendFactory,
+        backend: Backend,
         transaction: Callable[[], AbstractContextManager],
         inbox: Inbox,
     ) -> None:
         super().__init__(daemon=True)
-        self._event_store_factory = event_store_factory
+        self._backend = backend
         self._transaction = transaction
         self._inbox = inbox
         self.exception: Exception | None = None
 
     def run(self) -> None:
         try:
-            backend = self._event_store_factory.build()
-            event_store = backend.event_store
+            event_store = self._backend.event_store
 
             while True:
                 match self._inbox.get():
@@ -102,12 +101,12 @@ class Agent(Thread):
 class OtherClient:
     def __init__(
         self,
-        event_store_factory: BackendFactory,
+        backend: Backend,
         transaction: Callable[[], AbstractContextManager],
     ) -> None:
         self._inbox = Inbox()
         self._thread = Agent(
-            event_store_factory,
+            backend,
             transaction,
             self._inbox,
         )

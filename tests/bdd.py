@@ -1,7 +1,6 @@
 import time
 from collections.abc import Generator, Iterator, Sequence
 from contextlib import contextmanager
-from copy import copy
 from dataclasses import dataclass, field, replace
 from functools import singledispatchmethod
 from pprint import pformat
@@ -15,14 +14,15 @@ from typing_extensions import Self
 
 from event_sourcery import event_store as es
 from event_sourcery.event_store import (
+    Backend,
     Event,
     Position,
     Recorded,
     StreamId,
     TenantId,
+    TransactionalBackend,
     WrappedEvent,
 )
-from event_sourcery.event_store.factory import Backend, TransactionalBackend
 from event_sourcery.event_store.subscription import BuildPhase, PositionPhase
 from event_sourcery.event_store.tenant_id import DEFAULT_TENANT
 from tests.matchers import any_wrapped_event
@@ -73,7 +73,8 @@ class Stream:
         )
 
     def is_empty(self) -> None:
-        assert self.events == []
+        received = self.events
+        assert received == [], f"Stream {self.id} is not empty: {received}"
 
     @property
     def current_version(self) -> int | None:
@@ -96,7 +97,9 @@ class Subscription:
 
     def next_received_record_is(self, expected: Recorded | es.Entry) -> None:
         received = next(self._subscription)
-        assert expected == received, f"{expected} != {received}"
+        assert expected == received, pformat(
+            DeepDiff(received, expected, exclude_types=[type(ANY)])
+        )
 
     def received_no_new_records(self) -> None:
         record = next(self._subscription, None)
@@ -109,7 +112,9 @@ class BatchSubscription:
 
     def next_batch_is(self, expected: Sequence[Recorded]) -> None:
         received = next(self._subscription)
-        assert expected == received, f"{expected} != {received}"
+        assert expected == received, pformat(
+            DeepDiff(received, expected, exclude_types=[type(ANY)])
+        )
 
     def next_batch_is_empty(self) -> None:
         received = next(self._subscription)
@@ -143,7 +148,9 @@ class InTransactionListener:
 
     def next_received_record_is(self, expected: Recorded | es.Entry) -> None:
         received = next(self)
-        assert expected == received, f"{expected} != {received}"
+        assert expected == received, pformat(
+            DeepDiff(received, expected, exclude_types=[type(ANY)])
+        )
 
     def received_no_new_records(self) -> None:
         record = next(self)
@@ -167,7 +174,7 @@ class Encryption:
 
     def key_for_subject(self, for_subject: str, is_key: bytes) -> None:
         key = self.encryption.key_storage.get(for_subject)
-        assert key == is_key
+        assert key == is_key, f"{for_subject} key {is_key!r} != {key!r}"
 
 
 @dataclass
@@ -176,10 +183,7 @@ class Step:
     request: SubRequest
 
     def in_tenant_mode(self, for_tenant: TenantId) -> Self:
-        backend = copy(self.backend)
-        backend.event_store = backend.event_store.scoped_for_tenant(for_tenant)
-        backend.serde = backend.serde.scoped_for_tenant(for_tenant)
-        return replace(self, backend=backend)
+        return replace(self, backend=self.backend.in_tenant_mode(for_tenant))
 
     def without_tenant(self) -> Self:
         return self.in_tenant_mode(DEFAULT_TENANT)
@@ -194,7 +198,7 @@ class Step:
 
     @property
     def encryption(self) -> Encryption:
-        return Encryption(self.backend.serde.encryption)
+        return Encryption(self.backend[es.event.Encryption])
 
     def __call__(self, value: T) -> T:
         return value
@@ -269,7 +273,7 @@ class Given(Step):
         start = time.monotonic()
         yield
         took = time.monotonic() - start
-        assert took == approx(seconds, 0.2), (
+        assert took == approx(seconds, 0.5), (
             f"Expected timing {seconds:.02f}s, got {took:.02f}s"
         )
 

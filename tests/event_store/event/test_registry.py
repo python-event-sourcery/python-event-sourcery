@@ -5,9 +5,10 @@ import pytest
 from pydantic import BaseModel
 
 from event_sourcery.event_store import (
-    BackendFactory,
+    Backend,
     Event,
     EventRegistry,
+    EventStore,
     StreamId,
     WrappedEvent,
 )
@@ -42,18 +43,15 @@ def test_detects_duplicates_event_names_from_custom_registry(
 
 
 def test_can_work_with_custom_events_with_custom_registry(
-    event_store_factory: BackendFactory,
+    backend: Backend,
     registry: EventRegistry,
 ) -> None:
     @registry.add
     class SomeDummyEvent(BaseModel):
         __event_name__: ClassVar[str] = "SomeDummyEvent"
 
-    event_store = (
-        event_store_factory.with_event_registry(event_registry=registry)
-        .build()
-        .event_store
-    )
+    backend[EventRegistry] = registry
+    event_store = backend[EventStore]
 
     stream_id = StreamId(uuid4())
     event_store.append(

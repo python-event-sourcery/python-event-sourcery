@@ -3,7 +3,7 @@ from uuid import uuid4
 import pytest
 from _pytest.fixtures import SubRequest
 
-from event_sourcery.event_store import BackendFactory, StreamId
+from event_sourcery.event_store import Backend, StreamId
 from event_sourcery.event_store.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     IllegalCategoryName,
@@ -41,7 +41,8 @@ def test_lets_appending_by_both_id_and_name_then_just_name(
 
 
 @pytest.mark.skip_backend(
-    backend=["kurrentdb", "in_memory"], reason="Can't use both ids"
+    backend=["kurrentdb_backend", "in_memory_backend"],
+    reason="Can't use both ids",
 )
 def test_blocks_new_stream_uuid_with_same_name_as_other(
     given: Given,
@@ -57,10 +58,10 @@ def test_blocks_new_stream_uuid_with_same_name_as_other(
 
 
 def test_kurrentdb_cant_use_category_with_dash(
-    kurrentdb: BackendFactory,
+    kurrentdb_backend: Backend,
     request: SubRequest,
 ) -> None:
-    when = When(kurrentdb.build(), request)
+    when = When(kurrentdb_backend, request)
 
     with pytest.raises(IllegalCategoryName):
         when.appends(AnEvent(), to=StreamId(category="with-dash"))

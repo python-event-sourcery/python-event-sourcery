@@ -4,7 +4,7 @@ from contextlib import contextmanager
 import pytest
 from kurrentdbclient import KurrentDBClient, StreamState
 
-from event_sourcery_kurrentdb import KurrentDBBackendFactory
+from event_sourcery_kurrentdb import KurrentDBBackend
 
 
 @contextmanager
@@ -23,6 +23,6 @@ def kurrentdb_client() -> Iterator[KurrentDBClient]:
 
 
 @pytest.fixture()
-def kurrentdb(request: pytest.FixtureRequest) -> Iterator[KurrentDBBackendFactory]:
+def kurrentdb_backend(request: pytest.FixtureRequest) -> Iterator[KurrentDBBackend]:
     with kurrentdb_client() as client:
-        yield KurrentDBBackendFactory(client)
+        yield KurrentDBBackend().configure(client)

@@ -5,10 +5,9 @@ from typing import Annotated, Any
 import pytest
 from pydantic import BaseModel, Field
 
-from event_sourcery.event_store import Event, StreamId
+from event_sourcery.event_store import Backend, Event, StreamId
 from event_sourcery.event_store.event import DataSubject, Encrypted
 from event_sourcery.event_store.exceptions import KeyNotFoundError, NoSubjectIdFound
-from event_sourcery.event_store.factory import Backend, BackendFactory
 from event_sourcery.event_store.in_memory import InMemoryKeyStorage
 from event_sourcery.event_store.interfaces import EncryptionStrategy
 from tests.bdd import Given, Then, When
@@ -254,7 +253,7 @@ def test_withdrawn_only_events_with_shreded_key(
 
 
 @pytest.mark.skip_backend(
-    backend="kurrentdb", reason="KurrentDB cannot use stream names"
+    backend="kurrentdb_backend", reason="KurrentDB cannot use stream names"
 )
 def test_use_stream_name_when_no_data_subject(
     given: Given,
@@ -290,11 +289,11 @@ def test_invalid_encryption_configuration(given: Given, when: When) -> None:
 
 
 @pytest.fixture()
-def backend(event_store_factory: BackendFactory) -> Backend:
-    return event_store_factory.with_encryption(
+def backend(backend: Backend) -> Backend:
+    return backend.with_encryption(
         strategy=XorEncryptionStrategy(),
         key_storage=InMemoryKeyStorage(),
-    ).build()
+    )
 
 
 class XorEncryptionStrategy(EncryptionStrategy):

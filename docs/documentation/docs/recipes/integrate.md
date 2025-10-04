@@ -20,7 +20,7 @@ Integrating it with your project requires following steps:
 
     Once our models are registered, migrations generated and executed, you can continue.
 
-    You need an instance of [Session](https://docs.sqlalchemy.org/en/20/orm/session.html) to instantiate `event_sourcery_sqlalchemy.SQLAlchemyBackendFactory`, then call `.build()`:
+    You need an instance of [Session](https://docs.sqlalchemy.org/en/20/orm/session.html) to instantiate `event_sourcery_sqlalchemy.SQLAlchemyBackend`:
 
     ```python
     --8<--
@@ -28,29 +28,28 @@ Integrating it with your project requires following steps:
     --8<--
     ```
 
-=== "EventStoreDB"
-    First, you need an instance of `esdbclient.EventStoreDBClient` that represents a connection to EventStoreDB. Then, you can pass it to `event_sourcery_esdb.ESDBBackendFactory`:
+=== "KurrentDB (formerly EventStoreDB)"
+    First, you need an instance of `kurrentdbclient.KurrentDBClient` that represents a connection to EventStoreDB. Then, you can pass it to `event_sourcery_kurrentdb.KurrentDBBackend`:
 
     ```python
     --8<--
-    docs/documentation/code/recipes/integrate/esdb_01.py:1:1
-    docs/documentation/code/recipes/integrate/esdb_01.py:4:8
+    docs/documentation/code/recipes/integrate/kurrent_01.py:1:1
+    docs/documentation/code/recipes/integrate/kurrent_01.py:4:8
     --8<--
     ```
 
 === "Django"
     Your first step will be adding `"event_sourcery_django"` to the list of `INSTALLED_APPS` in your settings.
 
-    Then you can create an instance of `event_sourcery_django.DjangoBackendFactory` right away and call `.build()`.
+    Then you can simply create an instance of `event_sourcery_django.DjangoBackend`:
 
     ```python
-    from event_sourcery_django import DjangoBackendFactory
+    from event_sourcery_django import DjangoBackend
 
-    factory = DjangoBackendFactory()
-    backend = factory.build()
+    backend = DjangoBackend()
     ```
 
-    This can be done once. Then, you can import `backend` from other parts of code and start using it.
+    This can be done once. Then, you can import `backend` from other parts of code to use it.
 
 From `backend` you can grab [EventStore](../reference/event_store.md) instance:
 

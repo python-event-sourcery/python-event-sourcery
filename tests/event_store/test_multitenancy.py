@@ -1,6 +1,6 @@
 import pytest
 
-from event_sourcery.event_store import BackendFactory, StreamId
+from event_sourcery.event_store import Backend, StreamId
 from event_sourcery.event_store.exceptions import IllegalTenantId
 from tests.bdd import Given, Then
 from tests.factories import AnEvent, an_event
@@ -36,9 +36,9 @@ def test_streams_with_same_id_or_name_can_coexist(
     then.in_tenant_mode("second").stream(with_id=stream_id).loads_only([tenant_2_event])
 
 
-def test_kurrentdb_cant_use_tenant_id_with_dash(kurrentdb: BackendFactory) -> None:
-    event_store = kurrentdb.build().event_store
-    illegal_tenant_event_store = event_store.scoped_for_tenant("illegal-tenant-id")
+def test_kurrentdb_cant_use_tenant_id_with_dash(kurrentdb_backend: Backend) -> None:
+    illegal_tenant = kurrentdb_backend.in_tenant_mode("illegal-tenant-id")
+    illegal_tenant_event_store = illegal_tenant.event_store
 
     with pytest.raises(IllegalTenantId):
         illegal_tenant_event_store.append(AnEvent(), stream_id=StreamId())
