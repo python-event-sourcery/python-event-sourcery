@@ -9,7 +9,13 @@ from sqlalchemy.orm import Session
 
 from event_sourcery.event_store import Position, RecordedRaw
 from event_sourcery.event_store.interfaces import SubscriptionStrategy
-from event_sourcery_sqlalchemy import dto, models
+from event_sourcery_sqlalchemy import dto
+from event_sourcery_sqlalchemy.models.default import (
+    DefaultEvent as Event,
+)
+from event_sourcery_sqlalchemy.models.default import (
+    DefaultStream as Stream,
+)
 
 
 class SqlAlchemySubscriptionStrategy(SubscriptionStrategy):
@@ -63,7 +69,7 @@ class SqlAlchemySubscriptionStrategy(SubscriptionStrategy):
 
 
 class GetBatch(Protocol):
-    def __call__(self, position: Position) -> list[models.Event]: ...
+    def __call__(self, position: Position) -> list[Event]: ...
 
 
 class GetBatchToAll(GetBatch):
@@ -71,12 +77,12 @@ class GetBatchToAll(GetBatch):
         self._session = session
         self._batch_size = batch_size
 
-    def __call__(self, position: Position) -> list[models.Event]:
+    def __call__(self, position: Position) -> list[Event]:
         stmt = (
-            select(models.Event)
-            .join(models.Stream)
-            .where(models.Event.id > position)
-            .order_by(models.Event.id)
+            select(Event)
+            .join(Stream)
+            .where(Event.id > position)
+            .order_by(Event.id)
             .limit(self._batch_size)
         )
 
@@ -89,13 +95,13 @@ class GetBatchToCategory(GetBatch):
         self._batch_size = batch_size
         self._category = category
 
-    def __call__(self, position: Position) -> list[models.Event]:
+    def __call__(self, position: Position) -> list[Event]:
         stmt = (
-            select(models.Event)
-            .join(models.Stream)
-            .where(models.Stream.category == self._category)
-            .where(models.Event.id > position)
-            .order_by(models.Event.id)
+            select(Event)
+            .join(Stream)
+            .where(Stream.category == self._category)
+            .where(Event.id > position)
+            .order_by(Event.id)
             .limit(self._batch_size)
         )
 
@@ -108,13 +114,13 @@ class GetBatchToEvents(GetBatch):
         self._batch_size = batch_size
         self._events = events
 
-    def __call__(self, position: Position) -> list[models.Event]:
+    def __call__(self, position: Position) -> list[Event]:
         stmt = (
-            select(models.Event)
-            .join(models.Stream)
-            .where(models.Event.name.in_(self._events))
-            .where(models.Event.id > position)
-            .order_by(models.Event.id)
+            select(Event)
+            .join(Stream)
+            .where(Event.name.in_(self._events))
+            .where(Event.id > position)
+            .order_by(Event.id)
             .limit(self._batch_size)
         )
 
@@ -125,7 +131,7 @@ class GetBatchToEvents(GetBatch):
 class Cursor:
     position: Position
 
-    def advance(self, batch: list[models.Event]) -> None:
+    def advance(self, batch: list[Event]) -> None:
         if len(batch) > 0:
             self.position = batch[-1].id
 
@@ -159,14 +165,14 @@ class GapDetectingIterator(Iterator[list[RecordedRaw]]):
                 time.sleep(self._gap_retry_interval.total_seconds())
 
     @staticmethod
-    def _is_continuous(batch: list[models.Event]) -> bool:
+    def _is_continuous(batch: list[Event]) -> bool:
         if len(batch) < 2:
             return False
 
         return cast(bool, batch[-1].id - batch[0].id + 1 == len(batch))
 
     @staticmethod
-    def _batch_to_recorded_raw(batch: list[models.Event]) -> list[RecordedRaw]:
+    def _batch_to_recorded_raw(batch: list[Event]) -> list[RecordedRaw]:
         return [
             RecordedRaw(
                 entry=dto.raw_event(event, event.stream),

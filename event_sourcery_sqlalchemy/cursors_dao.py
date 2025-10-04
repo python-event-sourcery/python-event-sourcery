@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 
 from event_sourcery.event_store import StreamId
 from event_sourcery.read_model import CursorsDao
-from event_sourcery_sqlalchemy.models import ProjectorCursor
+from event_sourcery_sqlalchemy.models.default import (
+    DefaultProjectorCursor as ProjectorCursor,
+)
 
 
 class SqlAlchemyCursorsDao(CursorsDao):

@@ -20,8 +20,9 @@ from sqlalchemy.orm import (
     Composite,
     InstrumentedAttribute,
     Mapped,
+    MappedColumn,
+    declared_attr,
     mapped_column,
-    registry,
     relationship,
 )
 
@@ -29,11 +30,6 @@ from event_sourcery.event_store import StreamId
 from event_sourcery.event_store.tenant_id import TenantId
 from event_sourcery_sqlalchemy.guid import GUID
 from event_sourcery_sqlalchemy.jsonb import JSONB
-
-
-def configure_models(base: type[Any]) -> None:
-    for model_cls in (Stream, Event, Snapshot, OutboxEntry, ProjectorCursor):
-        registry(metadata=base.metadata, class_registry={}).map_declaratively(model_cls)
 
 
 class StreamIdComparator(Comparator[StreamId]):
@@ -55,8 +51,9 @@ class StreamIdComparator(Comparator[StreamId]):
         return and_(same_uuid, same_name, same_category)  # type: ignore
 
 
-class Stream:
-    __tablename__ = "event_sourcery_streams"
+class BaseStream:
+    __event_model__: type["BaseEvent"]
+    __snapshot_model__: type["BaseSnapshot"]
     __table_args__ = (
         UniqueConstraint("uuid", "category", "tenant_id"),
         UniqueConstraint("name", "category", "tenant_id"),
@@ -69,8 +66,22 @@ class Stream:
     tenant_id = mapped_column(String(255), nullable=False)
     version = mapped_column(BigInteger(), nullable=True)
 
-    events: Mapped[list["Event"]]
-    snapshots: Mapped[list["Snapshot"]]
+    @classmethod
+    def __set_mapping_information__(
+        cls, event_model: type["BaseEvent"], snapshot_model: type["BaseSnapshot"]
+    ) -> None:
+        cls.__event_model__ = event_model
+        cls.__snapshot_model__ = snapshot_model
+
+    @declared_attr
+    @classmethod
+    def events(cls) -> Mapped[list["BaseEvent"]]:
+        return relationship(cls.__event_model__, back_populates="stream")
+
+    @declared_attr
+    @classmethod
+    def snapshots(cls) -> Mapped[list["BaseSnapshot"]]:
+        return relationship(cls.__snapshot_model__, back_populates="stream")
 
     @hybrid_property
     def stream_id(self) -> StreamId:
@@ -82,8 +93,8 @@ class Stream:
         return StreamIdComparator(cls.uuid, cls.name, cls.category)
 
 
-class Event:
-    __tablename__ = "event_sourcery_events"
+class BaseEvent:
+    __stream_model__: type["BaseStream"]
     __table_args__ = (
         Index(
             "ix_events_stream_id_version",
@@ -109,17 +120,29 @@ class Event:
         self.event_context = event_context
         self.version = version
 
+    @classmethod
+    def __set_mapping_information__(cls, stream_model: type[BaseStream]) -> None:
+        cls.__stream_model__ = stream_model
+
+    @declared_attr
+    @classmethod
+    def _db_stream_id(cls) -> MappedColumn[Any]:
+        return mapped_column(
+            "db_stream_id",
+            BigInteger().with_variant(Integer(), "sqlite"),
+            ForeignKey(cls.__stream_model__.id),
+            nullable=False,
+            index=True,
+        )
+
+    @declared_attr
+    @classmethod
+    def stream(cls) -> Mapped[BaseStream]:
+        return relationship(cls.__stream_model__, back_populates="events")
+
     id = mapped_column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     version = mapped_column(Integer(), nullable=True)
     uuid = mapped_column(GUID(), index=True, unique=True)
-    _db_stream_id = mapped_column(
-        "db_stream_id",
-        BigInteger().with_variant(Integer(), "sqlite"),
-        ForeignKey(Stream.id),
-        nullable=False,
-        index=True,
-    )
-    stream: Mapped[Stream] = relationship(Stream, back_populates="events")
     stream_id: AssociationProxy[StreamId] = association_proxy("stream", "stream_id")
     tenant_id: AssociationProxy[TenantId] = association_proxy("stream", "tenant_id")
     name = mapped_column(String(200), nullable=False)
@@ -128,8 +151,8 @@ class Event:
     created_at = mapped_column(DateTime(), nullable=False, index=True)
 
 
-class Snapshot:
-    __tablename__ = "event_sourcery_snapshots"
+class BaseSnapshot:
+    __stream_model__: type["BaseStream"]
 
     def __init__(
         self,
@@ -147,16 +170,28 @@ class Snapshot:
         self.event_context = event_context
         self.version = version
 
+    @classmethod
+    def __set_mapping_information__(cls, stream_model: type[BaseStream]) -> None:
+        cls.__stream_model__ = stream_model
+
+    @declared_attr
+    @classmethod
+    def _db_stream_id(cls) -> MappedColumn[Any]:
+        return mapped_column(
+            "db_stream_id",
+            BigInteger().with_variant(Integer(), "sqlite"),
+            ForeignKey(cls.__stream_model__.id),
+            nullable=False,
+            index=True,
+        )
+
+    @declared_attr
+    @classmethod
+    def stream(cls) -> Mapped[BaseStream]:
+        return relationship(cls.__stream_model__, back_populates="snapshots")
+
     uuid = mapped_column(GUID, primary_key=True)
     version = mapped_column(Integer(), nullable=False)
-    _db_stream_id = mapped_column(
-        "db_stream_id",
-        BigInteger().with_variant(Integer(), "sqlite"),
-        ForeignKey(Stream.id),
-        nullable=False,
-        index=True,
-    )
-    stream = relationship(Stream, back_populates="snapshots")
     stream_id: AssociationProxy[StreamId] = association_proxy("stream", "stream_id")
     name = mapped_column(String(50), nullable=False)
     data = mapped_column(JSONB(), nullable=False)
@@ -164,9 +199,7 @@ class Snapshot:
     created_at = mapped_column(DateTime(), nullable=False)
 
 
-class OutboxEntry:
-    __tablename__ = "event_sourcery_outbox_entries"
-
+class BaseOutboxEntry:
     id = mapped_column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     created_at = mapped_column(DateTime(), nullable=False, index=True)
     data = mapped_column(JSONB(), nullable=False)
@@ -175,8 +208,7 @@ class OutboxEntry:
     tries_left = mapped_column(Integer(), nullable=False)
 
 
-class ProjectorCursor:
-    __tablename__ = "event_sourcery_projector_cursors"
+class BaseProjectorCursor:
     __table_args__ = (
         Index(
             "ix_name_stream_id",
@@ -192,7 +224,3 @@ class ProjectorCursor:
     stream_id = mapped_column(GUID(), nullable=False, index=True)
     category = mapped_column(String(255), nullable=True)
     version = mapped_column(BigInteger(), nullable=False)
-
-
-Stream.events = relationship(Event, back_populates="stream")
-Stream.snapshots = relationship(Snapshot, back_populates="stream")
