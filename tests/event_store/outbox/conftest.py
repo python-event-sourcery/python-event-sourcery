@@ -29,7 +29,7 @@ def max_attempts() -> int:
 
 
 @pytest.fixture()
-def kurrentdb(max_attempts: int) -> Generator[KurrentDBBackend, None, None]:
+def kurrentdb_backend(max_attempts: int) -> Generator[KurrentDBBackend, None, None]:
     with kurrentdb_client() as client:
         yield KurrentDBBackend().configure(
             client,
@@ -42,7 +42,7 @@ def kurrentdb(max_attempts: int) -> Generator[KurrentDBBackend, None, None]:
 
 
 @pytest.fixture()
-def django(transactional_db: None, max_attempts: int) -> DjangoBackend:
+def django_backend(transactional_db: None, max_attempts: int) -> DjangoBackend:
     django_framework.setup()
     django_command("migrate")
     return DjangoBackend().configure(
@@ -51,14 +51,17 @@ def django(transactional_db: None, max_attempts: int) -> DjangoBackend:
 
 
 @pytest.fixture()
-def in_memory(max_attempts: int) -> Backend:
+def in_memory_backend(max_attempts: int) -> Backend:
     return InMemoryBackend().configure(
         event_sourcery.event_store.in_memory.Config(outbox_attempts=max_attempts)
     )
 
 
 @pytest.fixture()
-def sqlalchemy_sqlite(tmp_path: Path, max_attempts: int) -> Iterator[SQLAlchemyBackend]:
+def sqlalchemy_sqlite_backend(
+    tmp_path: Path,
+    max_attempts: int,
+) -> Iterator[SQLAlchemyBackend]:
     with sqlalchemy_sqlite_session(tmp_path) as session:
         yield SQLAlchemyBackend().configure(
             session, event_sourcery_sqlalchemy.Config(outbox_attempts=max_attempts)
@@ -66,7 +69,7 @@ def sqlalchemy_sqlite(tmp_path: Path, max_attempts: int) -> Iterator[SQLAlchemyB
 
 
 @pytest.fixture()
-def sqlalchemy_postgres(max_attempts: int) -> Iterator[SQLAlchemyBackend]:
+def sqlalchemy_postgres_backend(max_attempts: int) -> Iterator[SQLAlchemyBackend]:
     with sqlalchemy_postgres_session() as session:
         yield SQLAlchemyBackend().configure(
             session, event_sourcery_sqlalchemy.Config(outbox_attempts=max_attempts)

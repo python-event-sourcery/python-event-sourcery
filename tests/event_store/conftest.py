@@ -5,19 +5,22 @@ from _pytest.fixtures import SubRequest
 
 from event_sourcery.event_store import Backend
 from tests import mark
-from tests.backend.django import django
-from tests.backend.in_memory import in_memory
-from tests.backend.kurrentdb import kurrentdb
-from tests.backend.sqlalchemy import sqlalchemy_postgres, sqlalchemy_sqlite
+from tests.backend.django import django_backend
+from tests.backend.in_memory import in_memory_backend
+from tests.backend.kurrentdb import kurrentdb_backend
+from tests.backend.sqlalchemy import (
+    sqlalchemy_postgres_backend,
+    sqlalchemy_sqlite_backend,
+)
 
 
 @pytest.fixture(
     params=[
-        django,
-        kurrentdb,
-        in_memory,
-        sqlalchemy_sqlite,
-        sqlalchemy_postgres,
+        django_backend,
+        kurrentdb_backend,
+        in_memory_backend,
+        sqlalchemy_sqlite_backend,
+        sqlalchemy_postgres_backend,
     ]
 )
 def backend(request: SubRequest) -> Backend:

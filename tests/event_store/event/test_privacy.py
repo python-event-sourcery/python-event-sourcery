@@ -253,7 +253,7 @@ def test_withdrawn_only_events_with_shreded_key(
 
 
 @pytest.mark.skip_backend(
-    backend="kurrentdb", reason="KurrentDB cannot use stream names"
+    backend="kurrentdb_backend", reason="KurrentDB cannot use stream names"
 )
 def test_use_stream_name_when_no_data_subject(
     given: Given,

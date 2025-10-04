@@ -8,7 +8,7 @@ from tests.factories import AnEvent, OtherEvent, an_event
 from tests.matchers import any_record
 
 pytestmark = pytest.mark.skip_backend(
-    backend="kurrentdb", reason="KurrentDB don't have transactions"
+    backend="kurrentdb_backend", reason="KurrentDB don't have transactions"
 )
 
 

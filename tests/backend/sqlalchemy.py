@@ -52,7 +52,7 @@ def sqlalchemy_sqlite_session(tmp_path: Path) -> Iterator[Session]:
 
 
 @pytest.fixture()
-def sqlalchemy_sqlite(tmp_path: Path) -> Iterator[SQLAlchemyBackend]:
+def sqlalchemy_sqlite_backend(tmp_path: Path) -> Iterator[SQLAlchemyBackend]:
     with sqlalchemy_sqlite_session(tmp_path) as session:
         yield SQLAlchemyBackend().configure(
             session,
@@ -67,7 +67,7 @@ def sqlalchemy_postgres_session() -> Iterator[Session]:
 
 
 @pytest.fixture()
-def sqlalchemy_postgres() -> Iterator[SQLAlchemyBackend]:
+def sqlalchemy_postgres_backend() -> Iterator[SQLAlchemyBackend]:
     with sqlalchemy_postgres_session() as session:
         yield SQLAlchemyBackend().configure(
             session,

@@ -36,8 +36,8 @@ def test_streams_with_same_id_or_name_can_coexist(
     then.in_tenant_mode("second").stream(with_id=stream_id).loads_only([tenant_2_event])
 
 
-def test_kurrentdb_cant_use_tenant_id_with_dash(kurrentdb: Backend) -> None:
-    illegal_tenant = kurrentdb.in_tenant_mode("illegal-tenant-id")
+def test_kurrentdb_cant_use_tenant_id_with_dash(kurrentdb_backend: Backend) -> None:
+    illegal_tenant = kurrentdb_backend.in_tenant_mode("illegal-tenant-id")
     illegal_tenant_event_store = illegal_tenant.event_store
 
     with pytest.raises(IllegalTenantId):

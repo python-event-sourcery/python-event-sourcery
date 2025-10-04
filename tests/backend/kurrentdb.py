@@ -23,6 +23,6 @@ def kurrentdb_client() -> Iterator[KurrentDBClient]:
 
 
 @pytest.fixture()
-def kurrentdb(request: pytest.FixtureRequest) -> Iterator[KurrentDBBackend]:
+def kurrentdb_backend(request: pytest.FixtureRequest) -> Iterator[KurrentDBBackend]:
     with kurrentdb_client() as client:
         yield KurrentDBBackend().configure(client)

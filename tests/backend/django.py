@@ -26,7 +26,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 @pytest.fixture()
-def django(transactional_db: None) -> DjangoBackend:
+def django_backend(transactional_db: None) -> DjangoBackend:
     django_framework.setup()
     django_command("migrate")
     return DjangoBackend().configure(

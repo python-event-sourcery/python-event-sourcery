@@ -8,11 +8,11 @@ from event_sourcery.event_store import Backend, StreamId
 from event_sourcery_django import DjangoBackend
 from event_sourcery_sqlalchemy import SQLAlchemyBackend
 from tests import mark
-from tests.backend.django import django
+from tests.backend.django import django_backend
 from tests.backend.sqlalchemy import (
-    sqlalchemy_postgres,
+    sqlalchemy_postgres_backend,
     sqlalchemy_postgres_session,
-    sqlalchemy_sqlite,
+    sqlalchemy_sqlite_backend,
     sqlalchemy_sqlite_session,
 )
 from tests.bdd import Given, Then, When
@@ -21,7 +21,9 @@ from tests.factories import OtherEvent, an_event
 from tests.matchers import any_record
 
 
-@pytest.fixture(params=[django, sqlalchemy_postgres, sqlalchemy_sqlite])
+@pytest.fixture(
+    params=[django_backend, sqlalchemy_postgres_backend, sqlalchemy_sqlite_backend],
+)
 def clients(
     request: pytest.FixtureRequest,
     tmp_path: Path,
@@ -31,17 +33,17 @@ def clients(
     mark.skip_backend(request, backend_name)
 
     match backend_name:
-        case "django":
+        case "django_backend":
             other = OtherClient(DjangoBackend(), django_transaction.atomic)
             yield backend, other
             other.stop()
-        case "sqlalchemy_postgres":
+        case "sqlalchemy_postgres_backend":
             with sqlalchemy_postgres_session() as session:
                 with session as s:
                     other = OtherClient(SQLAlchemyBackend().configure(s), s.begin)
                     yield backend, other
                     other.stop()
-        case "sqlalchemy_sqlite":
+        case "sqlalchemy_sqlite_backend":
             with sqlalchemy_sqlite_session(tmp_path) as session:
                 with session as s:
                     other = OtherClient(SQLAlchemyBackend().configure(s), s.begin)
@@ -160,9 +162,9 @@ class TestIgnoresEventsFromPendingTransactions:
 
 
 @pytest.mark.skip_backend(
-    backend=["in_memory", "sqlalchemy_sqlite"],
+    backend=["in_memory_backend", "sqlalchemy_sqlite_backend"],
     reason="Required only for SQL-based backends with transactions. "
-    "For 'sqlalchemy_sqlite' tests raise 'database table is locked'",
+    "For 'sqlalchemy_sqlite_backend' tests raise 'database table is locked'",
 )
 class TestMissesEventsThatWereNotCommittedWithinSpecifiedTimeout:
     def test_no_filtering(
