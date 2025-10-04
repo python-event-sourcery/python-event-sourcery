@@ -15,7 +15,7 @@ from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
 )
-from event_sourcery_sqlalchemy.models import OutboxEntry
+from event_sourcery_sqlalchemy.models.base import BaseOutboxEntry
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
     _session: Session
     _filterer: OutboxFiltererStrategy
     _max_publish_attempts: int
+    _outbox_entry_model: type[BaseOutboxEntry]
 
     def put_into_outbox(self, records: list[RecordedRaw]) -> None:
         rows = []
@@ -53,15 +54,15 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
         if len(rows) == 0:
             return
 
-        self._session.execute(insert(OutboxEntry), rows)
+        self._session.execute(insert(self._outbox_entry_model), rows)
 
     def outbox_entries(
         self, limit: int
     ) -> Iterator[AbstractContextManager[RecordedRaw]]:
         stmt = (
-            select(OutboxEntry)
-            .filter(OutboxEntry.tries_left > 0)
-            .order_by(OutboxEntry.id)
+            select(self._outbox_entry_model)
+            .filter(self._outbox_entry_model.tries_left > 0)
+            .order_by(self._outbox_entry_model.id)
             .limit(limit)
             .with_for_update(skip_locked=True)
         )
@@ -71,7 +72,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
 
     @contextmanager
     def _publish_context(
-        self, entry: OutboxEntry
+        self, entry: BaseOutboxEntry
     ) -> Generator[RecordedRaw, None, None]:
         raw = RawEvent(
             uuid=UUID(entry.data["uuid"]),

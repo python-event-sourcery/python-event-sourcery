@@ -1,8 +1,8 @@
 from event_sourcery.event_store import RawEvent, StreamId
-from event_sourcery_sqlalchemy.models import Event, Stream
+from event_sourcery_sqlalchemy.models.base import BaseEvent, BaseStream
 
 
-def raw_event(from_entry: Event, in_stream: Stream) -> RawEvent:
+def raw_event(from_entry: BaseEvent, in_stream: BaseStream) -> RawEvent:
     return RawEvent(
         uuid=from_entry.uuid,
         stream_id=StreamId(
