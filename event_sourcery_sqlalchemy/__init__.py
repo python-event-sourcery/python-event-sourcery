@@ -5,12 +5,14 @@ __all__ = [
     "BaseSnapshot",
     "BaseStream",
     "Config",
+    "Models",
     "SQLAlchemyBackend",
     "SqlAlchemyStorageStrategy",
     "configure_models",
     "models",
 ]
 
+from dataclasses import dataclass
 from datetime import timedelta
 
 from pydantic import BaseModel, ConfigDict, PositiveInt
@@ -43,6 +45,14 @@ from event_sourcery_sqlalchemy.models.default import (
 )
 from event_sourcery_sqlalchemy.outbox import SqlAlchemyOutboxStorageStrategy
 from event_sourcery_sqlalchemy.subscription import SqlAlchemySubscriptionStrategy
+
+
+@dataclass(frozen=True)
+class Models:
+    event_model: type[BaseEvent]
+    stream_model: type[BaseStream]
+    snapshot_model: type[BaseSnapshot]
+    outbox_entry_model: type[BaseOutboxEntry] = DefaultOutboxEntry
 
 
 class Config(BaseModel):
@@ -82,17 +92,22 @@ class SQLAlchemyBackend(TransactionalBackend):
         self,
         session: Session,
         config: Config | None = None,
-        event_model: type[BaseEvent] = DefaultEvent,
-        stream_model: type[BaseStream] = DefaultStream,
-        snapshot_model: type[BaseSnapshot] = DefaultSnapshot,
-        outbox_entry_model: type[BaseOutboxEntry] = DefaultOutboxEntry,
+        custom_models: Models | None = None,
     ) -> Self:
+        if custom_models is None:
+            custom_models = Models(
+                event_model=DefaultEvent,
+                stream_model=DefaultStream,
+                snapshot_model=DefaultSnapshot,
+                outbox_entry_model=DefaultOutboxEntry,
+            )
+
         self[Session] = session
         self[Config] = config or Config()
-        self[BaseEvent] = lambda _: event_model
-        self[BaseStream] = lambda _: stream_model
-        self[BaseSnapshot] = lambda _: snapshot_model
-        self[BaseOutboxEntry] = lambda _: outbox_entry_model
+        self[BaseEvent] = lambda _: custom_models.event_model
+        self[BaseStream] = lambda _: custom_models.stream_model
+        self[BaseSnapshot] = lambda _: custom_models.snapshot_model
+        self[BaseOutboxEntry] = lambda _: custom_models.outbox_entry_model
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:

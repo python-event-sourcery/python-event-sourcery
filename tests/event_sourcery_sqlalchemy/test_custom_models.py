@@ -9,6 +9,7 @@ from event_sourcery_sqlalchemy import (
     BaseEvent,
     BaseSnapshot,
     BaseStream,
+    Models,
     SQLAlchemyBackend,
     configure_models,
 )
@@ -59,9 +60,11 @@ def backend_with_custom_models(default_backend: SQLAlchemyBackend) -> SQLAlchemy
     session = default_backend[Session]
     return SQLAlchemyBackend().configure(
         session,
-        event_model=CustomEvent,
-        stream_model=CustomStream,
-        snapshot_model=CustomSnapshot,
+        custom_models=Models(
+            event_model=CustomEvent,
+            stream_model=CustomStream,
+            snapshot_model=CustomSnapshot,
+        ),
     )
 
 
