@@ -35,6 +35,12 @@ from event_sourcery_sqlalchemy.models.base import (
     BaseSnapshot,
     BaseStream,
 )
+from event_sourcery_sqlalchemy.models.default import (
+    DefaultEvent,
+    DefaultOutboxEntry,
+    DefaultSnapshot,
+    DefaultStream,
+)
 from event_sourcery_sqlalchemy.outbox import SqlAlchemyOutboxStorageStrategy
 from event_sourcery_sqlalchemy.subscription import SqlAlchemySubscriptionStrategy
 
@@ -49,6 +55,10 @@ class Config(BaseModel):
 class SQLAlchemyBackend(TransactionalBackend):
     def __init__(self) -> None:
         super().__init__()
+        self[BaseEvent] = lambda _: DefaultEvent
+        self[BaseStream] = lambda _: DefaultStream
+        self[BaseSnapshot] = lambda _: DefaultSnapshot
+        self[BaseOutboxEntry] = lambda _: DefaultOutboxEntry
         self[Session] = not_configured(
             "Configure backend with `.configure(session, config)`",
         )
@@ -59,10 +69,15 @@ class SQLAlchemyBackend(TransactionalBackend):
             c[Session],
             c[Dispatcher],
             c.get(SqlAlchemyOutboxStorageStrategy, None),
+            c[BaseEvent],
+            c[BaseSnapshot],
+            c[BaseStream],
         ).scoped_for_tenant(c.tenant_id)
         self[SubscriptionStrategy] = lambda c: SqlAlchemySubscriptionStrategy(
             c[Session],
             c[Config].gap_retry_interval,
+            c[BaseEvent],
+            c[BaseStream],
         )
 
     def configure(self, session: Session, config: Config | None = None) -> Self:
@@ -77,6 +92,7 @@ class SQLAlchemyBackend(TransactionalBackend):
                 c[Session],
                 c[OutboxFiltererStrategy],
                 c[Config].outbox_attempts,
+                c[BaseOutboxEntry],
             )
         )
         self[OutboxStorageStrategy] = lambda c: c[SqlAlchemyOutboxStorageStrategy]

@@ -25,11 +25,6 @@ from event_sourcery.event_store.exceptions import (
 from event_sourcery.event_store.interfaces import StorageStrategy
 from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
 from event_sourcery_sqlalchemy.models.base import BaseEvent, BaseSnapshot, BaseStream
-from event_sourcery_sqlalchemy.models.default import (
-    DefaultEvent,
-    DefaultSnapshot,
-    DefaultStream,
-)
 from event_sourcery_sqlalchemy.outbox import SqlAlchemyOutboxStorageStrategy
 
 
@@ -38,10 +33,10 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
     _session: Session
     _dispatcher: Dispatcher
     _outbox: SqlAlchemyOutboxStorageStrategy
+    _event_model: type[BaseEvent]
+    _snapshot_model: type[BaseSnapshot]
+    _stream_model: type[BaseStream]
     _tenant_id: TenantId = DEFAULT_TENANT
-    _event_model: type[BaseEvent] = DefaultEvent
-    _snapshot_model: type[BaseSnapshot] = DefaultSnapshot
-    _stream_model: type[BaseStream] = DefaultStream
 
     def fetch_events(
         self,

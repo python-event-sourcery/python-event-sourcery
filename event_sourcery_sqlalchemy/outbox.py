@@ -16,7 +16,6 @@ from event_sourcery.event_store.interfaces import (
     OutboxStorageStrategy,
 )
 from event_sourcery_sqlalchemy.models.base import BaseOutboxEntry
-from event_sourcery_sqlalchemy.models.default import DefaultOutboxEntry
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ class SqlAlchemyOutboxStorageStrategy(OutboxStorageStrategy):
     _session: Session
     _filterer: OutboxFiltererStrategy
     _max_publish_attempts: int
-    _outbox_entry_model: type[BaseOutboxEntry] = DefaultOutboxEntry
+    _outbox_entry_model: type[BaseOutboxEntry]
 
     def put_into_outbox(self, records: list[RecordedRaw]) -> None:
         rows = []

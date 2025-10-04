@@ -5,14 +5,15 @@ from sqlalchemy.orm import Session
 
 from event_sourcery.event_store import StreamId
 from event_sourcery.read_model import CursorsDao
-from event_sourcery_sqlalchemy.models.default import (
-    DefaultProjectorCursor as ProjectorCursor,
-)
+from event_sourcery_sqlalchemy.models.base import BaseProjectorCursor
 
 
 class SqlAlchemyCursorsDao(CursorsDao):
-    def __init__(self, session: Session) -> None:
+    def __init__(
+        self, session: Session, projector_cursor_model: type[BaseProjectorCursor]
+    ) -> None:
         self._session = session
+        self._projector_cursor_model = projector_cursor_model
 
     def increment(self, name: str, stream_id: StreamId, version: int) -> None:
         if version == 1:
@@ -20,7 +21,7 @@ class SqlAlchemyCursorsDao(CursorsDao):
             if current_version is not None:
                 raise self.AheadOfStream(current_version=current_version)
 
-            stmt = insert(ProjectorCursor).values(
+            stmt = insert(self._projector_cursor_model).values(
                 name=name,
                 stream_id=stream_id,
                 category=stream_id.category,
@@ -30,14 +31,14 @@ class SqlAlchemyCursorsDao(CursorsDao):
             return
 
         update_stmt = (
-            update(ProjectorCursor)
+            update(self._projector_cursor_model)
             .where(
-                ProjectorCursor.name == name,
-                ProjectorCursor.stream_id == stream_id,
-                ProjectorCursor.category == stream_id.category,
-                ProjectorCursor.version == version - 1,
+                self._projector_cursor_model.name == name,
+                self._projector_cursor_model.stream_id == stream_id,
+                self._projector_cursor_model.category == stream_id.category,
+                self._projector_cursor_model.version == version - 1,
             )
-            .values({ProjectorCursor.version: version})
+            .values({self._projector_cursor_model.version: version})
         )
         result = self._session.execute(update_stmt)
         if result.rowcount == 1:
@@ -53,15 +54,15 @@ class SqlAlchemyCursorsDao(CursorsDao):
                 raise self.AheadOfStream(current_version=current_version)
 
     def _current_version(self, name: str, stream_id: StreamId) -> int | None:
-        stmt = select(ProjectorCursor.version).filter(
-            ProjectorCursor.name == name,
-            ProjectorCursor.stream_id == stream_id,
-            ProjectorCursor.category == stream_id.category,
+        stmt = select(self._projector_cursor_model.version).filter(
+            self._projector_cursor_model.name == name,
+            self._projector_cursor_model.stream_id == stream_id,
+            self._projector_cursor_model.category == stream_id.category,
         )
         return cast(int | None, self._session.execute(stmt).scalar())
 
     def put_at(self, name: str, stream_id: StreamId, version: int) -> None:
-        stmt = insert(ProjectorCursor).values(
+        stmt = insert(self._projector_cursor_model).values(
             name=name,
             stream_id=stream_id,
             category=stream_id.category,
@@ -71,12 +72,12 @@ class SqlAlchemyCursorsDao(CursorsDao):
 
     def move_to(self, name: str, stream_id: StreamId, version: int) -> None:
         stmt = (
-            update(ProjectorCursor)
+            update(self._projector_cursor_model)
             .where(
-                ProjectorCursor.name == name,
-                ProjectorCursor.stream_id == stream_id,
-                ProjectorCursor.category == stream_id.category,
+                self._projector_cursor_model.name == name,
+                self._projector_cursor_model.stream_id == stream_id,
+                self._projector_cursor_model.category == stream_id.category,
             )
-            .values({ProjectorCursor.version: version})
+            .values({self._projector_cursor_model.version: version})
         )
         self._session.execute(stmt)

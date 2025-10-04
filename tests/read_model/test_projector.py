@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from event_sourcery.event_store import Event, EventStore, StreamId, WrappedEvent
 from event_sourcery.read_model import CursorsDao, Projector
 from event_sourcery_sqlalchemy.cursors_dao import SqlAlchemyCursorsDao
+from event_sourcery_sqlalchemy.models.default import DefaultProjectorCursor
 from tests.backend.sqlalchemy import DeclarativeBase
 
 
@@ -55,7 +56,7 @@ def cursors_dao() -> Generator[CursorsDao, None, None]:
     engine = create_engine("sqlite:///:memory:", future=True)
     DeclarativeBase.metadata.create_all(bind=engine)
     session = Session(bind=engine)
-    yield SqlAlchemyCursorsDao(session)
+    yield SqlAlchemyCursorsDao(session, DefaultProjectorCursor)
     session.close()
     DeclarativeBase.metadata.drop_all(bind=engine)
     engine.dispose()
