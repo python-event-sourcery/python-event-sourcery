@@ -183,7 +183,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             BaseStream,
             first_true(
                 self._session.info["strong_set"],
-                pred=lambda model: isinstance(model, BaseStream)
+                pred=lambda model: isinstance(model, self._stream_model)
                 and model.stream_id == stream_id
                 and model.tenant_id == self._tenant_id,
             ),

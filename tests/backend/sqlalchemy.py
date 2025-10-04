@@ -9,8 +9,7 @@ from sqlalchemy import MetaData, create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, as_declarative, close_all_sessions, sessionmaker
 
-from event_sourcery_sqlalchemy import Config, SQLAlchemyBackend
-from event_sourcery_sqlalchemy.models import configure_models
+from event_sourcery_sqlalchemy import Config, SQLAlchemyBackend, configure_models
 
 
 @as_declarative()

@@ -35,9 +35,9 @@ def configure_models(
     outbox_entry_model: type[BaseOutboxEntry] = DefaultOutboxEntry,
     projector_cursor_model: type[BaseProjectorCursor] = DefaultProjectorCursor,
 ) -> None:
-    event_model.__set_mapping_information__(DefaultStream)
-    snapshot_model.__set_mapping_information__(DefaultStream)
-    stream_model.__set_mapping_information__(DefaultEvent, DefaultSnapshot)
+    event_model.__set_mapping_information__(stream_model)
+    snapshot_model.__set_mapping_information__(stream_model)
+    stream_model.__set_mapping_information__(event_model, snapshot_model)
 
     mapping_registry = registry(metadata=base.metadata, class_registry=_class_registry)
     for model_cls in (

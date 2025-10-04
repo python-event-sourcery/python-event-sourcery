@@ -55,10 +55,10 @@ class Config(BaseModel):
 class SQLAlchemyBackend(TransactionalBackend):
     def __init__(self) -> None:
         super().__init__()
-        self[BaseEvent] = lambda _: DefaultEvent
-        self[BaseStream] = lambda _: DefaultStream
-        self[BaseSnapshot] = lambda _: DefaultSnapshot
-        self[BaseOutboxEntry] = lambda _: DefaultOutboxEntry
+        self[BaseEvent] = lambda _: DefaultEvent  # pragma: no cover
+        self[BaseStream] = lambda _: DefaultStream  # pragma: no cover
+        self[BaseSnapshot] = lambda _: DefaultSnapshot  # pragma: no cover
+        self[BaseOutboxEntry] = lambda _: DefaultOutboxEntry  # pragma: no cover
         self[Session] = not_configured(
             "Configure backend with `.configure(session, config)`",
         )
@@ -80,9 +80,21 @@ class SQLAlchemyBackend(TransactionalBackend):
             c[BaseStream],
         )
 
-    def configure(self, session: Session, config: Config | None = None) -> Self:
+    def configure(
+        self,
+        session: Session,
+        config: Config | None = None,
+        event_model: type[BaseEvent] = DefaultEvent,
+        stream_model: type[BaseStream] = DefaultStream,
+        snapshot_model: type[BaseSnapshot] = DefaultSnapshot,
+        outbox_entry_model: type[BaseOutboxEntry] = DefaultOutboxEntry,
+    ) -> Self:
         self[Session] = session
         self[Config] = config or Config()
+        self[BaseEvent] = lambda _: event_model
+        self[BaseStream] = lambda _: stream_model
+        self[BaseSnapshot] = lambda _: snapshot_model
+        self[BaseOutboxEntry] = lambda _: outbox_entry_model
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:

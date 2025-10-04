@@ -54,10 +54,14 @@ class StreamIdComparator(Comparator[StreamId]):
 class BaseStream:
     __event_model__: type["BaseEvent"]
     __snapshot_model__: type["BaseSnapshot"]
-    __table_args__ = (
-        UniqueConstraint("uuid", "category", "tenant_id"),
-        UniqueConstraint("name", "category", "tenant_id"),
-    )
+
+    @declared_attr  # type: ignore[arg-type]
+    @classmethod
+    def __table_args__(cls) -> tuple[Index | UniqueConstraint, ...]:
+        return (
+            UniqueConstraint("uuid", "category", "tenant_id"),
+            UniqueConstraint("name", "category", "tenant_id"),
+        )
 
     id = mapped_column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     uuid = mapped_column(GUID(), nullable=False)
@@ -95,14 +99,19 @@ class BaseStream:
 
 class BaseEvent:
     __stream_model__: type["BaseStream"]
-    __table_args__ = (
-        Index(
-            "ix_events_stream_id_version",
-            "db_stream_id",
-            "version",
-            unique=True,
-        ),
-    )
+    __tablename__: str
+
+    @declared_attr  # type: ignore[arg-type]
+    @classmethod
+    def __table_args__(cls) -> tuple[Index | UniqueConstraint, ...]:
+        return (
+            Index(
+                f"ix_events_stream_id_version_{cls.__tablename__}",
+                "db_stream_id",
+                "version",
+                unique=True,
+            ),
+        )
 
     def __init__(
         self,
@@ -209,15 +218,20 @@ class BaseOutboxEntry:
 
 
 class BaseProjectorCursor:
-    __table_args__ = (
-        Index(
-            "ix_name_stream_id",
-            "name",
-            "stream_id",
-            "category",
-            unique=True,
-        ),
-    )
+    __tablename__: str
+
+    @declared_attr  # type: ignore[arg-type]
+    @classmethod
+    def __table_args__(cls) -> tuple[Index | UniqueConstraint, ...]:
+        return (
+            Index(
+                f"ix_name_stream_id_{cls.__tablename__}",
+                "name",
+                "stream_id",
+                "category",
+                unique=True,
+            ),
+        )
 
     id = mapped_column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     name = mapped_column(String(255), nullable=False)
