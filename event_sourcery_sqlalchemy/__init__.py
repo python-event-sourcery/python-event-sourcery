@@ -53,18 +53,16 @@ class Config(BaseModel):
 
 
 class SQLAlchemyBackend(TransactionalBackend):
+    UNCONFIGURED_MESSAGE = "Configure backend with `.configure(session, config)`"
+
     def __init__(self) -> None:
         super().__init__()
-        self[BaseEvent] = lambda _: DefaultEvent  # pragma: no cover
-        self[BaseStream] = lambda _: DefaultStream  # pragma: no cover
-        self[BaseSnapshot] = lambda _: DefaultSnapshot  # pragma: no cover
-        self[BaseOutboxEntry] = lambda _: DefaultOutboxEntry  # pragma: no cover
-        self[Session] = not_configured(
-            "Configure backend with `.configure(session, config)`",
-        )
-        self[Config] = not_configured(
-            "Configure backend with `.configure(session, config)`",
-        )
+        self[BaseEvent] = not_configured(self.UNCONFIGURED_MESSAGE)
+        self[BaseStream] = not_configured(self.UNCONFIGURED_MESSAGE)
+        self[BaseSnapshot] = not_configured(self.UNCONFIGURED_MESSAGE)
+        self[BaseOutboxEntry] = not_configured(self.UNCONFIGURED_MESSAGE)
+        self[Session] = not_configured(self.UNCONFIGURED_MESSAGE)
+        self[Config] = not_configured(self.UNCONFIGURED_MESSAGE)
         self[StorageStrategy] = lambda c: SqlAlchemyStorageStrategy(
             c[Session],
             c[Dispatcher],
