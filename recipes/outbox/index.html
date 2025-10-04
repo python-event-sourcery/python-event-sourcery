@@ -507,6 +507,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data_privacy/" class="md-nav__link">
+        🔒 Data privacy
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -589,6 +603,20 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/encrypted/" class="md-nav__link">
+        Encrypted
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/wrapped_event/" class="md-nav__link">
         WrappedEvent
       </a>
@@ -617,36 +645,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/backend_factory/" class="md-nav__link">
-        BackendFactory
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/event_registry/" class="md-nav__link">
         EventRegistry
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/in_memory_backend_factory/" class="md-nav__link">
-        InMemoryBackendFactory
       </a>
     </li>
   
@@ -811,10 +811,9 @@
 <h2 id="basic-usage">Basic usage</h2>
 <h3 id="configure-event-sourcery">Configure Event Sourcery</h3>
 <p>To use outbox, you have to add <code>with_outbox</code> method call on factory while <a href="../integrate/">setting up Event Sourcery</a>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">factory</span> <span class="o">=</span> <span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">SQLAlchemyBackendFactory</span><span class="p">(</span><span class="n">session</span><span class="p">)</span><span class="o">.</span><span class="n">with_outbox</span><span class="p">()</span>  <span class="c1"># enable outbox</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">backend</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">SQLAlchemyBackend</span><span class="p">(</span><span class="n">session</span><span class="p">)</span><span class="o">.</span><span class="n">with_outbox</span><span class="p">()</span>  <span class="c1"># enable outbox</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
 </code></pre></div>
 <h3 id="write-publishing-function">Write publishing function</h3>
 <p>To publish messages, you need to write a little bit of glue code that will actually send a message.</p>
@@ -867,10 +866,9 @@
 </div>
 <p>Sometimes you want only specific events to be sent. You can pass an optional <code>filterer</code> argument to <code>with_outbox</code>.</p>
 <p>It should be a callable (e.g. a function) that accepts an event instance and returns True if an event should be published. False otherwise.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">SQLAlchemyBackendFactory</span><span class="p">(</span><span class="n">session</span><span class="p">)</span><span class="o">.</span><span class="n">with_outbox</span><span class="p">(</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">SQLAlchemyBackend</span><span class="p">(</span><span class="n">session</span><span class="p">)</span><span class="o">.</span><span class="n">with_outbox</span><span class="p">(</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">filterer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="s2">&quot;InvoicePaid&quot;</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">name</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="p">)</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
 </code></pre></div>
 <h2 id="handling-retries">Handling retries</h2>
 <p>Sending each event will be retried up to 3 times.</p>

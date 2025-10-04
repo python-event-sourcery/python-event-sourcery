@@ -411,6 +411,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data_privacy/" class="md-nav__link">
+        🔒 Data privacy
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -493,6 +507,20 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/encrypted/" class="md-nav__link">
+        Encrypted
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/wrapped_event/" class="md-nav__link">
         WrappedEvent
       </a>
@@ -521,36 +549,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/backend_factory/" class="md-nav__link">
-        BackendFactory
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/event_registry/" class="md-nav__link">
         EventRegistry
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/in_memory_backend_factory/" class="md-nav__link">
-        InMemoryBackendFactory
       </a>
     </li>
   
@@ -636,7 +636,7 @@
 <li>optional configuration, like enabling additional features</li>
 <li>building so-called <code>Backend</code> that exposes features of the library</li>
 </ol>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">SQLAlchemy</label><label for="__tabbed_1_2">EventStoreDB</label><label for="__tabbed_1_3">Django</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">SQLAlchemy</label><label for="__tabbed_1_2">KurrentDB (formerly EventStoreDB)</label><label for="__tabbed_1_3">Django</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p>Event Sourcery defines a few models to keep your events and streams in the database.</p>
@@ -647,33 +647,31 @@ Before alembic can detect Event Sourcery models, you need to register them once 
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">configure_models</span><span class="p">(</span><span class="n">Base</span><span class="p">)</span>  <span class="c1"># Base is your declarative base class</span>
 </code></pre></div>
 <p>Once our models are registered, migrations generated and executed, you can continue.</p>
-<p>You need an instance of <a href="https://docs.sqlalchemy.org/en/20/orm/session.html">Session</a> to instantiate <code>event_sourcery_sqlalchemy.SQLAlchemyBackendFactory</code>, then call <code>.build()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">event_sourcery_sqlalchemy</span> <span class="kn">import</span> <span class="n">SQLAlchemyBackendFactory</span>
+<p>You need an instance of <a href="https://docs.sqlalchemy.org/en/20/orm/session.html">Session</a> to instantiate <code>event_sourcery_sqlalchemy.SQLAlchemyBackend</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span> <span class="nn">event_sourcery_sqlalchemy</span> <span class="kn">import</span> <span class="n">SQLAlchemyBackend</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">session</span> <span class="o">=</span> <span class="n">Session</span><span class="p">()</span>  <span class="c1"># SQLAlchemy session</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">SQLAlchemyBackendFactory</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">SQLAlchemyBackend</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<p>First, you need an instance of <code>esdbclient.EventStoreDBClient</code> that represents a connection to EventStoreDB. Then, you can pass it to <code>event_sourcery_esdb.ESDBBackendFactory</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">esdbclient</span> <span class="kn">import</span> <span class="n">EventStoreDBClient</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span> <span class="nn">event_sourcery_esdb</span> <span class="kn">import</span> <span class="n">ESDBBackendFactory</span>
+<p>First, you need an instance of <code>kurrentdbclient.KurrentDBClient</code> that represents a connection to EventStoreDB. Then, you can pass it to <code>event_sourcery_kurrentdb.KurrentDBBackend</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">kurrentdbclient</span> <span class="kn">import</span> <span class="n">KurrentDBClient</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span> <span class="nn">event_sourcery_kurrentdb</span> <span class="kn">import</span> <span class="n">KurrentDBBackend</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">client</span> <span class="o">=</span> <span class="n">EventStoreDBClient</span><span class="p">(</span><span class="n">uri</span><span class="o">=</span><span class="s2">&quot;esdb://localhost:2113?Tls=false&quot;</span><span class="p">)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">ESDBBackendFactory</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">client</span> <span class="o">=</span> <span class="n">KurrentDBClient</span><span class="p">(</span><span class="n">uri</span><span class="o">=</span><span class="s2">&quot;kurrentdb://localhost:2113?Tls=false&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">KurrentDBBackend</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">backend</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">load_stream</span><span class="p">(</span><span class="n">StreamId</span><span class="p">())</span>  <span class="c1"># test if connection works</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <p>Your first step will be adding <code>"event_sourcery_django"</code> to the list of <code>INSTALLED_APPS</code> in your settings.</p>
-<p>Then you can create an instance of <code>event_sourcery_django.DjangoBackendFactory</code> right away and call <code>.build()</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span> <span class="nn">event_sourcery_django</span> <span class="kn">import</span> <span class="n">DjangoBackendFactory</span>
+<p>Then you can simply create an instance of <code>event_sourcery_django.DjangoBackend</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span> <span class="nn">event_sourcery_django</span> <span class="kn">import</span> <span class="n">DjangoBackend</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">DjangoBackendFactory</span><span class="p">()</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">DjangoBackend</span><span class="p">()</span>
 </code></pre></div>
-<p>This can be done once. Then, you can import <code>backend</code> from other parts of code and start using it.</p>
+<p>This can be done once. Then, you can import <code>backend</code> from other parts of code to use it.</p>
 </div>
 </div>
 </div>

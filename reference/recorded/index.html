@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#event_sourcery.event_store.event.dto.Recorded" class="md-skip">
+        <a href="#event_sourcery.event_store.event.Recorded" class="md-skip">
           Skip to content
         </a>
       
@@ -406,6 +406,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/data_privacy/" class="md-nav__link">
+        🔒 Data privacy
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -490,6 +504,20 @@
   
   
     <li class="md-nav__item">
+      <a href="../encrypted/" class="md-nav__link">
+        Encrypted
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../wrapped_event/" class="md-nav__link">
         WrappedEvent
       </a>
@@ -534,7 +562,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#event_sourcery.event_store.event.dto.Recorded" class="md-nav__link">
+  <a href="#event_sourcery.event_store.event.Recorded" class="md-nav__link">
     Recorded
   </a>
   
@@ -555,36 +583,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../backend_factory/" class="md-nav__link">
-        BackendFactory
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../event_registry/" class="md-nav__link">
         EventRegistry
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../in_memory_backend_factory/" class="md-nav__link">
-        InMemoryBackendFactory
       </a>
     </li>
   
@@ -650,7 +650,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#event_sourcery.event_store.event.dto.Recorded" class="md-nav__link">
+  <a href="#event_sourcery.event_store.event.Recorded" class="md-nav__link">
     Recorded
   </a>
   
@@ -682,34 +682,34 @@
 
 
 
-<a id="event_sourcery.event_store.event.dto.Recorded"></a>
+<a id="event_sourcery.event_store.event.Recorded"></a>
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="event_sourcery.event_store.event.dto.Entry">Entry</span></code></p>
+              Bases: <code><span title="event_sourcery.event_store.event._dto.Entry">Entry</span></code></p>
 
 
         <p>DTO containing events saved in the event store.</p>
 <p>It contains position of the event in the event store and tenant id.</p>
 
               <details class="quote">
-                <summary>Source code in <code>event_sourcery/event_store/event/dto.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-93"> 93</a></span>
-<span class="normal"><a href="#__codelineno-0-94"> 94</a></span>
-<span class="normal"><a href="#__codelineno-0-95"> 95</a></span>
-<span class="normal"><a href="#__codelineno-0-96"> 96</a></span>
-<span class="normal"><a href="#__codelineno-0-97"> 97</a></span>
-<span class="normal"><a href="#__codelineno-0-98"> 98</a></span>
-<span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
-<span class="normal"><a href="#__codelineno-0-100">100</a></span>
-<span class="normal"><a href="#__codelineno-0-101">101</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="k">class</span> <span class="nc">Recorded</span><span class="p">(</span><span class="n">Entry</span><span class="p">):</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;DTO containing events saved in the event store.</span>
+                <summary>Source code in <code>event_sourcery/event_store/event/_dto.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-90">90</a></span>
+<span class="normal"><a href="#__codelineno-0-91">91</a></span>
+<span class="normal"><a href="#__codelineno-0-92">92</a></span>
+<span class="normal"><a href="#__codelineno-0-93">93</a></span>
+<span class="normal"><a href="#__codelineno-0-94">94</a></span>
+<span class="normal"><a href="#__codelineno-0-95">95</a></span>
+<span class="normal"><a href="#__codelineno-0-96">96</a></span>
+<span class="normal"><a href="#__codelineno-0-97">97</a></span>
+<span class="normal"><a href="#__codelineno-0-98">98</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="k">class</span> <span class="nc">Recorded</span><span class="p">(</span><span class="n">Entry</span><span class="p">):</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;DTO containing events saved in the event store.</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="sd">    It contains position of the event in the event store and tenant id.</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">    &quot;&quot;&quot;</span>
 <a id="__codelineno-0-96" name="__codelineno-0-96"></a>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    It contains position of the event in the event store and tenant id.</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>    <span class="n">position</span><span class="p">:</span> <span class="n">Position</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a>    <span class="n">tenant_id</span><span class="p">:</span> <span class="n">TenantId</span> <span class="o">=</span> <span class="n">DEFAULT_TENANT</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a>    <span class="n">position</span><span class="p">:</span> <span class="n">Position</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="n">tenant_id</span><span class="p">:</span> <span class="n">TenantId</span> <span class="o">=</span> <span class="n">DEFAULT_TENANT</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -768,13 +768,13 @@
       
       
         
-        <a href="../backend_factory/" class="md-footer__link md-footer__link--next" aria-label="Next: BackendFactory" rel="next">
+        <a href="../event_registry/" class="md-footer__link md-footer__link--next" aria-label="Next: EventRegistry" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              BackendFactory
+              EventRegistry
             </div>
           </div>
           <div class="md-footer__button md-icon">

@@ -406,6 +406,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/data_privacy/" class="md-nav__link">
+        🔒 Data privacy
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -527,6 +541,20 @@
   
   
     <li class="md-nav__item">
+      <a href="../encrypted/" class="md-nav__link">
+        Encrypted
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../wrapped_event/" class="md-nav__link">
         WrappedEvent
       </a>
@@ -555,36 +583,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../backend_factory/" class="md-nav__link">
-        BackendFactory
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../event_registry/" class="md-nav__link">
         EventRegistry
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../in_memory_backend_factory/" class="md-nav__link">
-        InMemoryBackendFactory
       </a>
     </li>
   
@@ -695,10 +695,8 @@
 </code></pre></div></p>
 
               <details class="quote">
-                <summary>Source code in <code>event_sourcery/event_store/event/dto.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-34">34</a></span>
-<span class="normal"><a href="#__codelineno-0-35">35</a></span>
-<span class="normal"><a href="#__codelineno-0-36">36</a></span>
+                <summary>Source code in <code>event_sourcery/event_store/event/_dto.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-36">36</a></span>
 <span class="normal"><a href="#__codelineno-0-37">37</a></span>
 <span class="normal"><a href="#__codelineno-0-38">38</a></span>
 <span class="normal"><a href="#__codelineno-0-39">39</a></span>
@@ -706,41 +704,17 @@
 <span class="normal"><a href="#__codelineno-0-41">41</a></span>
 <span class="normal"><a href="#__codelineno-0-42">42</a></span>
 <span class="normal"><a href="#__codelineno-0-43">43</a></span>
-<span class="normal"><a href="#__codelineno-0-44">44</a></span>
-<span class="normal"><a href="#__codelineno-0-45">45</a></span>
-<span class="normal"><a href="#__codelineno-0-46">46</a></span>
-<span class="normal"><a href="#__codelineno-0-47">47</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="s2">&quot;forbid&quot;</span><span class="p">):</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for all events.</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    Example usage:</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">    ```</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">    class OrderCancelled(Event):</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        order_id: OrderId</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">    ```</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="n">__registry__</span><span class="p">:</span> <span class="n">ClassVar</span> <span class="o">=</span> <span class="n">EventRegistry</span><span class="p">()</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="bp">cls</span><span class="o">.</span><span class="n">__registry__</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-44">44</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="s2">&quot;forbid&quot;</span><span class="p">):</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for all events.</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">    Example usage:</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">    ```</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">    class OrderCancelled(Event):</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">        order_id: OrderId</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">    ```</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="sd">    &quot;&quot;&quot;</span>
 </code></pre></div></td></tr></table></div>
               </details>
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-  </div>
 
     </div>
 
@@ -781,13 +755,13 @@
       
       
         
-        <a href="../wrapped_event/" class="md-footer__link md-footer__link--next" aria-label="Next: WrappedEvent" rel="next">
+        <a href="../encrypted/" class="md-footer__link md-footer__link--next" aria-label="Next: Encrypted" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              WrappedEvent
+              Encrypted
             </div>
           </div>
           <div class="md-footer__button md-icon">

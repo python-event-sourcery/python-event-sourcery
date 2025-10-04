@@ -13,7 +13,7 @@
     
     
       
-        <title>InMemoryBackendFactory - Event Sourcery</title>
+        <title>Encrypted - Event Sourcery</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#event_sourcery.event_store.InMemoryBackendFactory" class="md-skip">
+        <a href="#event_sourcery.event_store.event.Encrypted" class="md-skip">
           Skip to content
         </a>
       
@@ -101,7 +101,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              InMemoryBackendFactory
+              Encrypted
             
           </span>
         </div>
@@ -406,6 +406,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/data_privacy/" class="md-nav__link">
+        🔒 Data privacy
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -488,6 +502,57 @@
               
   
   
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Encrypted
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Encrypted
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#event_sourcery.event_store.event.Encrypted" class="md-nav__link">
+    Encrypted
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
   
     <li class="md-nav__item">
       <a href="../wrapped_event/" class="md-nav__link">
@@ -518,74 +583,9 @@
   
   
     <li class="md-nav__item">
-      <a href="../backend_factory/" class="md-nav__link">
-        BackendFactory
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../event_registry/" class="md-nav__link">
         EventRegistry
       </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-    
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          InMemoryBackendFactory
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        InMemoryBackendFactory
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#event_sourcery.event_store.InMemoryBackendFactory" class="md-nav__link">
-    InMemoryBackendFactory
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -650,8 +650,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#event_sourcery.event_store.InMemoryBackendFactory" class="md-nav__link">
-    InMemoryBackendFactory
+  <a href="#event_sourcery.event_store.event.Encrypted" class="md-nav__link">
+    Encrypted
   </a>
   
 </li>
@@ -670,127 +670,172 @@
                 
                   
 
-  <a href="https://github.com/python-event-sourcery/python-event-sourcery/edit/master/docs/reference/in_memory_backend_factory.md" title="Edit this page" class="md-content__button md-icon">
+  <a href="https://github.com/python-event-sourcery/python-event-sourcery/edit/master/docs/reference/encrypted.md" title="Edit this page" class="md-content__button md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
   </a>
 
 
-  <h1>InMemoryBackendFactory</h1>
+  <h1>Encrypted</h1>
 
 <div class="doc doc-object doc-class">
 
 
 
-<a id="event_sourcery.event_store.InMemoryBackendFactory"></a>
+<a id="event_sourcery.event_store.event.Encrypted"></a>
     <div class="doc doc-contents first">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="event_sourcery.event_store.factory.BackendFactory" href="../backend_factory/#event_sourcery.event_store.BackendFactory">BackendFactory</a></code></p>
 
 
-        <p>Lightweight in-memory backend factory for testing and development.</p>
+        <p>Field annotation for marking event fields that should be encrypted.</p>
+<p>This annotation is used in combination with DataSubject to implement
+crypto-shredding, allowing for GDPR-compliant data removal in event-sourced systems.</p>
 
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>mask_value</code></td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Value to display when the data is shredded (deleted).
+        Must match the field type.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>subject_field</code></td>
+            <td>
+                  <code>str | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional. Name of the field containing the subject ID for this
+          encrypted field. If not provided, the field marked with
+          DataSubject will be used.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">class</span> <span class="nc">UserRegistered</span><span class="p">(</span><span class="n">Event</span><span class="p">):</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">user_id</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DataSubject</span><span class="p">]</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">email</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Encrypted</span><span class="p">(</span><span class="n">mask_value</span><span class="o">=</span><span class="s2">&quot;[REDACTED]&quot;</span><span class="p">)]</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="c1"># Custom subject field</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">other_data</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        <span class="n">Encrypted</span><span class="p">(</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>            <span class="n">mask_value</span><span class="o">=</span><span class="s2">&quot;[HIDDEN]&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>            <span class="n">subject_field</span><span class="o">=</span><span class="s2">&quot;alternative_id&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="p">),</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="p">]</span>
+</code></pre></div>
+</details>
+
+<details class="note" open>
+  <summary>Note</summary>
+  <ul>
+<li>Every event with encrypted fields must have exactly one DataSubject field.</li>
+<li>The mask_value type must match the field type.</li>
+<li>After shredding, the field will always return its mask_value.</li>
+</ul>
+</details>
               <details class="quote">
-                <summary>Source code in <code>event_sourcery/event_store/in_memory.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-310">310</a></span>
-<span class="normal"><a href="#__codelineno-0-311">311</a></span>
-<span class="normal"><a href="#__codelineno-0-312">312</a></span>
-<span class="normal"><a href="#__codelineno-0-313">313</a></span>
-<span class="normal"><a href="#__codelineno-0-314">314</a></span>
-<span class="normal"><a href="#__codelineno-0-315">315</a></span>
-<span class="normal"><a href="#__codelineno-0-316">316</a></span>
-<span class="normal"><a href="#__codelineno-0-317">317</a></span>
-<span class="normal"><a href="#__codelineno-0-318">318</a></span>
-<span class="normal"><a href="#__codelineno-0-319">319</a></span>
-<span class="normal"><a href="#__codelineno-0-320">320</a></span>
-<span class="normal"><a href="#__codelineno-0-321">321</a></span>
-<span class="normal"><a href="#__codelineno-0-322">322</a></span>
-<span class="normal"><a href="#__codelineno-0-323">323</a></span>
-<span class="normal"><a href="#__codelineno-0-324">324</a></span>
-<span class="normal"><a href="#__codelineno-0-325">325</a></span>
-<span class="normal"><a href="#__codelineno-0-326">326</a></span>
-<span class="normal"><a href="#__codelineno-0-327">327</a></span>
-<span class="normal"><a href="#__codelineno-0-328">328</a></span>
-<span class="normal"><a href="#__codelineno-0-329">329</a></span>
-<span class="normal"><a href="#__codelineno-0-330">330</a></span>
-<span class="normal"><a href="#__codelineno-0-331">331</a></span>
-<span class="normal"><a href="#__codelineno-0-332">332</a></span>
-<span class="normal"><a href="#__codelineno-0-333">333</a></span>
-<span class="normal"><a href="#__codelineno-0-334">334</a></span>
-<span class="normal"><a href="#__codelineno-0-335">335</a></span>
-<span class="normal"><a href="#__codelineno-0-336">336</a></span>
-<span class="normal"><a href="#__codelineno-0-337">337</a></span>
-<span class="normal"><a href="#__codelineno-0-338">338</a></span>
-<span class="normal"><a href="#__codelineno-0-339">339</a></span>
-<span class="normal"><a href="#__codelineno-0-340">340</a></span>
-<span class="normal"><a href="#__codelineno-0-341">341</a></span>
-<span class="normal"><a href="#__codelineno-0-342">342</a></span>
-<span class="normal"><a href="#__codelineno-0-343">343</a></span>
-<span class="normal"><a href="#__codelineno-0-344">344</a></span>
-<span class="normal"><a href="#__codelineno-0-345">345</a></span>
-<span class="normal"><a href="#__codelineno-0-346">346</a></span>
-<span class="normal"><a href="#__codelineno-0-347">347</a></span>
-<span class="normal"><a href="#__codelineno-0-348">348</a></span>
-<span class="normal"><a href="#__codelineno-0-349">349</a></span>
-<span class="normal"><a href="#__codelineno-0-350">350</a></span>
-<span class="normal"><a href="#__codelineno-0-351">351</a></span>
-<span class="normal"><a href="#__codelineno-0-352">352</a></span>
-<span class="normal"><a href="#__codelineno-0-353">353</a></span>
-<span class="normal"><a href="#__codelineno-0-354">354</a></span>
-<span class="normal"><a href="#__codelineno-0-355">355</a></span>
-<span class="normal"><a href="#__codelineno-0-356">356</a></span>
-<span class="normal"><a href="#__codelineno-0-357">357</a></span>
-<span class="normal"><a href="#__codelineno-0-358">358</a></span>
-<span class="normal"><a href="#__codelineno-0-359">359</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-310" name="__codelineno-0-310"></a><span class="nd">@dataclass</span><span class="p">(</span><span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<a id="__codelineno-0-311" name="__codelineno-0-311"></a><span class="k">class</span> <span class="nc">InMemoryBackendFactory</span><span class="p">(</span><span class="n">BackendFactory</span><span class="p">):</span>
-<a id="__codelineno-0-312" name="__codelineno-0-312"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Lightweight in-memory backend factory for testing and development.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-313" name="__codelineno-0-313"></a>
-<a id="__codelineno-0-314" name="__codelineno-0-314"></a>    <span class="n">serde</span> <span class="o">=</span> <span class="n">Serde</span><span class="p">(</span><span class="n">Event</span><span class="o">.</span><span class="n">__registry__</span><span class="p">)</span>
-<a id="__codelineno-0-315" name="__codelineno-0-315"></a>
-<a id="__codelineno-0-316" name="__codelineno-0-316"></a>    <span class="n">_config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
-<a id="__codelineno-0-317" name="__codelineno-0-317"></a>    <span class="n">_storage</span><span class="p">:</span> <span class="n">Storage</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Storage</span><span class="p">)</span>
-<a id="__codelineno-0-318" name="__codelineno-0-318"></a>    <span class="n">_outbox_strategy</span><span class="p">:</span> <span class="n">InMemoryOutboxStorageStrategy</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-319" name="__codelineno-0-319"></a>    <span class="n">_subscription_strategy</span><span class="p">:</span> <span class="n">InMemorySubscriptionStrategy</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<a id="__codelineno-0-320" name="__codelineno-0-320"></a>
-<a id="__codelineno-0-321" name="__codelineno-0-321"></a>    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-322" name="__codelineno-0-322"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_subscription_strategy</span> <span class="o">=</span> <span class="n">InMemorySubscriptionStrategy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="p">)</span>
-<a id="__codelineno-0-323" name="__codelineno-0-323"></a>
-<a id="__codelineno-0-324" name="__codelineno-0-324"></a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransactionalBackend</span><span class="p">:</span>
-<a id="__codelineno-0-325" name="__codelineno-0-325"></a>        <span class="n">backend</span> <span class="o">=</span> <span class="n">TransactionalBackend</span><span class="p">()</span>
-<a id="__codelineno-0-326" name="__codelineno-0-326"></a>        <span class="n">backend</span><span class="o">.</span><span class="n">serde</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">serde</span>
-<a id="__codelineno-0-327" name="__codelineno-0-327"></a>        <span class="n">backend</span><span class="o">.</span><span class="n">in_transaction</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="n">backend</span><span class="o">.</span><span class="n">serde</span><span class="p">)</span>
-<a id="__codelineno-0-328" name="__codelineno-0-328"></a>        <span class="n">backend</span><span class="o">.</span><span class="n">event_store</span> <span class="o">=</span> <span class="n">EventStore</span><span class="p">(</span>
-<a id="__codelineno-0-329" name="__codelineno-0-329"></a>            <span class="n">InMemoryStorageStrategy</span><span class="p">(</span>
-<a id="__codelineno-0-330" name="__codelineno-0-330"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_storage</span><span class="p">,</span>
-<a id="__codelineno-0-331" name="__codelineno-0-331"></a>                <span class="n">backend</span><span class="o">.</span><span class="n">in_transaction</span><span class="p">,</span>
-<a id="__codelineno-0-332" name="__codelineno-0-332"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_outbox_strategy</span><span class="p">,</span>
-<a id="__codelineno-0-333" name="__codelineno-0-333"></a>            <span class="p">),</span>
-<a id="__codelineno-0-334" name="__codelineno-0-334"></a>            <span class="n">backend</span><span class="o">.</span><span class="n">serde</span><span class="p">,</span>
-<a id="__codelineno-0-335" name="__codelineno-0-335"></a>        <span class="p">)</span>
-<a id="__codelineno-0-336" name="__codelineno-0-336"></a>        <span class="n">backend</span><span class="o">.</span><span class="n">outbox</span> <span class="o">=</span> <span class="n">Outbox</span><span class="p">(</span>
-<a id="__codelineno-0-337" name="__codelineno-0-337"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_outbox_strategy</span> <span class="ow">or</span> <span class="n">NoOutboxStorageStrategy</span><span class="p">(),</span>
-<a id="__codelineno-0-338" name="__codelineno-0-338"></a>            <span class="n">backend</span><span class="o">.</span><span class="n">serde</span><span class="p">,</span>
-<a id="__codelineno-0-339" name="__codelineno-0-339"></a>        <span class="p">)</span>
-<a id="__codelineno-0-340" name="__codelineno-0-340"></a>        <span class="n">backend</span><span class="o">.</span><span class="n">subscriber</span> <span class="o">=</span> <span class="n">subscription</span><span class="o">.</span><span class="n">SubscriptionBuilder</span><span class="p">(</span>
-<a id="__codelineno-0-341" name="__codelineno-0-341"></a>            <span class="n">_serde</span><span class="o">=</span><span class="n">backend</span><span class="o">.</span><span class="n">serde</span><span class="p">,</span>
-<a id="__codelineno-0-342" name="__codelineno-0-342"></a>            <span class="n">_strategy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_subscription_strategy</span><span class="p">,</span>
-<a id="__codelineno-0-343" name="__codelineno-0-343"></a>        <span class="p">)</span>
-<a id="__codelineno-0-344" name="__codelineno-0-344"></a>        <span class="k">return</span> <span class="n">backend</span>
-<a id="__codelineno-0-345" name="__codelineno-0-345"></a>
-<a id="__codelineno-0-346" name="__codelineno-0-346"></a>    <span class="k">def</span> <span class="nf">with_event_registry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_registry</span><span class="p">:</span> <span class="n">EventRegistry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-<a id="__codelineno-0-347" name="__codelineno-0-347"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">serde</span> <span class="o">=</span> <span class="n">Serde</span><span class="p">(</span><span class="n">event_registry</span><span class="p">)</span>
-<a id="__codelineno-0-348" name="__codelineno-0-348"></a>        <span class="k">return</span> <span class="bp">self</span>
-<a id="__codelineno-0-349" name="__codelineno-0-349"></a>
-<a id="__codelineno-0-350" name="__codelineno-0-350"></a>    <span class="k">def</span> <span class="nf">with_outbox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filterer</span><span class="p">:</span> <span class="n">OutboxFiltererStrategy</span> <span class="o">=</span> <span class="n">no_filter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-<a id="__codelineno-0-351" name="__codelineno-0-351"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_outbox_strategy</span> <span class="o">=</span> <span class="n">InMemoryOutboxStorageStrategy</span><span class="p">(</span>
-<a id="__codelineno-0-352" name="__codelineno-0-352"></a>            <span class="n">filterer</span><span class="p">,</span>
-<a id="__codelineno-0-353" name="__codelineno-0-353"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">outbox_attempts</span><span class="p">,</span>
-<a id="__codelineno-0-354" name="__codelineno-0-354"></a>        <span class="p">)</span>
-<a id="__codelineno-0-355" name="__codelineno-0-355"></a>        <span class="k">return</span> <span class="bp">self</span>
-<a id="__codelineno-0-356" name="__codelineno-0-356"></a>
-<a id="__codelineno-0-357" name="__codelineno-0-357"></a>    <span class="k">def</span> <span class="nf">without_outbox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filterer</span><span class="p">:</span> <span class="n">OutboxFiltererStrategy</span> <span class="o">=</span> <span class="n">no_filter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-<a id="__codelineno-0-358" name="__codelineno-0-358"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_outbox_strategy</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-359" name="__codelineno-0-359"></a>        <span class="k">return</span> <span class="bp">self</span>
+                <summary>Source code in <code>event_sourcery/event_store/event/_dto.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-101">101</a></span>
+<span class="normal"><a href="#__codelineno-0-102">102</a></span>
+<span class="normal"><a href="#__codelineno-0-103">103</a></span>
+<span class="normal"><a href="#__codelineno-0-104">104</a></span>
+<span class="normal"><a href="#__codelineno-0-105">105</a></span>
+<span class="normal"><a href="#__codelineno-0-106">106</a></span>
+<span class="normal"><a href="#__codelineno-0-107">107</a></span>
+<span class="normal"><a href="#__codelineno-0-108">108</a></span>
+<span class="normal"><a href="#__codelineno-0-109">109</a></span>
+<span class="normal"><a href="#__codelineno-0-110">110</a></span>
+<span class="normal"><a href="#__codelineno-0-111">111</a></span>
+<span class="normal"><a href="#__codelineno-0-112">112</a></span>
+<span class="normal"><a href="#__codelineno-0-113">113</a></span>
+<span class="normal"><a href="#__codelineno-0-114">114</a></span>
+<span class="normal"><a href="#__codelineno-0-115">115</a></span>
+<span class="normal"><a href="#__codelineno-0-116">116</a></span>
+<span class="normal"><a href="#__codelineno-0-117">117</a></span>
+<span class="normal"><a href="#__codelineno-0-118">118</a></span>
+<span class="normal"><a href="#__codelineno-0-119">119</a></span>
+<span class="normal"><a href="#__codelineno-0-120">120</a></span>
+<span class="normal"><a href="#__codelineno-0-121">121</a></span>
+<span class="normal"><a href="#__codelineno-0-122">122</a></span>
+<span class="normal"><a href="#__codelineno-0-123">123</a></span>
+<span class="normal"><a href="#__codelineno-0-124">124</a></span>
+<span class="normal"><a href="#__codelineno-0-125">125</a></span>
+<span class="normal"><a href="#__codelineno-0-126">126</a></span>
+<span class="normal"><a href="#__codelineno-0-127">127</a></span>
+<span class="normal"><a href="#__codelineno-0-128">128</a></span>
+<span class="normal"><a href="#__codelineno-0-129">129</a></span>
+<span class="normal"><a href="#__codelineno-0-130">130</a></span>
+<span class="normal"><a href="#__codelineno-0-131">131</a></span>
+<span class="normal"><a href="#__codelineno-0-132">132</a></span>
+<span class="normal"><a href="#__codelineno-0-133">133</a></span>
+<span class="normal"><a href="#__codelineno-0-134">134</a></span>
+<span class="normal"><a href="#__codelineno-0-135">135</a></span>
+<span class="normal"><a href="#__codelineno-0-136">136</a></span>
+<span class="normal"><a href="#__codelineno-0-137">137</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="k">class</span> <span class="nc">Encrypted</span><span class="p">:</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Field annotation for marking event fields that should be encrypted.</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">    This annotation is used in combination with DataSubject to implement</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">    crypto-shredding, allowing for GDPR-compliant data removal in event-sourced systems.</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">        mask_value: Value to display when the data is shredded (deleted).</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="sd">                    Must match the field type.</span>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="sd">        subject_field: Optional. Name of the field containing the subject ID for this</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">                      encrypted field. If not provided, the field marked with</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">                      DataSubject will be used.</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">    Example:</span>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="sd">        ```python</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a><span class="sd">        class UserRegistered(Event):</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a><span class="sd">            user_id: Annotated[str, DataSubject]</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a><span class="sd">            email: Annotated[str, Encrypted(mask_value=&quot;[REDACTED]&quot;)]</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a><span class="sd">            # Custom subject field</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a><span class="sd">            other_data: Annotated[</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a><span class="sd">                str,</span>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a><span class="sd">                Encrypted(</span>
+<a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">                    mask_value=&quot;[HIDDEN]&quot;,</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a><span class="sd">                    subject_field=&quot;alternative_id&quot;,</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a><span class="sd">                ),</span>
+<a id="__codelineno-0-127" name="__codelineno-0-127"></a><span class="sd">            ]</span>
+<a id="__codelineno-0-128" name="__codelineno-0-128"></a><span class="sd">        ```</span>
+<a id="__codelineno-0-129" name="__codelineno-0-129"></a>
+<a id="__codelineno-0-130" name="__codelineno-0-130"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-131" name="__codelineno-0-131"></a><span class="sd">        - Every event with encrypted fields must have exactly one DataSubject field.</span>
+<a id="__codelineno-0-132" name="__codelineno-0-132"></a><span class="sd">        - The mask_value type must match the field type.</span>
+<a id="__codelineno-0-133" name="__codelineno-0-133"></a><span class="sd">        - After shredding, the field will always return its mask_value.</span>
+<a id="__codelineno-0-134" name="__codelineno-0-134"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-135" name="__codelineno-0-135"></a>
+<a id="__codelineno-0-136" name="__codelineno-0-136"></a>    <span class="n">mask_value</span><span class="p">:</span> <span class="n">Any</span>
+<a id="__codelineno-0-137" name="__codelineno-0-137"></a>    <span class="n">subject_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -833,7 +878,7 @@
     <nav class="md-footer__inner md-grid" aria-label="Footer" >
       
         
-        <a href="../event_registry/" class="md-footer__link md-footer__link--prev" aria-label="Previous: EventRegistry" rel="prev">
+        <a href="../event/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Event" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
           </div>
@@ -842,20 +887,20 @@
               <span class="md-footer__direction">
                 Previous
               </span>
-              EventRegistry
+              Event
             </div>
           </div>
         </a>
       
       
         
-        <a href="../aggregate/" class="md-footer__link md-footer__link--next" aria-label="Next: Aggregate" rel="next">
+        <a href="../wrapped_event/" class="md-footer__link md-footer__link--next" aria-label="Next: WrappedEvent" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Aggregate
+              WrappedEvent
             </div>
           </div>
           <div class="md-footer__button md-icon">
