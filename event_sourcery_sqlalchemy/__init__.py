@@ -19,14 +19,16 @@ from pydantic import BaseModel, ConfigDict, PositiveInt
 from sqlalchemy.orm import Session
 from typing_extensions import Self
 
-from event_sourcery.event_store import Dispatcher, TenantId, TransactionalBackend
-from event_sourcery.event_store.backend import no_filter, not_configured
+from event_sourcery.event_store.backend import TransactionalBackend, not_configured
+from event_sourcery.event_store.in_transaction import Dispatcher
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
     StorageStrategy,
     SubscriptionStrategy,
 )
+from event_sourcery.event_store.outbox import no_filter
+from event_sourcery.event_store.types import TenantId
 from event_sourcery_sqlalchemy import models
 from event_sourcery_sqlalchemy.event_store import SqlAlchemyStorageStrategy
 from event_sourcery_sqlalchemy.models import configure_models

@@ -2,16 +2,16 @@ import dataclasses
 from collections.abc import Mapping, Sequence
 from typing import cast
 
-from event_sourcery.event_store.event._dto import (
+from event_sourcery.event_store._internal.event.dto import (
     Context,
     RawEvent,
     Recorded,
     RecordedRaw,
     WrappedEvent,
 )
-from event_sourcery.event_store.event._encryption import Encryption
-from event_sourcery.event_store.event._registry import EventRegistry
-from event_sourcery.event_store.stream_id import StreamId
+from event_sourcery.event_store._internal.event.encryption import Encryption
+from event_sourcery.event_store._internal.event.registry import EventRegistry
+from event_sourcery.event_store._internal.stream_id import StreamId
 
 
 class Serde:

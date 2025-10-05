@@ -2,19 +2,19 @@ from collections.abc import Sequence
 from functools import singledispatchmethod
 from typing import cast
 
-from event_sourcery.event_store.event import (
+from event_sourcery.event_store._internal.event.dto import (
     Event,
     Position,
-    Serde,
     WrappedEvent,
 )
-from event_sourcery.event_store.interfaces import StorageStrategy
-from event_sourcery.event_store.stream_id import StreamId
-from event_sourcery.event_store.versioning import (
+from event_sourcery.event_store._internal.event.serde import Serde
+from event_sourcery.event_store._internal.stream_id import StreamId
+from event_sourcery.event_store._internal.versioning import (
     NO_VERSIONING,
     ExplicitVersioning,
     Versioning,
 )
+from event_sourcery.event_store.interfaces import StorageStrategy
 
 
 class EventStore:

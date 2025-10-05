@@ -3,8 +3,10 @@ from uuid import uuid4
 import pytest
 
 from event_sourcery.event_sourcing import Aggregate, Repository
-from event_sourcery.event_store import Event, EventStore, StreamId, StreamUUID
+from event_sourcery.event_store import EventStore
+from event_sourcery.event_store.event import Event
 from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
+from event_sourcery.event_store.types import StreamId, StreamUUID
 
 
 class TurnedOn(Event):

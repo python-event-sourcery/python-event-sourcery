@@ -1,1 +1,1 @@
-::: event_sourcery.event_store.WrappedEvent
+::: event_sourcery.event_store.event.WrappedEvent

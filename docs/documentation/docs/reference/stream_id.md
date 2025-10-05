@@ -1,1 +1,1 @@
-::: event_sourcery.event_store.StreamId
+::: event_sourcery.event_store.types.StreamId

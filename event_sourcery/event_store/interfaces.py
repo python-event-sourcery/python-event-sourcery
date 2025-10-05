@@ -1,3 +1,12 @@
+__all__ = [
+    "EncryptionKeyStorageStrategy",
+    "EncryptionStrategy",
+    "OutboxFiltererStrategy",
+    "OutboxStorageStrategy",
+    "StorageStrategy",
+    "SubscriptionStrategy",
+]
+
 from collections.abc import Iterator
 from contextlib import AbstractContextManager
 from datetime import timedelta
@@ -5,10 +14,14 @@ from typing import Any, Protocol, runtime_checkable
 
 from typing_extensions import Self
 
-from event_sourcery.event_store.event import Position, RawEvent, RecordedRaw
-from event_sourcery.event_store.stream_id import StreamId
-from event_sourcery.event_store.tenant_id import TenantId
-from event_sourcery.event_store.versioning import Versioning
+from event_sourcery.event_store._internal.event.dto import (
+    Position,
+    RawEvent,
+    RecordedRaw,
+)
+from event_sourcery.event_store._internal.stream_id import StreamId
+from event_sourcery.event_store._internal.tenant_id import TenantId
+from event_sourcery.event_store._internal.versioning import Versioning
 
 
 @runtime_checkable

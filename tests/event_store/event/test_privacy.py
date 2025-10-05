@@ -5,11 +5,12 @@ from typing import Annotated, Any
 import pytest
 from pydantic import BaseModel, Field
 
-from event_sourcery.event_store import Backend, Event, StreamId
-from event_sourcery.event_store.event import DataSubject, Encrypted
+from event_sourcery.event_store.backend import Backend, InMemoryKeyStorage
+from event_sourcery.event_store.encryption import DataSubject, Encrypted
+from event_sourcery.event_store.event import Event
 from event_sourcery.event_store.exceptions import KeyNotFoundError, NoSubjectIdFound
-from event_sourcery.event_store.in_memory import InMemoryKeyStorage
 from event_sourcery.event_store.interfaces import EncryptionStrategy
+from event_sourcery.event_store.types import StreamId
 from tests.bdd import Given, Then, When
 
 
