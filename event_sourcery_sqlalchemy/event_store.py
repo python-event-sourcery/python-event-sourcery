@@ -32,7 +32,7 @@ from event_sourcery_sqlalchemy.outbox import SqlAlchemyOutboxStorageStrategy
 class SqlAlchemyStorageStrategy(StorageStrategy):
     _session: Session
     _dispatcher: Dispatcher
-    _outbox: SqlAlchemyOutboxStorageStrategy
+    _outbox: SqlAlchemyOutboxStorageStrategy | None
     _event_model: type[BaseEvent]
     _snapshot_model: type[BaseSnapshot]
     _stream_model: type[BaseStream]

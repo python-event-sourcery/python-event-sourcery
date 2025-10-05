@@ -1,9 +1,7 @@
-import abc
-from collections import UserDict
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager
 from functools import wraps
-from typing import NoReturn, Protocol, TypeVar, cast
+from typing import NoReturn, TypeVar, cast
 
 from typing_extensions import Self
 
@@ -46,12 +44,10 @@ class NoOutboxStorageStrategy(OutboxStorageStrategy):
         return iter([])
 
 
-T_co = TypeVar("T_co", covariant=True)
 T = TypeVar("T")
+T_co = TypeVar("T_co", covariant=True)
 
-
-class _Provider(Protocol[T_co]):
-    def __call__(self, container: "_Container") -> T_co: ...
+_Provider = Callable[["_Container"], T]
 
 
 def singleton(provider: _Provider[T]) -> _Provider[T]:
@@ -75,32 +71,39 @@ def not_configured(error_message: str) -> _Provider[T]:
     return _raise
 
 
-class _Container(UserDict[type[T], _Provider[T] | T]):
+class _Container:
+    def __init__(self) -> None:
+        self.providers: dict[type, _Provider] = {}
+
     def __getitem__(self, _type: type[T]) -> T:
-        provider = cast(_Provider[T], self.data[_type])
-        return provider(self)
+        return cast(_Provider[T], self.providers[_type])(self)
 
     def __setitem__(self, _type: type[T], value: T | _Provider[T]) -> None:
-        self.data[_type] = (
-            cast(_Provider[T], lambda _: value) if isinstance(value, _type) else value
+        self.providers[_type] = (
+            cast(_Provider[T], lambda _: value)
+            if isinstance(value, _type)
+            else cast(_Provider[T], value)
         )
+
+    def get(self, _type: type[T], default: T | None = None) -> T | None:
+        if _type not in self.providers:
+            return default
+        return self[_type]
 
     def copy(self) -> Self:
         new: Self = self.__class__()
-        new.data.update(self.data.copy())
+        new.providers.update(self.providers.copy())
         return new
 
 
 class Backend(_Container):
-    tenant_id: TenantId
-
     def __init__(self) -> None:
         super().__init__()
-        self.tenant_id = DEFAULT_TENANT
-        self[EventRegistry] = lambda _: EventRegistry()
-        self[EncryptionStrategy] = lambda _: NoEncryptionStrategy()
+        self[TenantId] = DEFAULT_TENANT
+        self[EventRegistry] = EventRegistry()
+        self[EncryptionStrategy] = NoEncryptionStrategy()
         self[EncryptionKeyStorageStrategy] = (
-            lambda c: NoKeyStorageStrategy().scoped_for_tenant(c.tenant_id)
+            lambda c: NoKeyStorageStrategy().scoped_for_tenant(c[TenantId])
         )
         self[Encryption] = lambda c: Encryption(
             registry=c[EventRegistry],
@@ -133,23 +136,23 @@ class Backend(_Container):
 
     @property
     def event_store(self) -> EventStore:
-        return cast(EventStore, self[EventStore])
+        return self[EventStore]
 
     @property
     def outbox(self) -> Outbox:
-        return cast(Outbox, self[Outbox])
+        return self[Outbox]
 
     @property
     def subscriber(self) -> subscription.PositionPhase:
-        return cast(subscription.PositionPhase, self[subscription.PositionPhase])
+        return self[subscription.PositionPhase]
 
     def in_tenant_mode(self, tenant_id: TenantId) -> Self:
         in_tenant_mode = self.copy()
-        in_tenant_mode.tenant_id = tenant_id
+        in_tenant_mode[TenantId] = tenant_id
         return in_tenant_mode
 
-    @abc.abstractmethod
-    def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self: ...
+    def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
+        raise NotImplementedError()
 
     def with_encryption(
         self,
@@ -158,12 +161,12 @@ class Backend(_Container):
     ) -> Self:
         self[EncryptionStrategy] = strategy
         self[EncryptionKeyStorageStrategy] = lambda c: key_storage.scoped_for_tenant(
-            c.tenant_id
+            c[TenantId],
         )
         return self
 
 
-class TransactionalBackend(Backend, abc.ABC):
+class TransactionalBackend(Backend):
     def __init__(self) -> None:
         super().__init__()
         self[Listeners] = singleton(lambda _: Listeners())

@@ -19,7 +19,7 @@ from pydantic import BaseModel, ConfigDict, PositiveInt
 from sqlalchemy.orm import Session
 from typing_extensions import Self
 
-from event_sourcery.event_store import Dispatcher, TransactionalBackend
+from event_sourcery.event_store import Dispatcher, TenantId, TransactionalBackend
 from event_sourcery.event_store.backend import no_filter, not_configured
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
@@ -67,25 +67,22 @@ class SQLAlchemyBackend(TransactionalBackend):
 
     def __init__(self) -> None:
         super().__init__()
-        self[BaseEvent] = not_configured(self.UNCONFIGURED_MESSAGE)
-        self[BaseStream] = not_configured(self.UNCONFIGURED_MESSAGE)
-        self[BaseSnapshot] = not_configured(self.UNCONFIGURED_MESSAGE)
-        self[BaseOutboxEntry] = not_configured(self.UNCONFIGURED_MESSAGE)
+        self[Models] = not_configured(self.UNCONFIGURED_MESSAGE)
         self[Session] = not_configured(self.UNCONFIGURED_MESSAGE)
         self[Config] = not_configured(self.UNCONFIGURED_MESSAGE)
         self[StorageStrategy] = lambda c: SqlAlchemyStorageStrategy(
             c[Session],
             c[Dispatcher],
             c.get(SqlAlchemyOutboxStorageStrategy, None),
-            c[BaseEvent],
-            c[BaseSnapshot],
-            c[BaseStream],
-        ).scoped_for_tenant(c.tenant_id)
+            c[Models].event_model,
+            c[Models].snapshot_model,
+            c[Models].stream_model,
+        ).scoped_for_tenant(c[TenantId])
         self[SubscriptionStrategy] = lambda c: SqlAlchemySubscriptionStrategy(
             c[Session],
             c[Config].gap_retry_interval,
-            c[BaseEvent],
-            c[BaseStream],
+            c[Models].event_model,
+            c[Models].stream_model,
         )
 
     def configure(
@@ -104,20 +101,17 @@ class SQLAlchemyBackend(TransactionalBackend):
 
         self[Session] = session
         self[Config] = config or Config()
-        self[BaseEvent] = lambda _: custom_models.event_model
-        self[BaseStream] = lambda _: custom_models.stream_model
-        self[BaseSnapshot] = lambda _: custom_models.snapshot_model
-        self[BaseOutboxEntry] = lambda _: custom_models.outbox_entry_model
+        self[Models] = custom_models
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
-        self[OutboxFiltererStrategy] = filterer
+        self[OutboxFiltererStrategy] = filterer  # type: ignore[type-abstract]
         self[SqlAlchemyOutboxStorageStrategy] = (
             lambda c: SqlAlchemyOutboxStorageStrategy(
                 c[Session],
-                c[OutboxFiltererStrategy],
+                c[OutboxFiltererStrategy],  # type: ignore[type-abstract]
                 c[Config].outbox_attempts,
-                c[BaseOutboxEntry],
+                c[Models].outbox_entry_model,
             )
         )
         self[OutboxStorageStrategy] = lambda c: c[SqlAlchemyOutboxStorageStrategy]
