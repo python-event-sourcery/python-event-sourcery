@@ -1,4 +1,4 @@
-# 4. Leave implementation of in-memory events handling to users of the library
+# Leave implementation of in-memory events handling to users of the library
  
 Date: 2023-10-27
 

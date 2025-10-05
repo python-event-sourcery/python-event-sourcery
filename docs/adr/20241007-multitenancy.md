@@ -1,4 +1,4 @@
-# 8. Multitenancy
+# Multitenancy
 
 Date: 2024-10-07
 

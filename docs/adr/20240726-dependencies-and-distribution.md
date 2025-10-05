@@ -1,4 +1,4 @@
-# 7. Dependencies and distribution
+# Dependencies and distribution
 
 Date: 2024-07-26
 

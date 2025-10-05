@@ -1,4 +1,4 @@
-# 5. InMemory Event Store
+# InMemory Event Store
 
 Date: 2023-10-29
 
