@@ -1,4 +1,5 @@
-from event_sourcery.event_store import RawEvent, StreamId
+from event_sourcery.event_store.event import RawEvent
+from event_sourcery.event_store.types import StreamId
 from event_sourcery_sqlalchemy.models.base import BaseEvent, BaseStream
 
 

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Protocol, cast
 
-from event_sourcery.event_store import Position, RecordedRaw
+from event_sourcery.event_store.event import Position, RecordedRaw
 from event_sourcery.event_store.interfaces import SubscriptionStrategy
 from event_sourcery_django import dto, models
 

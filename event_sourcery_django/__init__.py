@@ -8,18 +8,19 @@ from datetime import timedelta
 from pydantic import BaseModel, ConfigDict, PositiveInt
 from typing_extensions import Self
 
-from event_sourcery.event_store import Dispatcher, TenantId
 from event_sourcery.event_store.backend import (
     TransactionalBackend,
-    no_filter,
     not_configured,
 )
+from event_sourcery.event_store.in_transaction import Dispatcher
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
     StorageStrategy,
     SubscriptionStrategy,
 )
+from event_sourcery.event_store.outbox import no_filter
+from event_sourcery.event_store.types import TenantId
 
 
 class Config(BaseModel):

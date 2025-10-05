@@ -5,17 +5,19 @@ from kurrentdbclient import KurrentDBClient, StreamState
 from kurrentdbclient.exceptions import NotFoundError
 from typing_extensions import Self
 
-from event_sourcery.event_store import (
-    NO_VERSIONING,
+from event_sourcery.event_store.event import (
     Position,
     RawEvent,
+)
+from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
+from event_sourcery.event_store.interfaces import StorageStrategy
+from event_sourcery.event_store.types import (
+    DEFAULT_TENANT,
+    NO_VERSIONING,
     StreamId,
     TenantId,
     Versioning,
 )
-from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
-from event_sourcery.event_store.interfaces import StorageStrategy
-from event_sourcery.event_store.tenant_id import DEFAULT_TENANT
 from event_sourcery_kurrentdb import dto, stream
 
 

@@ -1,7 +1,9 @@
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
-from event_sourcery.event_store import Context, EventStore, StreamId, WrappedEvent
+from event_sourcery.event_store import EventStore
+from event_sourcery.event_store.event import Context, WrappedEvent
+from event_sourcery.event_store.types import StreamId
 from tests.bdd import Given, Then, When
 from tests.factories import NastyEventWithJsonUnfriendlyTypes, an_event
 from tests.matchers import any_wrapped_event

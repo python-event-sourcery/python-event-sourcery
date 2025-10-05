@@ -1,10 +1,10 @@
 import pytest
 
-from event_sourcery.event_store import NO_VERSIONING, StreamId
 from event_sourcery.event_store.exceptions import (
     ExpectedVersionUsedOnVersionlessStream,
     NoExpectedVersionGivenOnVersionedStream,
 )
+from event_sourcery.event_store.types import NO_VERSIONING, StreamId
 from tests.bdd import Given, Then, When
 from tests.factories import AnEvent
 

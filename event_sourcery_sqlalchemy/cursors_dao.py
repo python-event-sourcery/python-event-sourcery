@@ -3,7 +3,7 @@ from typing import cast
 from sqlalchemy import insert, select, update
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store import StreamId
+from event_sourcery.event_store.types import StreamId
 from event_sourcery.read_model import CursorsDao
 from event_sourcery_sqlalchemy.models.base import BaseProjectorCursor
 

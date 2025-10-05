@@ -4,7 +4,8 @@ import pytest
 from _pytest.fixtures import SubRequest
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store import Event, StreamId
+from event_sourcery.event_store.event import Event
+from event_sourcery.event_store.types import StreamId
 from event_sourcery_sqlalchemy import (
     BaseEvent,
     BaseSnapshot,

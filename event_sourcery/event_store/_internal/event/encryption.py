@@ -6,14 +6,14 @@ from typing import Any
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from event_sourcery.event_store.event._registry import EventRegistry
+from event_sourcery.event_store._internal.event.registry import EventRegistry
+from event_sourcery.event_store._internal.stream_id import StreamId
+from event_sourcery.event_store._internal.tenant_id import TenantId
 from event_sourcery.event_store.exceptions import KeyNotFoundError, NoSubjectIdFound
 from event_sourcery.event_store.interfaces import (
     EncryptionKeyStorageStrategy,
     EncryptionStrategy,
 )
-from event_sourcery.event_store.stream_id import StreamId
-from event_sourcery.event_store.tenant_id import TenantId
 
 
 class NoEncryptionStrategy(EncryptionStrategy):

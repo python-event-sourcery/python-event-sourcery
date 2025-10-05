@@ -1,4 +1,5 @@
-from event_sourcery.event_store import Backend, StreamId
+from event_sourcery.event_store.backend import Backend
+from event_sourcery.event_store.types import StreamId
 from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import an_event
 
