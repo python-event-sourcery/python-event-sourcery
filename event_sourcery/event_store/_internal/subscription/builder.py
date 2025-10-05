@@ -17,8 +17,8 @@ from event_sourcery.event_store._internal.subscription.interfaces import (
     FilterPhase,
     PositionPhase,
     Seconds,
+    SubscriptionStrategy,
 )
-from event_sourcery.event_store.interfaces import SubscriptionStrategy
 
 
 @dataclass(repr=False)

@@ -10,10 +10,28 @@ from event_sourcery.event_store._internal.event.registry import EventRegistry
 from event_sourcery.event_store._internal.stream_id import StreamId
 from event_sourcery.event_store._internal.tenant_id import TenantId
 from event_sourcery.event_store.exceptions import KeyNotFoundError, NoSubjectIdFound
-from event_sourcery.event_store.interfaces import (
-    EncryptionKeyStorageStrategy,
-    EncryptionStrategy,
-)
+
+
+class EncryptionStrategy:
+    def encrypt(self, data: Any, key: bytes) -> str:
+        raise NotImplementedError()
+
+    def decrypt(self, data: str, key: bytes) -> Any:
+        raise NotImplementedError()
+
+
+class EncryptionKeyStorageStrategy:
+    def get(self, subject_id: str) -> bytes | None:
+        raise NotImplementedError()
+
+    def store(self, subject_id: str, key: bytes) -> None:
+        raise NotImplementedError()
+
+    def delete(self, subject_id: str) -> None:
+        raise NotImplementedError()
+
+    def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
+        raise NotImplementedError()
 
 
 class NoEncryptionStrategy(EncryptionStrategy):
