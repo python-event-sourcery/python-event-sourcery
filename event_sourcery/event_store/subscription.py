@@ -1,4 +1,3 @@
-import abc
 import sys
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
@@ -19,31 +18,29 @@ from event_sourcery.event_store.stream_id import Category
 Seconds: TypeAlias = int | float
 
 
-class BuildPhase(abc.ABC):
-    @abc.abstractmethod
-    def build_iter(
-        self, timelimit: Seconds | timedelta
-    ) -> Iterator[Recorded | None]: ...
+class BuildPhase:
+    def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded | None]:
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def build_batch(
         self,
         size: int,
         timelimit: Seconds | timedelta,
-    ) -> Iterator[list[Recorded]]: ...
+    ) -> Iterator[list[Recorded]]:
+        raise NotImplementedError()
 
 
 class FilterPhase(BuildPhase):
-    @abc.abstractmethod
-    def to_category(self, category: Category) -> BuildPhase: ...
+    def to_category(self, category: Category) -> BuildPhase:
+        raise NotImplementedError()
 
-    @abc.abstractmethod
-    def to_events(self, events: list[type[Event]]) -> BuildPhase: ...
+    def to_events(self, events: list[type[Event]]) -> BuildPhase:
+        raise NotImplementedError()
 
 
-class PositionPhase(abc.ABC):
-    @abc.abstractmethod
-    def start_from(self, position: Position) -> FilterPhase: ...
+class PositionPhase:
+    def start_from(self, position: Position) -> FilterPhase:
+        raise NotImplementedError()
 
 
 @dataclass(repr=False)

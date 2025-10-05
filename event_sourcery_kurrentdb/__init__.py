@@ -10,7 +10,7 @@ from kurrentdbclient import KurrentDBClient
 from pydantic import BaseModel, ConfigDict, PositiveFloat, PositiveInt
 from typing_extensions import Self
 
-from event_sourcery.event_store import Backend
+from event_sourcery.event_store import Backend, TenantId
 from event_sourcery.event_store.backend import no_filter, not_configured
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
@@ -45,7 +45,7 @@ class KurrentDBBackend(Backend):
         self[StorageStrategy] = lambda c: KurrentDBStorageStrategy(
             c[KurrentDBClient],
             c[Config].timeout,
-        ).scoped_for_tenant(c.tenant_id)
+        ).scoped_for_tenant(c[TenantId])
         self[SubscriptionStrategy] = lambda c: KurrentDBSubscriptionStrategy(
             c[KurrentDBClient],
         )
@@ -56,10 +56,10 @@ class KurrentDBBackend(Backend):
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
-        self[OutboxFiltererStrategy] = filterer
+        self[OutboxFiltererStrategy] = filterer  # type: ignore[type-abstract]
         self[KurrentDBOutboxStorageStrategy] = lambda c: KurrentDBOutboxStorageStrategy(
             c[KurrentDBClient],
-            c[OutboxFiltererStrategy],
+            c[OutboxFiltererStrategy],  # type: ignore[type-abstract]
             c[Config].outbox_name,
             c[Config].outbox_attempts,
             c[Config].timeout,

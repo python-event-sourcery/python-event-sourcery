@@ -310,7 +310,7 @@ class InMemoryBackend(TransactionalBackend):
             c[Storage],
             c[Dispatcher],
             outbox_strategy=c.get(InMemoryOutboxStorageStrategy),
-        ).scoped_for_tenant(c.tenant_id)
+        ).scoped_for_tenant(c[TenantId])
         self[SubscriptionStrategy] = lambda c: InMemorySubscriptionStrategy(c[Storage])
 
     def configure(self, config: Config | None = None) -> Self:
@@ -318,10 +318,10 @@ class InMemoryBackend(TransactionalBackend):
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
-        self[OutboxFiltererStrategy] = filterer
+        self[OutboxFiltererStrategy] = filterer  # type: ignore[type-abstract]
         self[InMemoryOutboxStorageStrategy] = singleton(
             lambda c: InMemoryOutboxStorageStrategy(
-                c[OutboxFiltererStrategy],
+                c[OutboxFiltererStrategy],  # type: ignore[type-abstract]
                 c[Config].outbox_attempts,
             )
         )

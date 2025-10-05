@@ -1,4 +1,3 @@
-import abc
 from collections.abc import Iterator
 from contextlib import AbstractContextManager
 from datetime import timedelta
@@ -17,25 +16,22 @@ class OutboxFiltererStrategy(Protocol):
     def __call__(self, entry: RawEvent) -> bool: ...
 
 
-class OutboxStorageStrategy(abc.ABC):
-    @abc.abstractmethod
+class OutboxStorageStrategy:
     def outbox_entries(
         self, limit: int
     ) -> Iterator[AbstractContextManager[RecordedRaw]]:
-        pass
+        raise NotImplementedError()
 
 
-class SubscriptionStrategy(abc.ABC):
-    @abc.abstractmethod
+class SubscriptionStrategy:
     def subscribe_to_all(
         self,
         start_from: Position,
         batch_size: int,
         timelimit: timedelta,
     ) -> Iterator[list[RecordedRaw]]:
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def subscribe_to_category(
         self,
         start_from: Position,
@@ -43,9 +39,8 @@ class SubscriptionStrategy(abc.ABC):
         timelimit: timedelta,
         category: str,
     ) -> Iterator[list[RecordedRaw]]:
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def subscribe_to_events(
         self,
         start_from: Position,
@@ -53,66 +48,54 @@ class SubscriptionStrategy(abc.ABC):
         timelimit: timedelta,
         events: list[str],
     ) -> Iterator[list[RecordedRaw]]:
-        pass
+        raise NotImplementedError()
 
 
-class StorageStrategy(abc.ABC):
-    @abc.abstractmethod
+class StorageStrategy:
     def fetch_events(
         self,
         stream_id: StreamId,
         start: int | None = None,
         stop: int | None = None,
     ) -> list[RawEvent]:
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def insert_events(
         self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
     ) -> None:
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def save_snapshot(self, snapshot: RawEvent) -> None:
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def delete_stream(self, stream_id: StreamId) -> None:
-        pass
+        raise NotImplementedError()
 
     @property
-    @abc.abstractmethod
     def current_position(self) -> Position | None:
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def scoped_for_tenant(self, tenant_id: str) -> Self:
-        pass
+        raise NotImplementedError()
 
 
-class EncryptionKeyStorageStrategy(abc.ABC):
-    @abc.abstractmethod
+class EncryptionKeyStorageStrategy:
     def get(self, subject_id: str) -> bytes | None:
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def store(self, subject_id: str, key: bytes) -> None:
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def delete(self, subject_id: str) -> None:
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
-        pass
+        raise NotImplementedError()
 
 
-class EncryptionStrategy(abc.ABC):
-    @abc.abstractmethod
+class EncryptionStrategy:
     def encrypt(self, data: Any, key: bytes) -> str:
-        pass
+        raise NotImplementedError()
 
-    @abc.abstractmethod
     def decrypt(self, data: str, key: bytes) -> Any:
-        pass
+        raise NotImplementedError()

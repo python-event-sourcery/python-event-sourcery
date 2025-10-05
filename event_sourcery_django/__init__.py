@@ -8,7 +8,7 @@ from datetime import timedelta
 from pydantic import BaseModel, ConfigDict, PositiveInt
 from typing_extensions import Self
 
-from event_sourcery.event_store import Dispatcher
+from event_sourcery.event_store import Dispatcher, TenantId
 from event_sourcery.event_store.backend import (
     TransactionalBackend,
     no_filter,
@@ -40,7 +40,7 @@ class DjangoBackend(TransactionalBackend):
         self[StorageStrategy] = lambda c: DjangoStorageStrategy(
             c[Dispatcher],
             c.get(DjangoOutboxStorageStrategy, None),
-        ).scoped_for_tenant(c.tenant_id)
+        ).scoped_for_tenant(c[TenantId])
         self[SubscriptionStrategy] = lambda c: DjangoSubscriptionStrategy(
             gap_retry_interval=c[Config].gap_retry_interval
         )
@@ -52,9 +52,9 @@ class DjangoBackend(TransactionalBackend):
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
 
-        self[OutboxFiltererStrategy] = filterer
+        self[OutboxFiltererStrategy] = filterer  # type: ignore[type-abstract]
         self[DjangoOutboxStorageStrategy] = lambda c: DjangoOutboxStorageStrategy(
-            c[OutboxFiltererStrategy],
+            c[OutboxFiltererStrategy],  # type: ignore[type-abstract]
             c[Config].outbox_attempts,
         )
         self[OutboxStorageStrategy] = lambda c: c[DjangoOutboxStorageStrategy]

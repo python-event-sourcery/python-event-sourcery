@@ -19,7 +19,7 @@ from pydantic import BaseModel, ConfigDict, PositiveInt
 from sqlalchemy.orm import Session
 from typing_extensions import Self
 
-from event_sourcery.event_store import Dispatcher, TransactionalBackend
+from event_sourcery.event_store import Dispatcher, TenantId, TransactionalBackend
 from event_sourcery.event_store.backend import no_filter, not_configured
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
@@ -80,7 +80,7 @@ class SQLAlchemyBackend(TransactionalBackend):
             c[BaseEvent],
             c[BaseSnapshot],
             c[BaseStream],
-        ).scoped_for_tenant(c.tenant_id)
+        ).scoped_for_tenant(c[TenantId])
         self[SubscriptionStrategy] = lambda c: SqlAlchemySubscriptionStrategy(
             c[Session],
             c[Config].gap_retry_interval,
@@ -111,11 +111,11 @@ class SQLAlchemyBackend(TransactionalBackend):
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
-        self[OutboxFiltererStrategy] = filterer
+        self[OutboxFiltererStrategy] = filterer  # type: ignore[type-abstract]
         self[SqlAlchemyOutboxStorageStrategy] = (
             lambda c: SqlAlchemyOutboxStorageStrategy(
                 c[Session],
-                c[OutboxFiltererStrategy],
+                c[OutboxFiltererStrategy],  # type: ignore[type-abstract]
                 c[Config].outbox_attempts,
                 c[BaseOutboxEntry],
             )
