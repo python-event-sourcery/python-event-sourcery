@@ -1,5 +1,6 @@
 from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager
+from typing import Protocol, runtime_checkable
 
 from event_sourcery.event_store._internal.event.dto import (
     RawEvent,
@@ -7,7 +8,18 @@ from event_sourcery.event_store._internal.event.dto import (
     RecordedRaw,
 )
 from event_sourcery.event_store._internal.event.serde import Serde
-from event_sourcery.event_store.interfaces import OutboxStorageStrategy
+
+
+@runtime_checkable
+class OutboxFiltererStrategy(Protocol):
+    def __call__(self, entry: RawEvent) -> bool: ...
+
+
+class OutboxStorageStrategy:
+    def outbox_entries(
+        self, limit: int
+    ) -> Iterator[AbstractContextManager[RecordedRaw]]:
+        raise NotImplementedError()
 
 
 class Outbox:
