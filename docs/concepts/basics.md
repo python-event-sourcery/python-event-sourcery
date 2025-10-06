@@ -77,11 +77,11 @@ The same integration method can be used in much simpler environments, e.g. monor
 
 ### How Event Sourcery helps with that?
 
-Event Sourcery provides implementation of Event Store and so-called Outbox. 
+Event Sourcery provides implementation of [EventStore] and so-called [Outbox].
 
-The former is a class to provide persistence of events while the Outbox makes sure they will be published eventually, even if there's something with the broker.
+The former is a class to provide persistence of events while the [Outbox] makes sure they will be published eventually, even if there's something with the broker.
 
-First thing is to ask Event Store to not only save the event, but also to put it in the Outbox. You can do it using `publish` method instead of `append`.
+First thing is to ask [EventStore] to not only save the event, but also to put it in the [Outbox]. You can do it using `publish` method instead of `append`.
 ```python
 an_event = SomeEvent(first_name="John")
 
@@ -89,7 +89,7 @@ an_event = SomeEvent(first_name="John")
 event_store.append(stream_id=uuid4(), events=[an_event])
 ```
 
-Then, one has to implement publishing mechanism - e.g. publishing to Kafka or RabbitMQ, depending on your stack. Event Sourcery does not provide this out of the box. What it does provide is `Outbox` class that accepts `publisher` argument to send the message.
+Then, one has to implement publishing mechanism - e.g. publishing to Kafka or RabbitMQ, depending on your stack. Event Sourcery does not provide this out of the box. What it does provide is [Outbox] class that accepts `publisher` argument to send the message.
 
 ```python
 from event_sourcery import get_outbox
@@ -101,7 +101,7 @@ outbox = get_outbox(
 )
 ```
 
-The last step is to run `Outbox` in a separate process, e.g. separate docker container in an infinite loop:
+The last step is to run [Outbox] in a separate process, e.g. separate docker container in an infinite loop:
 
 ```python
 
@@ -171,21 +171,21 @@ However, notice that `order_history` is as good as `orders` table when we have t
 
 In the end we’ll get exactly the same information that is saved in `orders` table. So do we even need `orders` and `orders_lines` table as a source of truth...?
 
-Event Sourcing proposes we don't. We can still keep them around to optimize reading data for UI, but no longer have to rely on it in any situation that would actually change `Order`.
+[Event Sourcing] proposes we don't. We can still keep them around to optimize reading data for UI, but no longer have to rely on it in any situation that would actually change `Order`.
 
-To sum up, Event Sourcing comes down to:
+To sum up, [Event Sourcing] comes down to:
 
-- Keeping your business objects (called aggregates) as a series of replayable events.
+- Keeping your business objects (called [Aggregate]) as a series of replayable events.
 - This is often called an event stream.
 - Never deleting any events from a system, only appending new ones
 - Using events as the only reliable way of telling in what state a given aggregate is
 - If you need to query data or present them in a table-like format, keep a copy of them in a denormalized format. This is called projection
-- Designing your aggregates to protect certain vital business invariants, such as Order encapsulates costs summary.
-- A good rule of thumb is to keep aggregates as small as possible
+- Designing your [Aggregate] to protect certain vital business invariants, such as Order encapsulates costs summary.
+- A good rule of thumb is to keep [Aggregate] as small as possible
 
 ### How Event Sourcery helps with that?
 
-Event Sourcery provides a base class for an aggregate and repository implementation that makes it much easy to create or read/change aggregates.
+Event Sourcery provides a base class for an [Aggregate] and repository implementation that makes it much easy to create or read/change [Aggregate].
 
 ```python
 class LightSwitch(Aggregate):
@@ -229,13 +229,13 @@ class LightSwitch(Aggregate):
         self._event(TurnedOff)
 ```
 
-To create a `Repository` tailored for a particular Aggregate class, we need  that class and `Event Store` instance: 
+To create a [Repository] tailored for a particular [Aggregate] class, we need  that class and [EventStore] instance: 
 
 ```python
 repository = Repository[LightSwitch](event_store, LightSwitch)
 ```
 
-A `Repository` exposes method to create a new instance of Aggregate:
+A [Repository] exposes method to create a new instance of [Aggregate]:
 
 ```python
 stream_id = uuid4()
@@ -244,7 +244,7 @@ with repository.new(stream_id=stream_id) as switch:
     switch.turn_on()
 ```
 
-...or to work with existing Aggregate, making sure changes are saved at the end:
+...or to work with existing [Aggregate], making sure changes are saved at the end:
 
 ```python
 with repository.aggregate(stream_id=stream_id) as switch_second_incarnation:
@@ -255,4 +255,10 @@ with repository.aggregate(stream_id=stream_id) as switch_second_incarnation:
         switch_second_incarnation.turn_off()
 ```
 
-A `Repository` is a thin wrapper over Event Store. One can also write Aggregates even without using our base class and use `EventStore` directly!
+A [Repository] is a thin wrapper over Event Store. One can also write Aggregates even without using our base class and use [EventStore] directly!
+
+[EventStore]: ../reference/event_store/event_store.md#event_sourceryevent_storeeventstore
+[Outbox]: ../reference/event_store/outbox.md#event_sourceryevent_storeoutbox
+[Event Sourcing]: ../recipes/event_sourcing.md
+[Aggregate]: ../reference/event_sourcing.md#event_sourceryevent_sourcingaggregate
+[Repository]: ../reference/event_sourcing.md#event_sourceryevent_sourcingrepository
