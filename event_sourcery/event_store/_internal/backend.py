@@ -45,6 +45,16 @@ _Provider = Callable[["_Container"], T]
 
 
 def singleton(provider: _Provider[T]) -> _Provider[T]:
+    """
+    Decorator that ensures the provider returns the same instance (singleton)
+    for every call within the container's lifecycle.
+
+    Args:
+        provider (_Provider[T]): The provider function to wrap.
+
+    Returns:
+        _Provider[T]: A provider that always returns the same instance.
+    """
     result: T | None = None
 
     @wraps(provider)
@@ -59,6 +69,13 @@ def singleton(provider: _Provider[T]) -> _Provider[T]:
 
 
 def not_configured(error_message: str) -> _Provider[T]:
+    """
+    Used as a placeholder for providers that require configuration.
+
+    Args:
+        error_message (str): str. The error message to raise with the exception.
+    """
+
     def _raise(container: "_Container") -> NoReturn:
         raise NoProviderConfigured(error_message)  # pragma: no cover
 
@@ -91,6 +108,18 @@ class _Container:
 
 
 class Backend(_Container):
+    """
+    Dependency Injection container for Event Sourcery components.
+
+    Dict-like object resolving object instance during access by type.
+    Providers are passed setting the type as key and provider as a value.
+
+    By default, basic implementations are registered or an exception is raised
+    if backend configuration (e.g., storage strategy) is required.
+
+    Core components are exposed by properties.
+    """
+
     def __init__(self) -> None:
         super().__init__()
         self[TenantId] = DEFAULT_TENANT
@@ -130,22 +159,37 @@ class Backend(_Container):
 
     @property
     def event_store(self) -> EventStore:
+        """
+        Returns the current instance of `EventStore`.
+        """
         return self[EventStore]
 
     @property
     def outbox(self) -> Outbox:
+        """
+        Returns the current instance of `Outbox`.
+        """
         return self[Outbox]
 
     @property
     def subscriber(self) -> PositionPhase:
+        """
+        Returns the current instance of `SubscriptionBuilder` (as `PositionPhase`).
+        """
         return self[PositionPhase]
 
     def in_tenant_mode(self, tenant_id: TenantId) -> Self:
+        """
+        Returns a copy of the backend with the specified tenant ID set.
+        """
         in_tenant_mode = self.copy()
         in_tenant_mode[TenantId] = tenant_id
         return in_tenant_mode
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
+        """
+        Configure the outbox with a custom filter.
+        """
         raise NotImplementedError()
 
     def with_encryption(
@@ -153,6 +197,9 @@ class Backend(_Container):
         strategy: EncryptionStrategy,
         key_storage: EncryptionKeyStorageStrategy,
     ) -> Self:
+        """
+        Configures event encryption with the provided strategy and key storage.
+        """
         self[EncryptionStrategy] = strategy
         self[EncryptionKeyStorageStrategy] = lambda c: key_storage.scoped_for_tenant(
             c[TenantId],
@@ -161,6 +208,16 @@ class Backend(_Container):
 
 
 class TransactionalBackend(Backend):
+    """
+    Backend variant that provides transactional event handling support.
+
+    Registers additional services for managing listeners and dispatchers
+    to enable in-transaction event processing.
+
+    Properties:
+        in_transaction (Listeners): The current state of in transaction Listeners.
+    """
+
     def __init__(self) -> None:
         super().__init__()
         self[Listeners] = singleton(lambda _: Listeners())
@@ -168,4 +225,7 @@ class TransactionalBackend(Backend):
 
     @property
     def in_transaction(self) -> Listeners:
+        """
+        Returns the current instance of `Listeners` for transactional event handling.
+        """
         return cast(Listeners, self[Listeners])
