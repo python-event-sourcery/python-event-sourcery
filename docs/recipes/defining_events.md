@@ -2,7 +2,7 @@ To define an event, write a class inheriting from [Event](../reference/event.md)
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:defining_events_01
+docs/code/test_recipes.py:defining_events_01
 --8<--
 ```
 

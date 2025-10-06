@@ -8,7 +8,7 @@ Let's say we want to know about all paid invoices and we have an event for that 
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:subscriptions_01
+docs/code/test_recipes.py:subscriptions_01
 --8<--
 ```
 
@@ -16,7 +16,7 @@ docs/documentation/code/test_recipes.py:subscriptions_01
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:subscriptions_02
+docs/code/test_recipes.py:subscriptions_02
 --8<--
 ```
 
@@ -35,7 +35,7 @@ To do it, we need to slightly alter code responsible for building our `subscript
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:subscriptions_03
+docs/code/test_recipes.py:subscriptions_03
 --8<--
 ```
 
@@ -43,7 +43,7 @@ Then we can pass `subscritpion` to for loop:
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:subscriptions_04
+docs/code/test_recipes.py:subscriptions_04
 --8<--
 ```
 
