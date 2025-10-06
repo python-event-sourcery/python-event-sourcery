@@ -6,6 +6,9 @@
 ## event_sourcery_sqlalchemy.Config
 ::: event_sourcery_sqlalchemy.Config
 
+## event_sourcery_sqlalchemy.Models
+::: event_sourcery_sqlalchemy.Models
+
 ## event_sourcery_sqlalchemy.configure_models
 ::: event_sourcery_sqlalchemy.configure_models
 

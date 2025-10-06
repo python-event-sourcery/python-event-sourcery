@@ -35,6 +35,31 @@ def configure_models(
     outbox_entry_model: type[BaseOutboxEntry] = DefaultOutboxEntry,
     projector_cursor_model: type[BaseProjectorCursor] = DefaultProjectorCursor,
 ) -> None:
+    """
+    Configures SQLAlchemy ORM models for Event Sourcery backend.
+
+    Sets up mapping information and registers the provided (or default) models with
+    SQLAlchemy's registry.
+    This function allows customization of event, stream, snapshot, outbox entry, and
+    projector cursor models for advanced scenarios, or uses the default models for
+    standard usage.
+    Ensures all models are mapped declaratively and share the same metadata and class
+    registry, enabling flexible schema management and migrations.
+
+    Args:
+        base (type[BaseProto]):
+            Base class providing SQLAlchemy MetaData for model registration.
+        event_model (type[BaseEvent], optional):
+            Event model class to use. Defaults to DefaultEvent.
+        stream_model (type[BaseStream], optional):
+            Stream model class to use. Defaults to DefaultStream.
+        snapshot_model (type[BaseSnapshot], optional):
+            Snapshot model class to use. Defaults to DefaultSnapshot.
+        outbox_entry_model (type[BaseOutboxEntry], optional):
+            Outbox entry model class to use. Defaults to DefaultOutboxEntry.
+        projector_cursor_model (type[BaseProjectorCursor], optional):
+            Projector cursor model class to use. Defaults to DefaultProjectorCursor.
+    """
     event_model.__set_mapping_information__(stream_model)
     snapshot_model.__set_mapping_information__(stream_model)
     stream_model.__set_mapping_information__(event_model, snapshot_model)
