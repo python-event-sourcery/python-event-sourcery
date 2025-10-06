@@ -8,7 +8,7 @@ import time_machine
 
 from event_sourcery.event_sourcing import Aggregate, Repository
 from event_sourcery.event_store.event import Recorded, WrappedEvent
-from event_sourcery.event_store.types import StreamId
+from event_sourcery.event_store.stream import StreamId
 
 if typing.TYPE_CHECKING:
     from event_sourcery.event_store.event import Event
@@ -286,7 +286,7 @@ def test_event_sourcing(sqlite_in_memory_backend) -> None:
     # --8<-- [end:event_sourcing_02_repo]
 
     # --8<-- [start:event_sourcing_03]
-    from event_sourcery.event_store.types import StreamUUID
+    from event_sourcery.event_store.stream import StreamUUID
 
     stream_id = StreamUUID(name="light_switch/1")
     with repository.aggregate(stream_id, LightSwitch()) as light_switch:
@@ -318,7 +318,7 @@ def test_multitenancy(sqlite_in_memory_backend, event_cls) -> None:
     )
 
     # --8<-- [start:multitenancy_02]
-    from event_sourcery.event_store.types import DEFAULT_TENANT
+    from event_sourcery.event_store.backend import DEFAULT_TENANT
     # --8<-- [end:multitenancy_02]
 
     # --8<-- [start:multitenancy_03]
@@ -421,7 +421,7 @@ def test_versioning(sqlite_in_memory_backend, event_cls) -> None:
     # --8<-- [end:versioning_03]
 
     # --8<-- [start:versioning_01]
-    from event_sourcery.event_store.types import NO_VERSIONING
+    from event_sourcery.event_store.stream import NO_VERSIONING
 
     # --8<-- [start:versioning_04]
     stream_id = StreamId(name="invoices/123")

@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, PositiveInt
 from typing_extensions import Self
 
 from event_sourcery.event_store.backend import (
+    TenantId,
     TransactionalBackend,
     not_configured,
 )
@@ -20,7 +21,6 @@ from event_sourcery.event_store.interfaces import (
     SubscriptionStrategy,
 )
 from event_sourcery.event_store.outbox import no_filter
-from event_sourcery.event_store.types import TenantId
 
 
 class Config(BaseModel):

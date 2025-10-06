@@ -5,7 +5,7 @@ import pytest
 from django.db import transaction as django_transaction
 
 from event_sourcery.event_store.backend import Backend
-from event_sourcery.event_store.types import StreamId
+from event_sourcery.event_store.stream import StreamId
 from event_sourcery_django import DjangoBackend
 from event_sourcery_sqlalchemy import SQLAlchemyBackend
 from tests import mark

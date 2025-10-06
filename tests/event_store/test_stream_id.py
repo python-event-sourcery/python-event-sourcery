@@ -3,7 +3,7 @@ from uuid import uuid4, uuid5
 import pytest
 
 from event_sourcery.event_store.exceptions import IncompatibleUuidAndName
-from event_sourcery.event_store.types import StreamId
+from event_sourcery.event_store.stream import StreamId
 
 
 def test_creates_random_id_when_no_input_provided() -> None:
