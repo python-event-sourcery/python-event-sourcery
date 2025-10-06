@@ -14,6 +14,22 @@ DataSubject = object()
 
 @dataclasses.dataclass(frozen=True)
 class RawEvent(BaseModel):
+    """
+    Data Transfer Object representing a raw event that will be stored.
+
+    Contains all event metadata and payload in a flat structure.
+    Used for low-level event store operations, serialization, and transport.
+
+    Attributes:
+        uuid (UUID): Unique identifier of the event.
+        stream_id (StreamId): Identifier of the stream to which the event belongs.
+        created_at (datetime): Timestamp when the event was created.
+        name (str): Name/type of the event.
+        data (dict[str, Any]): Event payload (fields and values).
+        context (dict[str, Any]): Event custom metadata.
+        version (int | None): Version of the event in the stream (if applicable).
+    """
+
     uuid: UUID
     stream_id: StreamId
     created_at: datetime
@@ -28,6 +44,18 @@ Position: TypeAlias = int
 
 @dataclasses.dataclass(frozen=True)
 class RecordedRaw(BaseModel):
+    """
+    DTO representing a raw event received from the event store.
+
+    Used for low-level event store operations.
+    Wraps a RawEvent with additional metadata (position and tenant id).
+
+    Attributes:
+        entry (RawEvent): The raw event data and metadata.
+        position (Position): Position of the event in the event store.
+        tenant_id (TenantId): Tenant identifier (for multi-tenant scenarios).
+    """
+
     entry: RawEvent
     position: Position
     tenant_id: TenantId = DEFAULT_TENANT
@@ -48,15 +76,37 @@ TEvent = TypeVar("TEvent", bound=Event)
 
 
 class Context(BaseModel, extra="allow"):
+    """
+    Extensible context object for event metadata.
+
+    Designed to carry correlation and causation identifiers, and can be extended
+    with additional metadata fields as needed. This allows for flexible propagation
+    of context information throughout event processing and handling pipelines.
+
+    Attributes:
+        correlation_id (UUID | None): Identifier for correlating related events.
+        causation_id (UUID | None): Identifier for the cause of the event.
+
+    Additional fields can be added dynamically due to `extra="allow"`.
+    """
+
     correlation_id: UUID | None = None
     causation_id: UUID | None = None
 
 
 @dataclasses.dataclass()
 class WrappedEvent(Generic[TEvent]):
-    """Wrapper for events with all relevant metadata.
+    """
+    Wrapper for events with all relevant metadata.
 
     Returned from EventStore when loading events from a stream.
+
+    Attributes:
+        event (TEvent): The event instance.
+        version (int | None): Version of the event in the stream (if applicable).
+        uuid (UUID): Unique identifier of the event instance.
+        created_at (datetime): Timestamp when the event was created.
+        context (Context): Context object containing additional metadata.
 
     Example usage:
     ```
@@ -83,6 +133,17 @@ class WrappedEvent(Generic[TEvent]):
 
 @dataclasses.dataclass(frozen=True)
 class Entry:
+    """
+    Container for a single event and its stream identifier.
+
+    Used as a base DTO for representing an event (with all metadata) and the stream
+    it belongs to. Serves as a base for more specialized event store DTOs (e.g. Recorded).
+
+    Attributes:
+        wrapped_event (WrappedEvent[Event]): The event instance with metadata.
+        stream_id (StreamId): The identifier of the stream to which the event belongs.
+    """
+
     wrapped_event: WrappedEvent[Event]
     stream_id: StreamId
 

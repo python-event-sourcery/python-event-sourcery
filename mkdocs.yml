@@ -1,0 +1,69 @@
+site_name: Event Sourcery
+theme:
+  name: material
+  palette:
+    primary: deep purple
+repo_url: https://github.com/python-event-sourcery/python-event-sourcery/
+repo_name: python-event-sourcery/python-event-sourcery
+nav:
+    - 'Event Sourcery': 'index.md'
+    - '<b>Concepts</b>':
+        - 'Basics': 'concepts/basics.md'
+    - '<b>Recipes</b>':
+        - 'Defining events': 'recipes/defining_events.md'
+        - 'Integrate with your app': 'recipes/integrate.md'
+        - 'Save and read events': 'recipes/saving_events.md'
+        - 'React to events - subscriptions': 'recipes/subscriptions.md'
+        - 'Publish events - outbox': 'recipes/outbox.md'
+        - 'Event Sourcing': 'recipes/event_sourcing.md'
+        - 'Multitenancy': 'recipes/multitenancy.md'
+        - 'Snapshots': 'recipes/snapshots.md'
+        - 'Data privacy': 'recipes/data_privacy.md'
+    - '<b>API Reference</b>':
+        - 'Event Store':
+          - 'Event Store': 'reference/event_store/event_store.md'
+          - 'backend': 'reference/event_store/backend.md'
+          - 'encryption': 'reference/event_store/encryption.md'
+          - 'event': 'reference/event_store/event.md'
+          - 'exceptions': 'reference/event_store/exceptions.md'
+          - 'in_transaction': 'reference/event_store/in_transaction.md'
+          - 'interfaces': 'reference/event_store/interfaces.md'
+          - 'outbox': 'reference/event_store/outbox.md'
+          - 'stream': 'reference/event_store/stream.md'
+        - 'Backends':
+            - 'In-Memory': 'reference/backends/in_memory.md'
+            - 'Django': 'reference/backends/django.md'
+            - 'KurrentDB': 'reference/backends/kurrentdb.md'
+            - 'SQLAlchemy': 'reference/backends/sqlalchemy.md'
+        - 'Event Sourcing': 'reference/event_sourcing.md'
+    - '<b>Architecture Decision Records</b>':
+        - 'Record architecture decisions': 'adr/20220730-record-architecture-decisions.md'
+        - 'Explicit Init Arguments For Sqlalchemy S Models': 'adr/20230903-explicit-init-arguments-for-sqlalchemy-s-models.md'
+        - 'Packaging Of The Project': 'adr/20231027_1-packaging-of-the-project.md'
+        - 'Leave Implementation Of Synchronous Dispatcher To Users Of The Library': 'adr/20231027_2-leave-implementation-of-synchronous-dispatcher-to-users-of-the-library.md'
+        - 'In Memory Event Store': 'adr/20231029-in-memory-event-store.md'
+        - 'In Transaction Subscription': 'adr/20231230-in_transaction_subscription.md'
+        - 'Dependencies And Distribution': 'adr/20240726-dependencies-and-distribution.md'
+        - 'Multitenancy': 'adr/20241007-multitenancy.md'
+        - 'Packaging Of The Project Revised': 'adr/20250411-packaging-of-the-project-revised.md'
+        - 'Privacy Data Encryption And Shredding': 'adr/20250729-privacy-data-encryption-and-shredding.md'
+        - 'Packaging Of The Event Store Package': 'adr/20251004-packaging-of-the-event_store-package.md'
+
+plugins:
+- search
+- mkdocstrings
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets:
+      check_paths: true
+      dedent_subsections: true
+  - pymdownx.superfences
+  - tables

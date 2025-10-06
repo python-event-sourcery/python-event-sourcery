@@ -54,6 +54,24 @@ from event_sourcery_sqlalchemy.subscription import SqlAlchemySubscriptionStrateg
 
 @dataclass(frozen=True)
 class Models:
+    """
+    Container for SQLAlchemy ORM models used by the backend.
+
+    Allows customization of the event, stream, snapshot, and outbox entry models used by
+    the backend. It allows to have different event store models for different modules in
+    modular monolith applications still having in transactional event dispatching
+    between them.
+
+    By default, uses the standard models provided by Event Sourcery.
+
+    Attributes:
+        event_model (type[BaseEvent]): SQLAlchemy model for events.
+        stream_model (type[BaseStream]): SQLAlchemy model for streams.
+        snapshot_model (type[BaseSnapshot]): SQLAlchemy model for snapshots.
+        outbox_entry_model (type[BaseOutboxEntry]):
+            SQLAlchemy model for outbox entries (default: DefaultOutboxEntry).
+    """
+
     event_model: type[BaseEvent]
     stream_model: type[BaseStream]
     snapshot_model: type[BaseSnapshot]
@@ -61,6 +79,18 @@ class Models:
 
 
 class Config(BaseModel):
+    """
+    Configuration for SQLAlchemyBackend event store integration.
+
+    Attributes:
+        outbox_attempts (PositiveInt):
+            Maximum number of outbox delivery attempts per event before giving up.
+        gap_retry_interval (timedelta):
+            Time to wait before retrying a subscription gap. If the subscription detects a gap in event identifiers (e.g., missing event IDs),
+            it assumes there may be an open transaction and the database has already assigned IDs for new events that are not yet committed.
+            This interval determines how long the subscription waits before retrying to fetch events, preventing loss of events that are in the process of being written to the database.
+    """
+
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     outbox_attempts: PositiveInt = 3
@@ -68,6 +98,10 @@ class Config(BaseModel):
 
 
 class SQLAlchemyBackend(TransactionalBackend):
+    """
+    SQLAlchemy integration backend for Event Sourcery.
+    """
+
     UNCONFIGURED_MESSAGE = "Configure backend with `.configure(session, config)`"
 
     def __init__(self) -> None:
@@ -96,6 +130,25 @@ class SQLAlchemyBackend(TransactionalBackend):
         config: Config | None = None,
         custom_models: Models | None = None,
     ) -> Self:
+        """
+        Sets the backend configuration for SQLAlchemy session, outbox, and models.
+
+        Allows you to provide a SQLAlchemy Session instance, an optional Config
+        instance, and optional custom ORM models.
+        If no config or models are provided, the default configuration and models are
+        used.
+        This method must be called before using the backend in production to ensure
+        correct event publishing and subscription reliability.
+
+        Args:
+            session (Session): The SQLAlchemy session instance to use for backend operations.
+            config (Config | None): Optional custom configuration. If None, uses default Config().
+            custom_models (Models | None): Optional custom ORM models. If None, uses default models.
+
+        Returns:
+            Self: The configured backend instance (for chaining).
+        """
+
         if custom_models is None:
             custom_models = Models(
                 event_model=DefaultEvent,

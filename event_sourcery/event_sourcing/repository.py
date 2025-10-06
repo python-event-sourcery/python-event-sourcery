@@ -12,6 +12,14 @@ TEvent = TypeVar("TEvent", bound=Event)
 
 
 class Repository(Generic[TAggregate]):
+    """
+    Repository for event-sourced aggregates.
+
+    Provides loading and persisting of aggregates using an event store. Handles event
+    replay to reconstruct aggregate state and persists new events emitted by the
+    aggregate.
+    """
+
     def __init__(self, event_store: EventStore) -> None:
         self._event_store = event_store
 
@@ -21,6 +29,20 @@ class Repository(Generic[TAggregate]):
         uuid: StreamUUID,
         aggregate: TAggregate,
     ) -> Iterator[TAggregate]:
+        """
+        Context manager for loading an aggregate instance.
+
+        Loads the aggregate's event stream, replays events to reconstruct its state,
+        yields the aggregate for use, and persists any new events emitted during the
+        context.
+
+        Args:
+            uuid (StreamUUID): The unique identifier of the aggregate's stream.
+            aggregate (TAggregate): The aggregate initial instance to load state into.
+
+        Yields:
+            TAggregate: The loaded and ready-to-use aggregate instance.
+        """
         stream_id = StreamId(uuid=uuid, name=uuid.name, category=aggregate.category)
         old_version = self._load(stream_id, aggregate)
         yield aggregate

@@ -26,6 +26,20 @@ Seconds: TypeAlias = PositiveFloat
 
 
 class Config(BaseModel):
+    """
+    Configuration for KurrentDBBackend event store integration.
+
+    Attributes:
+        timeout (Seconds | None):
+            Optional timeout (in seconds) for KurrentDB operations. Controls the maximum
+            time allowed for backend requests.
+            If None, the default client timeout is used.
+        outbox_name (str):
+            Name of the outbox stream used for reliable event publishing.
+        outbox_attempts (PositiveInt):
+            Maximum number of outbox delivery attempts per event before giving up.
+    """
+
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     timeout: Seconds | None = None
@@ -34,6 +48,10 @@ class Config(BaseModel):
 
 
 class KurrentDBBackend(Backend):
+    """
+    KurrentDB integration backend for Event Sourcery.
+    """
+
     def __init__(self) -> None:
         super().__init__()
         self[KurrentDBClient] = not_configured(
@@ -51,6 +69,23 @@ class KurrentDBBackend(Backend):
         )
 
     def configure(self, client: KurrentDBClient, config: Config | None = None) -> Self:
+        """
+        Sets the backend configuration for KurrentDB client and outbox behavior.
+
+        Allows you to provide a KurrentDBClient instance and an optional Config.
+        If no config is provided, the default configuration is used.
+        This method must be called before using the backend in production
+        to ensure correct event publishing and subscription reliability.
+
+        Args:
+            client (KurrentDBClient):
+                The KurrentDB client instance to use for backend operations.
+            config (Config | None):
+                Optional custom configuration. If None, uses default Config().
+
+        Returns:
+            Self: The configured backend instance (for chaining).
+        """
         self[KurrentDBClient] = client
         self[Config] = config or Config()
         return self
