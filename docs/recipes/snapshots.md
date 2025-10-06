@@ -18,7 +18,7 @@ docs/code/test_recipes.py:snapshots_02
 --8<--
 ```
 
-Now we can save a snapshot, using dedicated [EventStore](../reference/event_store/event_store.md#event_sourceryevent_storeeventstore) method:
+Now we can save a snapshot, using dedicated [EventStore] method:
 
 ```python
 --8<--
@@ -39,3 +39,5 @@ docs/code/test_recipes.py:snapshots_04
 !!! warning
 
     Long streams are usually a sign of a poor stream design. Snapshots are an optimization that should be used only for a good reason. Use with caution!
+
+[EventStore]: ../reference/event_store/event_store.md#event_sourceryevent_storeeventstore
