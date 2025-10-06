@@ -4,4 +4,4 @@ __all__ = [
 ]
 
 from event_sourcery.event_store._internal.event_store import EventStore
-from event_sourcery.event_store.outbox import Outbox
+from event_sourcery.event_store._internal.outbox import Outbox
