@@ -1,7 +1,7 @@
 
 Event Sourcery implements multitenancy by adding tenant id to all objects it stores.
 
-By default, [EventStore](../reference/event_store.md) works in so-called default context, tenant-less.
+By default, [EventStore](../reference/event_store/event_store.md) works in so-called default context, tenant-less.
 
 ## Switching tenant
 
@@ -36,7 +36,7 @@ This table summarises visibility rules:
 Both [Outbox](outbox.md) and [Subscriptions](subscriptions.md) are meant to be used in a system context, for example to implement a projection of events onto a read model.
 However, you can always get tenant id when working with them.
 
-On any [Recorded](../reference/recorded.md) instance there is an attribute called `tenant_id`.
+On any [Recorded](../reference/event_store/event.md#event_sourceryevent_storeeventrecorded) instance there is an attribute called `tenant_id`.
 
 For events that were created in a default, tenant-less context, `tenant_id` has value of `event_sourcery.event_store.DEFAULT_TENANT`.
 
@@ -60,7 +60,7 @@ docs/code/test_recipes.py:multitenancy_03
 
 ## Event Sourcing
 
-In case of [Event Sourcing](event_sourcing.md), whenever you construct a [Repository](../reference/repository.md) make sure you pass a scoped [EventStore](../reference/event_store.md) instance:
+In case of [Event Sourcing](event_sourcing.md), whenever you construct a [Repository](../reference/event_sourcing.md#event_sourceryevent_sourcingrepository) make sure you pass a scoped [EventStore](../reference/event_store/event_store.md#event_sourceryevent_storeeventstore) instance:
 
 ```python
 --8<--
