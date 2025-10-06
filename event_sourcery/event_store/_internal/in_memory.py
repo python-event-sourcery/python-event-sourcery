@@ -301,12 +301,28 @@ class InMemoryStorageStrategy(StorageStrategy):
 
 
 class Config(BaseModel):
+    """
+    Configuration for InMemoryBackend event store integration.
+
+    Attributes:
+        outbox_attempts (PositiveInt):
+            Maximum number of outbox delivery attempts per event before giving up.
+    """
+
     model_config = ConfigDict(extra="forbid", frozen=True)
     outbox_attempts: PositiveInt = 3
 
 
 class InMemoryBackend(TransactionalBackend):
-    """Lightweight in-memory backend factory for testing and development."""
+    """
+    In-memory backend for Event Sourcery.
+
+    Provides a fully configured backend for in-memory event store.
+
+    Useful for testing, development, and scenarios where persistence is not required.
+    Ensures multi-tenancy and transactional event handling using in-memory
+    implementations.
+    """
 
     def __init__(self) -> None:
         super().__init__()
@@ -320,6 +336,19 @@ class InMemoryBackend(TransactionalBackend):
         self[SubscriptionStrategy] = lambda c: InMemorySubscriptionStrategy(c[Storage])
 
     def configure(self, config: Config | None = None) -> Self:
+        """
+        Sets the backend configuration for outbox behavior.
+
+        If no config is provided, the default configuration is used.
+        This method must be called before using the backend.
+
+        Args:
+            config (Config | None):
+                Optional custom configuration. If None, uses default Config().
+
+        Returns:
+            Self: The configured backend instance (for chaining).
+        """
         self[Config] = config or Config()
         return self
 
@@ -337,6 +366,13 @@ class InMemoryBackend(TransactionalBackend):
 
 @dataclass
 class InMemoryKeyStorage(EncryptionKeyStorageStrategy):
+    """
+    In-memory implementation of encryption key storage strategy.
+
+    Stores encryption keys for data subjects in memory. Suitable for testing and
+    development where persistent key storage is not required.
+    """
+
     _keys: dict[tuple[TenantId, str], bytes] = field(default_factory=dict)
     _tenant_id: TenantId = DEFAULT_TENANT
 
