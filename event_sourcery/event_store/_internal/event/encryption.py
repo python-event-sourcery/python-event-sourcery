@@ -91,6 +91,20 @@ class Encryption:
     key_storage: EncryptionKeyStorageStrategy
 
     def encrypt(self, event: BaseModel, stream_id: StreamId) -> dict[str, Any]:
+        """
+        Encrypts all fields of the event marked as encrypted.
+
+        Args:
+            event (BaseModel): The event instance to encrypt.
+            stream_id (StreamId): The stream identifier used for subject resolution.
+
+        Returns:
+            dict[str, Any]: The event data with encrypted fields.
+
+        Raises:
+            NoSubjectIdFound: If the subject id cannot be determined for encryption.
+            KeyNotFoundError: If the encryption key for a subject is missing.
+        """
         event_type = type(event)
         data = NestedDict(event.model_dump(mode="json"))
         for field_name in self.registry.encrypted_fields(of=event_type).keys():
@@ -110,6 +124,17 @@ class Encryption:
         raw: dict[str, Any],
         stream_id: StreamId,
     ) -> dict[str, Any]:
+        """
+        Decrypts all fields of the event marked as encrypted in the registry.
+
+        Args:
+            event_type (type[BaseModel]): The event class type.
+            raw (dict[str, Any]): The raw event data with encrypted fields.
+            stream_id (StreamId): The stream identifier used for subject resolution.
+
+        Returns:
+            dict[str, Any]: The event data with decrypted fields (or masked if no key).
+        """
         data = NestedDict(raw)
         encrypted_fields = self.registry.encrypted_fields(of=event_type)
         for field_name, encrypted_config in encrypted_fields.items():
@@ -144,4 +169,11 @@ class Encryption:
         return self.strategy.encrypt(serialized, key)
 
     def shred(self, subject_id: str) -> None:
+        """
+        Deletes the encryption key for the given subject, effectively making all
+        encrypted data for that subject unrecoverable (crypto-shredding).
+
+        Args:
+            subject_id (str): The subject identifier whose key should be deleted.
+        """
         self.key_storage.delete(subject_id)
