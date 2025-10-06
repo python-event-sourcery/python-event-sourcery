@@ -9,7 +9,7 @@ To switch context to specific tenant, one should call `scoped_for_tenant` method
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:multitenancy_01
+docs/code/test_recipes.py:multitenancy_01
 --8<--
 ```
 
@@ -46,7 +46,7 @@ In all places where you wish to check if an event was created in a default conte
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:multitenancy_02
+docs/code/test_recipes.py:multitenancy_02
 --8<--
 
 
@@ -54,7 +54,7 @@ docs/documentation/code/test_recipes.py:multitenancy_02
 
 
 --8<--
-docs/documentation/code/test_recipes.py:multitenancy_03
+docs/code/test_recipes.py:multitenancy_03
 --8<--
 ```
 
@@ -64,6 +64,6 @@ In case of [Event Sourcing](event_sourcing.md), whenever you construct a [Reposi
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:multitenancy_04
+docs/code/test_recipes.py:multitenancy_04
 --8<--
 ```

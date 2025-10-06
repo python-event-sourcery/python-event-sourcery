@@ -6,7 +6,7 @@ Let's say we have a stream with 100 events:
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:snapshots_01
+docs/code/test_recipes.py:snapshots_01
 --8<--
 ```
 
@@ -14,7 +14,7 @@ We could define a snapshot event that will capture all information relevant for 
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:snapshots_02
+docs/code/test_recipes.py:snapshots_02
 --8<--
 ```
 
@@ -22,7 +22,7 @@ Now we can save a snapshot, using dedicated [EventStore](../reference/event_stor
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:snapshots_03
+docs/code/test_recipes.py:snapshots_03
 --8<--
 ```
 
@@ -32,7 +32,7 @@ Now when you'll try to load the stream you'll notice the method only returns a s
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:snapshots_04
+docs/code/test_recipes.py:snapshots_04
 --8<--
 ```
 

@@ -15,7 +15,7 @@ To use outbox, you have to add `with_outbox` method call on factory while [setti
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:outbox_01
+docs/code/test_recipes.py:outbox_01
 --8<--
 ```
 
@@ -29,12 +29,12 @@ Take RabbitMQ and `pika` for example:
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:outbox_02_pika
+docs/code/test_recipes.py:outbox_02_pika
 --8<--
 
 
 --8<--
-docs/documentation/code/test_recipes.py:outbox_02_pika2
+docs/code/test_recipes.py:outbox_02_pika2
 --8<--
 ```
 
@@ -44,7 +44,7 @@ Now you can run outbox:
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:outbox_03
+docs/code/test_recipes.py:outbox_03
 --8<--
 ```
 
@@ -54,7 +54,7 @@ Optionally, you can specify a number of events to be processed in a single run:
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:outbox_03a
+docs/code/test_recipes.py:outbox_03a
 --8<--
 ```
 
@@ -66,7 +66,7 @@ If you use any of transactional backends (e.g. SQLAlchemy or Django), then every
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:outbox_04
+docs/code/test_recipes.py:outbox_04
 --8<--
 ```
 
@@ -101,7 +101,7 @@ It should be a callable (e.g. a function) that accepts an event instance and ret
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:outbox_01_filterer
+docs/code/test_recipes.py:outbox_01_filterer
 --8<--
 ```
 
