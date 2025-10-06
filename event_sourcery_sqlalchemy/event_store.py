@@ -9,6 +9,10 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 from typing_extensions import Self
 
+from event_sourcery.event_store.backend import (
+    DEFAULT_TENANT,
+    TenantId,
+)
 from event_sourcery.event_store.event import (
     Position,
     RawEvent,
@@ -20,11 +24,9 @@ from event_sourcery.event_store.exceptions import (
 )
 from event_sourcery.event_store.in_transaction import Dispatcher
 from event_sourcery.event_store.interfaces import StorageStrategy
-from event_sourcery.event_store.types import (
-    DEFAULT_TENANT,
+from event_sourcery.event_store.stream import (
     NO_VERSIONING,
     StreamId,
-    TenantId,
     Versioning,
 )
 from event_sourcery_sqlalchemy.models.base import BaseEvent, BaseSnapshot, BaseStream

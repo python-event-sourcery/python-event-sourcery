@@ -8,7 +8,7 @@ from event_sourcery.event_store.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     IllegalCategoryName,
 )
-from event_sourcery.event_store.types import StreamId
+from event_sourcery.event_store.stream import StreamId
 from tests.bdd import Given, Then, When
 from tests.factories import AnEvent
 

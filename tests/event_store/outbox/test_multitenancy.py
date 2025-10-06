@@ -3,7 +3,7 @@ from unittest.mock import call
 import pytest
 
 from event_sourcery.event_store.backend import Backend
-from event_sourcery.event_store.types import StreamId
+from event_sourcery.event_store.stream import StreamId
 from tests.bdd import Given
 from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import an_event

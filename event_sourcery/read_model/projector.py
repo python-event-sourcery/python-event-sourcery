@@ -3,7 +3,7 @@ from typing import TypeAlias
 
 from event_sourcery.event_store import EventStore
 from event_sourcery.event_store.event import Event, WrappedEvent
-from event_sourcery.event_store.types import StreamId
+from event_sourcery.event_store.stream import StreamId
 from event_sourcery.read_model.cursors_dao import CursorsDao
 
 ReadModel: TypeAlias = Callable[[WrappedEvent, StreamId], None]

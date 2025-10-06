@@ -5,7 +5,7 @@ from typing import Generic, TypeVar, cast
 from event_sourcery.event_sourcing import Aggregate
 from event_sourcery.event_store import EventStore
 from event_sourcery.event_store.event import Event, WrappedEvent
-from event_sourcery.event_store.types import StreamId, StreamUUID
+from event_sourcery.event_store.stream import StreamId, StreamUUID
 
 TAggregate = TypeVar("TAggregate", bound=Aggregate)
 TEvent = TypeVar("TEvent", bound=Event)
