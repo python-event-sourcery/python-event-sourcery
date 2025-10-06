@@ -10,3 +10,9 @@
 
 ## event_sourcery.event_store.backend.singleton
 ::: event_sourcery.event_store.backend.singleton
+
+## event_sourcery.event_store.backend.TenantId
+::: event_sourcery.event_store.backend.TenantId
+
+## event_sourcery.event_store.backend.DEFAULT_TENANT
+::: event_sourcery.event_store.backend.DEFAULT_TENANT

@@ -1,6 +1,6 @@
 from kurrentdbclient import KurrentDBClient
 
-from event_sourcery.event_store.types import StreamId
+from event_sourcery.event_store.stream import StreamId
 from event_sourcery_kurrentdb import KurrentDBBackend
 
 client = KurrentDBClient(uri="kurrentdb://localhost:2113?Tls=false")

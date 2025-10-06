@@ -74,4 +74,4 @@ docs/code/test_recipes.py:versioning_04
 
 [EventStore]: ../reference/event_store/event_store.md#event_sourceryevent_storeeventstore
 [WrappedEvent]: ../reference/event_store/event.md#event_sourceryevent_storeeventwrappedevent
-[NO_VERSIONING]: ../reference/event_store/types.md#event_sourceryevent_storetypesno_versioning
+[NO_VERSIONING]: ../reference/event_store/stream.md#event_sourceryevent_storestreamno_versioning

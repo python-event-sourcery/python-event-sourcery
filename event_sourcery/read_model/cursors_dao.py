@@ -1,6 +1,6 @@
 import abc
 
-from event_sourcery.event_store.types import StreamId
+from event_sourcery.event_store.stream import StreamId
 
 
 class CursorsDao(abc.ABC):

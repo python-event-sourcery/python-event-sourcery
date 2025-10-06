@@ -70,6 +70,6 @@ docs/code/test_recipes.py:multitenancy_04
 
 [EventStore]: ../reference/event_store/event_store.md#event_sourceryevent_storeeventstore
 [Recorded]: ../reference/event_store/event.md#event_sourceryevent_storeeventrecorded
-[TenantId]: ../reference/event_store/types.md#event_sourceryevent_storetypestenantid
-[DEFAULT_TENANT]: ../reference/event_store/types.md#event_sourceryevent_storetypesdefault_tenant
+[TenantId]: ../reference/event_store/backend.md#event_sourceryevent_storebackendtenantid
+[DEFAULT_TENANT]: ../reference/event_store/backend.md#event_sourceryevent_storebackenddefault_tenant
 [Repository]: ../reference/event_sourcing.md#event_sourceryevent_sourcingrepository

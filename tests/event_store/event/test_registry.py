@@ -12,7 +12,7 @@ from event_sourcery.event_store.event import (
     WrappedEvent,
 )
 from event_sourcery.event_store.exceptions import DuplicatedEvent
-from event_sourcery.event_store.types import StreamId
+from event_sourcery.event_store.stream import StreamId
 
 
 @pytest.fixture()

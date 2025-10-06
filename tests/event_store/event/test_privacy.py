@@ -10,7 +10,7 @@ from event_sourcery.event_store.encryption import DataSubject, Encrypted
 from event_sourcery.event_store.event import Event
 from event_sourcery.event_store.exceptions import KeyNotFoundError, NoSubjectIdFound
 from event_sourcery.event_store.interfaces import EncryptionStrategy
-from event_sourcery.event_store.types import StreamId
+from event_sourcery.event_store.stream import StreamId
 from tests.bdd import Given, Then, When
 
 

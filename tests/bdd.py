@@ -14,7 +14,9 @@ from typing_extensions import Self
 
 from event_sourcery.event_store import EventStore
 from event_sourcery.event_store.backend import (
+    DEFAULT_TENANT,
     Backend,
+    TenantId,
     TransactionalBackend,
 )
 from event_sourcery.event_store.encryption import Encryption as EncryptionService
@@ -25,14 +27,10 @@ from event_sourcery.event_store.event import (
     Recorded,
     WrappedEvent,
 )
+from event_sourcery.event_store.stream import StreamId
 from event_sourcery.event_store.subscription import (
     BuildPhase,
     PositionPhase,
-)
-from event_sourcery.event_store.types import (
-    DEFAULT_TENANT,
-    StreamId,
-    TenantId,
 )
 from tests.matchers import any_wrapped_event
 
