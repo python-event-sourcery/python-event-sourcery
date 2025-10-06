@@ -1,6 +1,6 @@
 ## Basic usage
 
-Once you have an [EventStore](../reference/event_store.md) instance after [integrating with your application](integrate.md) and some [events defined](defining_events.md), you can persist them:
+Once you have an [EventStore](../reference/event_store/event_store.md#event_sourceryevent_storeeventstore) instance after [integrating with your application](integrate.md) and some [events defined](defining_events.md), you can persist them:
 
 ```python
 --8<--
@@ -16,7 +16,7 @@ docs/code/test_recipes.py:saving_events_02
 --8<--
 ```
 
-`load_stream` returns a list of [WrappedEvent](../reference/wrapped_event.md) objects. They contain a saved event under `.event` attribute with its metadata in other attributes.
+`load_stream` returns a list of [WrappedEvent](../reference/event_store/event.md#event_sourceryevent_storeeventwrappedevent) objects. They contain a saved event under `.event` attribute with its metadata in other attributes.
 
 ## Version control
 

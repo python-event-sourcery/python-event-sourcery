@@ -18,7 +18,7 @@ docs/code/test_recipes.py:snapshots_02
 --8<--
 ```
 
-Now we can save a snapshot, using dedicated [EventStore](../reference/event_store.md) method:
+Now we can save a snapshot, using dedicated [EventStore](../reference/event_store/event_store.md#event_sourceryevent_storeeventstore) method:
 
 ```python
 --8<--

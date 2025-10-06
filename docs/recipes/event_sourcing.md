@@ -2,11 +2,11 @@
 
 Event Sourcery provides a few building blocks to work with event sourcing.
 
-These are [Aggregate](../reference/aggregate.md) and [Repository](../reference/repository.md) base classes.
+These are [Aggregate](../reference/event_sourcing.md#event_sourceryevent_sourcingaggregate) and [Repository](../reference/event_sourcing.md#event_sourceryevent_sourcingrepository) base classes.
 
 ## Usage
 
-You start from defining your own aggregate inheriting from [Aggregate](../reference/aggregate.md).
+You start from defining your own aggregate inheriting from [Aggregate](../reference/event_sourcing.md#event_sourceryevent_sourcingaggregate).
 
 There are three required attributes that need to be defined:
 
@@ -20,7 +20,7 @@ docs/code/test_recipes.py:event_sourcing_01
 --8<--
 ```
 
-To work with aggregate, you need to create repository. You need an instance of [EventStore](../reference/event_store.md) to do so:
+To work with aggregate, you need to create repository. You need an instance of [EventStore](../reference/event_store/event_store.md#event_sourceryevent_storeeventstore) to do so:
 
 ```python
 --8<--
