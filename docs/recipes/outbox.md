@@ -23,7 +23,7 @@ docs/code/test_recipes.py:outbox_01
 
 To publish messages, you need to write a little bit of glue code that will actually send a message.
 
-We need a publishing function that takes [Recorded](../reference/recorded.md) as the only argument and will do the sending.
+We need a publishing function that takes [Recorded](../reference/event_store/event.md#event_sourceryevent_storeeventrecorded) as the only argument and will do the sending.
 
 Take RabbitMQ and `pika` for example:
 

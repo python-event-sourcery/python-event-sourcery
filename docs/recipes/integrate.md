@@ -51,7 +51,7 @@ Integrating it with your project requires following steps:
 
     This can be done once. Then, you can import `backend` from other parts of code to use it.
 
-From `backend` you can grab [EventStore](../reference/event_store.md) instance:
+From `backend` you can grab [EventStore](../reference/event_store/event_store.md#event_sourceryevent_storeeventstore) instance:
 
 ```python
 --8<--
@@ -59,4 +59,4 @@ docs/code/test_recipes.py:integrate_sql_02
 --8<--
 ```
 
-You can now use [EventStore](../reference/event_store.md) to load events from a stream or append new events.
+You can now use [EventStore](../reference/event_store/event_store.md#event_sourceryevent_storeeventstore) to load events from a stream or append new events.
