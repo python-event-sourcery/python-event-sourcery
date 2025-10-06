@@ -12,13 +12,39 @@ from event_sourcery.event_store._internal.event.serde import Serde
 
 @runtime_checkable
 class OutboxFiltererStrategy(Protocol):
+    """
+    Protocol for outbox entry filtering strategies.
+
+    Used to determine whether a Event should be included in the outbox processing.
+    Implementations should return True to include the event, or False to skip it.
+    """
+
     def __call__(self, entry: RawEvent) -> bool: ...
 
 
 class OutboxStorageStrategy:
+    """
+    Interface for backend outbox storage implementation.
+    """
+
     def outbox_entries(
         self, limit: int
     ) -> Iterator[AbstractContextManager[RecordedRaw]]:
+        """
+        Returns an iterator over context managers for outbox entries to be published.
+        The context manager ensures transactional processing.
+
+        If the event is processed without exception, it is removed from the outbox.
+
+        If an exception occurs, the event remains in the outbox for retry.
+
+        Args:
+            limit (int): The maximum number of entries to return.
+
+        Returns:
+            Iterator[AbstractContextManager[RecordedRaw]]:
+              Context managers to wrap record processing
+        """
         raise NotImplementedError()
 
 
