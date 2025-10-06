@@ -1,6 +1,6 @@
 Subscriptions allow for asynchronous processing of events in another process.
 
-Having `backend` object after [integrating with your application](integrate.md), grab its `.subscriber` to start building a subscription.
+Having [Backend] object after [integrating with your application](integrate.md), grab its `.subscriber` to start building a subscription.
 
 ## Iterating over events one by one
 
@@ -20,7 +20,7 @@ docs/code/test_recipes.py:subscriptions_02
 --8<--
 ```
 
-With every iteration we're getting an instance of [Recorded](../reference/event_store/event.md#event_sourceryevent_storeeventrecorded) or `None` if there are no new events available.
+With every iteration we're getting an instance of [Recorded] or `None` if there are no new events available.
 
 !!! note
 
@@ -47,10 +47,13 @@ docs/code/test_recipes.py:subscriptions_04
 --8<--
 ```
 
-In this example, batch is a list of [Recorded](../reference/event_store/event.md#event_sourceryevent_storeeventrecorded).
+In this example, batch is a list of [Recorded].
 
 Just like in previous case, `subscription` is an infinite iterator. It will be returning batches of given size as long as there is enough events.
 
 If there are fewer 'new' events available, batch subscription will return whatever it can. For example, if you specify batch size of 10 but get a list with 7 events, it means there were only 7 new events and time limit has passed.
 
 When batch subscription catches up with event store, it will be returning empty lists. At least until some new events are saved.
+
+[Recorded]: ../reference/event_store/event.md#event_sourceryevent_storeeventrecorded
+[Backend]: ../reference/event_store/backend.md#event_sourceryevent_storebackendbackend

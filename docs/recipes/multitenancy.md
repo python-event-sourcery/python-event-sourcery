@@ -1,7 +1,7 @@
 
 Event Sourcery implements multitenancy by adding tenant id to all objects it stores.
 
-By default, [EventStore](../reference/event_store/event_store.md) works in so-called default context, tenant-less.
+By default, [EventStore] works in so-called default context, tenant-less.
 
 ## Switching tenant
 
@@ -36,9 +36,9 @@ This table summarises visibility rules:
 Both [Outbox](outbox.md) and [Subscriptions](subscriptions.md) are meant to be used in a system context, for example to implement a projection of events onto a read model.
 However, you can always get tenant id when working with them.
 
-On any [Recorded](../reference/event_store/event.md#event_sourceryevent_storeeventrecorded) instance there is an attribute called `tenant_id`.
+On any [Recorded] instance there is an attribute called [TenantId].
 
-For events that were created in a default, tenant-less context, `tenant_id` has value of `event_sourcery.event_store.DEFAULT_TENANT`.
+For events that were created in a default, tenant-less context, [TenantId] has value of [DEFAULT_TENANT].
 
 Value of this constant should not be relied upon and is considered an implementation details.
 
@@ -60,10 +60,16 @@ docs/code/test_recipes.py:multitenancy_03
 
 ## Event Sourcing
 
-In case of [Event Sourcing](event_sourcing.md), whenever you construct a [Repository](../reference/event_sourcing.md#event_sourceryevent_sourcingrepository) make sure you pass a scoped [EventStore](../reference/event_store/event_store.md#event_sourceryevent_storeeventstore) instance:
+In case of [Event Sourcing](event_sourcing.md), whenever you construct a [Repository] make sure you pass a scoped [EventStore] instance:
 
 ```python
 --8<--
 docs/code/test_recipes.py:multitenancy_04
 --8<--
 ```
+
+[EventStore]: ../reference/event_store/event_store.md#event_sourceryevent_storeeventstore
+[Recorded]: ../reference/event_store/event.md#event_sourceryevent_storeeventrecorded
+[TenantId]: ../reference/event_store/backend.md#event_sourceryevent_storebackendtenantid
+[DEFAULT_TENANT]: ../reference/event_store/backend.md#event_sourceryevent_storebackenddefault_tenant
+[Repository]: ../reference/event_sourcing.md#event_sourceryevent_sourcingrepository

@@ -50,7 +50,7 @@ decrypted_data = encryption.decrypt(UserRegistered, encrypted_data, stream_id)  
 
 ## Validation: DataSubject Required
 
-Every event with [Encrypted](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted) fields must have exactly one field marked as [`DataSubject`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptiondatasubject). If you forget to add it, you'll get a clear error during class initialization or when appending to a stream.
+Every event with [Encrypted] fields must have exactly one field marked as [DataSubject]. If you forget to add it, you'll get a clear error during class initialization or when appending to a stream.
 
 ### Example Traceback
 
@@ -64,7 +64,7 @@ class NoSubjectEvent(Event):
 ```
 
 **How to fix:**
-Add a field with `DataSubject` annotation:
+Add a field with [DataSubject] annotation:
 
 ```python
 class UserRegistered(Event):
@@ -101,38 +101,38 @@ encryption.shred(subject_id="user-123")
 Crypto-shredding in this framework is based on three main concepts:
 
 1. **Field Markers:**
-   - Use Python type annotations to mark fields for encryption ([`Encrypted`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted)) and to identify the privacy subject ([`DataSubject`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptiondatasubject)).
-   - Each event must have exactly one [`DataSubject`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptiondatasubject) field. [`Encrypted`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted) fields will be associated with this subject by default.
-   - You can specify a different subject for an [`Encrypted`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted) field using the `subject_field` parameter.
+   - Use Python type annotations to mark fields for encryption (with [Encrypted]) and to identify the privacy subject (with [DataSubject]).
+   - Each event must have exactly one [DataSubject] field. [Encrypted] fields will be associated with this subject by default.
+   - You can specify a different subject for an [Encrypted] field using the `subject_field` parameter.
 
 2. **Automatic Encryption & Decryption:**
-   - When events are serialized, fields marked as [`Encrypted`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted) are automatically [encrypted](../reference/event_store/encryption.md) using the [configured strategy](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionnoencryptionstrategy) and [key storage](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionnokeystoragestrategy).
-   - When events are deserialized, [`Encrypted`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted) fields are automatically decrypted if the key is available.
+   - When events are serialized, fields marked as [Encrypted] are automatically encrypted using the [EncryptionStrategy] and [EncryptionKeyStorage].
+   - When events are deserialized, [Encrypted] fields are automatically decrypted if the key is available.
    - If the key is shredded, the field will return its `mask_value` instead of the original data.
 
 3. **Shredding:**
    - Shredding is performed by deleting the encryption key for a given subject.
-   - All [`Encrypted`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted) fields for that subject will be irreversibly masked.
+   - All [Encrypted] fields for that subject will be irreversibly masked.
    - Public fields remain accessible and are not affected by shredding.
 
 ## Best Practices
 
-- Always specify a meaningful `mask_value` for each [`Encrypted`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted) field. This value will be shown when data is shredded.
-- Ensure every event with [`Encrypted`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted) fields has a `DataSubject` field. This is required for correct operation and validation.
-- Use custom `subject_field` only when you need to associate [encrypted](../reference/event_store/encryption.md) data with a different subject than the default.
+- Always specify a meaningful `mask_value` for each [Encrypted] field. This value will be shown when data is shredded.
+- Ensure every event with [Encrypted] fields has a [DataSubject] field. This is required for correct operation and validation.
+- Use custom `subject_field` only when you need to associate [Encrypted] data with a different subject than the default.
 - Regularly audit your key storage and shredding logic to ensure compliance with privacy regulations.
 - Test shredding in development to verify that sensitive data is properly masked and cannot be recovered.
 
 ## FAQ
 
 ### What happens if I forget to add a DataSubject field?
-You will get a `NoSubjectIdFound` exception when appending the event to a stream. This ensures that every [`Encrypted`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted) field is associated with a privacy subject. See the traceback example above for details.
+You will get a [NoSubjectIdFound] exception when appending the event to a stream. This ensures that every [Encrypted] field is associated with a privacy subject. See the traceback example above for details.
 
 ### Can I shred only part of the data for a subject?
-No, shredding deletes the encryption key for the subject, which irreversibly masks all [`Encrypted`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted) fields associated with that subject. If you need more granular control, use separate subjects for different fields.
+No, shredding deletes the encryption key for the subject, which irreversibly masks all [Encrypted] fields associated with that subject. If you need more granular control, use separate subjects for different fields.
 
 ### What if I need to change the mask value?
-You must update the event class definition and re-deploy. The mask value is evaluated at runtime, so no migrations is needed. Just ensure the new `mask_value` matches the type of the [`Encrypted`](../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted) field.
+You must update the event class definition and re-deploy. The mask value is evaluated at runtime, so no migrations is needed. Just ensure the new `mask_value` matches the type of the [Encrypted] field.
 
 ### Is crypto-shredding suitable for all types of data?
 Crypto-shredding is ideal for privacy-sensitive fields that must be protected or deleted on request. Do not use it for fields that must remain accessible for business or legal reasons.
@@ -140,3 +140,10 @@ Crypto-shredding is ideal for privacy-sensitive fields that must be protected or
 ---
 
 > 🔎 If you see `NoSubjectIdFound` in your traceback, check that your event class defines a DataSubject field.
+
+
+[Encrypted]: ../reference/event_store/encryption.md#event_sourceryevent_storeencryptionencrypted
+[DataSubject]: ../reference/event_store/encryption.md#event_sourceryevent_storeencryptiondatasubject
+[EncryptionStrategy]: ../reference/event_store/interfaces.md#event_sourceryevent_storeinterfacesencryptionstrategy
+[EncryptionKeyStorage]: ../reference/event_store/interfaces.md#event_sourceryevent_storeinterfacesencryptionkeystoragestrategy
+[NoSubjectIdFound]: ../reference/event_store/exceptions.md#event_sourceryevent_storeexceptionsnosubjectidfound
