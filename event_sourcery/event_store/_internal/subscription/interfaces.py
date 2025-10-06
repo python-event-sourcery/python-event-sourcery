@@ -14,12 +14,28 @@ Seconds: TypeAlias = int | float
 
 
 class SubscriptionStrategy:
+    """
+    Interface for event store backend subscription.
+    Defines the contract for subscribing to event streams in various ways.
+    """
+
     def subscribe_to_all(
         self,
         start_from: Position,
         batch_size: int,
         timelimit: timedelta,
     ) -> Iterator[list[RecordedRaw]]:
+        """
+        Subscribes to all events in the event store, starting from a given position.
+
+        Args:
+            start_from (Position): The position to start reading events from.
+            batch_size (int): The maximum number of events to return in each batch.
+            timelimit (timedelta): The maximum time to spend reading one batch.
+
+        Returns:
+            Iterator[list[RecordedRaw]]: An iterator over batches of recorded events.
+        """
         raise NotImplementedError()
 
     def subscribe_to_category(
@@ -29,6 +45,19 @@ class SubscriptionStrategy:
         timelimit: timedelta,
         category: str,
     ) -> Iterator[list[RecordedRaw]]:
+        """
+        Subscribes to all events in a given category of streams, starting from a
+        given position.
+
+        Args:
+            start_from (Position): The position to start reading events from.
+            batch_size (int): The maximum number of events to return in each batch.
+            timelimit (timedelta): The maximum time to spend reading one batch.
+            category (str): The category of streams to subscribe to.
+
+        Returns:
+            Iterator[list[RecordedRaw]]: An iterator over batches of recorded events.
+        """
         raise NotImplementedError()
 
     def subscribe_to_events(
@@ -38,6 +67,18 @@ class SubscriptionStrategy:
         timelimit: timedelta,
         events: list[str],
     ) -> Iterator[list[RecordedRaw]]:
+        """
+        Subscribes to all events of the given event types, starting from a position.
+
+        Args:
+            start_from (Position): The position to start reading events from.
+            batch_size (int): The maximum number of events to return in each batch.
+            timelimit (timedelta): The maximum time to spend reading one batch.
+            events (list[str]): The list of event type names to subscribe to.
+
+        Returns:
+            Iterator[list[RecordedRaw]]: An iterator over batches of recorded events.
+        """
         raise NotImplementedError()
 
 
