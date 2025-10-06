@@ -16,7 +16,7 @@ There are three required attributes that need to be defined:
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:event_sourcing_01
+docs/code/test_recipes.py:event_sourcing_01
 --8<--
 ```
 
@@ -24,7 +24,7 @@ To work with aggregate, you need to create repository. You need an instance of [
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:event_sourcing_02_repo
+docs/code/test_recipes.py:event_sourcing_02_repo
 --8<--
 ```
 
@@ -32,7 +32,7 @@ From now on, regardless if you want to work with a given aggregate for the first
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:event_sourcing_03
+docs/code/test_recipes.py:event_sourcing_03
 --8<--
 ```
 

@@ -14,7 +14,7 @@ Integrating it with your project requires following steps:
 
     ```python
     --8<--
-    docs/documentation/code/test_recipes.py:integrate_sql_00
+    docs/code/test_recipes.py:integrate_sql_00
     --8<--
     ```
 
@@ -24,7 +24,7 @@ Integrating it with your project requires following steps:
 
     ```python
     --8<--
-    docs/documentation/code/test_recipes.py:integrate_sql_01
+    docs/code/test_recipes.py:integrate_sql_01
     --8<--
     ```
 
@@ -33,8 +33,8 @@ Integrating it with your project requires following steps:
 
     ```python
     --8<--
-    docs/documentation/code/recipes/integrate/kurrent_01.py:1:1
-    docs/documentation/code/recipes/integrate/kurrent_01.py:4:8
+    docs/code/recipes/integrate/kurrent_01.py:1:1
+    docs/code/recipes/integrate/kurrent_01.py:4:8
     --8<--
     ```
 
@@ -55,7 +55,7 @@ From `backend` you can grab [EventStore](../reference/event_store.md) instance:
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:integrate_sql_02
+docs/code/test_recipes.py:integrate_sql_02
 --8<--
 ```
 

@@ -1,10 +1,10 @@
 ## Basic usage
 
-Once you have an [EventStore](../reference/event_store.md) instance after [integrating with your application](integrate.md) and some [events defined](../recipes/defining_events.md), you can persist them:
+Once you have an [EventStore](../reference/event_store.md) instance after [integrating with your application](integrate.md) and some [events defined](defining_events.md), you can persist them:
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:saving_events_01
+docs/code/test_recipes.py:saving_events_01
 --8<--
 ```
 
@@ -12,7 +12,7 @@ Events can be later retrieved by using `load_stream` method:
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:saving_events_02
+docs/code/test_recipes.py:saving_events_02
 --8<--
 ```
 
@@ -30,7 +30,7 @@ There is no need to add an expected version when adding some events to the strea
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:versioning_01
+docs/code/test_recipes.py:versioning_01
 --8<--
 ```
 
@@ -40,7 +40,7 @@ Otherwise, appending will fail with an exception:
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:versioning_02
+docs/code/test_recipes.py:versioning_02
 --8<--
 ```
 
@@ -54,7 +54,7 @@ In a typical flow, you'll first load a stream, perform some logic, then try to a
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:versioning_03
+docs/code/test_recipes.py:versioning_03
 --8<--
 ```
 
@@ -64,7 +64,7 @@ In case when you don't need protection against concurrent writes, you can disabl
 
 ```python
 --8<--
-docs/documentation/code/test_recipes.py:versioning_04
+docs/code/test_recipes.py:versioning_04
 --8<--
 ```
 
