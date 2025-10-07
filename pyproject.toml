@@ -3,9 +3,13 @@ name = "python-event-sourcery"
 requires-python = ">=3.10"
 
 [tool.poetry]
-version = "0.4.0a20"
-description = ""
-authors = ["Your Name <you@example.com>"]
+version = "1.0.0a1"
+description = "A library for event-based systems in Python."
+readme = "README.md"
+authors = [
+    "Sebastian Buczyński <nnplaya@gmail.com>",
+    "Łukasz Żukowski <lukasz.zukowski@gmail.com>",
+]
 license = "MIT"
 packages = [
     { include = "event_sourcery" },
