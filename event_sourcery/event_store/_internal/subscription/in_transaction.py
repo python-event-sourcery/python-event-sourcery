@@ -1,16 +1,18 @@
+__all__ = ["Dispatcher", "Listener", "Listeners"]
+
 from collections.abc import Iterator
 from itertools import chain
 from typing import Protocol
 
-from event_sourcery.event_store.event import (
+from event_sourcery.event_store._internal.event.dto import (
     Event,
     Position,
     RecordedRaw,
-    Serde,
     WrappedEvent,
 )
-from event_sourcery.event_store.stream_id import StreamId
-from event_sourcery.event_store.tenant_id import TenantId
+from event_sourcery.event_store._internal.event.serde import Serde
+from event_sourcery.event_store._internal.stream_id import StreamId
+from event_sourcery.event_store._internal.tenant_id import TenantId
 
 
 class Listener(Protocol):

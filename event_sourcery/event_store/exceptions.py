@@ -61,3 +61,7 @@ class KeyNotFoundError(PrivacyError):
 @dataclass
 class NoSubjectIdFound(PrivacyError):
     stream_id: UUID
+
+
+class NoProviderConfigured(Exception):
+    pass

@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import Any, TypeVar
 from uuid import UUID
 
-from event_sourcery.event_store import Event, WrappedEvent
+from event_sourcery.event_store.event import Event, WrappedEvent
 
 
 class AnEvent(Event):

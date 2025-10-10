@@ -9,29 +9,35 @@ from operator import getitem
 from pydantic import BaseModel, ConfigDict, PositiveInt
 from typing_extensions import Self
 
-from event_sourcery.event_store import Dispatcher
-from event_sourcery.event_store.backend import (
-    TransactionalBackend,
-    no_filter,
-    not_configured,
-    singleton,
-)
-from event_sourcery.event_store.event import (
+from event_sourcery.event_store._internal.event.dto import (
     Position,
     RawEvent,
     RecordedRaw,
 )
-from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
-from event_sourcery.event_store.interfaces import (
+from event_sourcery.event_store._internal.event.encryption import (
     EncryptionKeyStorageStrategy,
+)
+from event_sourcery.event_store._internal.event_store import (
+    StorageStrategy,
+)
+from event_sourcery.event_store._internal.outbox import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
-    StorageStrategy,
+    no_filter,
+)
+from event_sourcery.event_store._internal.stream_id import StreamId
+from event_sourcery.event_store._internal.subscription.in_transaction import Dispatcher
+from event_sourcery.event_store._internal.subscription.interfaces import (
     SubscriptionStrategy,
 )
-from event_sourcery.event_store.stream_id import StreamId
-from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
-from event_sourcery.event_store.versioning import NO_VERSIONING, Versioning
+from event_sourcery.event_store._internal.tenant_id import DEFAULT_TENANT, TenantId
+from event_sourcery.event_store._internal.versioning import NO_VERSIONING, Versioning
+from event_sourcery.event_store.backend import (
+    TransactionalBackend,
+    not_configured,
+    singleton,
+)
+from event_sourcery.event_store.exceptions import ConcurrentStreamWriteError
 
 
 @dataclass

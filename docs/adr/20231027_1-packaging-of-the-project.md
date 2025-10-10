@@ -1,4 +1,4 @@
-# 3. Packaging of the project
+# Packaging of the project
 
 Date: 2023-10-27
 

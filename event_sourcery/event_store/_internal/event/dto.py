@@ -6,8 +6,8 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel
 
-from event_sourcery.event_store.stream_id import StreamId
-from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
+from event_sourcery.event_store._internal.stream_id import StreamId
+from event_sourcery.event_store._internal.tenant_id import DEFAULT_TENANT, TenantId
 
 DataSubject = object()
 

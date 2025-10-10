@@ -1,1 +1,1 @@
-::: event_sourcery.event_store.Event
+::: event_sourcery.event_store.event.Event

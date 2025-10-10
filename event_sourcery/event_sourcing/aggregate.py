@@ -2,7 +2,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import ClassVar
 
-from event_sourcery.event_store import Event
+from event_sourcery.event_store.event import Event
 
 
 class Aggregate:

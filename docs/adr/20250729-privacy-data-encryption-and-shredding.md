@@ -1,4 +1,6 @@
-# 0009: Privacy Data Encryption and Crypto-Shredding
+# Privacy Data Encryption and Crypto-Shredding
+
+Date: 2025-07-29
 
 ## Status
 Proposed

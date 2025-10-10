@@ -1,1 +1,1 @@
-::: event_sourcery.event_store.event.Encrypted
+::: event_sourcery.event_store.encryption.Encrypted
