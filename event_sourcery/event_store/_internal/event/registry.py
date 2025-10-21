@@ -63,13 +63,14 @@ class EventRegistry:
         self._names_to_types: dict[str, type[TEvent]] = {}
         self._encrypted_fields: dict[type[TEvent], dict[str, Encrypted]] = {}
         self._subject_fields: dict[type[TEvent], str] = {}
-        self._register_defined_events()
+        self._register_defined_events(Event)
 
-    def _register_defined_events(self) -> None:
-        for event_type in Event.__subclasses__():
+    def _register_defined_events(self, for_base: type[TEvent]) -> None:
+        for event_type in for_base.__subclasses__():
             not_registered_type = event_type not in self._types_to_names
             not_registered_name = event_name(event_type) not in self._names_to_types
             not_registered_type and not_registered_name and self.add(event_type)
+            self._register_defined_events(event_type)
 
     def add(self, event: type[TEvent]) -> type[TEvent]:
         """Add event subclass to the registry."""
@@ -90,12 +91,12 @@ class EventRegistry:
 
     def type_for_name(self, name: str) -> type[TEvent]:
         if name not in self._names_to_types:
-            self._register_defined_events()
+            self._register_defined_events(Event)
         return self._names_to_types[name]
 
     def name_for_type(self, event: type[TEvent]) -> str:
         if event not in self._types_to_names:
-            self._register_defined_events()
+            self._register_defined_events(Event)
         return self._types_to_names[event]
 
     def encrypted_fields(self, of: type[TEvent]) -> dict[str, Encrypted]:
