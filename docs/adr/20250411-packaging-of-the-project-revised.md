@@ -1,4 +1,4 @@
-# 9. Packaging of the project
+# Packaging of the project
 
 Date: 2025-04-11
 
@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-In [ADR #3](0003-packaging-of-the-project.md) the decision was made to package the project in the following way:
+In [ADR 20231027 #1](20231027_1-packaging-of-the-project.md) the decision was made to package the project in the following way:
 
 - `aggregate`
 - `event_store`

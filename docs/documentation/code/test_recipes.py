@@ -7,16 +7,17 @@ import pytest
 import time_machine
 
 from event_sourcery.event_sourcing import Aggregate, Repository
-from event_sourcery.event_store import Recorded, StreamId, WrappedEvent
+from event_sourcery.event_store.event import Recorded, WrappedEvent
+from event_sourcery.event_store.stream import StreamId
 
 if typing.TYPE_CHECKING:
-    from event_sourcery.event_store import Event
+    from event_sourcery.event_store.event import Event
 
 
 @pytest.fixture(scope="session", autouse=True)
 def event_cls() -> type["Event"]:
     # --8<-- [start:defining_events_01]
-    from event_sourcery.event_store import Event
+    from event_sourcery.event_store.event import Event
 
     class InvoicePaid(Event):
         invoice_number: str
@@ -50,7 +51,7 @@ def test_sqlalchemy_backend(base_with_configured_es_models):
     from event_sourcery_sqlalchemy import SQLAlchemyBackend
 
     session = Session()  # SQLAlchemy session
-    backend = SQLAlchemyBackend(session)
+    backend = SQLAlchemyBackend().configure(session)
     # --8<-- [end:integrate_sql_01]
     # --8<-- [start:integrate_sql_02]
     backend.event_store
@@ -79,7 +80,7 @@ def test_saving(event_cls: type["Event"], base_with_configured_es_models):
     Base = base_with_configured_es_models
 
     Base.metadata.create_all(engine)
-    backend = SQLAlchemyBackend(Session())
+    backend = SQLAlchemyBackend().configure(Session())
     event_store = backend.event_store
     InvoicePaid = event_cls
 
@@ -116,7 +117,7 @@ def test_subscribing(event_cls: type["Event"], base_with_configured_es_models):
     Base = base_with_configured_es_models
 
     Base.metadata.create_all(engine)
-    backend = SQLAlchemyBackend(Session())
+    backend = SQLAlchemyBackend().configure(Session())
     InvoicePaid = event_cls
 
     invoice_paid = InvoicePaid(invoice_number="1004")
@@ -175,12 +176,14 @@ def test_outbox(
     session = Session()
     # --8<-- [start:outbox_01]
     backend = (
-        SQLAlchemyBackend(session).with_outbox()  # enable outbox
+        SQLAlchemyBackend().configure(session).with_outbox()  # enable outbox
     )
     # --8<-- [end:outbox_01]
     # --8<-- [start:outbox_01_filterer]
-    backend = SQLAlchemyBackend(session).with_outbox(
-        filterer=lambda e: "InvoicePaid" in e.name
+    backend = (
+        SQLAlchemyBackend()
+        .configure(session)
+        .with_outbox(filterer=lambda e: "InvoicePaid" in e.name)
     )
     # --8<-- [end:outbox_01_filterer]
     InvoicePaid = event_cls
@@ -246,14 +249,14 @@ def sqlite_in_memory_backend(base_with_configured_es_models):
     Base = base_with_configured_es_models
 
     Base.metadata.create_all(engine)
-    return SQLAlchemyBackend(Session())
+    return SQLAlchemyBackend().configure(Session())
 
 
 def test_event_sourcing(sqlite_in_memory_backend) -> None:
     backend = sqlite_in_memory_backend
     # --8<-- [start:event_sourcing_01]
     from event_sourcery.event_sourcing import Aggregate, Repository
-    from event_sourcery.event_store import Event
+    from event_sourcery.event_store.event import Event
 
     class SwitchedOn(Event):
         pass
@@ -283,7 +286,7 @@ def test_event_sourcing(sqlite_in_memory_backend) -> None:
     # --8<-- [end:event_sourcing_02_repo]
 
     # --8<-- [start:event_sourcing_03]
-    from event_sourcery.event_store import StreamUUID
+    from event_sourcery.event_store.stream import StreamUUID
 
     stream_id = StreamUUID(name="light_switch/1")
     with repository.aggregate(stream_id, LightSwitch()) as light_switch:
@@ -299,14 +302,15 @@ def test_event_sourcing(sqlite_in_memory_backend) -> None:
 
 
 def test_multitenancy(sqlite_in_memory_backend, event_cls) -> None:
-    event_store = sqlite_in_memory_backend.event_store
     InvoicePaid = event_cls
 
     # --8<-- [start:multitenancy_01]
-    scoped_event_store = event_store.scoped_for_tenant("tenant123")
+    scoped_backend = sqlite_in_memory_backend.in_tenant_mode("tenant123")
     # --8<-- [end:multitenancy_01]
     stream_id = StreamId(name="invoices/1111")
-    event_store.append(InvoicePaid(invoice_number="1111"), stream_id=stream_id)
+    scoped_backend.event_store.append(
+        InvoicePaid(invoice_number="1111"), stream_id=stream_id
+    )
     subscription = (
         sqlite_in_memory_backend.subscriber.start_from(0)
         .to_events([InvoicePaid])
@@ -314,7 +318,7 @@ def test_multitenancy(sqlite_in_memory_backend, event_cls) -> None:
     )
 
     # --8<-- [start:multitenancy_02]
-    from event_sourcery.event_store import DEFAULT_TENANT
+    from event_sourcery.event_store.backend import DEFAULT_TENANT
     # --8<-- [end:multitenancy_02]
 
     # --8<-- [start:multitenancy_03]
@@ -331,9 +335,9 @@ def test_multitenancy(sqlite_in_memory_backend, event_cls) -> None:
         pass
 
     # --8<-- [start:multitenancy_04]
-    scoped_event_store = event_store.scoped_for_tenant("tenant123")
+    scoped_backend = sqlite_in_memory_backend.in_tenant_mode("tenant123")
 
-    repository = Repository[ExampleAggregate](scoped_event_store)
+    repository = Repository[ExampleAggregate](scoped_backend.event_store)
     # --8<-- [end:multitenancy_04]
 
     assert repository is not None
@@ -342,7 +346,7 @@ def test_multitenancy(sqlite_in_memory_backend, event_cls) -> None:
 def test_snapshots(sqlite_in_memory_backend) -> None:
     event_store = sqlite_in_memory_backend.event_store
 
-    from event_sourcery.event_store import Event
+    from event_sourcery.event_store.event import Event
 
     # --8<-- [start:snapshots_01]
     class TemperatureChanged(Event):
@@ -417,7 +421,7 @@ def test_versioning(sqlite_in_memory_backend, event_cls) -> None:
     # --8<-- [end:versioning_03]
 
     # --8<-- [start:versioning_01]
-    from event_sourcery.event_store import NO_VERSIONING
+    from event_sourcery.event_store.stream import NO_VERSIONING
 
     # --8<-- [start:versioning_04]
     stream_id = StreamId(name="invoices/123")

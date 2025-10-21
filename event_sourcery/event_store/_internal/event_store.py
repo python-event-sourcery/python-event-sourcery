@@ -2,19 +2,49 @@ from collections.abc import Sequence
 from functools import singledispatchmethod
 from typing import cast
 
-from event_sourcery.event_store.event import (
+from typing_extensions import Self
+
+from event_sourcery.event_store._internal.event.dto import (
     Event,
     Position,
-    Serde,
+    RawEvent,
     WrappedEvent,
 )
-from event_sourcery.event_store.interfaces import StorageStrategy
-from event_sourcery.event_store.stream_id import StreamId
-from event_sourcery.event_store.versioning import (
+from event_sourcery.event_store._internal.event.serde import Serde
+from event_sourcery.event_store._internal.stream_id import StreamId
+from event_sourcery.event_store._internal.versioning import (
     NO_VERSIONING,
     ExplicitVersioning,
     Versioning,
 )
+
+
+class StorageStrategy:
+    def fetch_events(
+        self,
+        stream_id: StreamId,
+        start: int | None = None,
+        stop: int | None = None,
+    ) -> list[RawEvent]:
+        raise NotImplementedError()
+
+    def insert_events(
+        self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
+    ) -> None:
+        raise NotImplementedError()
+
+    def save_snapshot(self, snapshot: RawEvent) -> None:
+        raise NotImplementedError()
+
+    def delete_stream(self, stream_id: StreamId) -> None:
+        raise NotImplementedError()
+
+    @property
+    def current_position(self) -> Position | None:
+        raise NotImplementedError()
+
+    def scoped_for_tenant(self, tenant_id: str) -> Self:
+        raise NotImplementedError()
 
 
 class EventStore:

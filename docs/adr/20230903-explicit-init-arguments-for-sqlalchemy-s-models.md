@@ -1,4 +1,4 @@
-# 2. Explicit __init__ arguments for SQLAlchemy's models
+# Explicit __init__ arguments for SQLAlchemy's models
 
 Date: 2023-09-03
 

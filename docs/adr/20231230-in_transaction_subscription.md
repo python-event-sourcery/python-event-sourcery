@@ -1,4 +1,4 @@
-# 6. InTransaction Subscription
+# InTransaction Subscription
 
 Date: 2023-12-30
 

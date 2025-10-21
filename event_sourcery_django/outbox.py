@@ -3,7 +3,7 @@ from collections.abc import Iterator
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
 
-from event_sourcery.event_store import RecordedRaw
+from event_sourcery.event_store.event import RecordedRaw
 from event_sourcery.event_store.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
