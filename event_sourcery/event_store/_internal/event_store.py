@@ -20,30 +20,84 @@ from event_sourcery.event_store._internal.versioning import (
 
 
 class StorageStrategy:
+    """
+    Interface for event store backends.
+
+    Defines the contract for low-level operations on event streams, such as fetching,
+    inserting, and deleting events.
+    Concrete implementations provide storage logic for specific backends.
+    """
+
     def fetch_events(
         self,
         stream_id: StreamId,
         start: int | None = None,
         stop: int | None = None,
     ) -> list[RawEvent]:
+        """
+        Fetches events from a stream in the given range.
+
+        Args:
+            stream_id (StreamId): The stream identifier to fetch events from.
+            start (int | None): From version (inclusive), or None for the beginning.
+            stop (int | None): Stop before version (exclusive), or None for the end.
+
+        Returns:
+            list[RawEvent]: List of raw events in the specified range.
+        """
         raise NotImplementedError()
 
     def insert_events(
-        self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
+        self,
+        stream_id: StreamId,
+        versioning: Versioning,
+        events: list[RawEvent],
     ) -> None:
+        """
+        Inserts events into a stream with using versioning strategy.
+
+        Args:
+            stream_id (StreamId): The stream identifier to insert events into.
+            versioning (Versioning): Versioning strategy for optimistic locking.
+            events (list[RawEvent]): List of raw events to insert.
+        """
         raise NotImplementedError()
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
+        """
+        Saves a snapshot of the stream. Stream will be fetched from newest snapshot.
+
+        Args:
+            snapshot (RawEvent): The snapshot event to save.
+        """
         raise NotImplementedError()
 
     def delete_stream(self, stream_id: StreamId) -> None:
+        """
+        Deletes a stream and all its events.
+
+        Args:
+            stream_id (StreamId): The stream identifier to delete.
+        """
         raise NotImplementedError()
 
     @property
     def current_position(self) -> Position | None:
+        """
+        Returns the current position (offset) in the event store, if supported.
+        """
         raise NotImplementedError()
 
     def scoped_for_tenant(self, tenant_id: str) -> Self:
+        """
+        Returns a backend instance scoped for the given tenant.
+
+        Args:
+            tenant_id (str): The tenant identifier.
+
+        Returns:
+            Self: The backend instance for the tenant.
+        """
         raise NotImplementedError()
 
 

@@ -13,24 +13,91 @@ from event_sourcery.event_store.exceptions import KeyNotFoundError, NoSubjectIdF
 
 
 class EncryptionStrategy:
+    """
+    Interface for encryption algorithms used to secure event data.
+
+    Implementations should provide methods for encrypting and decrypting data using a
+    given key.
+    Used by the Encryption service to process event fields marked for encryption.
+    """
+
     def encrypt(self, data: Any, key: bytes) -> str:
+        """
+        Encrypts the given data using the provided key.
+
+        Args:
+            data (Any): The data to encrypt.
+            key (bytes): The encryption key.
+
+        Returns:
+            str: The encrypted data as a string.
+        """
         raise NotImplementedError()
 
     def decrypt(self, data: str, key: bytes) -> Any:
+        """
+        Decrypts the given data using the provided key.
+
+        Args:
+            data (str): The encrypted data as a string.
+            key (bytes): The encryption key.
+
+        Returns:
+            Any: The decrypted data.
+        """
         raise NotImplementedError()
 
 
 class EncryptionKeyStorageStrategy:
+    """
+    Interface for key management strategies used in event encryption.
+
+    Implementations are responsible for storing, retrieving, and deleting encryption
+    keys for specific data subjects. Supports multi-tenancy via scoped_for_tenant.
+    Used by the Encryption service for key management and crypto-shredding.
+    """
+
     def get(self, subject_id: str) -> bytes | None:
+        """
+        Retrieves the encryption key for the given subject identifier.
+
+        Args:
+            subject_id (str): The subject identifier.
+
+        Returns:
+            bytes | None: The encryption key, or None if not found.
+        """
         raise NotImplementedError()
 
     def store(self, subject_id: str, key: bytes) -> None:
+        """
+        Stores the encryption key for the given subject identifier.
+
+        Args:
+            subject_id (str): The subject identifier.
+            key (bytes): The encryption key to store.
+        """
         raise NotImplementedError()
 
     def delete(self, subject_id: str) -> None:
+        """
+        Deletes the encryption key for the given subject identifier.
+
+        Args:
+            subject_id (str): The subject identifier whose key should be deleted.
+        """
         raise NotImplementedError()
 
     def scoped_for_tenant(self, tenant_id: TenantId) -> Self:
+        """
+        Returns a key storage strategy instance scoped for the given tenant.
+
+        Args:
+            tenant_id (TenantId): The tenant identifier.
+
+        Returns:
+            Self: The key storage strategy instance for the tenant.
+        """
         raise NotImplementedError()
 
 
@@ -91,6 +158,20 @@ class Encryption:
     key_storage: EncryptionKeyStorageStrategy
 
     def encrypt(self, event: BaseModel, stream_id: StreamId) -> dict[str, Any]:
+        """
+        Encrypts all fields of the event marked as encrypted.
+
+        Args:
+            event (BaseModel): The event instance to encrypt.
+            stream_id (StreamId): The stream identifier used for subject resolution.
+
+        Returns:
+            dict[str, Any]: The event data with encrypted fields.
+
+        Raises:
+            NoSubjectIdFound: If the subject id cannot be determined for encryption.
+            KeyNotFoundError: If the encryption key for a subject is missing.
+        """
         event_type = type(event)
         data = NestedDict(event.model_dump(mode="json"))
         for field_name in self.registry.encrypted_fields(of=event_type).keys():
@@ -110,6 +191,17 @@ class Encryption:
         raw: dict[str, Any],
         stream_id: StreamId,
     ) -> dict[str, Any]:
+        """
+        Decrypts all fields of the event marked as encrypted in the registry.
+
+        Args:
+            event_type (type[BaseModel]): The event class type.
+            raw (dict[str, Any]): The raw event data with encrypted fields.
+            stream_id (StreamId): The stream identifier used for subject resolution.
+
+        Returns:
+            dict[str, Any]: The event data with decrypted fields (or masked if no key).
+        """
         data = NestedDict(raw)
         encrypted_fields = self.registry.encrypted_fields(of=event_type)
         for field_name, encrypted_config in encrypted_fields.items():
@@ -144,4 +236,11 @@ class Encryption:
         return self.strategy.encrypt(serialized, key)
 
     def shred(self, subject_id: str) -> None:
+        """
+        Deletes the encryption key for the given subject, effectively making all
+        encrypted data for that subject unrecoverable (crypto-shredding).
+
+        Args:
+            subject_id (str): The subject identifier whose key should be deleted.
+        """
         self.key_storage.delete(subject_id)

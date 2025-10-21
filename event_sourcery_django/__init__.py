@@ -24,6 +24,22 @@ from event_sourcery.event_store.outbox import no_filter
 
 
 class Config(BaseModel):
+    """
+    Configuration for DjangoBackend event store integration.
+
+    Attributes:
+        outbox_attempts (PositiveInt):
+            Maximum number of outbox delivery attempts per event.
+        gap_retry_interval (timedelta):
+            Time to wait before retrying a subscription gap. If the subscription detects
+            a gap in event identifiers (e.g., missing event IDs), it assumes there may
+            be an open transaction and the database has already assigned IDs for new
+            events that are not yet committed.
+            This interval determines how long the subscription waits before retrying to
+            fetch events, preventing loss of events that are in the process of being
+            written to the database.
+    """
+
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     outbox_attempts: PositiveInt = 3
@@ -31,6 +47,14 @@ class Config(BaseModel):
 
 
 class DjangoBackend(TransactionalBackend):
+    """
+    Django integration backend for Event Sourcery.
+
+    Provides a fully configured TransactionalBackend for Django projects, including
+    event store, outbox, and subscription strategies. Supports configuration via the
+    `Config` class.
+    """
+
     def __init__(self) -> None:
         from event_sourcery_django.event_store import DjangoStorageStrategy
         from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
@@ -47,6 +71,18 @@ class DjangoBackend(TransactionalBackend):
         )
 
     def configure(self, config: Config | None = None) -> Self:
+        """
+        Sets the backend configuration for outbox and subscription behavior.
+        If no config is provided, the default configuration is used.
+        This method must be called before using the backend in production
+        to ensure correct event publishing and subscription reliability.
+
+        Args:
+            config (Config | None): Optional custom configuration.
+
+        Returns:
+            Self: The configured backend instance (for chaining).
+        """
         self[Config] = config or Config()
         return self
 
