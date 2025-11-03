@@ -4,15 +4,13 @@ from uuid import uuid4
 import pytest
 from pydantic import BaseModel
 
-from event_sourcery.event_store import EventStore
-from event_sourcery.event_store.backend import Backend
-from event_sourcery.event_store.event import (
+from event_sourcery import Backend, EventStore, StreamId
+from event_sourcery.event import (
     Event,
     EventRegistry,
     WrappedEvent,
 )
-from event_sourcery.event_store.exceptions import DuplicatedEvent
-from event_sourcery.event_store.stream import StreamId
+from event_sourcery.exceptions import DuplicatedEvent
 
 
 @pytest.fixture()

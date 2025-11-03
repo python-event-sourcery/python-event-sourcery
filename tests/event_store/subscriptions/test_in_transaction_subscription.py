@@ -2,8 +2,8 @@ from unittest.mock import ANY
 
 import pytest
 
-from event_sourcery.event_store.backend import TransactionalBackend
-from event_sourcery.event_store.event import Event
+from event_sourcery.backend import TransactionalBackend
+from event_sourcery.event import Event
 from tests.bdd import Given, Then, When
 from tests.factories import AnEvent, OtherEvent, an_event
 from tests.matchers import any_record

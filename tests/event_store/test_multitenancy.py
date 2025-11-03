@@ -1,8 +1,7 @@
 import pytest
 
-from event_sourcery.event_store.backend import Backend
-from event_sourcery.event_store.exceptions import IllegalTenantId
-from event_sourcery.event_store.stream import StreamId
+from event_sourcery import Backend, StreamId
+from event_sourcery.exceptions import IllegalTenantId
 from tests.bdd import Given, Then
 from tests.factories import AnEvent, an_event
 

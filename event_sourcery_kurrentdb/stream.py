@@ -4,9 +4,8 @@ from typing import cast
 
 from typing_extensions import Self
 
-from event_sourcery.event_store.backend import TenantId
-from event_sourcery.event_store.exceptions import IllegalCategoryName, IllegalTenantId
-from event_sourcery.event_store.stream import StreamId
+from event_sourcery import StreamId, TenantId
+from event_sourcery.exceptions import IllegalCategoryName, IllegalTenantId
 
 
 class Name(UserString):

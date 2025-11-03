@@ -55,5 +55,5 @@ If there are fewer 'new' events available, batch subscription will return whatev
 
 When batch subscription catches up with event store, it will be returning empty lists. At least until some new events are saved.
 
-[Recorded]: ../reference/event_store/event.md#event_sourceryevent_storeeventrecorded
-[Backend]: ../reference/event_store/backend.md#event_sourceryevent_storebackendbackend
+[Recorded]: ../reference/event.md#event_sourceryeventrecorded
+[Backend]: ../reference/backend.md#event_sourcerybackendbackend

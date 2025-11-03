@@ -10,12 +10,12 @@ from uuid import UUID
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store.event import RawEvent, RecordedRaw
-from event_sourcery.event_store.interfaces import (
+from event_sourcery import StreamId
+from event_sourcery.event import RawEvent, RecordedRaw
+from event_sourcery.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
 )
-from event_sourcery.event_store.stream import StreamId
 from event_sourcery_sqlalchemy.models.base import BaseOutboxEntry
 
 logger = logging.getLogger(__name__)

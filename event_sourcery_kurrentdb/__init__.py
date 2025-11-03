@@ -10,14 +10,15 @@ from kurrentdbclient import KurrentDBClient
 from pydantic import BaseModel, ConfigDict, PositiveFloat, PositiveInt
 from typing_extensions import Self
 
-from event_sourcery.event_store.backend import Backend, TenantId, not_configured
-from event_sourcery.event_store.interfaces import (
+from event_sourcery import TenantId
+from event_sourcery.backend import Backend, not_configured
+from event_sourcery.interfaces import (
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
     StorageStrategy,
     SubscriptionStrategy,
 )
-from event_sourcery.event_store.outbox import no_filter
+from event_sourcery.outbox import no_filter
 from event_sourcery_kurrentdb.event_store import KurrentDBStorageStrategy
 from event_sourcery_kurrentdb.outbox import KurrentDBOutboxStorageStrategy
 from event_sourcery_kurrentdb.subscription import KurrentDBSubscriptionStrategy

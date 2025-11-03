@@ -1,8 +1,8 @@
 import pytest
 from _pytest.fixtures import SubRequest
 
-from event_sourcery.event_store import EventStore
-from event_sourcery.event_store.backend import Backend, InMemoryBackend
+from event_sourcery import EventStore
+from event_sourcery.backend import Backend, InMemoryBackend
 from tests import bdd
 
 

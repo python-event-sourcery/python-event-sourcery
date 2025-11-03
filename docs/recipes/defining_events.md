@@ -8,4 +8,4 @@ docs/code/test_recipes.py:defining_events_01
 
 Base class [Event] is a [pydantic model](https://docs.pydantic.dev/latest/api/base_model/) and so will be every event you define.
 
-[Event]: ../reference/event_store/event.md#event_sourceryevent_storeevent
+[Event]: ../reference/event.md#event_sourceryevent

@@ -3,9 +3,8 @@ from typing import Any, TypeVar
 from unittest.mock import ANY
 from uuid import UUID
 
-from event_sourcery.event_store.backend import TenantId
-from event_sourcery.event_store.event import Event, Recorded, WrappedEvent
-from event_sourcery.event_store.stream import StreamId
+from event_sourcery import StreamId, TenantId
+from event_sourcery.event import Event, Recorded, WrappedEvent
 
 TEvent = TypeVar("TEvent", bound=Event)
 

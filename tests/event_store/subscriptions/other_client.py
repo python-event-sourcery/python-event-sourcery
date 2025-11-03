@@ -9,9 +9,8 @@ from weakref import WeakSet
 
 from typing_extensions import Protocol
 
-from event_sourcery.event_store.backend import Backend
-from event_sourcery.event_store.event import WrappedEvent
-from event_sourcery.event_store.stream import StreamId
+from event_sourcery import Backend, StreamId
+from event_sourcery.event import WrappedEvent
 
 
 class Command(enum.Enum):

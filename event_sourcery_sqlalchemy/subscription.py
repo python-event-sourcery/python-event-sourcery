@@ -7,8 +7,8 @@ from typing import Protocol, cast
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store.event import Position, RecordedRaw
-from event_sourcery.event_store.interfaces import SubscriptionStrategy
+from event_sourcery.event import Position, RecordedRaw
+from event_sourcery.interfaces import SubscriptionStrategy
 from event_sourcery_sqlalchemy import dto
 from event_sourcery_sqlalchemy.models.base import BaseEvent, BaseStream
 

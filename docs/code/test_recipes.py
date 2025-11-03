@@ -6,18 +6,18 @@ import pika
 import pytest
 import time_machine
 
+from event_sourcery import StreamId
+from event_sourcery.event import Recorded, WrappedEvent
 from event_sourcery.event_sourcing import Aggregate, Repository
-from event_sourcery.event_store.event import Recorded, WrappedEvent
-from event_sourcery.event_store.stream import StreamId
 
 if typing.TYPE_CHECKING:
-    from event_sourcery.event_store.event import Event
+    from event_sourcery.event import Event
 
 
 @pytest.fixture(scope="session", autouse=True)
 def event_cls() -> type["Event"]:
     # --8<-- [start:defining_events_01]
-    from event_sourcery.event_store.event import Event
+    from event_sourcery.event import Event
 
     class InvoicePaid(Event):
         invoice_number: str
@@ -255,8 +255,8 @@ def sqlite_in_memory_backend(base_with_configured_es_models):
 def test_event_sourcing(sqlite_in_memory_backend) -> None:
     backend = sqlite_in_memory_backend
     # --8<-- [start:event_sourcing_01]
+    from event_sourcery.event import Event
     from event_sourcery.event_sourcing import Aggregate, Repository
-    from event_sourcery.event_store.event import Event
 
     class SwitchedOn(Event):
         pass
@@ -286,7 +286,7 @@ def test_event_sourcing(sqlite_in_memory_backend) -> None:
     # --8<-- [end:event_sourcing_02_repo]
 
     # --8<-- [start:event_sourcing_03]
-    from event_sourcery.event_store.stream import StreamUUID
+    from event_sourcery import StreamUUID
 
     stream_id = StreamUUID(name="light_switch/1")
     with repository.aggregate(stream_id, LightSwitch()) as light_switch:
@@ -318,7 +318,7 @@ def test_multitenancy(sqlite_in_memory_backend, event_cls) -> None:
     )
 
     # --8<-- [start:multitenancy_02]
-    from event_sourcery.event_store.backend import DEFAULT_TENANT
+    from event_sourcery.backend import DEFAULT_TENANT
     # --8<-- [end:multitenancy_02]
 
     # --8<-- [start:multitenancy_03]
@@ -346,7 +346,7 @@ def test_multitenancy(sqlite_in_memory_backend, event_cls) -> None:
 def test_snapshots(sqlite_in_memory_backend) -> None:
     event_store = sqlite_in_memory_backend.event_store
 
-    from event_sourcery.event_store.event import Event
+    from event_sourcery.event import Event
 
     # --8<-- [start:snapshots_01]
     class TemperatureChanged(Event):
@@ -405,7 +405,7 @@ def test_versioning(sqlite_in_memory_backend, event_cls) -> None:
     # --8<-- [start:versioning_02]
     another_event = InvoicePaid(invoice_number="1112")
     # 👇 this would raise an exception
-    # event_store.append(another_event, stream_id=stream_id)
+    # _event_store.append(another_event, stream_id=stream_id)
     # --8<-- [end:versioning_02]
 
     # --8<-- [start:versioning_03]
@@ -421,7 +421,7 @@ def test_versioning(sqlite_in_memory_backend, event_cls) -> None:
     # --8<-- [end:versioning_03]
 
     # --8<-- [start:versioning_01]
-    from event_sourcery.event_store.stream import NO_VERSIONING
+    from event_sourcery import NO_VERSIONING
 
     # --8<-- [start:versioning_04]
     stream_id = StreamId(name="invoices/123")

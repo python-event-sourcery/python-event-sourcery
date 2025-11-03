@@ -2,7 +2,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from event_sourcery.event_store.stream import StreamId
+from event_sourcery import StreamId
 from tests.bdd import Given, Then, When
 from tests.factories import AnEvent
 from tests.matchers import any_wrapped_event

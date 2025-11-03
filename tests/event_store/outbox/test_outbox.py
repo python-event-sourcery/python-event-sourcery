@@ -1,7 +1,6 @@
 from uuid import uuid4
 
-from event_sourcery.event_store.backend import Backend
-from event_sourcery.event_store.stream import StreamId
+from event_sourcery import Backend, StreamId
 from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import an_event
 from tests.matchers import any_record

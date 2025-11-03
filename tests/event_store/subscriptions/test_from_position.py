@@ -1,4 +1,4 @@
-from event_sourcery.event_store import EventStore
+from event_sourcery import EventStore
 from tests.bdd import Given, Then, When
 from tests.factories import an_event
 from tests.matchers import any_record

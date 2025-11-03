@@ -38,4 +38,4 @@ docs/code/test_recipes.py:event_sourcing_03
 
 [Aggregate]: ../reference/event_sourcing.md#event_sourceryevent_sourcingaggregate
 [Repository]: ../reference/event_sourcing.md#event_sourceryevent_sourcingrepository
-[EventStore]: ../reference/event_store/event_store.md#event_sourceryevent_storeeventstore
+[EventStore]: ../reference/event_store.md#event_sourceryeventstore

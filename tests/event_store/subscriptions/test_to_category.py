@@ -1,5 +1,4 @@
-from event_sourcery.event_store import EventStore
-from event_sourcery.event_store.stream import StreamId
+from event_sourcery import EventStore, StreamId
 from tests.bdd import Given, Then, When
 from tests.factories import an_event
 from tests.matchers import any_record

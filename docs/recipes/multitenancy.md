@@ -68,8 +68,8 @@ docs/code/test_recipes.py:multitenancy_04
 --8<--
 ```
 
-[EventStore]: ../reference/event_store/event_store.md#event_sourceryevent_storeeventstore
-[Recorded]: ../reference/event_store/event.md#event_sourceryevent_storeeventrecorded
-[TenantId]: ../reference/event_store/backend.md#event_sourceryevent_storebackendtenantid
-[DEFAULT_TENANT]: ../reference/event_store/backend.md#event_sourceryevent_storebackenddefault_tenant
+[EventStore]: ../reference/event_store.md#event_sourceryeventstore
+[Recorded]: ../reference/event.md#event_sourceryeventrecorded
+[TenantId]: ../reference/event_store.md#event_sourcerytenantid
+[DEFAULT_TENANT]: ../reference/event_store.md#event_sourcerydefault_tenant
 [Repository]: ../reference/event_sourcing.md#event_sourceryevent_sourcingrepository

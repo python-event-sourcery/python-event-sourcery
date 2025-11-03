@@ -12,26 +12,17 @@ from deepdiff import DeepDiff
 from pytest import approx
 from typing_extensions import Self
 
-from event_sourcery.event_store import EventStore
-from event_sourcery.event_store.backend import (
+from event_sourcery import (
     DEFAULT_TENANT,
     Backend,
+    EventStore,
+    StreamId,
     TenantId,
     TransactionalBackend,
 )
-from event_sourcery.event_store.encryption import Encryption as EncryptionService
-from event_sourcery.event_store.event import (
-    Entry,
-    Event,
-    Position,
-    Recorded,
-    WrappedEvent,
-)
-from event_sourcery.event_store.stream import StreamId
-from event_sourcery.event_store.subscription import (
-    BuildPhase,
-    PositionPhase,
-)
+from event_sourcery.encryption import Encryption as EncryptionService
+from event_sourcery.event import Entry, Event, Position, Recorded, WrappedEvent
+from event_sourcery.subscription import BuildPhase, PositionPhase
 from tests.matchers import any_wrapped_event
 
 

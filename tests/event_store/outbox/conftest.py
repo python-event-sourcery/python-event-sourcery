@@ -7,9 +7,9 @@ import django as django_framework
 import pytest
 from django.core.management import call_command as django_command
 
-from event_sourcery.event_store.backend import Backend, InMemoryBackend, InMemoryConfig
-from event_sourcery.event_store.event import WrappedEvent
-from event_sourcery.event_store.stream import StreamId
+from event_sourcery import StreamId
+from event_sourcery.backend import Backend, InMemoryBackend, InMemoryConfig
+from event_sourcery.event import WrappedEvent
 from event_sourcery_django import Config as DjangoConfig
 from event_sourcery_django import DjangoBackend
 from event_sourcery_kurrentdb import Config as KurrentDBConfig

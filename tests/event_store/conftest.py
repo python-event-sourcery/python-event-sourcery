@@ -3,7 +3,7 @@ from typing import cast
 import pytest
 from _pytest.fixtures import SubRequest
 
-from event_sourcery.event_store.backend import Backend
+from event_sourcery.backend import Backend
 from tests import mark
 from tests.backend.django import django_backend
 from tests.backend.in_memory import in_memory_backend
