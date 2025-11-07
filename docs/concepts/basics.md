@@ -257,8 +257,8 @@ with repository.aggregate(stream_id=stream_id) as switch_second_incarnation:
 
 A [Repository] is a thin wrapper over Event Store. One can also write Aggregates even without using our base class and use [EventStore] directly!
 
-[EventStore]: ../reference/event_store.md#event_sourceryeventstore
-[Outbox]: ../reference/outbox.md#event_sourceryoutbox
+[EventStore]: ../reference/event_store/EventStore.md
+[Outbox]: ../reference/event_store/outbox/Outbox.md
 [Event Sourcing]: ../recipes/event_sourcing.md
-[Aggregate]: ../reference/event_sourcing.md#event_sourceryevent_sourcingaggregate
-[Repository]: ../reference/event_sourcing.md#event_sourceryevent_sourcingrepository
+[Aggregate]: ../reference/event_sourcing/Aggregate.md
+[Repository]: ../reference/event_sourcing/Repository.md

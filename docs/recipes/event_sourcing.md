@@ -36,6 +36,6 @@ docs/code/test_recipes.py:event_sourcing_03
 --8<--
 ```
 
-[Aggregate]: ../reference/event_sourcing.md#event_sourceryevent_sourcingaggregate
-[Repository]: ../reference/event_sourcing.md#event_sourceryevent_sourcingrepository
-[EventStore]: ../reference/event_store.md#event_sourceryeventstore
+[Aggregate]: ../reference/event_sourcing/Aggregate.md
+[Repository]: ../reference/event_sourcing/Repository.md
+[EventStore]: ../reference/event_store/EventStore.md

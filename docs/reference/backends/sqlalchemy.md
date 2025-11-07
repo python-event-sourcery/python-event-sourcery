@@ -1,5 +1,3 @@
-# event_sourcery_sqlalchemy
-
 ## event_sourcery_sqlalchemy.SQLAlchemyBackend
 ::: event_sourcery_sqlalchemy.SQLAlchemyBackend
 

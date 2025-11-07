@@ -40,4 +40,4 @@ docs/code/test_recipes.py:snapshots_04
 
     Long streams are usually a sign of a poor stream design. Snapshots are an optimization that should be used only for a good reason. Use with caution!
 
-[EventStore]: ../reference/event_store.md#event_sourceryeventstore
+[EventStore]: ../reference/event_store/EventStore.md

@@ -142,8 +142,8 @@ Crypto-shredding is ideal for privacy-sensitive fields that must be protected or
 > 🔎 If you see `NoSubjectIdFound` in your traceback, check that your event class defines a DataSubject field.
 
 
-[Encrypted]: ../reference/encryption.md#event_sourceryencryptionencrypted
-[DataSubject]: ../reference/encryption.md#event_sourceryencryptiondatasubject
-[EncryptionStrategy]: ../reference/interfaces.md#event_sourceryinterfacesencryptionstrategy
-[EncryptionKeyStorage]: ../reference/interfaces.md#event_sourceryinterfacesencryptionkeystoragestrategy
-[NoSubjectIdFound]: ../reference/exceptions.md#event_sourceryexceptionsnosubjectidfound
+[Encrypted]: ../reference/event_store/encryption/Encrypted.md
+[DataSubject]: ../reference/event_store/encryption/DataSubject.md
+[EncryptionStrategy]: ../reference/event_store/interfaces/EncryptionStrategy.md
+[EncryptionKeyStorage]: ../reference/event_store/interfaces/EncryptionKeyStorageStrategy.md
+[NoSubjectIdFound]: ../reference/event_store/exceptions.md#nosubjectidfound

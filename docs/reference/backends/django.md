@@ -1,5 +1,3 @@
-# event_sourcery_django
-
 ## event_sourcery_django.DjangoBackend
 ::: event_sourcery_django.DjangoBackend
 

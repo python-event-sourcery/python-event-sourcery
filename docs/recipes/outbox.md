@@ -109,4 +109,4 @@ docs/code/test_recipes.py:outbox_01_filterer
 
 Sending each event will be retried up to 3 times.
 
-[Recorded]: ../reference/event.md#event_sourceryeventrecorded
+[Recorded]: ../reference/event_store/event/Recorded.md

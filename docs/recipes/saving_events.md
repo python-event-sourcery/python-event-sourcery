@@ -72,6 +72,6 @@ docs/code/test_recipes.py:versioning_04
 
     Once a stream has been created with disabled versioning, you cannot enable it. It is also forbidden the other way around. You can always create a new stream and delete the old one.
 
-[EventStore]: ../reference/event_store.md#event_sourceryeventstore
-[WrappedEvent]: ../reference/event.md#event_sourceryeventwrappedevent
-[NO_VERSIONING]: ../reference/event_store.md#event_sourceryno_versioning
+[EventStore]: ../reference/event_store/EventStore.md
+[WrappedEvent]: ../reference/event_store/event/WrappedEvent.md
+[NO_VERSIONING]: ../reference/event_store/NO_VERSIONING.md

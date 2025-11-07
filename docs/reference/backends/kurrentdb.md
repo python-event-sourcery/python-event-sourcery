@@ -1,5 +1,3 @@
-# event_sourcery_kurrentdb
-
 ## event_sourcery_kurrentdb.KurrentDBBackend
 ::: event_sourcery_kurrentdb.KurrentDBBackend
 

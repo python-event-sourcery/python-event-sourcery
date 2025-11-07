@@ -1,5 +1,3 @@
-# event_sourcery.backend
-
 ## event_sourcery.backend.InMemoryBackend
 ::: event_sourcery.backend.InMemoryBackend
 
