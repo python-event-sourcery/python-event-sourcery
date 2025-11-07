@@ -300,7 +300,7 @@ class InMemoryStorageStrategy(StorageStrategy):
         return self
 
 
-class Config(BaseModel):
+class InMemoryConfig(BaseModel):
     """
     Configuration for InMemoryBackend event store integration.
 
@@ -326,7 +326,9 @@ class InMemoryBackend(TransactionalBackend):
 
     def __init__(self) -> None:
         super().__init__()
-        self[Config] = not_configured("Configure backend with `.configure(config)`")
+        self[InMemoryConfig] = not_configured(
+            "Configure backend with `.configure(config)`"
+        )
         self[Storage] = Storage()
         self[StorageStrategy] = lambda c: InMemoryStorageStrategy(
             c[Storage],
@@ -335,7 +337,7 @@ class InMemoryBackend(TransactionalBackend):
         ).scoped_for_tenant(c[TenantId])
         self[SubscriptionStrategy] = lambda c: InMemorySubscriptionStrategy(c[Storage])
 
-    def configure(self, config: Config | None = None) -> Self:
+    def configure(self, config: InMemoryConfig | None = None) -> Self:
         """
         Sets the backend configuration for outbox behavior.
 
@@ -343,13 +345,13 @@ class InMemoryBackend(TransactionalBackend):
         This method must be called before using the backend.
 
         Args:
-            config (Config | None):
-                Optional custom configuration. If None, uses default Config().
+            config (InMemoryConfig | None):
+                Optional custom configuration. If None, uses default KurrentDBConfig().
 
         Returns:
             Self: The configured backend instance (for chaining).
         """
-        self[Config] = config or Config()
+        self[InMemoryConfig] = config or InMemoryConfig()
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
@@ -357,7 +359,7 @@ class InMemoryBackend(TransactionalBackend):
         self[InMemoryOutboxStorageStrategy] = singleton(
             lambda c: InMemoryOutboxStorageStrategy(
                 c[OutboxFiltererStrategy],  # type: ignore[type-abstract]
-                c[Config].outbox_attempts,
+                c[InMemoryConfig].outbox_attempts,
             )
         )
         self[OutboxStorageStrategy] = lambda c: c[InMemoryOutboxStorageStrategy]

@@ -1,6 +1,6 @@
 __all__ = [
-    "Config",
     "KurrentDBBackend",
+    "KurrentDBConfig",
     "KurrentDBStorageStrategy",
 ]
 
@@ -26,7 +26,7 @@ from event_sourcery_kurrentdb.subscription import KurrentDBSubscriptionStrategy
 Seconds: TypeAlias = PositiveFloat
 
 
-class Config(BaseModel):
+class KurrentDBConfig(BaseModel):
     """
     Configuration for KurrentDBBackend event store integration.
 
@@ -58,22 +58,24 @@ class KurrentDBBackend(Backend):
         self[KurrentDBClient] = not_configured(
             "Configure backend with `.configure(kurrentdb_client, config)`",
         )
-        self[Config] = not_configured(
+        self[KurrentDBConfig] = not_configured(
             "Configure backend with `.configure(kurrentdb_client, config)`",
         )
         self[StorageStrategy] = lambda c: KurrentDBStorageStrategy(
             c[KurrentDBClient],
-            c[Config].timeout,
+            c[KurrentDBConfig].timeout,
         ).scoped_for_tenant(c[TenantId])
         self[SubscriptionStrategy] = lambda c: KurrentDBSubscriptionStrategy(
             c[KurrentDBClient],
         )
 
-    def configure(self, client: KurrentDBClient, config: Config | None = None) -> Self:
+    def configure(
+        self, client: KurrentDBClient, config: KurrentDBConfig | None = None
+    ) -> Self:
         """
         Sets the backend configuration for KurrentDB client and outbox behavior.
 
-        Allows you to provide a KurrentDBClient instance and an optional Config.
+        Allows you to provide a KurrentDBClient instance and an optional SQLAlchemyConfig.
         If no config is provided, the default configuration is used.
         This method must be called before using the backend in production
         to ensure correct event publishing and subscription reliability.
@@ -81,14 +83,14 @@ class KurrentDBBackend(Backend):
         Args:
             client (KurrentDBClient):
                 The KurrentDB client instance to use for backend operations.
-            config (Config | None):
-                Optional custom configuration. If None, uses default Config().
+            config (KurrentDBConfig | None):
+                Optional custom configuration. If None, uses default SQLAlchemyConfig().
 
         Returns:
             Self: The configured backend instance (for chaining).
         """
         self[KurrentDBClient] = client
-        self[Config] = config or Config()
+        self[KurrentDBConfig] = config or KurrentDBConfig()
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
@@ -96,9 +98,9 @@ class KurrentDBBackend(Backend):
         self[KurrentDBOutboxStorageStrategy] = lambda c: KurrentDBOutboxStorageStrategy(
             c[KurrentDBClient],
             c[OutboxFiltererStrategy],  # type: ignore[type-abstract]
-            c[Config].outbox_name,
-            c[Config].outbox_attempts,
-            c[Config].timeout,
+            c[KurrentDBConfig].outbox_name,
+            c[KurrentDBConfig].outbox_attempts,
+            c[KurrentDBConfig].timeout,
         )
         self[OutboxStorageStrategy] = lambda c: c[KurrentDBOutboxStorageStrategy]
         self[KurrentDBOutboxStorageStrategy].create_subscription()

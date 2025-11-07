@@ -14,5 +14,8 @@ from event_sourcery._event_store.backend import (
     not_configured,
     singleton,
 )
-from event_sourcery._event_store.in_memory import Config as InMemoryConfig
-from event_sourcery._event_store.in_memory import InMemoryBackend, InMemoryKeyStorage
+from event_sourcery._event_store.in_memory import (
+    InMemoryBackend,
+    InMemoryConfig,
+    InMemoryKeyStorage,
+)

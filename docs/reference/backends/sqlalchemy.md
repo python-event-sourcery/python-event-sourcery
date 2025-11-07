@@ -1,26 +1,26 @@
-## event_sourcery_sqlalchemy.SQLAlchemyBackend
+# SQLAlchemyBackend
 ::: event_sourcery_sqlalchemy.SQLAlchemyBackend
 
-## event_sourcery_sqlalchemy.Config
-::: event_sourcery_sqlalchemy.Config
+# SQLAlchemyConfig
+::: event_sourcery_sqlalchemy.SQLAlchemyConfig
 
-## event_sourcery_sqlalchemy.Models
+# Models
 ::: event_sourcery_sqlalchemy.Models
 
-## event_sourcery_sqlalchemy.configure_models
+# configure_models
 ::: event_sourcery_sqlalchemy.configure_models
 
-## event_sourcery_sqlalchemy.BaseEvent
+# BaseEvent
 ::: event_sourcery_sqlalchemy.BaseEvent
 
-## event_sourcery_sqlalchemy.BaseStream
+# BaseStream
 ::: event_sourcery_sqlalchemy.BaseStream
 
-## event_sourcery_sqlalchemy.BaseOutboxEntry
+# BaseOutboxEntry
 ::: event_sourcery_sqlalchemy.BaseOutboxEntry
 
-## event_sourcery_sqlalchemy.BaseProjectorCursor
+# BaseProjectorCursor
 ::: event_sourcery_sqlalchemy.BaseProjectorCursor
 
-## event_sourcery_sqlalchemy.BaseSnapshot
+# BaseSnapshot
 ::: event_sourcery_sqlalchemy.BaseSnapshot

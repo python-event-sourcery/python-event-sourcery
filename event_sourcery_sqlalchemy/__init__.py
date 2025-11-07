@@ -4,9 +4,9 @@ __all__ = [
     "BaseProjectorCursor",
     "BaseSnapshot",
     "BaseStream",
-    "Config",
     "Models",
     "SQLAlchemyBackend",
+    "SQLAlchemyConfig",
     "SqlAlchemyStorageStrategy",
     "configure_models",
     "models",
@@ -75,7 +75,7 @@ class Models:
     outbox_entry_model: type[BaseOutboxEntry] = DefaultOutboxEntry
 
 
-class Config(BaseModel):
+class SQLAlchemyConfig(BaseModel):
     """
     Configuration for SQLAlchemyBackend event store integration.
 
@@ -105,7 +105,7 @@ class SQLAlchemyBackend(TransactionalBackend):
         super().__init__()
         self[Models] = not_configured(self.UNCONFIGURED_MESSAGE)
         self[Session] = not_configured(self.UNCONFIGURED_MESSAGE)
-        self[Config] = not_configured(self.UNCONFIGURED_MESSAGE)
+        self[SQLAlchemyConfig] = not_configured(self.UNCONFIGURED_MESSAGE)
         self[StorageStrategy] = lambda c: SqlAlchemyStorageStrategy(
             c[Session],
             c[Dispatcher],
@@ -116,7 +116,7 @@ class SQLAlchemyBackend(TransactionalBackend):
         ).scoped_for_tenant(c[TenantId])
         self[SubscriptionStrategy] = lambda c: SqlAlchemySubscriptionStrategy(
             c[Session],
-            c[Config].gap_retry_interval,
+            c[SQLAlchemyConfig].gap_retry_interval,
             c[Models].event_model,
             c[Models].stream_model,
         )
@@ -124,7 +124,7 @@ class SQLAlchemyBackend(TransactionalBackend):
     def configure(
         self,
         session: Session,
-        config: Config | None = None,
+        config: SQLAlchemyConfig | None = None,
         custom_models: Models | None = None,
     ) -> Self:
         """
@@ -139,7 +139,7 @@ class SQLAlchemyBackend(TransactionalBackend):
 
         Args:
             session (Session): The SQLAlchemy session instance to use for backend operations.
-            config (Config | None): Optional custom configuration. If None, uses default Config().
+            config (SQLAlchemyConfig | None): Optional custom configuration. If None, uses default Config().
             custom_models (Models | None): Optional custom ORM models. If None, uses default models.
 
         Returns:
@@ -155,7 +155,7 @@ class SQLAlchemyBackend(TransactionalBackend):
             )
 
         self[Session] = session
-        self[Config] = config or Config()
+        self[SQLAlchemyConfig] = config or SQLAlchemyConfig()
         self[Models] = custom_models
         return self
 
@@ -165,7 +165,7 @@ class SQLAlchemyBackend(TransactionalBackend):
             lambda c: SqlAlchemyOutboxStorageStrategy(
                 c[Session],
                 c[OutboxFiltererStrategy],  # type: ignore[type-abstract]
-                c[Config].outbox_attempts,
+                c[SQLAlchemyConfig].outbox_attempts,
                 c[Models].outbox_entry_model,
             )
         )

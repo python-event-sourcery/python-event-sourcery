@@ -10,12 +10,9 @@ from django.core.management import call_command as django_command
 from event_sourcery import StreamId
 from event_sourcery.backend import Backend, InMemoryBackend, InMemoryConfig
 from event_sourcery.event import WrappedEvent
-from event_sourcery_django import Config as DjangoConfig
-from event_sourcery_django import DjangoBackend
-from event_sourcery_kurrentdb import Config as KurrentDBConfig
-from event_sourcery_kurrentdb import KurrentDBBackend
-from event_sourcery_sqlalchemy import Config as SQLAlchemyConfig
-from event_sourcery_sqlalchemy import SQLAlchemyBackend
+from event_sourcery_django import DjangoBackend, DjangoConfig
+from event_sourcery_kurrentdb import KurrentDBBackend, KurrentDBConfig
+from event_sourcery_sqlalchemy import SQLAlchemyBackend, SQLAlchemyConfig
 from tests.backend.kurrentdb import kurrentdb_client
 from tests.backend.sqlalchemy import (
     sqlalchemy_postgres_session,

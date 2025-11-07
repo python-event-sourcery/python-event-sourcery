@@ -1,8 +1,8 @@
-## event_sourcery.backend.InMemoryBackend
+# InMemoryBackend
 ::: event_sourcery.backend.InMemoryBackend
 
-## event_sourcery.backend.InMemoryConfig
+# InMemoryConfig
 ::: event_sourcery.backend.InMemoryConfig
 
-## event_sourcery.backend.InMemoryKeyStorage
+# InMemoryKeyStorage
 ::: event_sourcery.backend.InMemoryKeyStorage

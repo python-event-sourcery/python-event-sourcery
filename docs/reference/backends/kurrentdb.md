@@ -1,5 +1,5 @@
-## event_sourcery_kurrentdb.KurrentDBBackend
+# KurrentDBBackend
 ::: event_sourcery_kurrentdb.KurrentDBBackend
 
-## event_sourcery_kurrentdb.Config
-::: event_sourcery_kurrentdb.Config
+# KurrentDBConfig
+::: event_sourcery_kurrentdb.KurrentDBConfig

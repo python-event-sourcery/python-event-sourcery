@@ -1,6 +1,6 @@
 __all__ = [
-    "Config",
     "DjangoBackend",
+    "DjangoConfig",
 ]
 
 from datetime import timedelta
@@ -20,7 +20,7 @@ from event_sourcery.interfaces import (
 from event_sourcery.outbox import no_filter
 
 
-class Config(BaseModel):
+class DjangoConfig(BaseModel):
     """
     Configuration for DjangoBackend event store integration.
 
@@ -49,7 +49,7 @@ class DjangoBackend(TransactionalBackend):
 
     Provides a fully configured TransactionalBackend for Django projects, including
     event store, outbox, and subscription strategies. Supports configuration via the
-    `Config` class.
+    `DjangoConfig` class.
     """
 
     def __init__(self) -> None:
@@ -58,16 +58,18 @@ class DjangoBackend(TransactionalBackend):
         from event_sourcery_django.subscription import DjangoSubscriptionStrategy
 
         super().__init__()
-        self[Config] = not_configured("Configure backend with `.configure(config)`")
+        self[DjangoConfig] = not_configured(
+            "Configure backend with `.configure(config)`"
+        )
         self[StorageStrategy] = lambda c: DjangoStorageStrategy(
             c[Dispatcher],
             c.get(DjangoOutboxStorageStrategy, None),
         ).scoped_for_tenant(c[TenantId])
         self[SubscriptionStrategy] = lambda c: DjangoSubscriptionStrategy(
-            gap_retry_interval=c[Config].gap_retry_interval
+            gap_retry_interval=c[DjangoConfig].gap_retry_interval
         )
 
-    def configure(self, config: Config | None = None) -> Self:
+    def configure(self, config: DjangoConfig | None = None) -> Self:
         """
         Sets the backend configuration for outbox and subscription behavior.
         If no config is provided, the default configuration is used.
@@ -75,12 +77,12 @@ class DjangoBackend(TransactionalBackend):
         to ensure correct event publishing and subscription reliability.
 
         Args:
-            config (Config | None): Optional custom configuration.
+            config (DjangoConfig | None): Optional custom configuration.
 
         Returns:
             Self: The configured backend instance (for chaining).
         """
-        self[Config] = config or Config()
+        self[DjangoConfig] = config or DjangoConfig()
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
@@ -89,7 +91,7 @@ class DjangoBackend(TransactionalBackend):
         self[OutboxFiltererStrategy] = filterer  # type: ignore[type-abstract]
         self[DjangoOutboxStorageStrategy] = lambda c: DjangoOutboxStorageStrategy(
             c[OutboxFiltererStrategy],  # type: ignore[type-abstract]
-            c[Config].outbox_attempts,
+            c[DjangoConfig].outbox_attempts,
         )
         self[OutboxStorageStrategy] = lambda c: c[DjangoOutboxStorageStrategy]
         return self

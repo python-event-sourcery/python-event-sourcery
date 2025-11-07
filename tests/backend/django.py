@@ -5,7 +5,7 @@ import django as django_framework
 import pytest
 from django.core.management import call_command as django_command
 
-from event_sourcery_django import Config, DjangoBackend
+from event_sourcery_django import DjangoBackend, DjangoConfig
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATABASES = {
@@ -30,5 +30,5 @@ def django_backend(transactional_db: None) -> DjangoBackend:
     django_framework.setup()
     django_command("migrate")
     return DjangoBackend().configure(
-        Config(gap_retry_interval=timedelta(milliseconds=100))
+        DjangoConfig(gap_retry_interval=timedelta(milliseconds=100))
     )
