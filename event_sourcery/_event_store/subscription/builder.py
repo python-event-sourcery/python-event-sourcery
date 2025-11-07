@@ -11,7 +11,7 @@ from event_sourcery._event_store.event.dto import (
     RecordedRaw,
 )
 from event_sourcery._event_store.event.serde import Serde
-from event_sourcery._event_store.stream_id import Category
+from event_sourcery._event_store.stream_id import StreamCategory
 from event_sourcery._event_store.subscription.interfaces import (
     BuildPhase,
     FilterPhase,
@@ -36,7 +36,7 @@ class SubscriptionBuilder(PositionPhase, FilterPhase, BuildPhase):
         self._position = position
         return self
 
-    def to_category(self, category: Category) -> BuildPhase:
+    def to_category(self, category: StreamCategory) -> BuildPhase:
         self._build = partial(
             self._strategy.subscribe_to_category,
             start_from=self._position,

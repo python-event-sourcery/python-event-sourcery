@@ -8,7 +8,7 @@ from event_sourcery._event_store.event.dto import (
     Recorded,
     RecordedRaw,
 )
-from event_sourcery._event_store.stream_id import Category
+from event_sourcery._event_store.stream_id import StreamCategory
 
 Seconds: TypeAlias = int | float
 
@@ -95,7 +95,7 @@ class BuildPhase:
 
 
 class FilterPhase(BuildPhase):
-    def to_category(self, category: Category) -> BuildPhase:
+    def to_category(self, category: StreamCategory) -> BuildPhase:
         raise NotImplementedError()
 
     def to_events(self, events: list[type[Event]]) -> BuildPhase:

@@ -17,7 +17,7 @@ class Aggregate:
     for applying events in a consistent way.
 
     Attributes:
-        category (ClassVar[str]): Category for the aggregate type (group streams).
+        category (ClassVar[str]): StreamCategory for the aggregate type (group streams).
         _changes (list[Event]): List of yet not persisted events.
     """
 

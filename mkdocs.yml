@@ -32,7 +32,7 @@ nav:
           - 'EventStore': 'reference/event_store/EventStore.md'
           - 'StreamId': 'reference/event_store/StreamId.md'
           - 'StreamUUID': 'reference/event_store/StreamUUID.md'
-          - 'Category': 'reference/event_store/Category.md'
+          - 'StreamCategory': 'reference/event_store/StreamCategory.md'
           - 'TenantId': 'reference/event_store/TenantId.md'
           - 'DEFAULT_TENANT': 'reference/event_store/DEFAULT_TENANT.md'
           - 'NO_VERSIONING': 'reference/event_store/NO_VERSIONING.md'

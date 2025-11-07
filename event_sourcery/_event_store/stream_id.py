@@ -4,7 +4,7 @@ from uuid import UUID, uuid4, uuid5
 
 from event_sourcery.exceptions import IncompatibleUuidAndName
 
-Category: TypeAlias = str
+StreamCategory: TypeAlias = str
 
 
 @dataclass(frozen=True, repr=False, eq=False)
@@ -62,10 +62,10 @@ class StreamId(StreamUUID):
     addressing.
 
     Attributes:
-        category (Category | None): Optional category for grouping streams.
+        category (StreamCategory | None): Optional category for grouping streams.
     """
 
-    category: Category | None = None
+    category: StreamCategory | None = None
 
     def __repr__(self) -> str:
         return (
