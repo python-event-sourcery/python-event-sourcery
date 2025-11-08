@@ -9,7 +9,11 @@ from sqlalchemy import MetaData, create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, as_declarative, close_all_sessions, sessionmaker
 
-from event_sourcery_sqlalchemy import Config, SQLAlchemyBackend, configure_models
+from event_sourcery_sqlalchemy import (
+    SQLAlchemyBackend,
+    SQLAlchemyConfig,
+    configure_models,
+)
 
 
 @as_declarative()
@@ -55,7 +59,9 @@ def sqlalchemy_sqlite_backend(tmp_path: Path) -> Iterator[SQLAlchemyBackend]:
     with sqlalchemy_sqlite_session(tmp_path) as session:
         yield SQLAlchemyBackend().configure(
             session,
-            Config(outbox_attempts=1, gap_retry_interval=timedelta(seconds=0.1)),
+            SQLAlchemyConfig(
+                outbox_attempts=1, gap_retry_interval=timedelta(seconds=0.1)
+            ),
         )
 
 
@@ -70,5 +76,7 @@ def sqlalchemy_postgres_backend() -> Iterator[SQLAlchemyBackend]:
     with sqlalchemy_postgres_session() as session:
         yield SQLAlchemyBackend().configure(
             session,
-            Config(outbox_attempts=1, gap_retry_interval=timedelta(seconds=0.1)),
+            SQLAlchemyConfig(
+                outbox_attempts=1, gap_retry_interval=timedelta(seconds=0.1)
+            ),
         )

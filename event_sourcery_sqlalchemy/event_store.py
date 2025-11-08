@@ -9,21 +9,14 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 from typing_extensions import Self
 
-from event_sourcery.event_store import (
-    NO_VERSIONING,
-    Dispatcher,
-    Position,
-    RawEvent,
-    RecordedRaw,
-    StreamId,
-    Versioning,
-)
-from event_sourcery.event_store.exceptions import (
+from event_sourcery import DEFAULT_TENANT, NO_VERSIONING, StreamId, TenantId
+from event_sourcery.event import Position, RawEvent, RecordedRaw
+from event_sourcery.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     ConcurrentStreamWriteError,
 )
-from event_sourcery.event_store.interfaces import StorageStrategy
-from event_sourcery.event_store.tenant_id import DEFAULT_TENANT, TenantId
+from event_sourcery.in_transaction import Dispatcher
+from event_sourcery.interfaces import StorageStrategy, Versioning
 from event_sourcery_sqlalchemy.models.base import BaseEvent, BaseSnapshot, BaseStream
 from event_sourcery_sqlalchemy.outbox import SqlAlchemyOutboxStorageStrategy
 

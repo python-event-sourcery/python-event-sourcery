@@ -4,7 +4,7 @@ from uuid import uuid4
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
-from event_sourcery.event_store import StreamId, TenantId
+from event_sourcery import StreamId, TenantId
 
 
 class StreamManager(models.Manager):

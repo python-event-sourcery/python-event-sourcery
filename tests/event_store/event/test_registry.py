@@ -4,15 +4,13 @@ from uuid import uuid4
 import pytest
 from pydantic import BaseModel
 
-from event_sourcery.event_store import (
-    Backend,
+from event_sourcery import Backend, EventStore, StreamId
+from event_sourcery.event import (
     Event,
     EventRegistry,
-    EventStore,
-    StreamId,
     WrappedEvent,
 )
-from event_sourcery.event_store.exceptions import DuplicatedEvent
+from event_sourcery.exceptions import DuplicatedEvent
 
 
 @pytest.fixture()
@@ -66,16 +64,24 @@ def test_can_work_with_custom_events_with_custom_registry(
 def test_auto_register_new_defined_event_when_accessing_by_type(
     registry: EventRegistry,
 ) -> None:
-    class SomeDummyEvent(Event):
-        __event_name__: ClassVar[str] = "ExpectedName"
+    class CategoryBaseEvent(Event):
+        __event_name__: ClassVar[str] = "SomeCategoryName"
 
-    assert registry.name_for_type(SomeDummyEvent) == "ExpectedName"
+    class SpecificEvent(CategoryBaseEvent):
+        __event_name__: ClassVar[str] = "SpecificExpectedName"
+
+    assert registry.name_for_type(CategoryBaseEvent) == "SomeCategoryName"
+    assert registry.name_for_type(SpecificEvent) == "SpecificExpectedName"
 
 
 def test_auto_register_new_defined_event_when_accessing_by_name(
     registry: EventRegistry,
 ) -> None:
-    class SomeDummyEvent(Event):
-        __event_name__: ClassVar[str] = "EventName"
+    class CategoryBaseEvent(Event):
+        __event_name__: ClassVar[str] = "AnotherCategoryName"
 
-    assert registry.type_for_name("EventName") == SomeDummyEvent
+    class SpecificEvent(CategoryBaseEvent):
+        __event_name__: ClassVar[str] = "SpecificAnotherCategoryEvent"
+
+    assert registry.type_for_name("AnotherCategoryName") == CategoryBaseEvent
+    assert registry.type_for_name("SpecificAnotherCategoryEvent") == SpecificEvent

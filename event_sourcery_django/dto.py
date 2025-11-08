@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from event_sourcery.event_store import RawEvent, RecordedRaw, StreamId
+from event_sourcery import StreamId
+from event_sourcery.event import RawEvent, RecordedRaw
 from event_sourcery_django.models import Event, OutboxEntry, Snapshot, Stream
 
 

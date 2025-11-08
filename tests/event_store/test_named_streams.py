@@ -3,8 +3,8 @@ from uuid import uuid4
 import pytest
 from _pytest.fixtures import SubRequest
 
-from event_sourcery.event_store import Backend, StreamId
-from event_sourcery.event_store.exceptions import (
+from event_sourcery import Backend, StreamId
+from event_sourcery.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     IllegalCategoryName,
 )

@@ -12,10 +12,9 @@ test:
 
 .PHONY: docs-serve
 docs-serve:
-	poetry run mkdocs serve -f docs/documentation/mkdocs.yml
+	poetry run mkdocs serve -f mkdocs.yml
 
 .PHONY: lint-fix-docs
 lint-fix-docs:
-	poetry run ruff format docs/documentation/code tests/
-	poetry run ruff check docs/documentation/code --fix
-
+	poetry run ruff format docs/code tests/
+	poetry run ruff check docs/code --fix

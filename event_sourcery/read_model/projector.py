@@ -1,7 +1,8 @@
 from collections.abc import Callable
 from typing import TypeAlias
 
-from event_sourcery.event_store import Event, EventStore, StreamId, WrappedEvent
+from event_sourcery import EventStore, StreamId
+from event_sourcery.event import Event, WrappedEvent
 from event_sourcery.read_model.cursors_dao import CursorsDao
 
 ReadModel: TypeAlias = Callable[[WrappedEvent, StreamId], None]

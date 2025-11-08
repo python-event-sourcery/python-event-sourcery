@@ -5,22 +5,14 @@ from typing import cast
 from more_itertools import first, first_true
 from typing_extensions import Self
 
-from event_sourcery.event_store import (
-    NO_VERSIONING,
-    Dispatcher,
-    Position,
-    RawEvent,
-    RecordedRaw,
-    StreamId,
-    TenantId,
-    Versioning,
-)
-from event_sourcery.event_store.exceptions import (
+from event_sourcery import DEFAULT_TENANT, NO_VERSIONING, StreamId, TenantId
+from event_sourcery.event import Position, RawEvent, RecordedRaw
+from event_sourcery.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     ConcurrentStreamWriteError,
 )
-from event_sourcery.event_store.interfaces import StorageStrategy
-from event_sourcery.event_store.tenant_id import DEFAULT_TENANT
+from event_sourcery.in_transaction import Dispatcher
+from event_sourcery.interfaces import StorageStrategy, Versioning
 from event_sourcery_django import dto, models
 from event_sourcery_django.outbox import DjangoOutboxStorageStrategy
 

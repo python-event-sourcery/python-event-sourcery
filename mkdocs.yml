@@ -1,0 +1,110 @@
+site_name: Event Sourcery
+theme:
+  name: material
+  palette:
+    primary: deep purple
+repo_url: https://github.com/python-event-sourcery/python-event-sourcery/
+repo_name: python-event-sourcery/python-event-sourcery
+nav:
+    - 'Event Sourcery': 'index.md'
+    - '<b>Concepts</b>':
+        - 'Basics': 'concepts/basics.md'
+    - '<b>Recipes</b>':
+        - 'Defining events': 'recipes/defining_events.md'
+        - 'Integrate with your app': 'recipes/integrate.md'
+        - 'Save and read events': 'recipes/saving_events.md'
+        - 'React to events - subscriptions': 'recipes/subscriptions.md'
+        - 'Publish events - outbox': 'recipes/outbox.md'
+        - 'Event Sourcing': 'recipes/event_sourcing.md'
+        - 'Multitenancy': 'recipes/multitenancy.md'
+        - 'Snapshots': 'recipes/snapshots.md'
+        - 'Data privacy': 'recipes/data_privacy.md'
+    - '<b>API Reference</b>':
+        - 'Backends':
+          - 'In-Memory': 'reference/backends/in_memory.md'
+          - 'Django': 'reference/backends/django.md'
+          - 'KurrentDB': 'reference/backends/kurrentdb.md'
+          - 'SQLAlchemy': 'reference/backends/sqlalchemy.md'
+        - 'Event Sourcing':
+          - 'Aggregate': 'reference/event_sourcing/Aggregate.md'
+          - 'Repository': 'reference/event_sourcing/Repository.md'
+        - 'EventStore':
+          - 'EventStore': 'reference/event_store/EventStore.md'
+          - 'StreamId': 'reference/event_store/StreamId.md'
+          - 'StreamUUID': 'reference/event_store/StreamUUID.md'
+          - 'StreamCategory': 'reference/event_store/StreamCategory.md'
+          - 'TenantId': 'reference/event_store/TenantId.md'
+          - 'DEFAULT_TENANT': 'reference/event_store/DEFAULT_TENANT.md'
+          - 'NO_VERSIONING': 'reference/event_store/NO_VERSIONING.md'
+          - 'exceptions': 'reference/event_store/exceptions.md'
+          - 'backend':
+            - 'Backend': 'reference/event_store/backend/Backend.md'
+            - 'not_configured': 'reference/event_store/backend/not_configured.md'
+            - 'singleton': 'reference/event_store/backend/singleton.md'
+            - 'TransactionalBackend': 'reference/event_store/backend/TransactionalBackend.md'
+          - 'encryption':
+            - 'DataSubject': 'reference/event_store/encryption/DataSubject.md'
+            - 'Encrypted': 'reference/event_store/encryption/Encrypted.md'
+            - 'Encryption': 'reference/event_store/encryption/Encryption.md'
+            - 'NoEncryptionStrategy': 'reference/event_store/encryption/NoEncryptionStrategy.md'
+            - 'NoKeyStorageStrategy': 'reference/event_store/encryption/NoKeyStorageStrategy.md'
+          - 'event':
+            - 'Context': 'reference/event_store/event/Context.md'
+            - 'Entry': 'reference/event_store/event/Entry.md'
+            - 'Event': 'reference/event_store/event/Event.md'
+            - 'Position': 'reference/event_store/event/Position.md'
+            - 'RawEvent': 'reference/event_store/event/RawEvent.md'
+            - 'Recorded': 'reference/event_store/event/Recorded.md'
+            - 'RecordedRaw': 'reference/event_store/event/RecordedRaw.md'
+            - 'WrappedEvent': 'reference/event_store/event/WrappedEvent.md'
+          - 'in_transaction':
+            - 'Dispatcher': 'reference/event_store/in_transaction/Dispatcher.md'
+            - 'Listener': 'reference/event_store/in_transaction/Listener.md'
+            - 'Listeners': 'reference/event_store/in_transaction/Listeners.md'
+          - 'interfaces':
+            - 'EncryptionKeyStorageStrategy': 'reference/event_store/interfaces/EncryptionKeyStorageStrategy.md'
+            - 'EncryptionStrategy': 'reference/event_store/interfaces/EncryptionStrategy.md'
+            - 'OutboxFiltererStrategy': 'reference/event_store/interfaces/OutboxFiltererStrategy.md'
+            - 'OutboxStorageStrategy': 'reference/event_store/interfaces/OutboxStorageStrategy.md'
+            - 'StorageStrategy': 'reference/event_store/interfaces/StorageStrategy.md'
+            - 'SubscriptionStrategy': 'reference/event_store/interfaces/SubscriptionStrategy.md'
+          - 'outbox':
+            - 'NoOutboxStorageStrategy': 'reference/event_store/outbox/NoOutboxStorageStrategy.md'
+            - 'no_filter': 'reference/event_store/outbox/no_filter.md'
+            - 'Outbox': 'reference/event_store/outbox/Outbox.md'
+          - 'subscription':
+            - 'BuildPhase': 'reference/event_store/subscription/BuildPhase.md'
+            - 'FilterPhase': 'reference/event_store/subscription/FilterPhase.md'
+            - 'PositionPhase': 'reference/event_store/subscription/PositionPhase.md'
+            - 'SubscriptionBuilder': 'reference/event_store/subscription/SubscriptionBuilder.md'
+    - '<b>Architecture Decision Records</b>':
+        - 'Record architecture decisions': 'adr/20220730-record-architecture-decisions.md'
+        - 'Explicit Init Arguments For Sqlalchemy S Models': 'adr/20230903-explicit-init-arguments-for-sqlalchemy-s-models.md'
+        - 'Packaging Of The Project': 'adr/20231027_1-packaging-of-the-project.md'
+        - 'Leave Implementation Of Synchronous Dispatcher To Users Of The Library': 'adr/20231027_2-leave-implementation-of-synchronous-dispatcher-to-users-of-the-library.md'
+        - 'In Memory Event Store': 'adr/20231029-in-memory-event-store.md'
+        - 'In Transaction Subscription': 'adr/20231230-in_transaction_subscription.md'
+        - 'Dependencies And Distribution': 'adr/20240726-dependencies-and-distribution.md'
+        - 'Multitenancy': 'adr/20241007-multitenancy.md'
+        - 'Packaging Of The Project Revised': 'adr/20250411-packaging-of-the-project-revised.md'
+        - 'Privacy Data Encryption And Shredding': 'adr/20250729-privacy-data-encryption-and-shredding.md'
+        - 'Packaging Of The Event Store Package': 'adr/20251004-packaging-of-the-event_store-package.md'
+
+plugins:
+- search
+- mkdocstrings
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets:
+      check_paths: true
+      dedent_subsections: true
+  - pymdownx.superfences
+  - tables

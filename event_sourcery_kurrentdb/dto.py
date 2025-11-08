@@ -4,7 +4,7 @@ from typing import Any, Literal, cast
 
 from kurrentdbclient import NewEvent, RecordedEvent
 
-from event_sourcery.event_store import Position, RawEvent, RecordedRaw
+from event_sourcery.event import Position, RawEvent, RecordedRaw
 from event_sourcery_kurrentdb import stream
 
 ES_PREFIX = "$es-"

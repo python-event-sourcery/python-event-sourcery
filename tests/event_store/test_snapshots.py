@@ -1,7 +1,7 @@
 import pytest
 
-from event_sourcery.event_store import StreamId
-from event_sourcery.event_store.exceptions import VersioningMismatch
+from event_sourcery import StreamId
+from event_sourcery.exceptions import VersioningMismatch
 from tests.bdd import Given, Then, When
 from tests.factories import a_snapshot, an_event
 

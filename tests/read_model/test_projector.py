@@ -5,7 +5,8 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from event_sourcery.event_store import Event, EventStore, StreamId, WrappedEvent
+from event_sourcery import EventStore, StreamId
+from event_sourcery.event import Event, WrappedEvent
 from event_sourcery.read_model import CursorsDao, Projector
 from event_sourcery_sqlalchemy.cursors_dao import SqlAlchemyCursorsDao
 from event_sourcery_sqlalchemy.models.default import DefaultProjectorCursor

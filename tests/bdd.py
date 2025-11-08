@@ -12,61 +12,58 @@ from deepdiff import DeepDiff
 from pytest import approx
 from typing_extensions import Self
 
-from event_sourcery import event_store as es
-from event_sourcery.event_store import (
+from event_sourcery import (
+    DEFAULT_TENANT,
     Backend,
-    Event,
-    Position,
-    Recorded,
+    EventStore,
     StreamId,
     TenantId,
     TransactionalBackend,
-    WrappedEvent,
 )
-from event_sourcery.event_store.subscription import BuildPhase, PositionPhase
-from event_sourcery.event_store.tenant_id import DEFAULT_TENANT
+from event_sourcery.encryption import Encryption as EncryptionService
+from event_sourcery.event import Entry, Event, Position, Recorded, WrappedEvent
+from event_sourcery.subscription import BuildPhase, PositionPhase
 from tests.matchers import any_wrapped_event
 
 
 @dataclass
 class Stream:
-    store: es.EventStore
-    id: es.StreamId = field(default_factory=es.StreamId)
+    store: EventStore
+    id: StreamId = field(default_factory=StreamId)
 
     @singledispatchmethod
-    def receives(self, *events: es.WrappedEvent) -> Self:
+    def receives(self, *events: WrappedEvent) -> Self:
         self.autoversion(*events)
         self.store.append(*events, stream_id=self.id)
         return self
 
     @receives.register
-    def receives_base_events(self, *events: es.Event) -> Self:
-        wrapped_events = (es.WrappedEvent.wrap(e, version=None) for e in events)
+    def receives_base_events(self, *events: Event) -> Self:
+        wrapped_events = (WrappedEvent.wrap(e, version=None) for e in events)
         return self.receives(*wrapped_events)
 
-    def with_events(self, *events: es.WrappedEvent | es.Event) -> Self:
+    def with_events(self, *events: WrappedEvent | Event) -> Self:
         return self.receives(*events)
 
-    def snapshots(self, snapshot: es.WrappedEvent) -> Self:
+    def snapshots(self, snapshot: WrappedEvent) -> Self:
         if not snapshot.version:
             snapshot.version = self.current_version
         self.store.save_snapshot(self.id, snapshot)
         return self
 
     @property
-    def events(self) -> list[es.WrappedEvent]:
+    def events(self) -> list[WrappedEvent]:
         return list(self.store.load_stream(self.id))
 
-    def loads_only(self, events: Sequence[es.WrappedEvent]) -> None:
+    def loads_only(self, events: Sequence[WrappedEvent]) -> None:
         expected = list(events)
         assert self.events == expected, pformat(
             DeepDiff(self.events, expected, exclude_types=[type(ANY)])
         )
 
-    def loads(self, events: Sequence[es.WrappedEvent | es.Event]) -> None:
+    def loads(self, events: Sequence[WrappedEvent | Event]) -> None:
         expected = [
-            e if isinstance(e, es.WrappedEvent) else any_wrapped_event(e)
-            for e in events
+            e if isinstance(e, WrappedEvent) else any_wrapped_event(e) for e in events
         ]
         assert self.events == expected, pformat(
             DeepDiff(self.events, expected, exclude_types=[type(ANY)])
@@ -80,7 +77,7 @@ class Stream:
     def current_version(self) -> int | None:
         return (self.events or [Mock(version=0)])[-1].version
 
-    def autoversion(self, *events: es.WrappedEvent) -> None:
+    def autoversion(self, *events: WrappedEvent) -> None:
         if any(e.version is not None for e in events):
             return
 
@@ -93,9 +90,9 @@ class Stream:
 
 @dataclass
 class Subscription:
-    _subscription: Iterator[Recorded | None] | Iterator[es.Entry]
+    _subscription: Iterator[Recorded | None] | Iterator[Entry]
 
-    def next_received_record_is(self, expected: Recorded | es.Entry) -> None:
+    def next_received_record_is(self, expected: Recorded | Entry) -> None:
         received = next(self._subscription)
         assert expected == received, pformat(
             DeepDiff(received, expected, exclude_types=[type(ANY)])
@@ -146,7 +143,7 @@ class InTransactionListener:
         except IndexError:
             return None
 
-    def next_received_record_is(self, expected: Recorded | es.Entry) -> None:
+    def next_received_record_is(self, expected: Recorded | Entry) -> None:
         received = next(self)
         assert expected == received, pformat(
             DeepDiff(received, expected, exclude_types=[type(ANY)])
@@ -162,7 +159,7 @@ T = TypeVar("T")
 
 @dataclass
 class Encryption:
-    encryption: es.event.Encryption
+    encryption: EncryptionService
 
     def store(self, key: bytes, for_subject: str) -> Self:
         self.encryption.key_storage.store(for_subject, key)
@@ -189,7 +186,7 @@ class Step:
         return self.in_tenant_mode(DEFAULT_TENANT)
 
     @property
-    def store(self) -> es.EventStore:
+    def store(self) -> EventStore:
         return self.backend.event_store
 
     @property
@@ -198,7 +195,7 @@ class Step:
 
     @property
     def encryption(self) -> Encryption:
-        return Encryption(self.backend[es.event.Encryption])
+        return Encryption(self.backend[EncryptionService])
 
     def __call__(self, value: T) -> T:
         return value
@@ -251,20 +248,20 @@ class Step:
         )
         return listener
 
-    def stream(self, with_id: es.StreamId | None = None) -> Stream:
+    def stream(self, with_id: StreamId | None = None) -> Stream:
         return Stream(self.store) if not with_id else Stream(self.store, with_id)
 
 
 class Given(Step):
-    def events(self, *events: es.WrappedEvent, on: es.StreamId) -> Self:
+    def events(self, *events: WrappedEvent, on: StreamId) -> Self:
         self.stream(on).receives(*events)
         return self
 
-    def event(self, event: es.WrappedEvent | es.Event, on: es.StreamId) -> Self:
+    def event(self, event: WrappedEvent | Event, on: StreamId) -> Self:
         self.stream(on).receives(event)
         return self
 
-    def snapshot(self, snapshot: es.WrappedEvent, on: es.StreamId) -> Self:
+    def snapshot(self, snapshot: WrappedEvent, on: StreamId) -> Self:
         self.stream(on).snapshots(snapshot)
         return self
 
@@ -279,15 +276,15 @@ class Given(Step):
 
 
 class When(Step):
-    def snapshots(self, with_: es.WrappedEvent, on: es.StreamId) -> Self:
+    def snapshots(self, with_: WrappedEvent, on: StreamId) -> Self:
         self.stream(on).snapshots(with_)
         return self
 
-    def appends(self, *events: es.WrappedEvent | es.Event, to: es.StreamId) -> Self:
+    def appends(self, *events: WrappedEvent | Event, to: StreamId) -> Self:
         self.stream(to).receives(*events)
         return self
 
-    def deletes(self, stream: es.StreamId) -> Self:
+    def deletes(self, stream: StreamId) -> Self:
         self.store.delete_stream(stream)
         return self
 

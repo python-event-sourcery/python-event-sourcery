@@ -2,8 +2,9 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery.event_store import Backend, StreamId
-from event_sourcery.event_store.interfaces import OutboxFiltererStrategy
+from event_sourcery import StreamId
+from event_sourcery.backend import Backend
+from event_sourcery.interfaces import OutboxFiltererStrategy
 from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import an_event
 

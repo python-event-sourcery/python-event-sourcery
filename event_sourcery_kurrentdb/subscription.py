@@ -7,8 +7,8 @@ from typing import Protocol
 import kurrentdbclient.exceptions
 from kurrentdbclient import KurrentDBClient, RecordedEvent
 
-from event_sourcery.event_store import Position, RecordedRaw
-from event_sourcery.event_store.interfaces import SubscriptionStrategy
+from event_sourcery.event import Position, RecordedRaw
+from event_sourcery.interfaces import SubscriptionStrategy
 from event_sourcery_kurrentdb import dto
 
 

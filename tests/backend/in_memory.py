@@ -1,6 +1,6 @@
 import pytest
 
-from event_sourcery.event_store import Backend, InMemoryBackend
+from event_sourcery.backend import Backend, InMemoryBackend
 
 
 @pytest.fixture()
