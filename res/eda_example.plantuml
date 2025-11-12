@@ -1,0 +1,13 @@
+@startuml
+
+participant "Order Service"
+participant "Payment Service"
+participant "Invoice Service"
+
+"Order Service" -> RabbitMQ: publish OrderConfirmed event
+"Payment Service" -> RabbitMQ: consume OrderConfirmed event
+"Payment Service" -> RabbitMQ: publish PaymentCompleted event
+"Invoice Service" -> RabbitMQ: consume PaymentCompleted event
+"Invoice Service" -> RabbitMQ: publish InvoiceIssued event
+
+@enduml
