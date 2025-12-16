@@ -1,3 +1,4 @@
+import errno
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import timedelta
@@ -51,7 +52,12 @@ def sqlalchemy_sqlite_session(tmp_path: Path) -> Iterator[Session]:
     ) as session:
         with session() as s:
             yield s
-    sqlite_file.unlink(missing_ok=True)
+    try:
+        sqlite_file.unlink(missing_ok=True)
+    except PermissionError as e:
+        other_thread_still_uses_db_file = e.errno is errno.EACCES
+        if other_thread_still_uses_db_file:
+            pass
 
 
 @pytest.fixture()
