@@ -2,6 +2,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import ClassVar
 
+from event_sourcery import StreamCategory
 from event_sourcery.event import Event
 
 
@@ -17,11 +18,11 @@ class Aggregate:
     for applying events in a consistent way.
 
     Attributes:
-        category (ClassVar[str]): StreamCategory for the aggregate type (group streams).
+        category (ClassVar[StreamCategory]): StreamCategory for the aggregate type (group streams).
         _changes (list[Event]): List of yet not persisted events.
     """
 
-    category: ClassVar[str]
+    category: ClassVar[StreamCategory]
     _changes: list[Event]
 
     @contextmanager

@@ -16,6 +16,7 @@ from event_sourcery import (
     DEFAULT_TENANT,
     Backend,
     EventStore,
+    StreamCategory,
     StreamId,
     TenantId,
     TransactionalBackend,
@@ -237,7 +238,10 @@ class Step:
         builder = self._create_subscription_builder(to, to_category, to_events)
         return BatchSubscription(builder.build_batch(of_size, timelimit))
 
-    def in_transaction_listener(self, to: type[Event] = Event) -> InTransactionListener:
+    def in_transaction_listener(
+        self,
+        to: type[Event] | StreamCategory = Event,
+    ) -> InTransactionListener:
         backend = cast(TransactionalBackend, self.backend)
         backend.in_transaction.register(listener := InTransactionListener(), to=to)
         self.request.addfinalizer(
@@ -245,6 +249,18 @@ class Step:
         )
         self.request.addfinalizer(
             lambda: backend.in_transaction.remove(listener, to=Event)
+        )
+        return listener
+
+    def subscribed_in_transaction(
+        self,
+        listener: InTransactionListener,
+        to: type[Event] | StreamCategory,
+    ) -> InTransactionListener:
+        backend = cast(TransactionalBackend, self.backend)
+        backend.in_transaction.register(listener, to=to)
+        self.request.addfinalizer(
+            lambda: backend.in_transaction.remove(listener, to=to)
         )
         return listener
 

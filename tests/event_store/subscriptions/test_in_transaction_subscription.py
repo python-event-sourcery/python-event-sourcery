@@ -2,6 +2,7 @@ from unittest.mock import ANY
 
 import pytest
 
+from event_sourcery import StreamId
 from event_sourcery.backend import TransactionalBackend
 from event_sourcery.event import Event
 from tests.bdd import Given, Then, When
@@ -122,6 +123,63 @@ def test_listener_is_registered_to_event_only_once(
     backend.in_transaction.register(listener, to=Event)
 
     when.stream().receives(event := an_event())
+
+    then(listener).next_received_record_is(any_record(event))
+    then(listener).received_no_new_records()
+
+
+def test_receives_all_events_from_category(
+    backend: TransactionalBackend,
+    given: Given,
+    when: When,
+    then: Then,
+) -> None:
+    listener = given.in_transaction_listener("Some Category")
+    stream = given.stream(StreamId(category="Some Category"))
+
+    when.stream(stream.id).receives(first := an_event())
+    when.stream(stream.id).receives(second := an_event())
+    when.stream(stream.id).receives(third := an_event())
+
+    then(listener).next_received_record_is(any_record(first))
+    then(listener).next_received_record_is(any_record(second))
+    then(listener).next_received_record_is(any_record(third))
+
+
+def test_receives_events_only_from_category_subscribed_to(
+    backend: TransactionalBackend,
+    given: Given,
+    when: When,
+    then: Then,
+) -> None:
+    listener = given.in_transaction_listener("Some Category")
+    stream = given.stream(StreamId(category="Some Category"))
+    different_category_stream = given.stream(StreamId(category="Other Category"))
+
+    when.stream(stream.id).receives(first := an_event())
+    when.stream(different_category_stream.id).receives(an_event())
+    when.stream(stream.id).receives(second := an_event())
+    when.stream(different_category_stream.id).receives(an_event())
+    when.stream(stream.id).receives(third := an_event())
+    when.stream(different_category_stream.id).receives(an_event())
+
+    then(listener).next_received_record_is(any_record(first))
+    then(listener).next_received_record_is(any_record(second))
+    then(listener).next_received_record_is(any_record(third))
+    then(listener).received_no_new_records()
+
+
+def test_receives_event_once_when_subscribed_to_both_event_type_and_category(
+    backend: TransactionalBackend,
+    given: Given,
+    when: When,
+    then: Then,
+) -> None:
+    stream = given.stream(StreamId(category="Some Category"))
+    listener = given.in_transaction_listener("Some Category")
+    given.subscribed_in_transaction(listener, to=Event)
+
+    when.stream(stream.id).receives(event := an_event())
 
     then(listener).next_received_record_is(any_record(event))
     then(listener).received_no_new_records()
