@@ -3,7 +3,7 @@ name = "python-event-sourcery"
 requires-python = ">=3.10"
 
 [tool.poetry]
-version = "0.5.1a1"
+version = "0.5.1a2"
 description = "A library for event-based systems in Python."
 readme = "README.md"
 authors = [
