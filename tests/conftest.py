@@ -1,9 +1,26 @@
+import pkgutil
+from pathlib import Path
+
 import pytest
 from _pytest.fixtures import SubRequest
 
 from event_sourcery import EventStore
 from event_sourcery.backend import Backend, InMemoryBackend
 from tests import bdd
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    backends_package = Path(__file__).parent / "backend"
+    backends = [
+        m.name
+        for m in pkgutil.iter_modules([str(backends_package)])
+        if not m.name.startswith("test_")
+    ]
+    parser.addoption(
+        "--backends",
+        action="store",
+        help=f"Comma-separated backend list. Available: {', '.join(backends)}",
+    )
 
 
 @pytest.fixture()
