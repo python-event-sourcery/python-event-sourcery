@@ -26,3 +26,14 @@ services:
       - KURRENTDB_NODE_PORT=2113
     ports:
       - "2113:2113"
+      
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
