@@ -9,6 +9,7 @@ Used for in-transaction (in-process) event processing.
 
 __all__ = ["Dispatcher", "Listener", "Listeners"]
 
+from collections import defaultdict
 from collections.abc import Iterator
 from itertools import chain
 from typing import Protocol
@@ -20,7 +21,7 @@ from event_sourcery._event_store.event.dto import (
     WrappedEvent,
 )
 from event_sourcery._event_store.event.serde import Serde
-from event_sourcery._event_store.stream_id import StreamId
+from event_sourcery._event_store.stream_id import StreamCategory, StreamId
 from event_sourcery._event_store.tenant_id import TenantId
 
 
@@ -58,9 +59,13 @@ class Listeners:
     """
 
     def __init__(self) -> None:
-        self._listeners: dict[type[Event], set[Listener]] = {}
+        self._to_event_types: dict[type[Event], set[Listener]] = {}
+        self._to_categories: dict[StreamCategory, set[Listener]] = defaultdict(set)
 
-    def __getitem__(self, event_type: type[Event]) -> Iterator[Listener]:
+    def __getitem__(
+        self,
+        subscribed_to: type[Event] | StreamCategory,
+    ) -> Iterator[Listener]:
         """
         Returns an iterator over all listeners registered for the given event type or
         its base types.
@@ -71,27 +76,35 @@ class Listeners:
         Returns:
             Iterator[Listener]: An iterator over matching listeners.
         """
-        return chain(
-            *(
-                listeners
-                for registered_to, listeners in self._listeners.items()
-                if issubclass(event_type, registered_to)
-            )
-        )
+        match subscribed_to:
+            case StreamCategory() as category:
+                return chain(self._to_categories[category])
+            case _ as event_type:
+                return chain(
+                    *(
+                        listeners
+                        for registered_to, listeners in self._to_event_types.items()
+                        if issubclass(event_type, registered_to)
+                    )
+                )
 
-    def register(self, listener: Listener, to: type[Event]) -> None:
+    def register(self, listener: Listener, to: type[Event] | StreamCategory) -> None:
         """
         Registers a listener for a specific event type.
 
         Args:
             listener (Listener): The listener to register.
-            to (type[Event]): The event type to register the listener for.
+            to (type[Event] | StreamCategory): The event type or stream category.
         """
-        if to not in self._listeners:
-            self._listeners[to] = set()
-        self._listeners[to].add(listener)
+        match to:
+            case StreamCategory() as category:
+                self._to_categories[category].add(listener)
+            case _ as event_type:
+                if event_type not in self._to_event_types:
+                    self._to_event_types[event_type] = set()
+                self._to_event_types[event_type].add(listener)
 
-    def remove(self, listener: Listener, to: type[Event]) -> None:
+    def remove(self, listener: Listener, to: type[Event] | StreamCategory) -> None:
         """
         Removes a listener from a specific event type.
 
@@ -99,8 +112,12 @@ class Listeners:
             listener (Listener): The listener to remove.
             to (type[Event]): The event type to remove the listener from.
         """
-        if to in self._listeners and listener in self._listeners[to]:
-            self._listeners[to].remove(listener)
+        match to:
+            case StreamCategory() as category:
+                self._to_categories[category].remove(listener)
+            case _:
+                if to in self._to_event_types and listener in self._to_event_types[to]:
+                    self._to_event_types[to].remove(listener)
 
 
 class Dispatcher:
@@ -122,8 +139,10 @@ class Dispatcher:
         """
         for raw in raws:
             record = self._serde.deserialize_record(raw)
-            event_type = record.wrapped_event.event.__class__
-            for listener in self._listeners[event_type]:
+            event = record.wrapped_event.event.__class__
+            category = record.stream_id.category or ""
+            listeners = set(self._listeners[event]) | set(self._listeners[category])
+            for listener in listeners:
                 listener(
                     record.wrapped_event,
                     record.stream_id,
