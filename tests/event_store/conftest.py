@@ -6,6 +6,7 @@ from _pytest.fixtures import SubRequest
 from event_sourcery.backend import Backend
 from tests import mark
 from tests.backend.django import django_backend
+from tests.backend.dynamodb import dynamodb_backend
 from tests.backend.in_memory import in_memory_backend
 from tests.backend.kurrentdb import kurrentdb_backend
 from tests.backend.sqlalchemy import (
@@ -15,6 +16,7 @@ from tests.backend.sqlalchemy import (
 
 _BACKEND_FIXTURES = [
     django_backend,
+    dynamodb_backend,
     kurrentdb_backend,
     in_memory_backend,
     sqlalchemy_sqlite_backend,
@@ -33,6 +35,7 @@ def selected_backends(request: SubRequest) -> list[str]:
 @pytest.fixture(
     params=[
         django_backend,
+        dynamodb_backend,
         kurrentdb_backend,
         in_memory_backend,
         sqlalchemy_sqlite_backend,
