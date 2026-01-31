@@ -7,7 +7,7 @@ from pprint import pformat
 from typing import TypeVar, cast
 from unittest.mock import ANY, Mock
 
-from _pytest.fixtures import SubRequest
+import pytest
 from deepdiff import DeepDiff
 from pytest import approx
 from typing_extensions import Self
@@ -177,7 +177,7 @@ class Encryption:
 @dataclass
 class Step:
     backend: Backend | TransactionalBackend
-    request: SubRequest
+    request: pytest.FixtureRequest
 
     def in_tenant_mode(self, for_tenant: TenantId) -> Self:
         return replace(self, backend=self.backend.in_tenant_mode(for_tenant))
