@@ -1,7 +1,6 @@
 from typing import cast
 
 import pytest
-from _pytest.fixtures import SubRequest
 from sqlalchemy.orm import Session
 
 from event_sourcery import Event, StreamId
@@ -48,7 +47,7 @@ class NameGiven(Event):
         sqlalchemy_postgres_backend,
     ]
 )
-def default_backend(request: SubRequest) -> SQLAlchemyBackend:
+def default_backend(request: pytest.FixtureRequest) -> SQLAlchemyBackend:
     backend_name: str = request.param.__name__
     mark.xfail_if_not_implemented_yet(request, backend_name)
     mark.skip_backend(request, backend_name)

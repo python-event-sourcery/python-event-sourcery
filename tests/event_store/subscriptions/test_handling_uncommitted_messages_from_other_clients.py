@@ -16,6 +16,7 @@ from tests.backend.sqlalchemy import (
     sqlalchemy_sqlite_session,
 )
 from tests.bdd import Given, Then, When
+from tests.event_store.conftest import skip_if_not_selected_backend
 from tests.event_store.subscriptions.other_client import OtherClient
 from tests.factories import OtherEvent, an_event
 from tests.matchers import any_record
@@ -31,6 +32,7 @@ def clients(
     backend_name: str = request.param.__name__
     backend: Backend = request.getfixturevalue(backend_name)
     mark.skip_backend(request, backend_name)
+    skip_if_not_selected_backend(backend_name, request)
 
     match backend_name:
         case "django_backend":

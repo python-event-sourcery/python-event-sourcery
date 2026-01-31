@@ -2,7 +2,6 @@ import pkgutil
 from pathlib import Path
 
 import pytest
-from _pytest.fixtures import SubRequest
 
 from event_sourcery import EventStore
 from event_sourcery.backend import Backend, InMemoryBackend
@@ -34,15 +33,15 @@ def event_store(backend: Backend) -> EventStore:
 
 
 @pytest.fixture()
-def given(backend: Backend, request: SubRequest) -> bdd.Given:
+def given(backend: Backend, request: pytest.FixtureRequest) -> bdd.Given:
     return bdd.Given(backend, request)
 
 
 @pytest.fixture()
-def when(backend: Backend, request: SubRequest) -> bdd.When:
+def when(backend: Backend, request: pytest.FixtureRequest) -> bdd.When:
     return bdd.When(backend, request)
 
 
 @pytest.fixture()
-def then(backend: Backend, request: SubRequest) -> bdd.Then:
+def then(backend: Backend, request: pytest.FixtureRequest) -> bdd.Then:
     return bdd.Then(backend, request)

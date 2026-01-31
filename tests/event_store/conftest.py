@@ -1,7 +1,6 @@
 from typing import cast
 
 import pytest
-from _pytest.fixtures import SubRequest
 
 from event_sourcery.backend import Backend
 from tests import mark
@@ -23,11 +22,23 @@ _BACKEND_FIXTURES = [
 
 
 @pytest.fixture(scope="session")
-def selected_backends(request: SubRequest) -> list[str]:
+def selected_backends(request: pytest.FixtureRequest) -> list[str]:
     backends: str | None = request.config.getoption("--backends")
     if backends:
         return backends.split(",")
     return [f.__name__.rsplit("_backend", 1)[0] for f in _BACKEND_FIXTURES]
+
+
+def skip_if_not_selected_backend(
+    fixture_name: str,
+    request: pytest.FixtureRequest,
+) -> bool:
+    backend_name, _ = fixture_name.rsplit("_backend", 1)
+    selected = request.getfixturevalue(selected_backends.__name__)
+    if backend_name not in selected:
+        pytest.skip(f"Backend '{fixture_name}' not selected")
+        return True
+    return False
 
 
 @pytest.fixture(
@@ -39,13 +50,9 @@ def selected_backends(request: SubRequest) -> list[str]:
         sqlalchemy_postgres_backend,
     ]
 )
-def backend(request: SubRequest, selected_backends: list[str]) -> Backend:
+def backend(request: pytest.FixtureRequest, selected_backends: list[str]) -> Backend:
     fixture_name = request.param.__name__
-    backend_name, _ = fixture_name.rsplit("_backend", 1)
-
-    if backend_name not in selected_backends:
-        pytest.skip(f"Backend '{fixture_name}' not selected")
-
+    skip_if_not_selected_backend(fixture_name, request)
     mark.xfail_if_not_implemented_yet(request, fixture_name)
     mark.skip_backend(request, fixture_name)
     return cast(Backend, request.getfixturevalue(fixture_name))

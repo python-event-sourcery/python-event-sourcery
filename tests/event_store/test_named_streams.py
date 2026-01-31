@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 import pytest
-from _pytest.fixtures import SubRequest
 
 from event_sourcery import Backend, StreamId
 from event_sourcery.exceptions import (
@@ -59,7 +58,7 @@ def test_blocks_new_stream_uuid_with_same_name_as_other(
 
 def test_kurrentdb_cant_use_category_with_dash(
     kurrentdb_backend: Backend,
-    request: SubRequest,
+    request: pytest.FixtureRequest,
 ) -> None:
     when = When(kurrentdb_backend, request)
 
