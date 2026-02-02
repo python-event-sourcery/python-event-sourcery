@@ -76,6 +76,48 @@ Notes:
 - Use optimistic concurrency (expected version) when appending to stream.
 - A simple inbox (event UUIDs) can protect against duplicate event handling.
 
+## Single process stream + async task/workflow streams (brainstorm)
+Goal: keep the state machine in one deterministic stream, while executing
+transitions asynchronously in separate task/workflow streams that can be
+cancelled/interrupted.
+
+### Streams & responsibilities
+- Process stream (orchestrator/state machine)
+  - Source of truth for state and transition decisions.
+  - Replayable and deterministic from its own events only.
+- Task/workflow streams (execution)
+  - Each planned transition can spawn a task with its own step history.
+  - Only final outcomes are reported back to the process stream.
+
+### Process stream event sketch
+```
+ProcessStarted
+TransitionPlanned(transition_id, from_state, to_state, task_id, task_stream_id)
+TaskCompleted(task_id, transition_id, result)
+TaskFailed(task_id, transition_id, reason)
+ProcessCancelled(reason)
+ProcessCompleted
+```
+
+### Multi-step transition execution
+- A single transition maps to a single task.
+- The task may be a multi-step workflow with retries and progress tracking.
+- Only the final outcome is recorded back in the process stream.
+
+### Cancellation / interruptions
+Two possible approaches:
+- Hard cancel:
+  - Write `ProcessCancelled` and ignore any late task results.
+  - Optionally emit `CancelTask` messages to workers.
+- Cooperative cancel:
+  - Write `ProcessCancelled`, send `CancelTask(task_id)`.
+  - Task emits `TaskCancelled`, PM finalizes once all running tasks respond.
+
+### Determinism & idempotency
+- Process stream must remain deterministic and replayable.
+- `transition_id` and `task_id` are idempotency keys.
+- PM should ignore duplicates or late results after cancellation.
+
 ## Open questions
 - Should TransitionPlanned also be the only representation of state change,
   or do we need explicit StateChanged events?
