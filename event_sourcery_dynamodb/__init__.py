@@ -88,6 +88,7 @@ class DynamoDBBackend(Backend):
         self[StorageStrategy] = lambda c: DynamoDBStorageStrategy(
             c[DynamoDBClient],
             c[DynamoDBConfig],
+            c.get(DynamoDBOutboxStorageStrategy),
         ).scoped_for_tenant(c[TenantId])
         self[SubscriptionStrategy] = lambda c: DynamoDBSubscriptionStrategy(
             c[DynamoDBClient],
@@ -120,6 +121,8 @@ class DynamoDBBackend(Backend):
         # Create tables if configured to do so
         if self[DynamoDBConfig].create_tables:
             self._ensure_tables_exist()
+            # Initialize position counter after tables are created
+            self._ensure_position_counter()
         
         return self
 
@@ -152,6 +155,18 @@ class DynamoDBBackend(Backend):
                 "AttributeDefinitions": [
                     {"AttributeName": "pk", "AttributeType": "S"},
                     {"AttributeName": "sk", "AttributeType": "S"},
+                    {"AttributeName": "position", "AttributeType": "N"},
+                    {"AttributeName": "tenant_id", "AttributeType": "S"},
+                ],
+                "GlobalSecondaryIndexes": [
+                    {
+                        "IndexName": "position-index",
+                        "KeySchema": [
+                            {"AttributeName": "tenant_id", "KeyType": "HASH"},
+                            {"AttributeName": "position", "KeyType": "RANGE"},
+                        ],
+                        "Projection": {"ProjectionType": "ALL"},
+                    }
                 ],
                 "BillingMode": "PAY_PER_REQUEST",
             },
@@ -212,3 +227,19 @@ class DynamoDBBackend(Backend):
             except client.exceptions.ResourceInUseException:
                 # Table already exists
                 pass
+    
+    def _ensure_position_counter(self) -> None:
+        """Initialize the global position counter."""
+        table = self[DynamoDBClient].resource.Table(self[DynamoDBConfig].streams_table_name)
+        try:
+            table.put_item(
+                Item={
+                    "pk": "GLOBAL#POSITION",
+                    "sk": "COUNTER",
+                    "position": 0,
+                },
+                ConditionExpression="attribute_not_exists(pk)",
+            )
+        except self[DynamoDBClient].client.exceptions.ConditionalCheckFailedException:
+            # Counter already exists
+            pass

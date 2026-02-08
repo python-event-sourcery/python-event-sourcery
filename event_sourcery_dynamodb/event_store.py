@@ -10,7 +10,7 @@ from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
 from event_sourcery import StreamId, TenantId
-from event_sourcery._event_store.event.dto import Position, RawEvent
+from event_sourcery._event_store.event.dto import Position, RawEvent, RecordedRaw
 from event_sourcery._event_store.event_store import StorageStrategy
 from event_sourcery._event_store.tenant_id import DEFAULT_TENANT
 from event_sourcery._event_store.versioning import NO_VERSIONING, Versioning
@@ -22,6 +22,7 @@ from event_sourcery.exceptions import (
 
 if TYPE_CHECKING:
     from event_sourcery_dynamodb import DynamoDBClient, DynamoDBConfig
+    from event_sourcery_dynamodb.outbox import DynamoDBOutboxStorageStrategy
 
 
 class DynamoDBStorageStrategy(StorageStrategy):
@@ -35,11 +36,12 @@ class DynamoDBStorageStrategy(StorageStrategy):
         self,
         client: DynamoDBClient,
         config: DynamoDBConfig,
+        outbox: DynamoDBOutboxStorageStrategy | None = None,
     ) -> None:
         self._client = client
         self._config = config
         self._tenant_id: TenantId = DEFAULT_TENANT
-        self._position_counter = 0  # In-memory counter for positions
+        self._outbox = outbox
 
     def fetch_events(
         self,
@@ -127,14 +129,15 @@ class DynamoDBStorageStrategy(StorageStrategy):
             next_version = 1 if versioning is not NO_VERSIONING else None
             # Create stream metadata
             try:
+                tenant_id_str = str(self._tenant_id) if self._tenant_id else "default"
                 streams_table.put_item(
                     Item={
                         "pk": self._make_stream_pk(stream_id),
                         "sk": "STREAM#META",
-                        "tenant_id": str(self._tenant_id),
+                        "tenant_id": tenant_id_str,
                         "stream_id": str(stream_id),
                         "stream_id_hex": str(stream_id),
-                        "category": stream_id.category,
+                        "category": stream_id.category or "",
                         "stream_name": stream_id.name,
                         "version": 0 if versioning is not NO_VERSIONING else None,
                         "versioning": "none" if versioning is NO_VERSIONING else "explicit",
@@ -148,20 +151,32 @@ class DynamoDBStorageStrategy(StorageStrategy):
         else:
             next_version = current_version + 1 if versioning is not NO_VERSIONING else None
         
+        # Allocate positions for all events
+        start_position = self._allocate_positions(len(events))
+        
         # Insert events
         try:
+            records = []
             with table.batch_writer() as batch:
                 for i, event in enumerate(events):
                     event_version = next_version + i if next_version else None
+                    position = start_position + i
                     
                     # Create a new RawEvent with the version if needed
                     if event_version and event.version != event_version:
                         from dataclasses import replace
                         event = replace(event, version=event_version)
-                        
-                    batch.put_item(
-                        Item=self._raw_event_to_item(event, event_version)
-                    )
+                    
+                    item = self._raw_event_to_item(event, event_version)
+                    item["position"] = position
+                    batch.put_item(Item=item)
+                    
+                    # Add to records for outbox
+                    records.append(RecordedRaw(
+                        entry=event,
+                        position=position,
+                        tenant_id=str(self._tenant_id) if self._tenant_id else "default",
+                    ))
             
             # Update stream version
             if versioning is not NO_VERSIONING:
@@ -175,6 +190,10 @@ class DynamoDBStorageStrategy(StorageStrategy):
                         ":v": next_version + len(events) - 1,
                     },
                 )
+            
+            # Publish to outbox if configured
+            if self._outbox and records:
+                self._outbox.put_into_outbox(records)
                 
         except ClientError as e:
             if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
@@ -250,14 +269,11 @@ class DynamoDBStorageStrategy(StorageStrategy):
     @property
     def current_position(self) -> Position | None:
         """Get the current position in the event store."""
-        # DynamoDB doesn't have a global position counter like SQL databases
-        # This would need to be implemented differently for subscriptions
-        # For now, return None to indicate position tracking is not supported
-        return None
+        return self._get_current_position()
 
     def scoped_for_tenant(self, tenant_id: TenantId) -> DynamoDBStorageStrategy:
         """Create a tenant-scoped instance of this storage strategy."""
-        scoped = DynamoDBStorageStrategy(self._client, self._config)
+        scoped = DynamoDBStorageStrategy(self._client, self._config, self._outbox)
         scoped._tenant_id = tenant_id
         return scoped
 
@@ -295,15 +311,18 @@ class DynamoDBStorageStrategy(StorageStrategy):
 
     def _raw_event_to_item(self, event: RawEvent, version: int | None) -> dict[str, Any]:
         """Convert a RawEvent to a DynamoDB item."""
+        # Ensure tenant_id is never empty
+        tenant_id_str = str(self._tenant_id) if self._tenant_id else "default"
+        
         return {
             "pk": self._make_stream_pk(event.stream_id),
             "sk": f"EVENT#{version:010d}" if version else f"EVENT#{event.created_at.isoformat()}",
-            "tenant_id": str(self._tenant_id),
+            "tenant_id": tenant_id_str,
             "uuid": str(event.uuid),
             "stream_id": str(event.stream_id),
             "stream_id_hex": str(event.stream_id),
             "stream_id_name": event.stream_id.name,
-            "stream_id_category": event.stream_id.category,
+            "stream_id_category": event.stream_id.category or "",
             "created_at": event.created_at.isoformat(),
             "name": event.name,
             "data": event.data,
@@ -331,3 +350,45 @@ class DynamoDBStorageStrategy(StorageStrategy):
             context=item["context"],
             version=int(item["version"]) if item.get("version") is not None else None,
         )
+
+
+    def _get_current_position(self) -> Position | None:
+        """Get the current global position."""
+        table = self._client.resource.Table(self._config.streams_table_name)
+        try:
+            response = table.get_item(
+                Key={
+                    "pk": "GLOBAL#POSITION",
+                    "sk": "COUNTER",
+                }
+            )
+            item = response.get("Item")
+            if item:
+                return int(item["position"])
+            return 0
+        except ClientError:
+            return 0
+
+    def _allocate_positions(self, count: int) -> int:
+        """Allocate positions for a batch of events atomically."""
+        table = self._client.resource.Table(self._config.streams_table_name)
+        
+        # Atomic increment and return the starting position
+        response = table.update_item(
+            Key={
+                "pk": "GLOBAL#POSITION",
+                "sk": "COUNTER",
+            },
+            UpdateExpression="ADD #pos :inc",
+            ExpressionAttributeNames={
+                "#pos": "position",
+            },
+            ExpressionAttributeValues={
+                ":inc": count,
+            },
+            ReturnValues="UPDATED_OLD",
+        )
+        
+        # Return the old value (starting position for this batch)
+        old_position = response["Attributes"].get("position", 0)
+        return int(old_position) + 1  # Positions start at 1
