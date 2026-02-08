@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Iterator
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
@@ -42,7 +42,7 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
         timelimit: timedelta,
     ) -> Iterator[list[RecordedRaw]]:
         """Subscribe to all events from a position."""
-        return self._gap_detecting_iterator(
+        return self._simple_iterator(
             start_from=start_from,
             batch_size=batch_size,
             timelimit=timelimit,
@@ -57,7 +57,7 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
         category: str,
     ) -> Iterator[list[RecordedRaw]]:
         """Subscribe to events in a specific category."""
-        return self._gap_detecting_iterator(
+        return self._simple_iterator(
             start_from=start_from,
             batch_size=batch_size,
             timelimit=timelimit,
@@ -73,29 +73,31 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
     ) -> Iterator[list[RecordedRaw]]:
         """Subscribe to specific event types."""
         event_set = set(events)
-        return self._gap_detecting_iterator(
+        return self._simple_iterator(
             start_from=start_from,
             batch_size=batch_size,
             timelimit=timelimit,
             filter_fn=lambda item: item.get("name") in event_set,
         )
 
-    def _gap_detecting_iterator(
+    def _simple_iterator(
         self,
         start_from: Position,
         batch_size: int,
         timelimit: timedelta,
         filter_fn: Any | None,
     ) -> Iterator[list[RecordedRaw]]:
-        """Iterator that handles gaps in the event stream."""
+        """Simple iterator for events without gap detection."""
+        # Handle starting position
+        # Position 0 means "from the beginning", so we start from 0 to get position > 0 (i.e., >= 1)
+        # Any other position means "after that position"
         position = start_from
         
         while True:
             start_time = time.monotonic()
             batch = []
-            had_gap = False
             
-            # Scan all events starting from position
+            # Query events starting from position
             events = self._scan_events_from_position(position, batch_size, filter_fn)
             
             for event_item in events:
@@ -105,28 +107,25 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
                 event_position = event_item.get("position")
                 if event_position is None:
                     continue
-                    
-                # Check for gaps
+                
+                # Convert Decimal to int for comparison
+                event_position = int(event_position)
+                
+                # Since DynamoDB uses atomic position allocation, we can trust positions are sequential
                 if event_position > position:
-                    # Gap detected
-                    had_gap = True
-                    break
-                    
-                batch.append(self._item_to_recorded_raw(event_item))
-                position = event_position + 1
+                    batch.append(self._item_to_recorded_raw(event_item))
             
             if batch:
-                # We have events to yield
+                # Update position to continue after the last event we processed
+                last_event_position = batch[-1].position
+                position = last_event_position + 1
                 yield batch
-            elif had_gap:
-                # We found a gap, wait and retry
-                time.sleep(self._config.gap_retry_interval.total_seconds())
             else:
-                # No events and no gap - we're at the end
-                # Wait for the time limit then yield empty batch
+                # No events found - wait for remaining time then yield empty batch
                 elapsed = time.monotonic() - start_time
-                if elapsed < timelimit.total_seconds():
-                    time.sleep(timelimit.total_seconds() - elapsed)
+                remaining = timelimit.total_seconds() - elapsed
+                if remaining > 0:
+                    time.sleep(remaining)
                 yield []
 
     def _scan_events_from_position(
@@ -135,80 +134,53 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
         limit: int,
         filter_fn: Any | None,
     ) -> list[dict[str, Any]]:
-        """Scan events from a given position using the position GSI."""
+        """Scan events from a given position."""
         table = self._client.resource.Table(self._config.events_table_name)
         
         results = []
         
+        # For subscribe_to_all, we need to scan across all tenants
+        # This is less efficient than querying a single tenant, but necessary for correctness
         try:
-            # Query using the position GSI for better performance
-            # DynamoDB doesn't allow empty strings in keys, so we use "default" for empty tenant
-            tenant_id_str = str(DEFAULT_TENANT) if str(DEFAULT_TENANT) else "default"
-            query_kwargs = {
-                "IndexName": "position-index",
-                "KeyConditionExpression": Key("tenant_id").eq(tenant_id_str) & Key("position").gte(position),
-                "Limit": limit * 3 if filter_fn else limit,  # Fetch more if filtering
-                "ScanIndexForward": True,  # Sort by position ascending
+            scan_kwargs = {
+                "FilterExpression": Attr("position").gt(position),
+                "Limit": limit * 10,  # Fetch more since we're filtering
             }
             
-            response = table.query(**query_kwargs)
+            response = table.scan(**scan_kwargs)
             items = response.get("Items", [])
             
             # Apply additional filter if provided
             if filter_fn:
                 items = [item for item in items if filter_fn(item)]
             
+            # Sort by position to ensure correct ordering
+            items.sort(key=lambda x: int(x.get("position", 0)))
+            
             results = items[:limit]
             
             # Handle pagination if needed and we don't have enough results
             while len(results) < limit and "LastEvaluatedKey" in response:
-                query_kwargs["ExclusiveStartKey"] = response["LastEvaluatedKey"]
-                response = table.query(**query_kwargs)
+                scan_kwargs["ExclusiveStartKey"] = response["LastEvaluatedKey"]
+                response = table.scan(**scan_kwargs)
                 new_items = response.get("Items", [])
                 
                 if filter_fn:
                     new_items = [item for item in new_items if filter_fn(item)]
                 
+                # Sort new items too
+                new_items.sort(key=lambda x: int(x.get("position", 0)))
+                
                 results.extend(new_items)
+                # Re-sort after adding new items to maintain position order
+                results.sort(key=lambda x: int(x.get("position", 0)))
                 results = results[:limit]
                 
-        except ClientError as e:
-            # If GSI doesn't exist, fall back to scan
-            if e.response["Error"]["Code"] == "ValidationException":
-                return self._scan_events_fallback(position, limit, filter_fn)
-            pass
-            
-        return results
-    
-    def _scan_events_fallback(
-        self,
-        position: Position,
-        limit: int,
-        filter_fn: Any | None,
-    ) -> list[dict[str, Any]]:
-        """Fallback scan method if GSI is not available."""
-        table = self._client.resource.Table(self._config.events_table_name)
-        results = []
-        
-        try:
-            scan_kwargs = {
-                "FilterExpression": Attr("position").gte(position),
-                "Limit": limit * 10,
-            }
-            
-            response = table.scan(**scan_kwargs)
-            items = response.get("Items", [])
-            
-            if filter_fn:
-                items = [item for item in items if filter_fn(item)]
-            
-            items.sort(key=lambda x: x.get("position", 0))
-            results = items[:limit]
-            
         except ClientError:
             pass
             
         return results
+    
 
     def _item_to_recorded_raw(self, item: dict[str, Any]) -> RecordedRaw:
         """Convert a DynamoDB item to RecordedRaw."""

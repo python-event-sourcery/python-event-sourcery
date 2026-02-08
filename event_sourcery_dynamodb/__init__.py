@@ -13,13 +13,13 @@ from typing_extensions import Self
 
 from event_sourcery import TenantId
 from event_sourcery.backend import Backend, not_configured
-from event_sourcery._event_store.event_store import StorageStrategy
-from event_sourcery._event_store.outbox import (
+from event_sourcery.interfaces import (
+    StorageStrategy,
+    SubscriptionStrategy,
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
-    no_filter,
 )
-from event_sourcery._event_store.subscription.interfaces import SubscriptionStrategy
+from event_sourcery.outbox import no_filter
 from event_sourcery_dynamodb.event_store import DynamoDBStorageStrategy
 from event_sourcery_dynamodb.outbox import DynamoDBOutboxStorageStrategy
 from event_sourcery_dynamodb.subscription import DynamoDBSubscriptionStrategy
