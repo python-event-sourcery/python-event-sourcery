@@ -115,7 +115,6 @@ def dynamodb_backend(max_attempts: int) -> Iterator[DynamoDBBackend]:
             outbox_table_name=f"test_outbox_{uuid4().hex[:8]}",
             subscriptions_table_name=f"test_outbox_subscriptions_{uuid4().hex[:8]}",
             outbox_attempts=max_attempts,
-            create_tables=True,
         ),
     )
     

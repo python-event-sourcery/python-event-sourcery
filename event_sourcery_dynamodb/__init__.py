@@ -4,6 +4,7 @@ __all__ = [
     "DynamoDBStorageStrategy",
 ]
 
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
@@ -47,8 +48,6 @@ class DynamoDBConfig(BaseModel):
             Maximum number of outbox delivery attempts per event before giving up.
         gap_retry_interval (timedelta):
             Time to wait before retrying a subscription gap.
-        create_tables (bool):
-            Whether to automatically create tables if they don't exist.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -60,7 +59,6 @@ class DynamoDBConfig(BaseModel):
     subscriptions_table_name: str = "event_sourcery_subscriptions"
     outbox_attempts: PositiveInt = 3
     gap_retry_interval: timedelta = timedelta(seconds=0.5)
-    create_tables: bool = True
 
 
 @dataclass
@@ -118,11 +116,10 @@ class DynamoDBBackend(Backend):
         )
         self[DynamoDBConfig] = config or DynamoDBConfig()
         
-        # Create tables if configured to do so
-        if self[DynamoDBConfig].create_tables:
-            self._ensure_tables_exist()
-            # Initialize position counter after tables are created
-            self._ensure_position_counter()
+        # Always ensure tables exist (idempotent operation)
+        self._ensure_tables_exist()
+        # Initialize position counter after tables are created
+        self._ensure_position_counter()
         
         return self
 
@@ -140,7 +137,16 @@ class DynamoDBBackend(Backend):
         return self
 
     def _ensure_tables_exist(self) -> None:
-        """Create DynamoDB tables if they don't exist."""
+        """Create DynamoDB tables if they don't exist.
+        
+        Note: This method only creates tables with the initial schema.
+        It does NOT handle schema migrations for existing tables.
+        
+        Future considerations for migrations:
+        - DynamoDB is schemaless, so most changes don't require migrations
+        - Adding GSIs would require manual intervention
+        - Consider a separate migration tool/script if schema changes are needed
+        """
         client = self[DynamoDBClient].client
         config = self[DynamoDBConfig]
         
@@ -222,16 +228,13 @@ class DynamoDBBackend(Backend):
         
         # Create tables if they don't exist
         for table_def in tables:
-            try:
+            with suppress(client.exceptions.ResourceInUseException):
                 client.create_table(**table_def)
-            except client.exceptions.ResourceInUseException:
-                # Table already exists
-                pass
     
     def _ensure_position_counter(self) -> None:
         """Initialize the global position counter."""
         table = self[DynamoDBClient].resource.Table(self[DynamoDBConfig].streams_table_name)
-        try:
+        with suppress(self[DynamoDBClient].client.exceptions.ConditionalCheckFailedException):
             table.put_item(
                 Item={
                     "pk": "GLOBAL#POSITION",
@@ -240,6 +243,3 @@ class DynamoDBBackend(Backend):
                 },
                 ConditionExpression="attribute_not_exists(pk)",
             )
-        except self[DynamoDBClient].client.exceptions.ConditionalCheckFailedException:
-            # Counter already exists
-            pass

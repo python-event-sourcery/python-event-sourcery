@@ -52,7 +52,6 @@ def dynamodb_backend() -> Iterator[DynamoDBBackend]:
             snapshots_table_name="test_snapshots",
             outbox_table_name="test_outbox",
             subscriptions_table_name="test_subscriptions",
-            create_tables=True,
         ),
     )
     
