@@ -19,14 +19,8 @@ from tests.backend.sqlalchemy import (
     sqlalchemy_sqlite_session,
 )
 
-try:
-    import boto3
-
-    from event_sourcery_dynamodb import DynamoDBBackend, DynamoDBConfig
-except ImportError:
-    boto3 = None
-    DynamoDBBackend = None
-    DynamoDBConfig = None
+import boto3
+from event_sourcery_dynamodb import DynamoDBBackend, DynamoDBConfig
 
 
 @pytest.fixture()
@@ -80,8 +74,6 @@ def sqlalchemy_postgres_backend(max_attempts: int) -> Iterator[SQLAlchemyBackend
 
 @pytest.fixture()
 def dynamodb_backend(max_attempts: int) -> Iterator[DynamoDBBackend]:
-    if boto3 is None or DynamoDBBackend is None:
-        pytest.skip("boto3 not installed")
 
     dynamodb_client = boto3.client(
         "dynamodb",
@@ -99,13 +91,11 @@ def dynamodb_backend(max_attempts: int) -> Iterator[DynamoDBBackend]:
         aws_secret_access_key="test",
     )
 
-    # Check if DynamoDB Local is available
     try:
         dynamodb_client.list_tables()
     except Exception:
         pytest.skip("DynamoDB Local not available, skipping")
 
-    # Create backend with test configuration
     backend = DynamoDBBackend().configure(
         dynamodb_client=dynamodb_client,
         dynamodb_resource=dynamodb_resource,
@@ -121,7 +111,6 @@ def dynamodb_backend(max_attempts: int) -> Iterator[DynamoDBBackend]:
 
     yield backend
 
-    # Cleanup: Delete all test tables
     for table_name in [
         backend[DynamoDBConfig].events_table_name,
         backend[DynamoDBConfig].streams_table_name,
@@ -134,7 +123,7 @@ def dynamodb_backend(max_attempts: int) -> Iterator[DynamoDBBackend]:
             table.delete()
             table.wait_until_not_exists()
         except dynamodb_client.exceptions.ResourceNotFoundException:
-            pass  # Table doesn't exist, nothing to clean up
+            pass
 
 
 @pytest.fixture()

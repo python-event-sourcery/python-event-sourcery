@@ -4,11 +4,8 @@ from collections.abc import Iterator
 
 import pytest
 
-try:
-    import boto3
-    from botocore.config import Config
-except ImportError:
-    pytest.skip("boto3 not installed", allow_module_level=True)
+import boto3
+from botocore.config import Config
 
 from event_sourcery_dynamodb import DynamoDBBackend, DynamoDBConfig
 
