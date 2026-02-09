@@ -15,10 +15,10 @@ from typing_extensions import Self
 from event_sourcery import TenantId
 from event_sourcery.backend import Backend, not_configured
 from event_sourcery.interfaces import (
-    StorageStrategy,
-    SubscriptionStrategy,
     OutboxFiltererStrategy,
     OutboxStorageStrategy,
+    StorageStrategy,
+    SubscriptionStrategy,
 )
 from event_sourcery.outbox import no_filter
 from event_sourcery_dynamodb.event_store import DynamoDBStorageStrategy
@@ -65,19 +65,21 @@ class DynamoDBConfig(BaseModel):
 class DynamoDBClient:
     """Wrapper for boto3 DynamoDB client to enable dependency injection."""
 
-    client: Any  # boto3.client('dynamodb')
-    resource: Any  # boto3.resource('dynamodb')
+    client: Any
+    resource: Any
 
 
 class DynamoDBBackend(Backend):
     """
     DynamoDB integration backend for Event Sourcery.
-    
+
     This backend uses AWS DynamoDB for event storage and does not support
     transactional operations across multiple aggregates.
     """
 
-    UNCONFIGURED_MESSAGE = "Configure backend with `.configure(dynamodb_client, config)`"
+    UNCONFIGURED_MESSAGE = (
+        "Configure backend with `.configure(dynamodb_client, config)`"
+    )
 
     def __init__(self) -> None:
         super().__init__()
@@ -96,7 +98,7 @@ class DynamoDBBackend(Backend):
     def configure(
         self,
         dynamodb_client: "boto3.client",
-        dynamodb_resource: "boto3.resource", 
+        dynamodb_resource: "boto3.resource",
         config: DynamoDBConfig | None = None,
     ) -> Self:
         """
@@ -115,42 +117,24 @@ class DynamoDBBackend(Backend):
             resource=dynamodb_resource,
         )
         self[DynamoDBConfig] = config or DynamoDBConfig()
-        
-        # Always ensure tables exist (idempotent operation)
         self._ensure_tables_exist()
-        # Initialize position counter after tables are created
         self._ensure_position_counter()
-        
         return self
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         """Configure the outbox with a custom filter."""
-        self[OutboxFiltererStrategy] = filterer  # type: ignore[type-abstract]
-        self[DynamoDBOutboxStorageStrategy] = (
-            lambda c: DynamoDBOutboxStorageStrategy(
-                c[DynamoDBClient],
-                c[DynamoDBConfig],
-                c[OutboxFiltererStrategy],  # type: ignore[type-abstract]
-            )
+        self[OutboxFiltererStrategy] = lambda _: filterer
+        self[DynamoDBOutboxStorageStrategy] = lambda c: DynamoDBOutboxStorageStrategy(
+            c[DynamoDBClient],
+            c[DynamoDBConfig],
+            c[OutboxFiltererStrategy],
         )
         self[OutboxStorageStrategy] = lambda c: c[DynamoDBOutboxStorageStrategy]
         return self
 
     def _ensure_tables_exist(self) -> None:
-        """Create DynamoDB tables if they don't exist.
-        
-        Note: This method only creates tables with the initial schema.
-        It does NOT handle schema migrations for existing tables.
-        
-        Future considerations for migrations:
-        - DynamoDB is schemaless, so most changes don't require migrations
-        - Adding GSIs would require manual intervention
-        - Consider a separate migration tool/script if schema changes are needed
-        """
         client = self[DynamoDBClient].client
         config = self[DynamoDBConfig]
-        
-        # Define table schemas
         tables = [
             {
                 "TableName": config.events_table_name,
@@ -225,16 +209,17 @@ class DynamoDBBackend(Backend):
                 "BillingMode": "PAY_PER_REQUEST",
             },
         ]
-        
-        # Create tables if they don't exist
         for table_def in tables:
             with suppress(client.exceptions.ResourceInUseException):
                 client.create_table(**table_def)
-    
+
     def _ensure_position_counter(self) -> None:
-        """Initialize the global position counter."""
-        table = self[DynamoDBClient].resource.Table(self[DynamoDBConfig].streams_table_name)
-        with suppress(self[DynamoDBClient].client.exceptions.ConditionalCheckFailedException):
+        table = self[DynamoDBClient].resource.Table(
+            self[DynamoDBConfig].streams_table_name
+        )
+        with suppress(
+            self[DynamoDBClient].client.exceptions.ConditionalCheckFailedException
+        ):
             table.put_item(
                 Item={
                     "pk": "GLOBAL#POSITION",

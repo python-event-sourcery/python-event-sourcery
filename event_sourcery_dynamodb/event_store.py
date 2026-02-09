@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from boto3.dynamodb.conditions import Attr, Key
-from botocore.exceptions import ClientError
 
 from event_sourcery import StreamId, TenantId
 from event_sourcery._event_store.event.dto import Position, RawEvent, RecordedRaw
@@ -28,7 +27,7 @@ if TYPE_CHECKING:
 class DynamoDBStorageStrategy(StorageStrategy):
     """
     DynamoDB implementation of the StorageStrategy interface.
-    
+
     Uses DynamoDB tables to store events, streams, and snapshots.
     """
 
@@ -52,55 +51,45 @@ class DynamoDBStorageStrategy(StorageStrategy):
         """Fetch events from a stream within the given range."""
         events_table = self._client.resource.Table(self._config.events_table_name)
         snapshots_table = self._client.resource.Table(self._config.snapshots_table_name)
-        
-        # First, try to find the latest snapshot for this stream
         snapshot_pk = self._make_stream_pk(stream_id)
         latest_snapshot = None
-        
-        # Query snapshots to find one within our range
-        # We need to check all snapshots to find the latest one that matches our criteria
         response = snapshots_table.query(
             KeyConditionExpression=Key("pk").eq(snapshot_pk),
-            ScanIndexForward=False,  # Sort descending to get latest first
+            ScanIndexForward=False,
         )
-        
-        # Find the first (latest) snapshot that's within our query range
         for snapshot_item in response.get("Items", []):
             snapshot_version = int(snapshot_item["version"])
-            
-            # Check if snapshot is within the requested range (same logic as SQL backends)
-            if (start is None or snapshot_version >= start) and \
-               (stop is None or snapshot_version < stop):
+            if (start is None or snapshot_version >= start) and (
+                stop is None or snapshot_version < stop
+            ):
                 latest_snapshot = self._item_to_raw_event(snapshot_item)
-                break  # Found the latest valid snapshot
-        
-        # Query for events
-        key_condition = Key("pk").eq(self._make_stream_pk(stream_id)) & Key("sk").begins_with("EVENT#")
-        
+                break
+
+        key_condition = Key("pk").eq(self._make_stream_pk(stream_id)) & Key(
+            "sk"
+        ).begins_with("EVENT#")
+
         response = events_table.query(
             KeyConditionExpression=key_condition,
-            ScanIndexForward=True,  # Sort by SK ascending (version order)
+            ScanIndexForward=True,
         )
-        
         items = response.get("Items", [])
-        
-        # If we have a snapshot, filter events to only include those after the snapshot
         min_version = latest_snapshot.version if latest_snapshot else None
-        
-        # Filter by version range
+
         events = []
         for item in items:
             version = int(item["version"]) if item.get("version") is not None else None
-            # Skip events before start or before/at snapshot version
             if start is not None and version is not None and version < start:
                 continue
-            if min_version is not None and version is not None and version <= min_version:
+            if (
+                min_version is not None
+                and version is not None
+                and version <= min_version
+            ):
                 continue
             if stop is not None and version is not None and version >= stop:
                 break
             events.append(self._item_to_raw_event(item))
-        
-        # Return snapshot + newer events, or just events if no snapshot
         if latest_snapshot:
             return [latest_snapshot] + events
         else:
@@ -113,54 +102,39 @@ class DynamoDBStorageStrategy(StorageStrategy):
         events: list[RawEvent],
     ) -> None:
         """Insert events into a stream with versioning."""
-            
         table = self._client.resource.Table(self._config.events_table_name)
         streams_table = self._client.resource.Table(self._config.streams_table_name)
-        
-        # Check if stream exists and get its metadata
         stream_meta = self._get_stream_metadata(stream_id)
-        
+
         if not stream_meta:
-            # New stream - initialize with version 0 if versioned
             current_version = 0 if versioning is not NO_VERSIONING else None
             is_versioned = versioning is not NO_VERSIONING
         else:
-            # Existing stream
             current_version = stream_meta.get("version")
             is_versioned = stream_meta.get("versioning") != "none"
-            
-            # Validate versioning compatibility
             if is_versioned and versioning is NO_VERSIONING:
                 raise NoExpectedVersionGivenOnVersionedStream
-            elif not is_versioned and versioning is not NO_VERSIONING:
+            if not is_versioned and versioning is not NO_VERSIONING:
                 raise ExpectedVersionUsedOnVersionlessStream
-        
-        # Validate version expectations
+
         if is_versioned:
             versioning.validate_if_compatible(current_version)
-            
-            # Only check expected version if it's truthy (not 0, not None)
             if versioning is not NO_VERSIONING and versioning.expected_version:
                 if current_version != versioning.expected_version:
                     raise ConcurrentStreamWriteError(
                         current_version,
                         versioning.expected_version,
                     )
-        
-        # Determine starting version for new events
+
         if not stream_meta:
-            # New stream
             next_version = 1 if versioning is not NO_VERSIONING else None
-            
-            # Check if a stream with the same name but different ID exists
             if stream_id.name:
                 existing_with_name = self._check_stream_name_uniqueness(stream_id)
                 if existing_with_name:
                     raise AnotherStreamWithThisNameButOtherIdExists(
-                        f"Stream with name '{stream_id.name}' already exists with ID {existing_with_name}"
+                        f"Stream with name '{stream_id.name}' already exists "
+                        f"with ID {existing_with_name}"
                     )
-            
-            # Create stream metadata
             tenant_id_str = str(self._tenant_id) if self._tenant_id else "default"
             streams_table.put_item(
                 Item={
@@ -176,32 +150,29 @@ class DynamoDBStorageStrategy(StorageStrategy):
                 }
             )
         else:
-            next_version = current_version + 1 if versioning is not NO_VERSIONING else None
-        
-        # Allocate positions for all events
+            next_version = (
+                current_version + 1 if versioning is not NO_VERSIONING else None
+            )
+
         start_position = self._allocate_positions(len(events))
-        
-        # Insert events
         records = []
         with table.batch_writer() as batch:
             for i, event in enumerate(events):
                 event_version = next_version + i if next_version else None
                 position = start_position + i
-                
-                # Events should already have the correct version
-                
                 item = self._raw_event_to_item(event, event_version)
                 item["position"] = position
                 batch.put_item(Item=item)
-                
-                # Add to records for outbox
-                records.append(RecordedRaw(
-                    entry=event,
-                    position=position,
-                    tenant_id=str(self._tenant_id) if self._tenant_id else "default",
-                ))
-        
-        # Update stream version
+                records.append(
+                    RecordedRaw(
+                        entry=event,
+                        position=position,
+                        tenant_id=(
+                            str(self._tenant_id) if self._tenant_id else "default"
+                        ),
+                    )
+                )
+
         if versioning is not NO_VERSIONING:
             streams_table.update_item(
                 Key={
@@ -213,19 +184,22 @@ class DynamoDBStorageStrategy(StorageStrategy):
                     ":v": next_version + len(events) - 1,
                 },
             )
-        
-        # Publish to outbox if configured
+
         if self._outbox and records:
             self._outbox.put_into_outbox(records)
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
         """Save a snapshot of a stream."""
         table = self._client.resource.Table(self._config.snapshots_table_name)
-        
+
         table.put_item(
             Item={
                 "pk": self._make_stream_pk(snapshot.stream_id),
-                "sk": f"SNAPSHOT#{snapshot.version:010d}" if snapshot.version else "SNAPSHOT#LATEST",
+                "sk": (
+                    f"SNAPSHOT#{snapshot.version:010d}"
+                    if snapshot.version
+                    else "SNAPSHOT#LATEST"
+                ),
                 "tenant_id": str(self._tenant_id),
                 **self._raw_event_to_item(snapshot, snapshot.version),
             }
@@ -236,14 +210,10 @@ class DynamoDBStorageStrategy(StorageStrategy):
         events_table = self._client.resource.Table(self._config.events_table_name)
         streams_table = self._client.resource.Table(self._config.streams_table_name)
         snapshots_table = self._client.resource.Table(self._config.snapshots_table_name)
-        
         pk = self._make_stream_pk(stream_id)
-        
-        # Delete all events
         response = events_table.query(
             KeyConditionExpression=Key("pk").eq(pk),
         )
-        
         with events_table.batch_writer() as batch:
             for item in response.get("Items", []):
                 batch.delete_item(
@@ -252,20 +222,15 @@ class DynamoDBStorageStrategy(StorageStrategy):
                         "sk": item["sk"],
                     }
                 )
-        
-        # Delete stream metadata
         streams_table.delete_item(
             Key={
                 "pk": pk,
                 "sk": "STREAM#META",
             }
         )
-        
-        # Delete snapshots
         response = snapshots_table.query(
             KeyConditionExpression=Key("pk").eq(pk),
         )
-        
         with snapshots_table.batch_writer() as batch:
             for item in response.get("Items", []):
                 batch.delete_item(
@@ -278,7 +243,6 @@ class DynamoDBStorageStrategy(StorageStrategy):
     @property
     def current_position(self) -> Position | None:
         """Get the current position in the event store."""
-        # Position counter is always initialized during configuration
         table = self._client.resource.Table(self._config.streams_table_name)
         response = table.get_item(
             Key={
@@ -295,36 +259,35 @@ class DynamoDBStorageStrategy(StorageStrategy):
         return scoped
 
     def _make_stream_pk(self, stream_id: StreamId) -> str:
-        """Create the partition key for a stream."""
-        # Include category in the key to ensure streams with same name/uuid but different categories are separate
         category_part = f"#{stream_id.category}" if stream_id.category else ""
         return f"TENANT#{self._tenant_id}#STREAM#{stream_id}{category_part}"
 
     def _get_stream_metadata(self, stream_id: StreamId) -> dict[str, Any] | None:
-        """Get the metadata for a stream."""
         table = self._client.resource.Table(self._config.streams_table_name)
-        
         response = table.get_item(
             Key={
                 "pk": self._make_stream_pk(stream_id),
                 "sk": "STREAM#META",
             }
         )
-        
         item = response.get("Item")
         if item and "version" in item and item["version"] is not None:
-            # Convert Decimal to int for version
             item["version"] = int(item["version"])
         return item
 
-    def _raw_event_to_item(self, event: RawEvent, version: int | None) -> dict[str, Any]:
-        """Convert a RawEvent to a DynamoDB item."""
-        # Ensure tenant_id is never empty
+    def _raw_event_to_item(
+        self,
+        event: RawEvent,
+        version: int | None,
+    ) -> dict[str, Any]:
         tenant_id_str = str(self._tenant_id) if self._tenant_id else "default"
-        
         return {
             "pk": self._make_stream_pk(event.stream_id),
-            "sk": f"EVENT#{version:010d}" if version else f"EVENT#{event.created_at.isoformat()}",
+            "sk": (
+                f"EVENT#{version:010d}"
+                if version
+                else f"EVENT#{event.created_at.isoformat()}"
+            ),
             "tenant_id": tenant_id_str,
             "uuid": str(event.uuid),
             "stream_id": str(event.stream_id),
@@ -339,17 +302,15 @@ class DynamoDBStorageStrategy(StorageStrategy):
         }
 
     def _item_to_raw_event(self, item: dict[str, Any]) -> RawEvent:
-        """Convert a DynamoDB item to a RawEvent."""
         from datetime import datetime
-        
-        # Reconstruct StreamId
+
         category = item.get("stream_id_category")
         stream_id = StreamId(
             from_hex=item["stream_id_hex"],
             category=category if category else None,
             name=item.get("stream_id_name"),
         )
-        
+
         return RawEvent(
             uuid=UUID(item["uuid"]),
             stream_id=stream_id,
@@ -360,40 +321,28 @@ class DynamoDBStorageStrategy(StorageStrategy):
             version=int(item["version"]) if item.get("version") is not None else None,
         )
 
-
-
     def _check_stream_name_uniqueness(self, stream_id: StreamId) -> str | None:
-        """Check if a stream with the same name but different ID exists."""
-        # This method is only called when stream_id.name exists
         table = self._client.resource.Table(self._config.streams_table_name)
-        
-        # Scan for streams with the same name in the same tenant
-        # Note: This is not efficient for large tables, but necessary for correctness
         tenant_id_str = str(self._tenant_id) if self._tenant_id else "default"
-        
         response = table.scan(
-            FilterExpression=Attr("stream_name").eq(stream_id.name) & 
-                           Attr("tenant_id").eq(tenant_id_str) &
-                           Attr("sk").eq("STREAM#META"),
+            FilterExpression=Attr("stream_name").eq(stream_id.name)
+            & Attr("tenant_id").eq(tenant_id_str)
+            & Attr("sk").eq("STREAM#META"),
         )
-        
         items = response.get("Items", [])
         for item in items:
-            # Check if it's a different stream ID
             existing_id = item.get("stream_id_hex", item.get("stream_id"))
             existing_category = item.get("category", "")
-            
-            # Streams with same name but different categories are allowed
-            if existing_category == (stream_id.category or "") and existing_id and existing_id != str(stream_id):
+            if (
+                existing_category == (stream_id.category or "")
+                and existing_id
+                and existing_id != str(stream_id)
+            ):
                 return existing_id
-                
         return None
-    
+
     def _allocate_positions(self, count: int) -> int:
-        """Allocate positions for a batch of events atomically."""
         table = self._client.resource.Table(self._config.streams_table_name)
-        
-        # Atomic increment and return the starting position
         response = table.update_item(
             Key={
                 "pk": "GLOBAL#POSITION",
@@ -408,7 +357,5 @@ class DynamoDBStorageStrategy(StorageStrategy):
             },
             ReturnValues="UPDATED_OLD",
         )
-        
-        # Return the old value (starting position for this batch)
         old_position = response["Attributes"].get("position", 0)
-        return int(old_position) + 1  # Positions start at 1
+        return int(old_position) + 1

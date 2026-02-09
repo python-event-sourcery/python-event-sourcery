@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Generator
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from boto3.dynamodb.conditions import Attr, Key
-from botocore.exceptions import ClientError
+from boto3.dynamodb.conditions import Attr
 
 from event_sourcery import StreamId
 from event_sourcery._event_store.event.dto import RawEvent, RecordedRaw
@@ -24,7 +23,7 @@ if TYPE_CHECKING:
 class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):
     """
     DynamoDB implementation of the OutboxStorageStrategy interface.
-    
+
     Uses a DynamoDB table to store outbox entries for reliable event publishing.
     """
 
@@ -43,23 +42,17 @@ class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):
     ) -> Iterator[AbstractContextManager[RecordedRaw]]:
         """Return iterator of context managers for outbox entries."""
         table = self._client.resource.Table(self._config.outbox_table_name)
-        
-        # Scan for entries with tries_left > 0
+
         scan_kwargs = {
             "FilterExpression": Attr("tries_left").gt(0),
-            "Limit": limit * 2,  # Scan more since we're filtering
+            "Limit": limit * 2,
         }
-        
+
         response = table.scan(**scan_kwargs)
         items = response.get("Items", [])
-        
-        # Filter to only return items with tries_left > 0
+
         items = [item for item in items if item.get("tries_left", 0) > 0]
-        
-        # Sort by position to ensure proper ordering
         items.sort(key=lambda x: int(x.get("position", 0)))
-        
-        # Limit to requested number
         for item in items[:limit]:
             yield self._publish_context(item)
 
@@ -69,17 +62,14 @@ class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):
     ) -> Generator[RecordedRaw, None, None]:
         """Context manager for processing an outbox entry."""
         table = self._client.resource.Table(self._config.outbox_table_name)
-        
-        # Extract event data
+
         data = item.get("data", {})
-        
-        # Reconstruct the RawEvent
         stream_id = StreamId(
             from_hex=data.get("stream_id", ""),
             name=data.get("stream_name", item.get("stream_name", "")),
             category=data.get("stream_category"),
         )
-        
+
         raw_event = RawEvent(
             uuid=UUID(data["uuid"]),
             stream_id=stream_id,
@@ -89,16 +79,15 @@ class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):
             context=data["context"],
             version=int(data["version"]) if data.get("version") is not None else None,
         )
-        
+
         recorded = RecordedRaw(
             entry=raw_event,
             position=int(item.get("position", 0)),
             tenant_id=data.get("tenant_id", "default"),
         )
-        
+
         try:
             yield recorded
-            # Success - delete the entry
             table.delete_item(
                 Key={
                     "pk": item["pk"],
@@ -106,7 +95,6 @@ class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):
                 }
             )
         except Exception:
-            # Failure - decrement tries_left
             tries_left = item.get("tries_left", 1) - 1
             table.update_item(
                 Key={
@@ -116,22 +104,20 @@ class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):
                 UpdateExpression="SET tries_left = :tries",
                 ExpressionAttributeValues={":tries": tries_left},
             )
-            # Don't re-raise - the outbox pattern handles failures internally
 
     def put_into_outbox(self, records: list[RecordedRaw]) -> None:
         """Store events in the outbox for later publishing."""
         table = self._client.resource.Table(self._config.outbox_table_name)
-        
+
         with table.batch_writer() as batch:
             for record in records:
                 if not self._filterer(record.entry):
                     continue
-                
-                # Create outbox entry
-                timestamp = int(time.time() * 1000000)  # Microsecond precision
+
+                timestamp = int(time.time() * 1000000)
                 pk = f"OUTBOX#{record.tenant_id}"
                 sk = f"ENTRY#{timestamp}#{record.entry.uuid}"
-                
+
                 item = {
                     "pk": pk,
                     "sk": sk,
@@ -152,5 +138,5 @@ class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):
                         "tenant_id": str(record.tenant_id),
                     },
                 }
-                
+
                 batch.put_item(Item=item)
