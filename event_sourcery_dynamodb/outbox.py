@@ -50,22 +50,18 @@ class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):
             "Limit": limit * 2,  # Scan more since we're filtering
         }
         
-        try:
-            response = table.scan(**scan_kwargs)
-            items = response.get("Items", [])
-            
-            # Filter to only return items with tries_left > 0
-            items = [item for item in items if item.get("tries_left", 0) > 0]
-            
-            # Sort by position to ensure proper ordering
-            items.sort(key=lambda x: int(x.get("position", 0)))
-            
-            # Limit to requested number
-            for item in items[:limit]:
-                yield self._publish_context(item)
-                
-        except ClientError:
-            pass
+        response = table.scan(**scan_kwargs)
+        items = response.get("Items", [])
+        
+        # Filter to only return items with tries_left > 0
+        items = [item for item in items if item.get("tries_left", 0) > 0]
+        
+        # Sort by position to ensure proper ordering
+        items.sort(key=lambda x: int(x.get("position", 0)))
+        
+        # Limit to requested number
+        for item in items[:limit]:
+            yield self._publish_context(item)
 
     @contextmanager
     def _publish_context(

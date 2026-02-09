@@ -113,22 +113,13 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
                 
                 events_added = False
                 for event_item in events:
-                    if len(batch) >= batch_size:
-                        break
-                        
-                    event_position = event_item.get("position")
-                    if event_position is None:
-                        continue
+                    event_position = int(event_item.get("position"))
                     
-                    # Convert Decimal to int for comparison
-                    event_position = int(event_position)
-                    
-                    # Since DynamoDB uses atomic position allocation, we can trust positions are sequential
-                    if event_position > current_scan_position:
-                        batch.append(self._item_to_recorded_raw(event_item))
-                        events_added = True
-                        # Track highest position seen to avoid re-scanning
-                        current_scan_position = event_position
+                    # Events are already filtered by position in the query
+                    batch.append(self._item_to_recorded_raw(event_item))
+                    events_added = True
+                    # Track highest position seen to avoid re-scanning
+                    current_scan_position = event_position
                 
                 if not events_added:
                     # No new events found, wait a bit before retrying
@@ -157,45 +148,22 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
         
         # For subscribe_to_all, we need to scan across all tenants
         # This is less efficient than querying a single tenant, but necessary for correctness
-        try:
-            scan_kwargs = {
-                "FilterExpression": Attr("position").gt(position),
-                "Limit": limit * 10,  # Fetch more since we're filtering
-            }
-            
-            response = table.scan(**scan_kwargs)
-            items = response.get("Items", [])
-            
-            # Apply additional filter if provided
-            if filter_fn:
-                items = [item for item in items if filter_fn(item)]
-            
-            # Sort by position to ensure correct ordering
-            items.sort(key=lambda x: int(x.get("position", 0)))
-            
-            results = items[:limit]
-            
-            # Handle pagination if needed and we don't have enough results
-            while len(results) < limit and "LastEvaluatedKey" in response:
-                scan_kwargs["ExclusiveStartKey"] = response["LastEvaluatedKey"]
-                response = table.scan(**scan_kwargs)
-                new_items = response.get("Items", [])
-                
-                if filter_fn:
-                    new_items = [item for item in new_items if filter_fn(item)]
-                
-                # Sort new items too
-                new_items.sort(key=lambda x: int(x.get("position", 0)))
-                
-                results.extend(new_items)
-                # Re-sort after adding new items to maintain position order
-                results.sort(key=lambda x: int(x.get("position", 0)))
-                results = results[:limit]
-                
-        except ClientError:
-            pass
-            
-        return results
+        scan_kwargs = {
+            "FilterExpression": Attr("position").gt(position),
+            "Limit": limit * 10,  # Fetch more since we're filtering
+        }
+        
+        response = table.scan(**scan_kwargs)
+        items = response.get("Items", [])
+        
+        # Apply additional filter if provided
+        if filter_fn:
+            items = [item for item in items if filter_fn(item)]
+        
+        # Sort by position to ensure correct ordering
+        items.sort(key=lambda x: int(x.get("position", 0)))
+        
+        return items[:limit]
     
 
     def _item_to_recorded_raw(self, item: dict[str, Any]) -> RecordedRaw:
