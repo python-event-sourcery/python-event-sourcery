@@ -87,7 +87,7 @@ class DynamoDBStorageStrategy(StorageStrategy):
                 break
             events.append(self._item_to_raw_event(item))
         if latest_snapshot:
-            return [latest_snapshot] + events
+            return [latest_snapshot, *events]
         else:
             return events
 
@@ -100,85 +100,24 @@ class DynamoDBStorageStrategy(StorageStrategy):
         """Insert events into a stream with versioning."""
         table = self._client.resource.Table(self._config.events_table_name)
         streams_table = self._client.resource.Table(self._config.streams_table_name)
-        stream_meta = self._get_stream_metadata(stream_id)
 
-        if not stream_meta:
-            current_version = 0 if versioning is not NO_VERSIONING else None
-            is_versioned = versioning is not NO_VERSIONING
-        else:
-            current_version = stream_meta.get("version")
-            is_versioned = stream_meta.get("versioning") != "none"
-            if is_versioned and versioning is NO_VERSIONING:
-                raise NoExpectedVersionGivenOnVersionedStream
-            if not is_versioned and versioning is not NO_VERSIONING:
-                raise ExpectedVersionUsedOnVersionlessStream
+        stream_meta = self._get_stream_metadata(stream_id)
+        current_version, is_versioned = self._determine_versioning_state(
+            stream_meta, versioning
+        )
 
         if is_versioned:
-            versioning.validate_if_compatible(current_version)
-            if versioning is not NO_VERSIONING and versioning.expected_version:
-                if current_version != versioning.expected_version:
-                    raise ConcurrentStreamWriteError(
-                        current_version,
-                        versioning.expected_version,
-                    )
+            self._validate_versioning(versioning, current_version)
 
-        if not stream_meta:
-            next_version = 1 if versioning is not NO_VERSIONING else None
-            if stream_id.name:
-                existing_with_name = self._check_stream_name_uniqueness(stream_id)
-                if existing_with_name:
-                    raise AnotherStreamWithThisNameButOtherIdExists(
-                        f"Stream with name '{stream_id.name}' already exists "
-                        f"with ID {existing_with_name}"
-                    )
-            tenant_id_str = str(self._tenant_id) if self._tenant_id else "default"
-            streams_table.put_item(
-                Item={
-                    "pk": self._make_stream_pk(stream_id),
-                    "sk": "STREAM#META",
-                    "tenant_id": tenant_id_str,
-                    "stream_id": str(stream_id),
-                    "stream_id_hex": str(stream_id),
-                    "category": stream_id.category or "",
-                    "stream_name": stream_id.name,
-                    "version": 0 if versioning is not NO_VERSIONING else None,
-                    "versioning": "none" if versioning is NO_VERSIONING else "explicit",
-                }
-            )
-        else:
-            next_version = (
-                current_version + 1 if versioning is not NO_VERSIONING else None
-            )
+        next_version = self._handle_stream_creation_or_update(
+            stream_id, stream_meta, versioning, streams_table, current_version
+        )
 
-        start_position = self._allocate_positions(len(events))
-        records = []
-        with table.batch_writer() as batch:
-            for i, event in enumerate(events):
-                event_version = next_version + i if next_version else None
-                position = start_position + i
-                item = self._raw_event_to_item(event, event_version)
-                item["position"] = position
-                batch.put_item(Item=item)
-                records.append(
-                    RecordedRaw(
-                        entry=event,
-                        position=position,
-                        tenant_id=(
-                            str(self._tenant_id) if self._tenant_id else "default"
-                        ),
-                    )
-                )
+        records = self._write_events_to_table(table, events, next_version, stream_id)
 
-        if versioning is not NO_VERSIONING:
-            streams_table.update_item(
-                Key={
-                    "pk": self._make_stream_pk(stream_id),
-                    "sk": "STREAM#META",
-                },
-                UpdateExpression="SET version = :v",
-                ExpressionAttributeValues={
-                    ":v": next_version + len(events) - 1,
-                },
+        if versioning is not NO_VERSIONING and next_version is not None:
+            self._update_stream_version(
+                streams_table, stream_id, next_version, len(events)
             )
 
         if self._outbox and records:
@@ -269,7 +208,7 @@ class DynamoDBStorageStrategy(StorageStrategy):
         item = response.get("Item")
         if item and "version" in item and item["version"] is not None:
             item["version"] = int(item["version"])
-        return item
+        return item  # type: ignore[no-any-return]
 
     def _raw_event_to_item(
         self,
@@ -334,7 +273,7 @@ class DynamoDBStorageStrategy(StorageStrategy):
                 and existing_id
                 and existing_id != str(stream_id)
             ):
-                return existing_id
+                return existing_id  # type: ignore[no-any-return]
         return None
 
     def _allocate_positions(self, count: int) -> int:
@@ -355,3 +294,126 @@ class DynamoDBStorageStrategy(StorageStrategy):
         )
         old_position = response["Attributes"].get("position", 0)
         return int(old_position) + 1
+
+    def _determine_versioning_state(
+        self, stream_meta: dict[str, Any] | None, versioning: Versioning
+    ) -> tuple[int | None, bool]:
+        """Determine current version and whether stream is versioned."""
+        if not stream_meta:
+            current_version = 0 if versioning is not NO_VERSIONING else None
+            is_versioned = versioning is not NO_VERSIONING
+        else:
+            current_version = stream_meta.get("version")
+            is_versioned = stream_meta.get("versioning") != "none"
+            if is_versioned and versioning is NO_VERSIONING:
+                raise NoExpectedVersionGivenOnVersionedStream
+            if not is_versioned and versioning is not NO_VERSIONING:
+                raise ExpectedVersionUsedOnVersionlessStream
+        return current_version, is_versioned
+
+    def _validate_versioning(
+        self, versioning: Versioning, current_version: int | None
+    ) -> None:
+        """Validate versioning constraints."""
+        versioning.validate_if_compatible(current_version)
+        if versioning is not NO_VERSIONING and versioning.expected_version:
+            if current_version != versioning.expected_version:
+                raise ConcurrentStreamWriteError(
+                    current_version,
+                    versioning.expected_version,
+                )
+
+    def _handle_stream_creation_or_update(
+        self,
+        stream_id: StreamId,
+        stream_meta: dict[str, Any] | None,
+        versioning: Versioning,
+        streams_table: Any,
+        current_version: int | None,
+    ) -> int | None:
+        """Handle stream creation or determine next version."""
+        if not stream_meta:
+            self._create_stream_metadata(stream_id, versioning, streams_table)
+            return 1 if versioning is not NO_VERSIONING else None
+        else:
+            return (
+                (current_version + 1)
+                if (versioning is not NO_VERSIONING and current_version is not None)
+                else None
+            )
+
+    def _create_stream_metadata(
+        self, stream_id: StreamId, versioning: Versioning, streams_table: Any
+    ) -> None:
+        """Create metadata for a new stream."""
+        if stream_id.name:
+            existing_with_name = self._check_stream_name_uniqueness(stream_id)
+            if existing_with_name:
+                raise AnotherStreamWithThisNameButOtherIdExists(
+                    f"Stream with name '{stream_id.name}' already exists "
+                    f"with ID {existing_with_name}"
+                )
+
+        tenant_id_str = str(self._tenant_id) if self._tenant_id else "default"
+        streams_table.put_item(
+            Item={
+                "pk": self._make_stream_pk(stream_id),
+                "sk": "STREAM#META",
+                "tenant_id": tenant_id_str,
+                "stream_id": str(stream_id),
+                "stream_id_hex": str(stream_id),
+                "category": stream_id.category or "",
+                "stream_name": stream_id.name,
+                "version": 0 if versioning is not NO_VERSIONING else None,
+                "versioning": "none" if versioning is NO_VERSIONING else "explicit",
+            }
+        )
+
+    def _write_events_to_table(
+        self,
+        table: Any,
+        events: list[RawEvent],
+        next_version: int | None,
+        stream_id: StreamId,
+    ) -> list[RecordedRaw]:
+        """Write events to DynamoDB table and return recorded events."""
+        start_position = self._allocate_positions(len(events))
+        records = []
+
+        with table.batch_writer() as batch:
+            for i, event in enumerate(events):
+                event_version = next_version + i if next_version else None
+                position = start_position + i
+                item = self._raw_event_to_item(event, event_version)
+                item["position"] = position
+                batch.put_item(Item=item)
+                records.append(
+                    RecordedRaw(
+                        entry=event,
+                        position=position,
+                        tenant_id=(
+                            str(self._tenant_id) if self._tenant_id else "default"
+                        ),
+                    )
+                )
+
+        return records
+
+    def _update_stream_version(
+        self,
+        streams_table: Any,
+        stream_id: StreamId,
+        next_version: int,
+        event_count: int,
+    ) -> None:
+        """Update the stream version after inserting events."""
+        streams_table.update_item(
+            Key={
+                "pk": self._make_stream_pk(stream_id),
+                "sk": "STREAM#META",
+            },
+            UpdateExpression="SET version = :v",
+            ExpressionAttributeValues={
+                ":v": next_version + event_count - 1,
+            },
+        )

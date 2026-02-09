@@ -79,11 +79,11 @@ class DynamoDBBackend(Backend):
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         """Configure the outbox with a custom filter."""
-        self[OutboxFiltererStrategy] = filterer
+        self[OutboxFiltererStrategy] = filterer  # type: ignore[type-abstract]
         self[DynamoDBOutboxStorageStrategy] = lambda c: DynamoDBOutboxStorageStrategy(
             c[DynamoDBClient],
             c[DynamoDBConfig],
-            c[OutboxFiltererStrategy],
+            c[OutboxFiltererStrategy],  # type: ignore[type-abstract]
         )
         self[OutboxStorageStrategy] = lambda c: c[DynamoDBOutboxStorageStrategy]
         return self

@@ -88,7 +88,7 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
 
         while True:
             start_time = time.monotonic()
-            batch = []
+            batch: list[RecordedRaw] = []
             current_scan_position = position
 
             while len(batch) < batch_size:
@@ -104,7 +104,7 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
 
                 events_added = False
                 for event_item in events:
-                    event_position = int(event_item.get("position"))
+                    event_position = int(event_item.get("position", 0))
 
                     batch.append(self._item_to_recorded_raw(event_item))
                     events_added = True
@@ -132,8 +132,6 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
         """Scan events from a given position."""
         table = self._client.resource.Table(self._config.events_table_name)
 
-        results = []
-
         scan_kwargs = {
             "FilterExpression": Attr("position").gt(position),
             "Limit": limit * 10,
@@ -147,7 +145,7 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
 
         items.sort(key=lambda x: int(x.get("position", 0)))
 
-        return items[:limit]
+        return list(items[:limit])
 
     def _item_to_recorded_raw(self, item: dict[str, Any]) -> RecordedRaw:
         """Convert a DynamoDB item to RecordedRaw."""

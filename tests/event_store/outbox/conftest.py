@@ -78,7 +78,7 @@ def dynamodb_backend(max_attempts: int) -> Iterator[DynamoDBBackend]:
         endpoint_url="http://localhost:8000",
         region_name="us-east-1",
         aws_access_key_id="test",
-        aws_secret_access_key="test",
+        aws_secret_access_key="test",  # noqa: S106
     )
 
     dynamodb_resource = boto3.resource(
@@ -86,7 +86,7 @@ def dynamodb_backend(max_attempts: int) -> Iterator[DynamoDBBackend]:
         endpoint_url="http://localhost:8000",
         region_name="us-east-1",
         aws_access_key_id="test",
-        aws_secret_access_key="test",
+        aws_secret_access_key="test",  # noqa: S106
     )
 
     try:
