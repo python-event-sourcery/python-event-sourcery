@@ -56,7 +56,9 @@ class Stream:
     def events(self) -> list[WrappedEvent]:
         return list(self.store.load_stream(self.id))
 
-    def slice(self, start: int | None = None, stop: int | None = None) -> list[WrappedEvent]:
+    def slice(
+        self, start: int | None = None, stop: int | None = None
+    ) -> list[WrappedEvent]:
         return list(self.store.load_stream(self.id, start=start, stop=stop))
 
     def loads_only(self, events: Sequence[WrappedEvent]) -> None:
