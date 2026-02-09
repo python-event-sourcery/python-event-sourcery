@@ -10,13 +10,13 @@ from uuid import UUID
 
 from boto3.dynamodb.conditions import Attr
 
+if TYPE_CHECKING:
+    from event_sourcery_dynamodb import DynamoDBClient, DynamoDBConfig
+
 from event_sourcery import StreamId
 from event_sourcery._event_store.event.dto import Position, RawEvent, RecordedRaw
 from event_sourcery._event_store.subscription.interfaces import SubscriptionStrategy
 from event_sourcery._event_store.tenant_id import DEFAULT_TENANT
-
-if TYPE_CHECKING:
-    from event_sourcery_dynamodb import DynamoDBClient, DynamoDBConfig
 
 
 class DynamoDBSubscriptionStrategy(SubscriptionStrategy):

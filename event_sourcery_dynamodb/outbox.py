@@ -11,13 +11,13 @@ from uuid import UUID
 
 from boto3.dynamodb.conditions import Attr
 
-from event_sourcery import StreamId
-from event_sourcery._event_store.event.dto import RawEvent, RecordedRaw
-from event_sourcery._event_store.outbox import OutboxStorageStrategy
-
 if TYPE_CHECKING:
     from event_sourcery._event_store.outbox import OutboxFiltererStrategy
     from event_sourcery_dynamodb import DynamoDBClient, DynamoDBConfig
+
+from event_sourcery import StreamId
+from event_sourcery._event_store.event.dto import RawEvent, RecordedRaw
+from event_sourcery._event_store.outbox import OutboxStorageStrategy
 
 
 class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):

@@ -7,7 +7,7 @@ __all__ = [
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, PositiveInt
 from typing_extensions import Self
@@ -25,8 +25,7 @@ from event_sourcery_dynamodb.event_store import DynamoDBStorageStrategy
 from event_sourcery_dynamodb.outbox import DynamoDBOutboxStorageStrategy
 from event_sourcery_dynamodb.subscription import DynamoDBSubscriptionStrategy
 
-if TYPE_CHECKING:
-    import boto3
+import boto3
 
 
 class DynamoDBConfig(BaseModel):
@@ -97,8 +96,8 @@ class DynamoDBBackend(Backend):
 
     def configure(
         self,
-        dynamodb_client: "boto3.client",
-        dynamodb_resource: "boto3.resource",
+        dynamodb_client: boto3.client,
+        dynamodb_resource: boto3.resource,
         config: DynamoDBConfig | None = None,
     ) -> Self:
         """
