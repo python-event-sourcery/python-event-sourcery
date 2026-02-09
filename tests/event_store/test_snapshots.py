@@ -74,3 +74,46 @@ def test_rejects_snapshot_with_incorrect_version(
     outdated = 3 - 1
     with pytest.raises(VersioningMismatch):
         when.snapshots(a_snapshot(version=outdated), on=stream_id)
+
+
+@pytest.mark.skip_backend(backend=["in_memory_backend"], reason="bug spotted")
+def test_ignores_snapshot_outside_query_range(given: Given, when: When, then: Then) -> None:
+    given.stream(stream_id := StreamId())
+    given.events(an_event(), second := an_event(), third := an_event(), on=stream_id)
+    
+    when.appends(fourth := an_event(), an_event(), to=stream_id)
+    when.snapshots(a_snapshot(), on=stream_id)
+
+    assert then.stream(stream_id).slice(start=2, stop=5) == [second, third, fourth]
+
+
+@pytest.mark.skip_backend(backend=["in_memory_backend", "kurrentdb_backend"], reason="bug spotted")
+def test_selects_latest_snapshot_within_range(given: Given, when: When, then: Then) -> None:
+    given.stream(stream_id := StreamId())
+
+    given.events(an_event(), an_event(), an_event(), on=stream_id)
+    given.snapshot(a_snapshot(), on=stream_id)
+    given.events(an_event(), an_event(), an_event(), on=stream_id)
+    given.snapshot(v6_snapshot := a_snapshot(), on=stream_id)
+    given.events(seventh := an_event(), an_event(), an_event(), on=stream_id)
+    given.snapshot(a_snapshot(), on=stream_id)
+
+    assert then.stream(stream_id).slice(start=4, stop=8) == [v6_snapshot, seventh]
+
+
+@pytest.mark.skip_backend(
+    backend=["kurrentdb_backend", "sqlalchemy_sqlite_backend", "sqlalchemy_postgres_backend"],
+    reason="bug spotted",
+)
+def test_removes_stream_with_snapshots(given: Given, when: When, then: Then) -> None:
+    given.stream(stream_id := StreamId())
+    given.events(an_event(), an_event(), on=stream_id)
+    given.snapshot(a_snapshot(), on=stream_id)
+    given.events(an_event(), on=stream_id)
+    given.snapshot(a_snapshot(), on=stream_id)
+
+    when.deletes(stream_id)
+
+    then.stream(stream_id).is_empty()
+    then.stream(stream_id).receives(new_event := an_event(version=1))
+    then.stream(stream_id).loads_only([new_event])
