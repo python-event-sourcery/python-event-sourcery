@@ -57,6 +57,9 @@ class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):
             # Filter to only return items with tries_left > 0
             items = [item for item in items if item.get("tries_left", 0) > 0]
             
+            # Sort by position to ensure proper ordering
+            items.sort(key=lambda x: int(x.get("position", 0)))
+            
             # Limit to requested number
             for item in items[:limit]:
                 yield self._publish_context(item)
@@ -88,12 +91,12 @@ class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):
             name=data["name"],
             data=data["data"],
             context=data["context"],
-            version=data.get("version"),
+            version=int(data["version"]) if data.get("version") is not None else None,
         )
         
         recorded = RecordedRaw(
             entry=raw_event,
-            position=item.get("position", 0),
+            position=int(item.get("position", 0)),
             tenant_id=data.get("tenant_id", "default"),
         )
         

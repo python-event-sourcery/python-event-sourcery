@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
 
 from event_sourcery import StreamId, TenantId
@@ -14,6 +14,7 @@ from event_sourcery._event_store.event_store import StorageStrategy
 from event_sourcery._event_store.tenant_id import DEFAULT_TENANT
 from event_sourcery._event_store.versioning import NO_VERSIONING, Versioning
 from event_sourcery.exceptions import (
+    AnotherStreamWithThisNameButOtherIdExists,
     ConcurrentStreamWriteError,
     ExpectedVersionUsedOnVersionlessStream,
     NoExpectedVersionGivenOnVersionedStream,
@@ -49,30 +50,65 @@ class DynamoDBStorageStrategy(StorageStrategy):
         stop: int | None = None,
     ) -> list[RawEvent]:
         """Fetch events from a stream within the given range."""
-        table = self._client.resource.Table(self._config.events_table_name)
+        events_table = self._client.resource.Table(self._config.events_table_name)
+        snapshots_table = self._client.resource.Table(self._config.snapshots_table_name)
         
-        # Query for events in this stream for this tenant
+        # First, try to find the latest snapshot for this stream
+        snapshot_pk = self._make_stream_pk(stream_id)
+        latest_snapshot = None
+        
+        try:
+            # Query snapshots in descending order to get the latest
+            response = snapshots_table.query(
+                KeyConditionExpression=Key("pk").eq(snapshot_pk),
+                ScanIndexForward=False,  # Sort descending to get latest first
+                Limit=1,
+            )
+            
+            snapshot_items = response.get("Items", [])
+            if snapshot_items:
+                snapshot_item = snapshot_items[0]
+                snapshot_version = int(snapshot_item["version"]) if snapshot_item.get("version") is not None else None
+                
+                # Check if snapshot is within the requested range
+                if (start is None or snapshot_version is None or snapshot_version >= start) and \
+                   (stop is None or snapshot_version is None or snapshot_version < stop):
+                    latest_snapshot = self._item_to_raw_event(snapshot_item)
+        except ClientError:
+            pass
+        
+        # Query for events
         key_condition = Key("pk").eq(self._make_stream_pk(stream_id)) & Key("sk").begins_with("EVENT#")
         
         try:
-            response = table.query(
+            response = events_table.query(
                 KeyConditionExpression=key_condition,
                 ScanIndexForward=True,  # Sort by SK ascending (version order)
             )
             
             items = response.get("Items", [])
             
-            # Filter by version range if specified
+            # If we have a snapshot, filter events to only include those after the snapshot
+            min_version = latest_snapshot.version if latest_snapshot else None
+            
+            # Filter by version range
             events = []
             for item in items:
                 version = int(item["version"]) if item.get("version") is not None else None
+                # Skip events before start or before/at snapshot version
                 if start is not None and version is not None and version < start:
+                    continue
+                if min_version is not None and version is not None and version <= min_version:
                     continue
                 if stop is not None and version is not None and version >= stop:
                     break
                 events.append(self._item_to_raw_event(item))
-                
-            return events
+            
+            # Return snapshot + newer events, or just events if no snapshot
+            if latest_snapshot:
+                return [latest_snapshot] + events
+            else:
+                return events
             
         except ClientError as e:
             if e.response["Error"]["Code"] == "ResourceNotFoundException":
@@ -126,6 +162,15 @@ class DynamoDBStorageStrategy(StorageStrategy):
         if not stream_meta:
             # New stream
             next_version = 1 if versioning is not NO_VERSIONING else None
+            
+            # Check if a stream with the same name but different ID exists
+            if stream_id.name:
+                existing_with_name = self._check_stream_name_uniqueness(stream_id)
+                if existing_with_name:
+                    raise AnotherStreamWithThisNameButOtherIdExists(
+                        f"Stream with name '{stream_id.name}' already exists with ID {existing_with_name}"
+                    )
+            
             # Create stream metadata
             try:
                 tenant_id_str = str(self._tenant_id) if self._tenant_id else "default"
@@ -278,7 +323,9 @@ class DynamoDBStorageStrategy(StorageStrategy):
 
     def _make_stream_pk(self, stream_id: StreamId) -> str:
         """Create the partition key for a stream."""
-        return f"TENANT#{self._tenant_id}#STREAM#{stream_id}"
+        # Include category in the key to ensure streams with same name/uuid but different categories are separate
+        category_part = f"#{stream_id.category}" if stream_id.category else ""
+        return f"TENANT#{self._tenant_id}#STREAM#{stream_id}{category_part}"
 
     def _get_stream_metadata(self, stream_id: StreamId) -> dict[str, Any] | None:
         """Get the metadata for a stream."""
@@ -319,7 +366,7 @@ class DynamoDBStorageStrategy(StorageStrategy):
             "tenant_id": tenant_id_str,
             "uuid": str(event.uuid),
             "stream_id": str(event.stream_id),
-            "stream_id_hex": str(event.stream_id),
+            "stream_id_hex": event.stream_id.hex,
             "stream_id_name": event.stream_id.name,
             "stream_id_category": event.stream_id.category or "",
             "created_at": event.created_at.isoformat(),
@@ -334,9 +381,10 @@ class DynamoDBStorageStrategy(StorageStrategy):
         from datetime import datetime
         
         # Reconstruct StreamId
+        category = item.get("stream_id_category")
         stream_id = StreamId(
             from_hex=item["stream_id_hex"],
-            category=item.get("stream_id_category"),
+            category=category if category else None,
             name=item.get("stream_id_name"),
         )
         
@@ -368,6 +416,39 @@ class DynamoDBStorageStrategy(StorageStrategy):
         except ClientError:
             return 0
 
+    def _check_stream_name_uniqueness(self, stream_id: StreamId) -> str | None:
+        """Check if a stream with the same name but different ID exists."""
+        if not stream_id.name:
+            return None
+            
+        table = self._client.resource.Table(self._config.streams_table_name)
+        
+        # Scan for streams with the same name in the same tenant
+        # Note: This is not efficient for large tables, but necessary for correctness
+        tenant_id_str = str(self._tenant_id) if self._tenant_id else "default"
+        
+        try:
+            response = table.scan(
+                FilterExpression=Attr("stream_name").eq(stream_id.name) & 
+                               Attr("tenant_id").eq(tenant_id_str) &
+                               Attr("sk").eq("STREAM#META"),
+            )
+            
+            items = response.get("Items", [])
+            for item in items:
+                # Check if it's a different stream ID
+                existing_id = item.get("stream_id_hex", item.get("stream_id"))
+                existing_category = item.get("category", "")
+                
+                # Streams with same name but different categories are allowed
+                if existing_category == (stream_id.category or "") and existing_id and existing_id != str(stream_id):
+                    return existing_id
+                    
+        except ClientError:
+            pass
+            
+        return None
+    
     def _allocate_positions(self, count: int) -> int:
         """Allocate positions for a batch of events atomically."""
         table = self._client.resource.Table(self._config.streams_table_name)

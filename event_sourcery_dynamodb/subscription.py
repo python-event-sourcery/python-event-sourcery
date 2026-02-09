@@ -96,37 +96,53 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
         while True:
             start_time = time.monotonic()
             batch = []
+            current_scan_position = position
             
-            # Query events starting from position
-            events = self._scan_events_from_position(position, batch_size, filter_fn)
-            
-            for event_item in events:
-                if len(batch) >= batch_size:
+            # Keep trying to fill the batch until we have enough events or timeout
+            while len(batch) < batch_size:
+                elapsed = time.monotonic() - start_time
+                if elapsed >= timelimit.total_seconds():
                     break
                     
-                event_position = event_item.get("position")
-                if event_position is None:
-                    continue
+                # Query events starting from position
+                events = self._scan_events_from_position(
+                    current_scan_position, 
+                    batch_size - len(batch),  # Only fetch what we still need
+                    filter_fn
+                )
                 
-                # Convert Decimal to int for comparison
-                event_position = int(event_position)
+                events_added = False
+                for event_item in events:
+                    if len(batch) >= batch_size:
+                        break
+                        
+                    event_position = event_item.get("position")
+                    if event_position is None:
+                        continue
+                    
+                    # Convert Decimal to int for comparison
+                    event_position = int(event_position)
+                    
+                    # Since DynamoDB uses atomic position allocation, we can trust positions are sequential
+                    if event_position > current_scan_position:
+                        batch.append(self._item_to_recorded_raw(event_item))
+                        events_added = True
+                        # Track highest position seen to avoid re-scanning
+                        current_scan_position = event_position
                 
-                # Since DynamoDB uses atomic position allocation, we can trust positions are sequential
-                if event_position > position:
-                    batch.append(self._item_to_recorded_raw(event_item))
+                if not events_added:
+                    # No new events found, wait a bit before retrying
+                    remaining = timelimit.total_seconds() - (time.monotonic() - start_time)
+                    if remaining > 0:
+                        time.sleep(min(0.01, remaining))  # Sleep for 10ms or remaining time
             
+            # Update position to continue after the last event we processed
             if batch:
-                # Update position to continue after the last event we processed
                 last_event_position = batch[-1].position
-                position = last_event_position + 1
-                yield batch
-            else:
-                # No events found - wait for remaining time then yield empty batch
-                elapsed = time.monotonic() - start_time
-                remaining = timelimit.total_seconds() - elapsed
-                if remaining > 0:
-                    time.sleep(remaining)
-                yield []
+                position = last_event_position
+                
+            # Always yield the batch (empty or not) after the timeout
+            yield batch
 
     def _scan_events_from_position(
         self,
@@ -185,9 +201,10 @@ class DynamoDBSubscriptionStrategy(SubscriptionStrategy):
     def _item_to_recorded_raw(self, item: dict[str, Any]) -> RecordedRaw:
         """Convert a DynamoDB item to RecordedRaw."""
         # Reconstruct StreamId
+        category = item.get("stream_id_category")
         stream_id = StreamId(
             from_hex=item["stream_id_hex"],
-            category=item.get("stream_id_category"),
+            category=category if category else None,
             name=item.get("stream_id_name"),
         )
         
