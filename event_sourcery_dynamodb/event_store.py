@@ -7,17 +7,15 @@ from uuid import UUID
 
 from boto3.dynamodb.conditions import Attr, Key
 
-from event_sourcery import StreamId, TenantId
-from event_sourcery import DEFAULT_TENANT, NO_VERSIONING
+from event_sourcery import DEFAULT_TENANT, NO_VERSIONING, StreamId, TenantId
 from event_sourcery.event import Position, RawEvent, RecordedRaw
-from event_sourcery.interfaces import StorageStrategy, Versioning
 from event_sourcery.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     ConcurrentStreamWriteError,
     ExpectedVersionUsedOnVersionlessStream,
     NoExpectedVersionGivenOnVersionedStream,
 )
-
+from event_sourcery.interfaces import StorageStrategy, Versioning
 from event_sourcery_dynamodb.config import DynamoDBClient, DynamoDBConfig
 from event_sourcery_dynamodb.outbox import DynamoDBOutboxStorageStrategy
 

@@ -2,9 +2,8 @@
 
 from collections.abc import Iterator
 
-import pytest
-
 import boto3
+import pytest
 from botocore.config import Config
 
 from event_sourcery_dynamodb import DynamoDBBackend, DynamoDBConfig

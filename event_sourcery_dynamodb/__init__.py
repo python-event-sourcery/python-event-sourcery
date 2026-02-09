@@ -1,14 +1,14 @@
 __all__ = [
     "DynamoDBBackend",
-    "DynamoDBConfig", 
-    "DynamoDBStorageStrategy",
     "DynamoDBClient",
+    "DynamoDBConfig",
+    "DynamoDBStorageStrategy",
 ]
 
 from contextlib import suppress
-from typing_extensions import Self
 
 import boto3
+from typing_extensions import Self
 
 from event_sourcery import TenantId
 from event_sourcery.backend import Backend, not_configured

@@ -10,12 +10,10 @@ from uuid import UUID
 
 from boto3.dynamodb.conditions import Attr
 
-from event_sourcery_dynamodb.config import DynamoDBClient, DynamoDBConfig
-
-from event_sourcery import StreamId
-from event_sourcery import DEFAULT_TENANT
+from event_sourcery import DEFAULT_TENANT, StreamId
 from event_sourcery.event import Position, RawEvent, RecordedRaw
 from event_sourcery.interfaces import SubscriptionStrategy
+from event_sourcery_dynamodb.config import DynamoDBClient, DynamoDBConfig
 
 
 class DynamoDBSubscriptionStrategy(SubscriptionStrategy):

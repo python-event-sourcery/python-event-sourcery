@@ -11,12 +11,10 @@ from uuid import UUID
 
 from boto3.dynamodb.conditions import Attr
 
-from event_sourcery.interfaces import OutboxFiltererStrategy
-from event_sourcery_dynamodb.config import DynamoDBClient, DynamoDBConfig
-
 from event_sourcery import StreamId
 from event_sourcery.event import RawEvent, RecordedRaw
-from event_sourcery.interfaces import OutboxStorageStrategy
+from event_sourcery.interfaces import OutboxFiltererStrategy, OutboxStorageStrategy
+from event_sourcery_dynamodb.config import DynamoDBClient, DynamoDBConfig
 
 
 class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):

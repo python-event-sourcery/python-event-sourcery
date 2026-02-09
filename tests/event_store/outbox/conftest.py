@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import Mock
 from uuid import uuid4
 
+import boto3
 import django as django_framework
 import pytest
 from django.core.management import call_command as django_command
@@ -11,6 +12,7 @@ from event_sourcery import StreamId
 from event_sourcery.backend import Backend, InMemoryBackend, InMemoryConfig
 from event_sourcery.event import WrappedEvent
 from event_sourcery_django import DjangoBackend, DjangoConfig
+from event_sourcery_dynamodb import DynamoDBBackend, DynamoDBConfig
 from event_sourcery_kurrentdb import KurrentDBBackend, KurrentDBConfig
 from event_sourcery_sqlalchemy import SQLAlchemyBackend, SQLAlchemyConfig
 from tests.backend.kurrentdb import kurrentdb_client
@@ -18,9 +20,6 @@ from tests.backend.sqlalchemy import (
     sqlalchemy_postgres_session,
     sqlalchemy_sqlite_session,
 )
-
-import boto3
-from event_sourcery_dynamodb import DynamoDBBackend, DynamoDBConfig
 
 
 @pytest.fixture()
@@ -74,7 +73,6 @@ def sqlalchemy_postgres_backend(max_attempts: int) -> Iterator[SQLAlchemyBackend
 
 @pytest.fixture()
 def dynamodb_backend(max_attempts: int) -> Iterator[DynamoDBBackend]:
-
     dynamodb_client = boto3.client(
         "dynamodb",
         endpoint_url="http://localhost:8000",
