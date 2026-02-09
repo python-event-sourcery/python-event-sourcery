@@ -5,18 +5,17 @@ from __future__ import annotations
 import time
 from collections.abc import Iterator
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import UUID
 
 from boto3.dynamodb.conditions import Attr
 
-if TYPE_CHECKING:
-    from event_sourcery_dynamodb import DynamoDBClient, DynamoDBConfig
+from event_sourcery_dynamodb.config import DynamoDBClient, DynamoDBConfig
 
 from event_sourcery import StreamId
-from event_sourcery._event_store.event.dto import Position, RawEvent, RecordedRaw
-from event_sourcery._event_store.subscription.interfaces import SubscriptionStrategy
-from event_sourcery._event_store.tenant_id import DEFAULT_TENANT
+from event_sourcery import DEFAULT_TENANT
+from event_sourcery.event import Position, RawEvent, RecordedRaw
+from event_sourcery.interfaces import SubscriptionStrategy
 
 
 class DynamoDBSubscriptionStrategy(SubscriptionStrategy):

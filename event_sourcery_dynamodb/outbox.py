@@ -6,18 +6,17 @@ import time
 from collections.abc import Generator, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import UUID
 
 from boto3.dynamodb.conditions import Attr
 
-if TYPE_CHECKING:
-    from event_sourcery._event_store.outbox import OutboxFiltererStrategy
-    from event_sourcery_dynamodb import DynamoDBClient, DynamoDBConfig
+from event_sourcery.interfaces import OutboxFiltererStrategy
+from event_sourcery_dynamodb.config import DynamoDBClient, DynamoDBConfig
 
 from event_sourcery import StreamId
-from event_sourcery._event_store.event.dto import RawEvent, RecordedRaw
-from event_sourcery._event_store.outbox import OutboxStorageStrategy
+from event_sourcery.event import RawEvent, RecordedRaw
+from event_sourcery.interfaces import OutboxStorageStrategy
 
 
 class DynamoDBOutboxStorageStrategy(OutboxStorageStrategy):

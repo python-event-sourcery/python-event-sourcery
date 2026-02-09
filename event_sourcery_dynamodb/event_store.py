@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import UUID
 
 from boto3.dynamodb.conditions import Attr, Key
 
 from event_sourcery import StreamId, TenantId
-from event_sourcery._event_store.event.dto import Position, RawEvent, RecordedRaw
-from event_sourcery._event_store.event_store import StorageStrategy
-from event_sourcery._event_store.tenant_id import DEFAULT_TENANT
-from event_sourcery._event_store.versioning import NO_VERSIONING, Versioning
+from event_sourcery import DEFAULT_TENANT, NO_VERSIONING
+from event_sourcery.event import Position, RawEvent, RecordedRaw
+from event_sourcery.interfaces import StorageStrategy, Versioning
 from event_sourcery.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     ConcurrentStreamWriteError,
@@ -19,9 +18,8 @@ from event_sourcery.exceptions import (
     NoExpectedVersionGivenOnVersionedStream,
 )
 
-if TYPE_CHECKING:
-    from event_sourcery_dynamodb import DynamoDBClient, DynamoDBConfig
-    from event_sourcery_dynamodb.outbox import DynamoDBOutboxStorageStrategy
+from event_sourcery_dynamodb.config import DynamoDBClient, DynamoDBConfig
+from event_sourcery_dynamodb.outbox import DynamoDBOutboxStorageStrategy
 
 
 class DynamoDBStorageStrategy(StorageStrategy):
