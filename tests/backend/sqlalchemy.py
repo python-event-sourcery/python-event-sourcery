@@ -6,9 +6,16 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from sqlalchemy import MetaData, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import Session, as_declarative, close_all_sessions, sessionmaker
+from sqlalchemy.orm import (
+    DeclarativeBase as Declarative,
+)
+from sqlalchemy.orm import (
+    Session,
+    close_all_sessions,
+    sessionmaker,
+)
 
 from event_sourcery_sqlalchemy import (
     SQLAlchemyBackend,
@@ -17,9 +24,8 @@ from event_sourcery_sqlalchemy import (
 )
 
 
-@as_declarative()
-class DeclarativeBase:
-    metadata: MetaData
+class DeclarativeBase(Declarative):
+    pass
 
 
 configure_models(DeclarativeBase)

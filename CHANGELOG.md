@@ -5,6 +5,8 @@
 - In transaction subscription to category
 - Custom context support in `Repository.aggregate()` via optional `context` parameter
 - `WrappedEvent.get_context()` method for typed context retrieval
+### Fixes
+- event_sourcery_sqlalchemy.configure_models annotation for sqlalchemy.orm.DeclarativeBase
 
 ## 0.5.0
 ### Added
