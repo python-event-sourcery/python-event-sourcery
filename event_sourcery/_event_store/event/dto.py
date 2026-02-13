@@ -73,6 +73,7 @@ class Event(BaseModel, extra="forbid"):
 
 
 TEvent = TypeVar("TEvent", bound=Event)
+TContext = TypeVar("TContext", bound=BaseModel)
 
 
 class Context(BaseModel, extra="allow"):
@@ -127,8 +128,18 @@ class WrappedEvent(Generic[TEvent]):
     context: Context = dataclasses.field(default_factory=Context)
 
     @classmethod
-    def wrap(cls, event: TEvent, version: int | None) -> "WrappedEvent[TEvent]":
-        return WrappedEvent[TEvent](event=event, version=version)
+    def wrap(
+        cls,
+        event: TEvent,
+        version: int | None,
+        context: Context | None = None,
+    ) -> "WrappedEvent[TEvent]":
+        return WrappedEvent[TEvent](
+            event=event, version=version, context=context or Context()
+        )
+
+    def get_context(self, context_type: type[TContext]) -> TContext:
+        return context_type.model_validate(self.context.model_dump())
 
 
 @dataclasses.dataclass(frozen=True)
