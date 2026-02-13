@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from typing import Generic, TypeVar, cast
 
 from event_sourcery import EventStore, StreamId, StreamUUID
-from event_sourcery.event import Event, WrappedEvent
+from event_sourcery.event import Context, Event, WrappedEvent
 from event_sourcery.event_sourcing import Aggregate
 
 TAggregate = TypeVar("TAggregate", bound=Aggregate)
@@ -27,6 +27,7 @@ class Repository(Generic[TAggregate]):
         self,
         uuid: StreamUUID,
         aggregate: TAggregate,
+        context: Context | None = None,
     ) -> Iterator[TAggregate]:
         """
         Context manager for loading an aggregate instance.
@@ -38,6 +39,7 @@ class Repository(Generic[TAggregate]):
         Args:
             uuid (StreamUUID): The unique identifier of the aggregate's stream.
             aggregate (TAggregate): The aggregate initial instance to load state into.
+            context (Context | None): Optional context to attach to all emitted events.
 
         Yields:
             TAggregate: The loaded and ready-to-use aggregate instance.
@@ -45,7 +47,7 @@ class Repository(Generic[TAggregate]):
         stream_id = StreamId(uuid=uuid, name=uuid.name, category=aggregate.category)
         old_version = self._load(stream_id, aggregate)
         yield aggregate
-        self._save(aggregate, old_version, stream_id)
+        self._save(aggregate, old_version, stream_id, context)
 
     def _load(self, stream_id: StreamId, aggregate: TAggregate) -> int:
         stream = self._event_store.load_stream(stream_id)
@@ -61,11 +63,12 @@ class Repository(Generic[TAggregate]):
         aggregate: TAggregate,
         old_version: int,
         stream_id: StreamId,
+        context: Context | None = None,
     ) -> None:
         with aggregate.__persisting_changes__() as pending:
             start_from = old_version + 1
             events = [
-                WrappedEvent.wrap(event, version)
+                WrappedEvent.wrap(event, version, context=context)
                 for version, event in enumerate(pending, start=start_from)
             ]
 

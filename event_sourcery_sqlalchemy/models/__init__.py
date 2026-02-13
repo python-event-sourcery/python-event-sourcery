@@ -1,7 +1,7 @@
 from typing import Protocol
 
 from sqlalchemy import MetaData
-from sqlalchemy.orm import registry
+from sqlalchemy.orm import DeclarativeBase, registry
 from sqlalchemy.orm.clsregistry import ClsRegistryToken
 
 from event_sourcery_sqlalchemy.models.base import (
@@ -28,7 +28,7 @@ _class_registry: dict[str, type | ClsRegistryToken] = {}
 
 
 def configure_models(
-    base: type[BaseProto],
+    base: type[BaseProto | DeclarativeBase],
     event_model: type[BaseEvent] = DefaultEvent,
     stream_model: type[BaseStream] = DefaultStream,
     snapshot_model: type[BaseSnapshot] = DefaultSnapshot,

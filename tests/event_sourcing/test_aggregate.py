@@ -3,6 +3,7 @@ from uuid import uuid4
 import pytest
 
 from event_sourcery import Event, EventStore, StreamId, StreamUUID
+from event_sourcery.event import Context
 from event_sourcery.event_sourcing import Aggregate, Repository
 from event_sourcery.exceptions import ConcurrentStreamWriteError
 
@@ -120,6 +121,25 @@ def test_repository_supports_optimistic_locking(
                 switch_third_incarnation.turn_off()
 
     assert not switch_second_incarnation.shines
+
+
+def test_context_is_attached_to_events_saved_by_repository(
+    repo: Repository[LightSwitch],
+    event_store: EventStore,
+) -> None:
+    class RequestContext(Context):
+        user_id: str
+
+    uuid = StreamUUID(uuid4())
+    ctx = RequestContext(user_id="user-123")
+    with repo.aggregate(uuid, LightSwitch(), context=ctx) as switch:
+        switch.turn_on()
+
+    stream_id = StreamId(uuid, category=LightSwitch.category)
+    events = list(event_store.load_stream(stream_id))
+    assert len(events) == 1
+    loaded_ctx = events[0].get_context(RequestContext)
+    assert loaded_ctx.user_id == "user-123"
 
 
 @pytest.fixture()
