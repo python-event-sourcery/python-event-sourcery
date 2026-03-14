@@ -43,15 +43,15 @@ def test_light_switch_changes_are_preserved_by_repository(
     repo: Repository[LightSwitch],
 ) -> None:
     uuid = StreamUUID(uuid4())
-    with repo.aggregate(uuid, LightSwitch()) as switch_first_incarnation:
-        switch_first_incarnation.turn_on()
+    with repo.aggregate(uuid, LightSwitch()) as wrapped:
+        wrapped.aggregate.turn_on()
 
-    with repo.aggregate(uuid, LightSwitch()) as switch_second_incarnation:
+    with repo.aggregate(uuid, LightSwitch()) as wrapped:
         try:
-            switch_second_incarnation.turn_on()
+            wrapped.aggregate.turn_on()
         except LightSwitch.AlreadyTurnedOn:
             # o mon Dieu, I made a mistake!
-            switch_second_incarnation.turn_off()
+            wrapped.aggregate.turn_off()
 
 
 def test_nothing_when_no_changes_on_aggregate(
@@ -70,16 +70,16 @@ def test_repository_supports_optimistic_locking(
     repo: Repository[LightSwitch],
 ) -> None:
     uuid = StreamUUID(uuid4())
-    with repo.aggregate(uuid, LightSwitch()) as switch_first_incarnation:
-        switch_first_incarnation.turn_on()
+    with repo.aggregate(uuid, LightSwitch()) as wrapped:
+        wrapped.aggregate.turn_on()
 
     with pytest.raises(ConcurrentStreamWriteError):
-        with repo.aggregate(uuid, LightSwitch()) as switch_second_incarnation:
-            with repo.aggregate(uuid, LightSwitch()) as switch_third_incarnation:
-                switch_second_incarnation.turn_off()
-                switch_third_incarnation.turn_off()
+        with repo.aggregate(uuid, LightSwitch()) as second:
+            with repo.aggregate(uuid, LightSwitch()) as third:
+                second.aggregate.turn_off()
+                third.aggregate.turn_off()
 
-    assert not switch_second_incarnation.shines
+    assert not second.aggregate.shines
 
 
 def test_context_is_attached_to_events_saved_by_repository(
@@ -91,8 +91,8 @@ def test_context_is_attached_to_events_saved_by_repository(
 
     uuid = StreamUUID(uuid4())
     ctx = RequestContext(user_id="user-123")
-    with repo.aggregate(uuid, LightSwitch(), context=ctx) as switch:
-        switch.turn_on()
+    with repo.aggregate(uuid, LightSwitch(), context=ctx) as wrapped:
+        wrapped.aggregate.turn_on()
 
     stream_id = StreamId(uuid, category=LightSwitch.category)
     events = list(event_store.load_stream(stream_id))
