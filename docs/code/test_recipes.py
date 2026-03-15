@@ -289,9 +289,9 @@ def test_event_sourcing(sqlite_in_memory_backend) -> None:
     from event_sourcery import StreamUUID
 
     stream_id = StreamUUID(name="light_switch/1")
-    with repository.aggregate(stream_id, LightSwitch()) as light_switch:
-        light_switch.switch_on()
-        light_switch.switch_on()
+    with repository.aggregate(stream_id, LightSwitch()) as wrapped:
+        wrapped.aggregate.switch_on()
+        wrapped.aggregate.switch_on()
     # --8<-- [end:event_sourcing_03]
 
     events = backend.event_store.load_stream(

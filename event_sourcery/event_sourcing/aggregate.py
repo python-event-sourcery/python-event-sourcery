@@ -103,11 +103,21 @@ class WrappedAggregate(Generic[TAggregate]):
 
     @property
     def version(self) -> int:
+        """Current version of the aggregate, including pending events."""
         return self.stored_version + len(getattr(self.aggregate, "__changes__", []))
 
     @property
     def is_new(self) -> bool:
+        """Whether the aggregate is newly created (no events existed before)."""
         return self.stored_version == 0
 
     def get_context(self, context_type: type[TContext]) -> TContext:
+        """Convert the stored context to a specific context type.
+
+        Args:
+            context_type: The target context class to validate against.
+
+        Returns:
+            An instance of *context_type* populated from the stored context data.
+        """
         return context_type.model_validate(self.context.model_dump())

@@ -188,71 +188,84 @@ To sum up, [Event Sourcing] comes down to:
 Event Sourcery provides a base class for an [Aggregate] and repository implementation that makes it much easy to create or read/change [Aggregate].
 
 ```python
+from event_sourcery.event import Event
+from event_sourcery.event_sourcing import Aggregate
+
+
+class TurnedOn(Event):
+    pass
+
+
+class TurnedOff(Event):
+    pass
+
+
 class LightSwitch(Aggregate):
     """A simple aggregate that models a light switch."""
+    category = "light_switch"  # stream category for all LightSwitch aggregates
+
     class AlreadyTurnedOn(Exception):
         pass
 
     class AlreadyTurnedOff(Exception):
         pass
 
-    def __init__(
-        self, past_events: list[Event], changes: list[Event], stream_id: StreamId
-    ) -> None:
+    def __init__(self) -> None:
         # init any state you need in aggregate class to check conditions
         self._shines = False
 
-        # required for base class
-        super().__init__(past_events, changes, stream_id)
-
-    def _apply(self, event: Event) -> None:
-        # each aggregate need an _apply method to parse events
+    def __apply__(self, event: Event) -> None:
+        # each aggregate needs an __apply__ method to handle events
         match event:
-            case TurnedOn() as event:
+            case TurnedOn():
                 self._shines = True
-            case TurnedOff() as event:
+            case TurnedOff():
                 self._shines = False
 
     def turn_on(self) -> None:
-        # this is one of command methods
-        # we can rejest it (i.e. raise an exception)
+        # this is a command method
+        # we can reject it (i.e. raise an exception)
         # if current state does not allow this to proceed
-        # e.g. light is already on
         if self._shines:
             raise LightSwitch.AlreadyTurnedOn
-        self._event(TurnedOn)
+        self._emit(TurnedOn())
 
     def turn_off(self) -> None:
         if not self._shines:
             raise LightSwitch.AlreadyTurnedOff
-
-        self._event(TurnedOff)
+        self._emit(TurnedOff())
 ```
 
-To create a [Repository] tailored for a particular [Aggregate] class, we need  that class and [EventStore] instance: 
+To create a [Repository] tailored for a particular [Aggregate] class, we need an [EventStore] instance:
 
 ```python
-repository = Repository[LightSwitch](event_store, LightSwitch)
+from event_sourcery.event_sourcing import Repository
+
+repository = Repository[LightSwitch](event_store)
 ```
 
-A [Repository] exposes method to create a new instance of [Aggregate]:
+A [Repository] exposes a context manager to work with an [Aggregate]. It returns a [WrappedAggregate] that wraps the aggregate with stream metadata (version, timestamps, etc.):
 
 ```python
-stream_id = uuid4()
+from event_sourcery import StreamUUID
 
-with repository.new(stream_id=stream_id) as switch:
-    switch.turn_on()
+uuid = StreamUUID()
+
+with repository.aggregate(uuid, LightSwitch()) as wrapped:
+    wrapped.aggregate.turn_on()
+    print(wrapped.version)   # 1
+    print(wrapped.is_new)    # True
 ```
 
-...or to work with existing [Aggregate], making sure changes are saved at the end:
+Loading an existing [Aggregate] works the same way — events are replayed automatically:
 
 ```python
-with repository.aggregate(stream_id=stream_id) as switch_second_incarnation:
+with repository.aggregate(uuid, LightSwitch()) as wrapped:
     try:
-        switch_second_incarnation.turn_on()
+        wrapped.aggregate.turn_on()
     except LightSwitch.AlreadyTurnedOn:
         # o mon Dieu, I made a mistake!
-        switch_second_incarnation.turn_off()
+        wrapped.aggregate.turn_off()
 ```
 
 A [Repository] is a thin wrapper over Event Store. One can also write Aggregates even without using our base class and use [EventStore] directly!
@@ -262,3 +275,4 @@ A [Repository] is a thin wrapper over Event Store. One can also write Aggregates
 [Event Sourcing]: ../recipes/event_sourcing.md
 [Aggregate]: ../reference/event_sourcing/Aggregate.md
 [Repository]: ../reference/event_sourcing/Repository.md
+[WrappedAggregate]: ../reference/event_sourcing/WrappedAggregate.md
