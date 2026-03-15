@@ -2,53 +2,12 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery import Event, EventStore, StreamId, StreamUUID
+from event_sourcery import EventStore, StreamId, StreamUUID
 from event_sourcery.event import Context
-from event_sourcery.event_sourcing import Aggregate, Repository
+from event_sourcery.event_sourcing import Repository
 from event_sourcery.exceptions import ConcurrentStreamWriteError
 
-
-class TurnedOn(Event):
-    pass
-
-
-class TurnedOff(Event):
-    pass
-
-
-class LightSwitch(Aggregate):
-    category = "light_switch"
-
-    class AlreadyTurnedOn(Exception):
-        pass
-
-    class AlreadyTurnedOff(Exception):
-        pass
-
-    def __init__(self) -> None:
-        self._shines = False
-
-    def __apply__(self, event: Event) -> None:
-        match event:
-            case TurnedOn():
-                self._shines = True
-            case TurnedOff():
-                self._shines = False
-
-    def turn_on(self) -> None:
-        if self._shines:
-            raise LightSwitch.AlreadyTurnedOn
-        self._emit(TurnedOn())
-
-    def turn_off(self) -> None:
-        if not self._shines:
-            raise LightSwitch.AlreadyTurnedOff
-
-        self._emit(TurnedOff())
-
-    @property
-    def shines(self) -> bool:
-        return self._shines
+from .light_switch import LightSwitch, TurnedOff, TurnedOn
 
 
 def test_light_switch_aggregate_logs_events() -> None:
@@ -140,8 +99,3 @@ def test_context_is_attached_to_events_saved_by_repository(
     assert len(events) == 1
     loaded_ctx = events[0].get_context(RequestContext)
     assert loaded_ctx.user_id == "user-123"
-
-
-@pytest.fixture()
-def repo(event_store: EventStore) -> Repository[LightSwitch]:
-    return Repository[LightSwitch](event_store)
