@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2
+### Changed
+- **Breaking:** `Repository.aggregate()` yields `WrappedAggregate` instead of `Aggregate` directly
+
 ## 0.5.1
 ### Added
 - In transaction subscription to category
