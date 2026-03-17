@@ -28,6 +28,7 @@ nav:
         - 'Event Sourcing':
           - 'Aggregate': 'reference/event_sourcing/Aggregate.md'
           - 'Repository': 'reference/event_sourcing/Repository.md'
+          - 'WrappedAggregate': 'reference/event_sourcing/WrappedAggregate.md'
         - 'EventStore':
           - 'EventStore': 'reference/event_store/EventStore.md'
           - 'StreamId': 'reference/event_store/StreamId.md'
@@ -89,6 +90,7 @@ nav:
         - 'Packaging Of The Project Revised': 'adr/20250411-packaging-of-the-project-revised.md'
         - 'Privacy Data Encryption And Shredding': 'adr/20250729-privacy-data-encryption-and-shredding.md'
         - 'Packaging Of The Event Store Package': 'adr/20251004-packaging-of-the-event_store-package.md'
+        - 'Aggregate Metadata': 'adr/20260314-aggregate-metadata.md'
 
 plugins:
 - search

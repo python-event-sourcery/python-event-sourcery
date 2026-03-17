@@ -1,9 +1,11 @@
+import dataclasses
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import ClassVar
+from datetime import datetime
+from typing import ClassVar, Generic, TypeVar
 
-from event_sourcery import StreamCategory
-from event_sourcery.event import Event
+from event_sourcery import StreamCategory, StreamId
+from event_sourcery.event import Context, Event
 
 
 class Aggregate:
@@ -19,11 +21,15 @@ class Aggregate:
 
     Attributes:
         category (ClassVar[StreamCategory]): StreamCategory for the aggregate type (group streams).
-        _changes (list[Event]): List of yet not persisted events.
+        __changes__ (list[Event]): List of yet not persisted events.
     """
 
     category: ClassVar[StreamCategory]
     _changes: list[Event]
+
+    @property
+    def __changes__(self) -> list[Event]:
+        return list(getattr(self, "_changes", []))
 
     @contextmanager
     def __persisting_changes__(self) -> Iterator[Iterator[Event]]:
@@ -36,8 +42,7 @@ class Aggregate:
         Returns:
             Iterator[Iterator[Event]]: Iterator over unpersisted events.
         """
-        yield iter(getattr(self, "_changes", []))
-        self._changes = []
+        yield iter(self.__changes__)
 
     def __apply__(self, event: Event) -> None:
         """
@@ -65,3 +70,54 @@ class Aggregate:
             self._changes = []
         self.__apply__(event)
         self._changes.append(event)
+
+
+TAggregate = TypeVar("TAggregate", bound=Aggregate)
+TContext = TypeVar("TContext", bound=Context)
+
+
+@dataclasses.dataclass()
+class WrappedAggregate(Generic[TAggregate]):
+    """
+    Wraps an aggregate instance with stream-level metadata.
+
+    Provides access to the aggregate alongside information such as version,
+    timestamps, and whether the aggregate is newly created. Follows the same
+    wrapper pattern as ``WrappedEvent``.
+
+    Attributes:
+        aggregate: The aggregate instance.
+        stream_id: The stream identity (UUID + category).
+        context: The context passed for this operation, if any.
+        created_at: Timestamp of the first event in the stream.
+        updated_at: Timestamp of the last event in the stream.
+        stored_version: Number of events persisted before this session.
+    """
+
+    aggregate: TAggregate
+    stream_id: StreamId
+    context: Context = dataclasses.field(default_factory=Context)
+    stored_version: int = 0
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    @property
+    def version(self) -> int:
+        """Current version of the aggregate, including pending events."""
+        return self.stored_version + len(getattr(self.aggregate, "__changes__", []))
+
+    @property
+    def is_new(self) -> bool:
+        """Whether the aggregate is newly created (no events existed before)."""
+        return self.stored_version == 0
+
+    def get_context(self, context_type: type[TContext]) -> TContext:
+        """Convert the stored context to a specific context type.
+
+        Args:
+            context_type: The target context class to validate against.
+
+        Returns:
+            An instance of *context_type* populated from the stored context data.
+        """
+        return context_type.model_validate(self.context.model_dump())

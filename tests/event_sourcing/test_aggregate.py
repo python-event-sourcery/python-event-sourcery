@@ -2,53 +2,12 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery import Event, EventStore, StreamId, StreamUUID
+from event_sourcery import EventStore, StreamId, StreamUUID
 from event_sourcery.event import Context
-from event_sourcery.event_sourcing import Aggregate, Repository
+from event_sourcery.event_sourcing import Repository
 from event_sourcery.exceptions import ConcurrentStreamWriteError
 
-
-class TurnedOn(Event):
-    pass
-
-
-class TurnedOff(Event):
-    pass
-
-
-class LightSwitch(Aggregate):
-    category = "light_switch"
-
-    class AlreadyTurnedOn(Exception):
-        pass
-
-    class AlreadyTurnedOff(Exception):
-        pass
-
-    def __init__(self) -> None:
-        self._shines = False
-
-    def __apply__(self, event: Event) -> None:
-        match event:
-            case TurnedOn():
-                self._shines = True
-            case TurnedOff():
-                self._shines = False
-
-    def turn_on(self) -> None:
-        if self._shines:
-            raise LightSwitch.AlreadyTurnedOn
-        self._emit(TurnedOn())
-
-    def turn_off(self) -> None:
-        if not self._shines:
-            raise LightSwitch.AlreadyTurnedOff
-
-        self._emit(TurnedOff())
-
-    @property
-    def shines(self) -> bool:
-        return self._shines
+from .light_switch import LightSwitch, TurnedOff, TurnedOn
 
 
 def test_light_switch_aggregate_logs_events() -> None:
@@ -84,15 +43,15 @@ def test_light_switch_changes_are_preserved_by_repository(
     repo: Repository[LightSwitch],
 ) -> None:
     uuid = StreamUUID(uuid4())
-    with repo.aggregate(uuid, LightSwitch()) as switch_first_incarnation:
-        switch_first_incarnation.turn_on()
+    with repo.aggregate(uuid, LightSwitch()) as wrapped:
+        wrapped.aggregate.turn_on()
 
-    with repo.aggregate(uuid, LightSwitch()) as switch_second_incarnation:
+    with repo.aggregate(uuid, LightSwitch()) as wrapped:
         try:
-            switch_second_incarnation.turn_on()
+            wrapped.aggregate.turn_on()
         except LightSwitch.AlreadyTurnedOn:
             # o mon Dieu, I made a mistake!
-            switch_second_incarnation.turn_off()
+            wrapped.aggregate.turn_off()
 
 
 def test_nothing_when_no_changes_on_aggregate(
@@ -111,16 +70,16 @@ def test_repository_supports_optimistic_locking(
     repo: Repository[LightSwitch],
 ) -> None:
     uuid = StreamUUID(uuid4())
-    with repo.aggregate(uuid, LightSwitch()) as switch_first_incarnation:
-        switch_first_incarnation.turn_on()
+    with repo.aggregate(uuid, LightSwitch()) as wrapped:
+        wrapped.aggregate.turn_on()
 
     with pytest.raises(ConcurrentStreamWriteError):
-        with repo.aggregate(uuid, LightSwitch()) as switch_second_incarnation:
-            with repo.aggregate(uuid, LightSwitch()) as switch_third_incarnation:
-                switch_second_incarnation.turn_off()
-                switch_third_incarnation.turn_off()
+        with repo.aggregate(uuid, LightSwitch()) as second:
+            with repo.aggregate(uuid, LightSwitch()) as third:
+                second.aggregate.turn_off()
+                third.aggregate.turn_off()
 
-    assert not switch_second_incarnation.shines
+    assert not second.aggregate.shines
 
 
 def test_context_is_attached_to_events_saved_by_repository(
@@ -132,16 +91,11 @@ def test_context_is_attached_to_events_saved_by_repository(
 
     uuid = StreamUUID(uuid4())
     ctx = RequestContext(user_id="user-123")
-    with repo.aggregate(uuid, LightSwitch(), context=ctx) as switch:
-        switch.turn_on()
+    with repo.aggregate(uuid, LightSwitch(), context=ctx) as wrapped:
+        wrapped.aggregate.turn_on()
 
     stream_id = StreamId(uuid, category=LightSwitch.category)
     events = list(event_store.load_stream(stream_id))
     assert len(events) == 1
     loaded_ctx = events[0].get_context(RequestContext)
     assert loaded_ctx.user_id == "user-123"
-
-
-@pytest.fixture()
-def repo(event_store: EventStore) -> Repository[LightSwitch]:
-    return Repository[LightSwitch](event_store)
