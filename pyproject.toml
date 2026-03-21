@@ -14,6 +14,7 @@ license = "MIT"
 packages = [
     { include = "event_sourcery" },
     { include = "event_sourcery_django" },
+    { include = "event_sourcery_dynamodb" },
     { include = "event_sourcery_kurrentdb" },
     { include = "event_sourcery_sqlalchemy" },
 ]
@@ -25,6 +26,7 @@ more-itertools = "*"
 SQLAlchemy = {version = ">=2.0", optional = true}
 kurrentdbclient = {version = ">=1.0.6", optional = true}
 django = {version = ">=4,<6", optional = true}
+boto3 = {version = ">=1.26", optional = true}
 psycopg2-binary = ">2,<3"
 
 [tool.poetry.group.dev.dependencies]
@@ -45,6 +47,7 @@ deepdiff = "*"
 sqlalchemy = ["SQLAlchemy"]
 kurrentdb = ["kurrentdbclient"]
 django = ["django"]
+dynamodb = ["boto3"]
 
 [tool.pytest]
 addopts = ""
@@ -61,6 +64,7 @@ branch = true
 source = [
     "event_sourcery",
     "event_sourcery_django",
+    "event_sourcery_dynamodb",
     "event_sourcery_kurrentdb",
     "event_sourcery_sqlalchemy",
 ]

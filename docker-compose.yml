@@ -16,7 +16,8 @@ services:
       - '15672:15672'
 
   kurrentdb:
-    image: kurrentplatform/kurrentdb
+    image: ${KURRENTDB_IMAGE:-kurrentplatform/kurrentdb:25.0.1-experimental-arm64-8.0-jammy}
+    platform: ${KURRENTDB_PLATFORM:-linux/arm64}
     environment:
       - KURRENTDB_CLUSTER_SIZE=1
       - KURRENTDB_RUN_PROJECTIONS=All
@@ -26,3 +27,9 @@ services:
       - KURRENTDB_NODE_PORT=2113
     ports:
       - "2113:2113"
+
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"
