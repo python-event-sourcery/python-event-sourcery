@@ -31,12 +31,15 @@ First, `cd docs/documentation`
 ## Serve docs with live preview
 
 ```bash
-mkdocs serve
+zensical serve
 ```
 
-## Deploy docs to github pages (force)
+## Deploy docs to github pages
+
+Build the static site into `site/` and publish it with the GitHub Actions
+workflow for GitHub Pages (see https://zensical.org/docs/publish-your-site/):
 
 ```bash
-mkdocs gh-deploy --force
+zensical build --clean
 ```
 

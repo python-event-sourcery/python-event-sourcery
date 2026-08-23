@@ -12,7 +12,7 @@ test:
 
 .PHONY: docs-serve
 docs-serve:
-	poetry run mkdocs serve -f mkdocs.yml
+	poetry run zensical serve
 
 .PHONY: lint-fix-docs
 lint-fix-docs:

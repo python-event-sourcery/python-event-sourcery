@@ -318,7 +318,7 @@ def test_multitenancy(sqlite_in_memory_backend, event_cls) -> None:
     )
 
     # --8<-- [start:multitenancy_02]
-    from event_sourcery.backend import DEFAULT_TENANT
+    from event_sourcery import DEFAULT_TENANT
     # --8<-- [end:multitenancy_02]
 
     # --8<-- [start:multitenancy_03]

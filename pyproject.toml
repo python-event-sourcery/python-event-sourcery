@@ -33,10 +33,9 @@ mypy = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-django = {version = "*"}
-mkdocs-material = "^8.3.9"
+zensical = ">=0.0.11"
 psycopg2-binary = "^2.9.3"
-mkdocstrings = {version = "*", extras = ["python"]}
-pymdown-extensions = "*"
+mkdocstrings = {extras = ["python"], version = "^1.0.6"}
 time-machine = "*"
 pika = "*"
 deepdiff = "*"
@@ -50,6 +49,7 @@ django = ["django"]
 addopts = ""
 
 [tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
 markers = [
     "not_implemented: skip not implemented yet backend functionality",
     "skip_backend: skip features not supported by backend",
@@ -126,7 +126,7 @@ ignore = [
 "event_sourcery_django/models.py" = [
     "RUF012",  # Mutable class attributes should be annotated with typing.ClassVar
 ]
-"docs/documentation/code/*" = [
+"docs/code/*" = [
    "S101",  # Use of assert detected
    "N806",  # Variables in function should be lowercase
    "B018",  # Useless expressions

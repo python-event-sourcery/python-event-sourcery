@@ -64,6 +64,6 @@ You can now use [EventStore] to load events from a stream or append new events.
 [Backend]: ../reference/event_store/backend/Backend.md
 [EventStore]: ../reference/event_store/EventStore.md
 [SQLAlchemy]: ../reference/backends/sqlalchemy.md
-[SQLAlchemyBackend]: ../reference/backends/sqlalchemy.md#event_sourcery_sqlalchemysqlalchemybackend
-[KurrentDBBackend]: ../reference/backends/kurrentdb.md#event_sourcery_kurrentdbkurrentdbbackend
-[DjangoBackend]: ../reference/backends/django.md#event_sourcery_djangodjangobackend
+[SQLAlchemyBackend]: ../reference/backends/sqlalchemy.md#event_sourcery_sqlalchemy.SQLAlchemyBackend
+[KurrentDBBackend]: ../reference/backends/kurrentdb.md#event_sourcery_kurrentdb.KurrentDBBackend
+[DjangoBackend]: ../reference/backends/django.md#event_sourcery_django.DjangoBackend
