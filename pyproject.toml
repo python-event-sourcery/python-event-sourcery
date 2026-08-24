@@ -1,52 +1,38 @@
 [project]
 name = "python-event-sourcery"
-requires-python = ">=3.10"
-
-[tool.poetry]
 version = "0.5.3a2"
+requires-python = ">=3.10"
 description = "A library for event-based systems in Python."
 readme = "README.md"
-authors = [
-    "Sebastian Buczyński <nnplaya@gmail.com>",
-    "Łukasz Żukowski <lukasz.zukowski@gmail.com>",
-]
 license = "MIT"
-packages = [
-    { include = "event_sourcery" },
-    { include = "event_sourcery_django" },
-    { include = "event_sourcery_kurrentdb" },
-    { include = "event_sourcery_sqlalchemy" },
+authors = [
+    { name = "Sebastian Buczyński", email = "nnplaya@gmail.com" },
+    { name = "Łukasz Żukowski", email = "lukasz.zukowski@gmail.com" },
+]
+dependencies = [
+    "pydantic>=2.0,<3",
+    "more-itertools",
+    "psycopg2-binary>2,<3",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-pydantic = ">=2.0,<3"
-more-itertools = "*"
-SQLAlchemy = {version = ">=2.0", optional = true}
-kurrentdbclient = {version = ">=1.0.6", optional = true}
-django = {version = ">=4,<6", optional = true}
-psycopg2-binary = ">2,<3"
+[project.optional-dependencies]
+sqlalchemy = ["SQLAlchemy>=2.0"]
+kurrentdb = ["kurrentdbclient>=1.0.6"]
+django = ["django>=4,<6"]
 
-[tool.poetry.group.dev.dependencies]
-ruff = "*"
-mypy = "*"
-pytest = "*"
-pytest-cov = "*"
-pytest-django = {version = "*"}
-zensical = ">=0.0.11"
-psycopg2-binary = "^2.9.3"
-mkdocstrings = {extras = ["python"], version = "^1.0.6"}
-time-machine = "*"
-pika = "*"
-deepdiff = "*"
-
-[tool.poetry.extras]
-sqlalchemy = ["SQLAlchemy"]
-kurrentdb = ["kurrentdbclient"]
-django = ["django"]
-
-[tool.pytest]
-addopts = ""
+[dependency-groups]
+dev = [
+    "ruff==0.10.0",
+    "mypy==1.15.0",
+    "pytest",
+    "pytest-cov",
+    "pytest-django",
+    "zensical>=0.0.11",
+    "mkdocstrings[python]>=1.0.6",
+    "time-machine",
+    "pika",
+    "deepdiff",
+]
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
@@ -122,19 +108,36 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = [
     "S101",  # Use of assert detected
+    "PLW1641",  # Object does not implement `__hash__` method
 ]
 "event_sourcery_django/models.py" = [
     "RUF012",  # Mutable class attributes should be annotated with typing.ClassVar
+]
+"event_sourcery_django/__init__.py" = [
+    "PLC0415",  # Lazy imports to avoid Django app loading issues
+]
+"event_sourcery_sqlalchemy/models/base.py" = [
+    "PLW1641",  # Object does not implement `__hash__` method
 ]
 "docs/code/*" = [
    "S101",  # Use of assert detected
    "N806",  # Variables in function should be lowercase
    "B018",  # Useless expressions
+   "PLC0415",  # Imports inside functions for docs snippets
+   "PLW0108",  # Lambda may be unnecessary
 ]
 
 [tool.ruff.lint.pylint]
 max-args = 10
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "event_sourcery",
+    "event_sourcery_django",
+    "event_sourcery_kurrentdb",
+    "event_sourcery_sqlalchemy",
+]

@@ -43,7 +43,12 @@ def skip_if_not_selected_backend(
 
 @pytest.fixture(
     params=[
-        django_backend,
+        pytest.param(
+            django_backend,
+            # dynamic getfixturevalue() hides the transactional_db request
+            # from pytest-django, so declare the DB need explicitly
+            marks=pytest.mark.django_db,
+        ),
         kurrentdb_backend,
         in_memory_backend,
         sqlalchemy_sqlite_backend,
