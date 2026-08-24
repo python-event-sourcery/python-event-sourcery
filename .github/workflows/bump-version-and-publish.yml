@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 env:
-  PYTHON_VERSION: "3.10"
+  PYTHON_VERSION: "3.14"
 
 jobs:
   bump-and-publish:
