@@ -23,7 +23,16 @@ from tests.matchers import any_record
 
 
 @pytest.fixture(
-    params=[django_backend, sqlalchemy_postgres_backend, sqlalchemy_sqlite_backend],
+    params=[
+        pytest.param(
+            django_backend,
+            # dynamic getfixturevalue() hides the transactional_db request
+            # from pytest-django, so declare the DB need explicitly
+            marks=pytest.mark.django_db,
+        ),
+        sqlalchemy_postgres_backend,
+        sqlalchemy_sqlite_backend,
+    ],
 )
 def clients(
     request: pytest.FixtureRequest,

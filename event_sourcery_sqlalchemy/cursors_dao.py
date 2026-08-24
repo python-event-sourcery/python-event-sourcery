@@ -1,6 +1,7 @@
-from typing import cast
+from typing import Any, cast
 
 from sqlalchemy import insert, select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session
 
 from event_sourcery import StreamId
@@ -40,7 +41,7 @@ class SqlAlchemyCursorsDao(CursorsDao):
             )
             .values({self._projector_cursor_model.version: version})
         )
-        result = self._session.execute(update_stmt)
+        result = cast(CursorResult[Any], self._session.execute(update_stmt))
         if result.rowcount == 1:
             return
         else:

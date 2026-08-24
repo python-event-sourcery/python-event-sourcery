@@ -1,10 +1,11 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
-from typing import cast
+from typing import Any, cast
 
 from more_itertools import first_true
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 from typing_extensions import Self
@@ -161,7 +162,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 )
                 .values(version=versioning.initial_version)
             )
-            result = self._session.execute(bump_version_stmt)
+            result = cast(CursorResult[Any], self._session.execute(bump_version_stmt))
 
             if result.rowcount != 1:
                 # optimistic lock failed
