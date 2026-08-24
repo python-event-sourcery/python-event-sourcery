@@ -54,5 +54,7 @@ jobs:
       run: make lint
     - name: Build docs
       run: uv run --all-extras zensical build --clean
+    - name: Test docs code snippets
+      run: make docs-test
     - name: Test with pytest
       run: make test

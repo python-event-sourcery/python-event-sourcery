@@ -10,6 +10,10 @@ lint:
 test:
 	uv run --all-extras pytest $(addprefix --cov ,$(SRC_DIRS)) tests/
 
+.PHONY: docs-test
+docs-test:
+	uv run --all-extras pytest docs/code/
+
 .PHONY: docs-serve
 docs-serve:
 	uv run --all-extras zensical serve
