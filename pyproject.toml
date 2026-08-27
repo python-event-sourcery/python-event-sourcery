@@ -147,7 +147,7 @@ packages = [
 
 [tool.poe.executor]
 type = "uv"
-extra = ["sqlalchemy", "kurrentdb", "django"]
+extra = ["sqlalchemy", "sqlalchemy-async", "kurrentdb", "django"]
 
 [tool.poe.env]
 SRC_DIRS = "./event_sourcery_sqlalchemy ./event_sourcery ./event_sourcery_django ./event_sourcery_kurrentdb"
