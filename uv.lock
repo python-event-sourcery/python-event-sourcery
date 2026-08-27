@@ -1221,7 +1221,7 @@ wheels = [
 
 [[package]]
 name = "python-event-sourcery"
-version = "0.5.3a4"
+version = "0.5.3a5"
 source = { editable = "." }
 dependencies = [
     { name = "more-itertools" },
