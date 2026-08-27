@@ -8,6 +8,7 @@ from tests.backend.django import django_backend
 from tests.backend.in_memory import in_memory_backend
 from tests.backend.in_memory_async import in_memory_async_backend
 from tests.backend.kurrentdb import kurrentdb_backend
+from tests.backend.kurrentdb_async import kurrentdb_async_backend
 from tests.backend.sqlalchemy import (
     sqlalchemy_postgres_backend,
     sqlalchemy_sqlite_backend,
@@ -16,6 +17,7 @@ from tests.backend.sqlalchemy import (
 _BACKEND_FIXTURES = [
     django_backend,
     kurrentdb_backend,
+    kurrentdb_async_backend,
     in_memory_backend,
     in_memory_async_backend,
     sqlalchemy_sqlite_backend,
@@ -52,6 +54,7 @@ def skip_if_not_selected_backend(
             marks=pytest.mark.django_db,
         ),
         kurrentdb_backend,
+        kurrentdb_async_backend,
         in_memory_backend,
         in_memory_async_backend,
         sqlalchemy_sqlite_backend,

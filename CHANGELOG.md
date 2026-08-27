@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+### Added
+- Async KurrentDB backend: `AsyncKurrentDBBackend` with async storage,
+  subscriptions and outbox strategies (outbox persistent subscription created
+  lazily before the first append or outbox run)
+
 ## 0.6.1
 ### Fixes
 - Include the `py.typed` marker in the `event_sourcery_otel` package.

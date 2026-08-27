@@ -13,9 +13,11 @@ from event_sourcery.backend import Backend, InMemoryBackend, InMemoryConfig
 from event_sourcery.event import WrappedEvent
 from event_sourcery_django import DjangoBackend, DjangoConfig
 from event_sourcery_kurrentdb import KurrentDBBackend, KurrentDBConfig
+from event_sourcery_kurrentdb.async_ import AsyncKurrentDBBackend
 from event_sourcery_sqlalchemy import SQLAlchemyBackend, SQLAlchemyConfig
 from tests.adapter import BackendFacade
 from tests.backend.kurrentdb import kurrentdb_client
+from tests.backend.kurrentdb_async import async_kurrentdb_client
 from tests.backend.sqlalchemy import (
     sqlalchemy_postgres_session,
     sqlalchemy_sqlite_session,
@@ -37,6 +39,22 @@ def kurrentdb_backend(max_attempts: int) -> Generator[KurrentDBBackend, None, No
                 outbox_name=f"pyes-outbox-test-{uuid4().hex}",
                 outbox_attempts=max_attempts,
             ),
+        )
+
+
+@pytest.fixture()
+def kurrentdb_async_backend(max_attempts: int) -> Iterator[Backend]:
+    with async_kurrentdb_client() as (client, runner):
+        yield BackendFacade(
+            AsyncKurrentDBBackend().configure(
+                client,
+                KurrentDBConfig(
+                    timeout=1,
+                    outbox_name=f"pyes-outbox-test-{uuid4().hex}",
+                    outbox_attempts=max_attempts,
+                ),
+            ),
+            runner,
         )
 
 
