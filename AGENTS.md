@@ -21,9 +21,10 @@ uv sync --all-extras   # install all deps (dev group is included by default)
 
 ```bash
 docker compose up -d   # required before tests (postgres, kurrentdb, rabbitmq)
-make test              # pytest with coverage (fail_under = 100)
-make lint              # ruff format + ruff check + mypy (must pass clean)
-make docs-serve        # docs live preview
+poe test              # pytest with coverage (fail_under = 100)
+poe lint-fix              # ruff format + ruff check + mypy (must pass clean)
+poe docs-test         # pytest docs/code/ — snippets embedded in docs must pass
+poe docs-serve        # docs live preview
 ```
 
 Run single tools via `uv run --all-extras <tool>`, e.g. `uv run --all-extras pytest tests/event_store -k django`.
@@ -36,10 +37,12 @@ Run single tools via `uv run --all-extras <tool>`, e.g. `uv run --all-extras pyt
 
 ## Docs
 
-Changing public API or behavior may require updating `docs/` — pages embed runnable snippets from `docs/code/` (via `--8<--` includes). After touching docs code:
+Changing public API or behavior **requires** updating `docs/` and running docs tests —
+pages embed runnable snippets from `docs/code/` (via `--8<--` includes), and broken
+snippets go unnoticed without them. Docs tests need no docker services. After touching docs code:
 
 ```bash
-uv run --all-extras pytest docs/code   # snippets are real tests, must pass
-make lint-fix-docs                     # lint docs/code
+poe docs-test                         # snippets are real tests, must pass (enforced in CI)
+poe docs-lint-fix                     # lint docs/code
 uv run --all-extras zensical build --clean   # verify docs build
 ```

@@ -16,11 +16,21 @@ pip install "python-event-sourcery[sqlalchemy]"
 
 The example below uses the in-memory backend, so you can run it right away, without setting up a database.
 
-Define an event by inheriting from the [Event] base class, then append it to a stream and read it back:
+Define an event by inheriting from the [Event] base class, then append it to a stream:
 
 ```python
 --8<--
 docs/code/test_get_started.py:get_started_01
+--8<--
+```
+
+## Reading events
+
+Events from a given stream can be read back at once:
+
+```python
+--8<--
+docs/code/test_get_started.py:get_started_02
 --8<--
 ```
 

@@ -5,9 +5,7 @@ repo_name = "python-event-sourcery/python-event-sourcery"
 nav = [
   { "Event Sourcery" = "index.md" },
   { "Get Started" = "get_started.md" },
-  { "Concepts" = [
-    { "Basics" = "concepts/basics.md" },
-  ] },
+  { "Concepts" = "concepts.md" },
   { "Recipes" = [
     { "Defining events" = "recipes/defining_events.md" },
     { "Integrate with your app" = "recipes/integrate.md" },

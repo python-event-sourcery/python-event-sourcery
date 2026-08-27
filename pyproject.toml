@@ -141,3 +141,83 @@ packages = [
     "event_sourcery_kurrentdb",
     "event_sourcery_sqlalchemy",
 ]
+
+[tool.poe.executor]
+type = "uv"
+extra = ["sqlalchemy", "kurrentdb", "django"]
+
+[tool.poe.env]
+SRC_DIRS = "./event_sourcery_sqlalchemy ./event_sourcery ./event_sourcery_django ./event_sourcery_kurrentdb"
+COV_ARGS = "--cov ./event_sourcery_sqlalchemy --cov ./event_sourcery --cov ./event_sourcery_django --cov ./event_sourcery_kurrentdb"
+
+[tool.poe.tasks.docs-test]
+cmd = "pytest docs/code/"
+
+[tool.poe.tasks.docs-lint-fix]
+shell = """
+    ruff format docs/code tests/
+    ruff check docs/code --fix
+"""
+
+[tool.poe.tasks.docs-serve]
+cmd = "zensical serve"
+
+[tool.poe.tasks.fmt]
+cmd = "ruff format ${SRC_DIRS} tests/"
+
+[tool.poe.tasks.lint]
+cmd = "ruff check ${SRC_DIRS} tests/ --fix"
+
+[tool.poe.tasks.typecheck]
+ref = "typecheck-py314"
+
+[tool.poe.tasks.typecheck-py314]
+cmd = "mypy ${SRC_DIRS} tests/"
+
+[tool.poe.tasks.typecheck-py313]
+cmd = "mypy ${SRC_DIRS} tests/"
+executor = {isolated = true, python = "3.13"}
+
+[tool.poe.tasks.typecheck-py312]
+cmd = "mypy ${SRC_DIRS} tests/"
+executor = {isolated = true, python = "3.12"}
+
+[tool.poe.tasks.typecheck-py311]
+cmd = "mypy ${SRC_DIRS} tests/"
+executor = {isolated = true, python = "3.11"}
+
+[tool.poe.tasks.typecheck-py310]
+cmd = "mypy ${SRC_DIRS} tests/"
+executor = {isolated = true, python = "3.10"}
+
+[tool.poe.tasks.lint-fix]
+sequence = ["fmt", "lint", "typecheck"]
+
+[tool.poe.tasks.test]
+ref = "test-py314"
+
+[tool.poe.tasks.test-py314]
+cmd = "pytest ${COV_ARGS} tests/"
+
+[tool.poe.tasks.test-py313]
+cmd = "pytest ${COV_ARGS} tests/"
+executor = {isolated = true, python = "3.13"}
+
+[tool.poe.tasks.test-py312]
+cmd = "pytest ${COV_ARGS} tests/"
+executor = {isolated = true, python = "3.12"}
+
+[tool.poe.tasks.test-py311]
+cmd = "pytest ${COV_ARGS} tests/"
+executor = {isolated = true, python = "3.11"}
+
+[tool.poe.tasks.test-py310]
+cmd = "pytest ${COV_ARGS} tests/"
+executor = {isolated = true, python = "3.10"}
+
+[tool.poe.tasks.test-all]
+sequence = ["test-py314", "test-py313", "test-py312", "test-py311", "test-py310"]
+
+[tool.poe.tasks.typecheck-all]
+sequence = ["typecheck-py314", "typecheck-py313", "typecheck-py312", "typecheck-py311", "typecheck-py310"]
+
