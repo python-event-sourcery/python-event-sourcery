@@ -59,6 +59,31 @@ def test_sqlalchemy_backend(base_with_configured_es_models):
     assert backend.event_store.position == 0
 
 
+def test_sqlalchemy_async_backend(base_with_configured_es_models, tmp_path):
+    import asyncio
+
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+    Base = base_with_configured_es_models
+    engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path}/example.db")
+    Session = async_sessionmaker(bind=engine)
+
+    async def main() -> None:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        # --8<-- [start:integrate_sql_async_01]
+        from event_sourcery_sqlalchemy.async_ import AsyncSQLAlchemyBackend
+
+        session = Session()  # SQLAlchemy AsyncSession
+        backend = AsyncSQLAlchemyBackend().configure(session)
+        # --8<-- [end:integrate_sql_async_01]
+        assert await backend.event_store.position() == 0
+        await session.close()
+        await engine.dispose()
+
+    asyncio.run(main())
+
+
 def test_kurrent_db():
     pass
     # from kurrentdb import KurrentDBClient

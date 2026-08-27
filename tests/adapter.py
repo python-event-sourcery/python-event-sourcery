@@ -43,6 +43,10 @@ class Runner:
             except StopAsyncIteration:
                 return
 
+    def shutdown_asyncgens(self) -> None:
+        """Finalizes async generators created on the loop, without closing it."""
+        self._loop.run_until_complete(self._loop.shutdown_asyncgens())
+
     def close(self) -> None:
         self._loop.run_until_complete(self._loop.shutdown_asyncgens())
         self._loop.close()
@@ -158,6 +162,17 @@ class BackendFacade(TransactionalBackend):
     ) -> None:
         self._async = backend
         self._runner = runner or Runner()
+
+    @property
+    def runner(self) -> Runner:
+        """
+        The event loop runner draining this backend's coroutines.
+
+        Components sharing async resources (e.g. an AsyncSession) must be
+        driven on the same loop, so a facade built over such a component
+        should reuse the runner of the original facade.
+        """
+        return self._runner
 
     @property
     def event_store(self) -> EventStore:

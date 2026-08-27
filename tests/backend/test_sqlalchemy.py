@@ -1,6 +1,7 @@
 from typing import cast
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from event_sourcery import Event, StreamId
@@ -12,11 +13,17 @@ from event_sourcery_sqlalchemy import (
     SQLAlchemyBackend,
     configure_models,
 )
+from event_sourcery_sqlalchemy.async_ import AsyncSQLAlchemyBackend
 from tests import mark
+from tests.adapter import BackendFacade
 from tests.backend.sqlalchemy import (
     DeclarativeBase,
     sqlalchemy_postgres_backend,
     sqlalchemy_sqlite_backend,
+)
+from tests.backend.sqlalchemy_async import (
+    sqlalchemy_async_postgres_backend,
+    sqlalchemy_async_sqlite_backend,
 )
 
 
@@ -73,6 +80,59 @@ def test_backends_with_different_tables_are_isolated(
     stream_id = StreamId()
     event_store_default = default_backend.event_store
     event_store_custom = backend_with_custom_models.event_store
+
+    event_store_default.append(NameGiven(name="Rascal"), stream_id=stream_id)
+    event_store_custom.append(NameGiven(name="Bloke"), stream_id=stream_id)
+
+    stream_in_default_tables = event_store_default.load_stream(stream_id)
+    stream_in_custom_tables = event_store_custom.load_stream(stream_id)
+
+    assert len(stream_in_default_tables) == 1
+    assert len(stream_in_custom_tables) == 1
+    assert stream_in_default_tables[0].version == 1
+    assert stream_in_custom_tables[0].version == 1
+    assert stream_in_default_tables[0].event.name == "Rascal"
+    assert stream_in_custom_tables[0].event.name == "Bloke"
+
+
+@pytest.fixture(
+    params=[
+        sqlalchemy_async_sqlite_backend,
+        sqlalchemy_async_postgres_backend,
+    ]
+)
+def default_async_backend(request: pytest.FixtureRequest) -> BackendFacade:
+    backend_name: str = request.param.__name__
+    mark.xfail_if_not_implemented_yet(request, backend_name)
+    mark.skip_backend(request, backend_name)
+    return cast(BackendFacade, request.getfixturevalue(backend_name))
+
+
+@pytest.fixture()
+def async_backend_with_custom_models(
+    default_async_backend: BackendFacade,
+) -> BackendFacade:
+    session = default_async_backend[AsyncSession]
+    return BackendFacade(
+        AsyncSQLAlchemyBackend().configure(
+            session,
+            custom_models=Models(
+                event_model=CustomEvent,
+                stream_model=CustomStream,
+                snapshot_model=CustomSnapshot,
+            ),
+        ),
+        default_async_backend.runner,
+    )
+
+
+def test_async_backends_with_different_tables_are_isolated(
+    default_async_backend: BackendFacade,
+    async_backend_with_custom_models: BackendFacade,
+) -> None:
+    stream_id = StreamId()
+    event_store_default = default_async_backend.event_store
+    event_store_custom = async_backend_with_custom_models.event_store
 
     event_store_default.append(NameGiven(name="Rascal"), stream_id=stream_id)
     event_store_custom.append(NameGiven(name="Bloke"), stream_id=stream_id)
