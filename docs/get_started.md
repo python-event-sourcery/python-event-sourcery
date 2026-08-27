@@ -12,6 +12,12 @@ For production use, install the extra matching your storage of choice: `sqlalche
 pip install "python-event-sourcery[sqlalchemy]"
 ```
 
+For asynchronous SQLAlchemy usage, install the `sqlalchemy-async` extra instead, along with an async driver of your choice (e.g. `asyncpg` for PostgreSQL or `aiosqlite` for SQLite):
+
+```bash
+pip install "python-event-sourcery[sqlalchemy-async]" asyncpg
+```
+
 ## Your first event
 
 The example below uses the in-memory backend, so you can run it right away, without setting up a database.
