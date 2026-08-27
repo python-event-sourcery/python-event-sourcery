@@ -13,6 +13,10 @@ from tests.backend.sqlalchemy import (
     sqlalchemy_postgres_backend,
     sqlalchemy_sqlite_backend,
 )
+from tests.backend.sqlalchemy_async import (
+    sqlalchemy_async_postgres_backend,
+    sqlalchemy_async_sqlite_backend,
+)
 
 _BACKEND_FIXTURES = [
     django_backend,
@@ -22,6 +26,8 @@ _BACKEND_FIXTURES = [
     in_memory_async_backend,
     sqlalchemy_sqlite_backend,
     sqlalchemy_postgres_backend,
+    sqlalchemy_async_sqlite_backend,
+    sqlalchemy_async_postgres_backend,
 ]
 
 
@@ -59,6 +65,8 @@ def skip_if_not_selected_backend(
         in_memory_async_backend,
         sqlalchemy_sqlite_backend,
         sqlalchemy_postgres_backend,
+        sqlalchemy_async_sqlite_backend,
+        sqlalchemy_async_postgres_backend,
     ]
 )
 def backend(request: pytest.FixtureRequest, selected_backends: list[str]) -> Backend:

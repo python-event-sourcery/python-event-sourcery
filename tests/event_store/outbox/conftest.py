@@ -15,12 +15,17 @@ from event_sourcery_django import DjangoBackend, DjangoConfig
 from event_sourcery_kurrentdb import KurrentDBBackend, KurrentDBConfig
 from event_sourcery_kurrentdb.async_ import AsyncKurrentDBBackend
 from event_sourcery_sqlalchemy import SQLAlchemyBackend, SQLAlchemyConfig
+from event_sourcery_sqlalchemy.async_ import AsyncSQLAlchemyBackend
 from tests.adapter import BackendFacade
 from tests.backend.kurrentdb import kurrentdb_client
 from tests.backend.kurrentdb_async import async_kurrentdb_client
 from tests.backend.sqlalchemy import (
     sqlalchemy_postgres_session,
     sqlalchemy_sqlite_session,
+)
+from tests.backend.sqlalchemy_async import (
+    sqlalchemy_async_postgres_session,
+    sqlalchemy_async_sqlite_session,
 )
 
 
@@ -95,6 +100,31 @@ def sqlalchemy_postgres_backend(max_attempts: int) -> Iterator[SQLAlchemyBackend
     with sqlalchemy_postgres_session() as session:
         yield SQLAlchemyBackend().configure(
             session, SQLAlchemyConfig(outbox_attempts=max_attempts)
+        )
+
+
+@pytest.fixture()
+def sqlalchemy_async_sqlite_backend(
+    tmp_path: Path,
+    max_attempts: int,
+) -> Iterator[Backend]:
+    with sqlalchemy_async_sqlite_session(tmp_path) as (session, runner):
+        yield BackendFacade(
+            AsyncSQLAlchemyBackend().configure(
+                session(), SQLAlchemyConfig(outbox_attempts=max_attempts)
+            ),
+            runner,
+        )
+
+
+@pytest.fixture()
+def sqlalchemy_async_postgres_backend(max_attempts: int) -> Iterator[Backend]:
+    with sqlalchemy_async_postgres_session() as (session, runner):
+        yield BackendFacade(
+            AsyncSQLAlchemyBackend().configure(
+                session(), SQLAlchemyConfig(outbox_attempts=max_attempts)
+            ),
+            runner,
         )
 
 

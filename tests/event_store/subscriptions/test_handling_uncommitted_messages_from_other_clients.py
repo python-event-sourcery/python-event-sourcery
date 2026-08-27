@@ -15,6 +15,13 @@ from tests.backend.sqlalchemy import (
     sqlalchemy_sqlite_backend,
     sqlalchemy_sqlite_session,
 )
+from tests.backend.sqlalchemy_async import (
+    sqlalchemy_async_other_client,
+    sqlalchemy_async_postgres_backend,
+    sqlalchemy_async_postgres_session,
+    sqlalchemy_async_sqlite_backend,
+    sqlalchemy_async_sqlite_session,
+)
 from tests.bdd import Given, Then, When
 from tests.event_store.conftest import skip_if_not_selected_backend
 from tests.event_store.subscriptions.other_client import OtherClient
@@ -32,6 +39,8 @@ from tests.matchers import any_record
         ),
         sqlalchemy_postgres_backend,
         sqlalchemy_sqlite_backend,
+        sqlalchemy_async_postgres_backend,
+        sqlalchemy_async_sqlite_backend,
     ],
 )
 def clients(
@@ -58,6 +67,32 @@ def clients(
             with sqlalchemy_sqlite_session(tmp_path) as session:
                 with session as s:
                     other = OtherClient(SQLAlchemyBackend().configure(s), s.begin)
+                    yield backend, other
+                    other.stop()
+        case "sqlalchemy_async_postgres_backend":
+            # schema is managed by the main backend fixture; dropping it here
+            # would deadlock on the main session's open transaction
+            with sqlalchemy_async_postgres_session(manage_tables=False) as (
+                session,
+                runner,
+            ):
+                with sqlalchemy_async_other_client(session, runner) as (
+                    other_backend,
+                    begin,
+                ):
+                    other = OtherClient(other_backend, begin)
+                    yield backend, other
+                    other.stop()
+        case "sqlalchemy_async_sqlite_backend":
+            with sqlalchemy_async_sqlite_session(tmp_path, manage_tables=False) as (
+                session,
+                runner,
+            ):
+                with sqlalchemy_async_other_client(session, runner) as (
+                    other_backend,
+                    begin,
+                ):
+                    other = OtherClient(other_backend, begin)
                     yield backend, other
                     other.stop()
 
@@ -173,9 +208,13 @@ class TestIgnoresEventsFromPendingTransactions:
 
 
 @pytest.mark.skip_backend(
-    backend=["in_memory_backend", "sqlalchemy_sqlite_backend"],
+    backend=[
+        "in_memory_backend",
+        "sqlalchemy_sqlite_backend",
+        "sqlalchemy_async_sqlite_backend",
+    ],
     reason="Required only for SQL-based backends with transactions. "
-    "For 'sqlalchemy_sqlite_backend' tests raise 'database table is locked'",
+    "For sqlite backends tests raise 'database table is locked'",
 )
 class TestMissesEventsThatWereNotCommittedWithinSpecifiedTimeout:
     def test_no_filtering(

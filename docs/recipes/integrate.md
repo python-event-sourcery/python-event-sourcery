@@ -20,13 +20,27 @@ Integrating it with your project requires following steps:
 
     Once our models are registered, migrations generated and executed, you can continue.
 
-    You need an instance of [Session](https://docs.sqlalchemy.org/en/20/orm/session.html) to instantiate [SQLAlchemyBackend]:
+    === "Synchronous"
+        You need an instance of [Session](https://docs.sqlalchemy.org/en/20/orm/session.html) to instantiate [SQLAlchemyBackend]:
 
-    ```python
-    --8<--
-    docs/code/test_recipes.py:integrate_sql_01
-    --8<--
-    ```
+        ```python
+        --8<--
+        docs/code/test_recipes.py:integrate_sql_01
+        --8<--
+        ```
+
+    === "Asynchronous"
+        For async applications, use an [AsyncSession](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html) with [AsyncSQLAlchemyBackend]:
+
+        ```python
+        --8<--
+        docs/code/test_recipes.py:integrate_sql_async_01
+        --8<--
+        ```
+
+        The async variant requires the `sqlalchemy-async` extra (`SQLAlchemy[asyncio]`) and an async driver (e.g. `asyncpg` for PostgreSQL, `aiosqlite` for SQLite) — drivers are not installed by Event Sourcery, same as in the sync variant.
+
+        Note: a single `AsyncSession` cannot interleave concurrent operations — use one session (and thus one backend) per concurrent unit of work. In-transaction event listeners remain synchronous callables, as they run inside the append transaction.
 
 === "KurrentDB (formerly EventStoreDB)"
     === "Synchronous"
@@ -77,6 +91,7 @@ You can now use [EventStore] to load events from a stream or append new events.
 [EventStore]: ../reference/event_store/EventStore.md
 [SQLAlchemy]: ../reference/backends/sqlalchemy.md
 [SQLAlchemyBackend]: ../reference/backends/sqlalchemy.md#event_sourcery_sqlalchemy.SQLAlchemyBackend
+[AsyncSQLAlchemyBackend]: ../reference/backends/sqlalchemy.md#event_sourcery_sqlalchemy.async_.AsyncSQLAlchemyBackend
 [KurrentDBBackend]: ../reference/backends/kurrentdb.md#event_sourcery_kurrentdb.KurrentDBBackend
 [AsyncKurrentDBBackend]: ../reference/backends/kurrentdb.md#event_sourcery_kurrentdb.async_.AsyncKurrentDBBackend
 [DjangoBackend]: ../reference/backends/django.md#event_sourcery_django.DjangoBackend

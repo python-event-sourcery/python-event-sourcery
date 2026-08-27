@@ -120,6 +120,9 @@ class OtherClient:
 
     def stop(self) -> None:
         self._inbox.put_stop()
+        # wait for the agent to finish, so no in-flight operation races
+        # with fixture teardown (e.g. closing sessions or dropping tables)
+        self._thread.join()
         self._raise_thread_exception()
 
     def _raise_thread_exception(self) -> None:
