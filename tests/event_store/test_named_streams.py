@@ -27,7 +27,10 @@ def test_can_append_then_load_with_named_stream_with_assigned_uuid(
     then.stream(StreamId(name="Test #2")).loads([an_event])
 
 
-@pytest.mark.skip_backend(backend="kurrentdb", reason="KurrentDB can't use both ids")
+@pytest.mark.skip_backend(
+    backend=["kurrentdb", "kurrentdb_async"],
+    reason="KurrentDB can't use both ids",
+)
 def test_lets_appending_by_both_id_and_name_then_just_name(
     given: Given,
     then: Then,
@@ -40,7 +43,12 @@ def test_lets_appending_by_both_id_and_name_then_just_name(
 
 
 @pytest.mark.skip_backend(
-    backend=["kurrentdb_backend", "in_memory_backend", "in_memory_async_backend"],
+    backend=[
+        "kurrentdb_backend",
+        "kurrentdb_async_backend",
+        "in_memory_backend",
+        "in_memory_async_backend",
+    ],
     reason="Can't use both ids",
 )
 def test_blocks_new_stream_uuid_with_same_name_as_other(

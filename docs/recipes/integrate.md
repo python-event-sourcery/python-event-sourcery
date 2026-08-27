@@ -29,14 +29,26 @@ Integrating it with your project requires following steps:
     ```
 
 === "KurrentDB (formerly EventStoreDB)"
-    First, you need an instance of `kurrentdbclient.KurrentDBClient` that represents a connection to EventStoreDB. Then, you can pass it to [KurrentDBBackend]:
+    === "Synchronous"
+        First, you need an instance of `kurrentdbclient.KurrentDBClient` that represents a connection to EventStoreDB. Then, you can pass it to [KurrentDBBackend]:
 
-    ```python
-    --8<--
-    docs/code/recipes/integrate/kurrent_01.py:1:1
-    docs/code/recipes/integrate/kurrent_01.py:4:8
-    --8<--
-    ```
+        ```python
+        --8<--
+        docs/code/recipes/integrate/kurrent_01.py:1:1
+        docs/code/recipes/integrate/kurrent_01.py:4:8
+        --8<--
+        ```
+
+    === "Asynchronous"
+        For async applications, use `kurrentdbclient.AsyncKurrentDBClient` with [AsyncKurrentDBBackend]:
+
+        ```python
+        --8<--
+        docs/code/recipes/integrate/kurrent_async_01.py
+        --8<--
+        ```
+
+        Note: with the async variant, the outbox persistent subscription is created lazily — before the first append or outbox run — not in `with_outbox()` (a coroutine cannot be awaited from a sync method).
 
 === "Django"
     Your first step will be adding `"event_sourcery_django"` to the list of `INSTALLED_APPS` in your settings.
@@ -66,4 +78,5 @@ You can now use [EventStore] to load events from a stream or append new events.
 [SQLAlchemy]: ../reference/backends/sqlalchemy.md
 [SQLAlchemyBackend]: ../reference/backends/sqlalchemy.md#event_sourcery_sqlalchemy.SQLAlchemyBackend
 [KurrentDBBackend]: ../reference/backends/kurrentdb.md#event_sourcery_kurrentdb.KurrentDBBackend
+[AsyncKurrentDBBackend]: ../reference/backends/kurrentdb.md#event_sourcery_kurrentdb.async_.AsyncKurrentDBBackend
 [DjangoBackend]: ../reference/backends/django.md#event_sourcery_django.DjangoBackend

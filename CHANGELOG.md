@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+### Added
+- Async KurrentDB backend: `AsyncKurrentDBBackend` with async storage,
+  subscriptions and outbox strategies (outbox persistent subscription created
+  lazily before the first append or outbox run)
+
 ## 0.5.2
 ### Changed
 - **Breaking:** `Repository.aggregate()` yields `WrappedAggregate` instead of `Aggregate` directly
