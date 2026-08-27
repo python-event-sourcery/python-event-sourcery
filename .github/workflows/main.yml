@@ -41,6 +41,12 @@ jobs:
           - 1113:1113
           - 2113:2113
 
+      rabbitmq:
+        image: rabbitmq:3.11.2
+        ports:
+          - '5672:5672'
+          - '15672:15672'
+
     steps:
     - uses: actions/checkout@v2
     - name: Install uv
