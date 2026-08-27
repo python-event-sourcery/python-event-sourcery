@@ -8,11 +8,13 @@ import pytest
 from django.core.management import call_command as django_command
 
 from event_sourcery import StreamId
+from event_sourcery.async_.backend import AsyncInMemoryBackend
 from event_sourcery.backend import Backend, InMemoryBackend, InMemoryConfig
 from event_sourcery.event import WrappedEvent
 from event_sourcery_django import DjangoBackend, DjangoConfig
 from event_sourcery_kurrentdb import KurrentDBBackend, KurrentDBConfig
 from event_sourcery_sqlalchemy import SQLAlchemyBackend, SQLAlchemyConfig
+from tests.adapter import BackendFacade
 from tests.backend.kurrentdb import kurrentdb_client
 from tests.backend.sqlalchemy import (
     sqlalchemy_postgres_session,
@@ -48,6 +50,15 @@ def django_backend(transactional_db: None, max_attempts: int) -> DjangoBackend:
 @pytest.fixture()
 def in_memory_backend(max_attempts: int) -> Backend:
     return InMemoryBackend().configure(InMemoryConfig(outbox_attempts=max_attempts))
+
+
+@pytest.fixture()
+def in_memory_async_backend(max_attempts: int) -> Iterator[Backend]:
+    facade = BackendFacade(
+        AsyncInMemoryBackend().configure(InMemoryConfig(outbox_attempts=max_attempts))
+    )
+    yield facade
+    facade.close()
 
 
 @pytest.fixture()

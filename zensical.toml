@@ -31,6 +31,7 @@ nav = [
     ] },
     { "EventStore" = [
       { "EventStore" = "reference/event_store/EventStore.md" },
+      { "AsyncEventStore" = "reference/event_store/AsyncEventStore.md" },
       { "StreamId" = "reference/event_store/StreamId.md" },
       { "StreamUUID" = "reference/event_store/StreamUUID.md" },
       { "StreamCategory" = "reference/event_store/StreamCategory.md" },
@@ -39,6 +40,8 @@ nav = [
       { "NO_VERSIONING" = "reference/event_store/NO_VERSIONING.md" },
       { "exceptions" = "reference/event_store/exceptions.md" },
       { "backend" = [
+        { "AsyncBackend" = "reference/event_store/backend/AsyncBackend.md" },
+        { "AsyncTransactionalBackend" = "reference/event_store/backend/AsyncTransactionalBackend.md" },
         { "Backend" = "reference/event_store/backend/Backend.md" },
         { "not_configured" = "reference/event_store/backend/not_configured.md" },
         { "singleton" = "reference/event_store/backend/singleton.md" },
@@ -67,6 +70,9 @@ nav = [
         { "Listeners" = "reference/event_store/in_transaction/Listeners.md" },
       ] },
       { "interfaces" = [
+        { "AsyncOutboxStorageStrategy" = "reference/event_store/interfaces/AsyncOutboxStorageStrategy.md" },
+        { "AsyncStorageStrategy" = "reference/event_store/interfaces/AsyncStorageStrategy.md" },
+        { "AsyncSubscriptionStrategy" = "reference/event_store/interfaces/AsyncSubscriptionStrategy.md" },
         { "EncryptionKeyStorageStrategy" = "reference/event_store/interfaces/EncryptionKeyStorageStrategy.md" },
         { "EncryptionStrategy" = "reference/event_store/interfaces/EncryptionStrategy.md" },
         { "OutboxFiltererStrategy" = "reference/event_store/interfaces/OutboxFiltererStrategy.md" },
@@ -75,11 +81,17 @@ nav = [
         { "SubscriptionStrategy" = "reference/event_store/interfaces/SubscriptionStrategy.md" },
       ] },
       { "outbox" = [
+        { "AsyncNoOutboxStorageStrategy" = "reference/event_store/outbox/AsyncNoOutboxStorageStrategy.md" },
+        { "AsyncOutbox" = "reference/event_store/outbox/AsyncOutbox.md" },
         { "NoOutboxStorageStrategy" = "reference/event_store/outbox/NoOutboxStorageStrategy.md" },
         { "no_filter" = "reference/event_store/outbox/no_filter.md" },
         { "Outbox" = "reference/event_store/outbox/Outbox.md" },
       ] },
       { "subscription" = [
+        { "AsyncBuildPhase" = "reference/event_store/subscription/AsyncBuildPhase.md" },
+        { "AsyncFilterPhase" = "reference/event_store/subscription/AsyncFilterPhase.md" },
+        { "AsyncPositionPhase" = "reference/event_store/subscription/AsyncPositionPhase.md" },
+        { "AsyncSubscriptionBuilder" = "reference/event_store/subscription/AsyncSubscriptionBuilder.md" },
         { "BuildPhase" = "reference/event_store/subscription/BuildPhase.md" },
         { "FilterPhase" = "reference/event_store/subscription/FilterPhase.md" },
         { "PositionPhase" = "reference/event_store/subscription/PositionPhase.md" },
@@ -100,6 +112,7 @@ nav = [
     { "Privacy Data Encryption And Shredding" = "adr/20250729-privacy-data-encryption-and-shredding.md" },
     { "Packaging Of The Event Store Package" = "adr/20251004-packaging-of-the-event_store-package.md" },
     { "Aggregate Metadata" = "adr/20260314-aggregate-metadata.md" },
+    { "Async API" = "adr/20260827-async-api.md" },
   ] },
 ]
 
