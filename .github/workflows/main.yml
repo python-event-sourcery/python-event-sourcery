@@ -48,13 +48,15 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         enable-cache: true
+    - name: Install poe
+      run: uv tool install poethepoet
     - name: Install deps
       run: uv sync --all-extras
     - name: Run linters
-      run: make lint
+      run: poe lint-fix
     - name: Build docs
       run: uv run --all-extras zensical build --clean
     - name: Test docs code snippets
-      run: make docs-test
+      run: poe docs-test
     - name: Test with pytest
-      run: make test
+      run: poe test
