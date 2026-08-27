@@ -12,7 +12,7 @@
         <link rel="prev" href="./..">
       
       
-        <link rel="next" href="../concepts/basics/">
+        <link rel="next" href="../concepts/">
       
       
         
@@ -323,6 +323,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#reading-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reading events
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#whats-next" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -347,60 +358,15 @@
   
   
   
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Concepts
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-  Concepts
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
     <li class="md-nav__item">
-      <a href="../concepts/basics/" class="md-nav__link">
+      <a href="../concepts/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-  Basics
+  Concepts
 
     
   </span>
@@ -408,14 +374,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -3028,6 +2986,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#reading-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reading events
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#whats-next" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -3067,7 +3036,7 @@
 </code></pre></div>
 <h2 id="your-first-event">Your first event</h2>
 <p>The example below uses the in-memory backend, so you can run it right away, without setting up a database.</p>
-<p>Define an event by inheriting from the <a href="../reference/event_store/event/Event/">Event</a> base class, then append it to a stream and read it back:</p>
+<p>Define an event by inheriting from the <a href="../reference/event_store/event/Event/">Event</a> base class, then append it to a stream:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">event_sourcery</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamId</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">event_sourcery.backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">InMemoryBackend</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">event_sourcery.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">Event</span>
@@ -3082,12 +3051,15 @@
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="n">InvoicePaid</span><span class="p">(</span><span class="n">invoice_number</span><span class="o">=</span><span class="s2">"1003"</span><span class="p">),</span>
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">stream_id</span><span class="o">=</span><span class="n">StreamId</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"invoices/1003"</span><span class="p">),</span>
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="p">)</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="k">for</span> <span class="n">recorded</span> <span class="ow">in</span> <span class="n">event_store</span><span class="o">.</span><span class="n">load_stream</span><span class="p">(</span><span class="n">StreamId</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"invoices/1003"</span><span class="p">)):</span>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">recorded</span><span class="o">.</span><span class="n">event</span><span class="p">,</span> <span class="n">recorded</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="reading-events">Reading events</h2>
+<p>Events from a given stream can be read back at once:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">recorded_events</span> <span class="o">=</span> <span class="n">event_store</span><span class="o">.</span><span class="n">load_stream</span><span class="p">(</span><span class="n">StreamId</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"invoices/1003"</span><span class="p">))</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">for</span> <span class="n">recorded</span> <span class="ow">in</span> <span class="n">recorded_events</span><span class="p">:</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">recorded</span><span class="o">.</span><span class="n">event</span><span class="p">,</span> <span class="n">recorded</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
 </code></pre></div>
 <p>Output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>invoice_number='1003' 1
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>invoice_number='1003' 1
 </code></pre></div>
 <p>That's the essence of the library: events are defined as <a href="https://docs.pydantic.dev/latest/api/base_model/">pydantic</a> models, appended to named streams and read back together with their metadata.</p>
 <h2 id="whats-next">What's next?</h2>

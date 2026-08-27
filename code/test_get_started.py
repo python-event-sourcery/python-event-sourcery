@@ -14,10 +14,12 @@ def test_get_started():
         InvoicePaid(invoice_number="1003"),
         stream_id=StreamId(name="invoices/1003"),
     )
-
-    for recorded in event_store.load_stream(StreamId(name="invoices/1003")):
-        print(recorded.event, recorded.version)
     # --8<-- [end:get_started_01]
+    # --8<-- [start:get_started_02]
+    recorded_events = event_store.load_stream(StreamId(name="invoices/1003"))
+    for recorded in recorded_events:
+        print(recorded.event, recorded.version)
+    # --8<-- [end:get_started_02]
 
     events = event_store.load_stream(StreamId(name="invoices/1003"))
     assert len(events) == 1
