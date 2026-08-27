@@ -40,7 +40,7 @@ def test_lets_appending_by_both_id_and_name_then_just_name(
 
 
 @pytest.mark.skip_backend(
-    backend=["kurrentdb_backend", "in_memory_backend"],
+    backend=["kurrentdb_backend", "in_memory_backend", "in_memory_async_backend"],
     reason="Can't use both ids",
 )
 def test_blocks_new_stream_uuid_with_same_name_as_other(
