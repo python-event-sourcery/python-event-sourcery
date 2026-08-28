@@ -12,27 +12,49 @@ For production use, install the extra matching your storage of choice: `sqlalche
 pip install "python-event-sourcery[sqlalchemy]"
 ```
 
+For asynchronous SQLAlchemy usage, install the `sqlalchemy-async` extra instead, along with an async driver of your choice (e.g. `asyncpg` for PostgreSQL or `aiosqlite` for SQLite):
+
+```bash
+pip install "python-event-sourcery[sqlalchemy-async]" asyncpg
+```
+
 ## Your first event
 
 The example below uses the in-memory backend, so you can run it right away, without setting up a database.
 
 Define an event by inheriting from the [Event] base class, then append it to a stream:
 
-```python
---8<--
-docs/code/test_get_started.py:get_started_01
---8<--
-```
+=== "Sync"
+    ```python
+    --8<--
+    docs/code/test_get_started.py:get_started_01
+    --8<--
+    ```
+
+=== "Async"
+    ```python
+    --8<--
+    docs/code/test_get_started.py:get_started_async_01
+    --8<--
+    ```
 
 ## Reading events
 
 Events from a given stream can be read back at once:
 
-```python
---8<--
-docs/code/test_get_started.py:get_started_02
---8<--
-```
+=== "Sync"
+    ```python
+    --8<--
+    docs/code/test_get_started.py:get_started_02
+    --8<--
+    ```
+
+=== "Async"
+    ```python
+    --8<--
+    docs/code/test_get_started.py:get_started_async_02
+    --8<--
+    ```
 
 Output:
 

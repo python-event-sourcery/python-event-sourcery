@@ -25,7 +25,7 @@ def test_versionless_stream_is_supported(given: Given, when: When, then: Then) -
 
 
 @pytest.mark.skip_backend(
-    backend="kurrentdb_backend",
+    backend=["kurrentdb_backend", "kurrentdb_async_backend"],
     reason="KurrentDB is auto versioning",
 )
 def test_does_not_allow_for_mixing_versioning_with_no_versioning(
@@ -44,7 +44,7 @@ def test_does_not_allow_for_mixing_versioning_with_no_versioning(
 
 
 @pytest.mark.skip_backend(
-    backend="kurrentdb_backend",
+    backend=["kurrentdb_backend", "kurrentdb_async_backend"],
     reason="KurrentDB is auto versioning",
 )
 def test_does_not_allow_for_mixing_no_versioning_with_versioning(

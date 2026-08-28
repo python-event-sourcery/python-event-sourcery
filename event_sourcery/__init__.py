@@ -1,6 +1,10 @@
 __all__ = [
     "DEFAULT_TENANT",
     "NO_VERSIONING",
+    "AsyncBackend",
+    "AsyncEventStore",
+    "AsyncOutbox",
+    "AsyncTransactionalBackend",
     "Backend",
     "Event",
     "EventStore",
@@ -12,6 +16,12 @@ __all__ = [
     "TransactionalBackend",
 ]
 
+from event_sourcery._event_store._async.backend import (
+    AsyncBackend,
+    AsyncTransactionalBackend,
+)
+from event_sourcery._event_store._async.event_store import AsyncEventStore
+from event_sourcery._event_store._async.outbox import AsyncOutbox
 from event_sourcery._event_store.backend import Backend, TransactionalBackend
 from event_sourcery._event_store.event.dto import Event
 from event_sourcery._event_store.event_store import EventStore

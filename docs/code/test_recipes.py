@@ -59,6 +59,31 @@ def test_sqlalchemy_backend(base_with_configured_es_models):
     assert backend.event_store.position == 0
 
 
+def test_sqlalchemy_async_backend(base_with_configured_es_models, tmp_path):
+    import asyncio
+
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+    Base = base_with_configured_es_models
+    engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path}/example.db")
+    Session = async_sessionmaker(bind=engine)
+
+    async def main() -> None:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        # --8<-- [start:integrate_sql_async_01]
+        from event_sourcery_sqlalchemy.async_ import AsyncSQLAlchemyBackend
+
+        session = Session()  # SQLAlchemy AsyncSession
+        backend = AsyncSQLAlchemyBackend().configure(session)
+        # --8<-- [end:integrate_sql_async_01]
+        assert await backend.event_store.position() == 0
+        await session.close()
+        await engine.dispose()
+
+    asyncio.run(main())
+
+
 def test_kurrent_db():
     pass
     # from kurrentdb import KurrentDBClient
@@ -104,6 +129,38 @@ def test_saving(event_cls: type["Event"], base_with_configured_es_models):
     # TODO
     # assert repr(events) == "[WrappedEvent(event=InvoicePaid(invoice_number='1003'), version=1, uuid=UUID('831cd32b-02b9-48d2-a67c-28cf7dbb37fa'), created_at=datetime.datetime(2025, 3, 16, 10, 3, 2, 138667), context=Context(correlation_id=None, causation_id=None))]"
     assert len(events) == 1
+
+
+def test_saving_events_async(event_cls: type["Event"]) -> None:
+    import asyncio
+
+    from event_sourcery.async_.backend import AsyncInMemoryBackend
+
+    backend = AsyncInMemoryBackend()
+    event_store = backend.event_store
+    InvoicePaid = event_cls
+
+    async def main() -> None:
+        # --8<-- [start:saving_events_01_async]
+        invoice_paid = InvoicePaid(invoice_number="1003")
+        stream_id = StreamId(name="invoices/1003")
+        await event_store.append(invoice_paid, stream_id=stream_id)
+        # --8<-- [end:saving_events_01_async]
+        # --8<-- [start:saving_events_02_async]
+        events = await event_store.load_stream(stream_id)
+        # [
+        #   WrappedEvent(
+        #       event=InvoicePaid(invoice_number='1003'),
+        #       version=1,
+        #       uuid=UUID('831cd32b-02b9-48d2-a67c-28cf7dbb37fa'),
+        #       created_at=datetime.datetime(2025, 3, 16, 10, 3, 2, 138667),
+        #       context=Context(correlation_id=None, causation_id=None)
+        #   )
+        # ]
+        # --8<-- [end:saving_events_02_async]
+        assert len(events) == 1
+
+    asyncio.run(main())
 
 
 def test_subscribing(event_cls: type["Event"], base_with_configured_es_models):
@@ -156,6 +213,56 @@ def test_subscribing(event_cls: type["Event"], base_with_configured_es_models):
             break
     # --8<-- [end:subscriptions_04]
     assert True
+
+
+def test_subscribing_async(event_cls: type["Event"]) -> None:
+    import asyncio
+
+    from event_sourcery.async_.backend import AsyncInMemoryBackend
+
+    backend = AsyncInMemoryBackend()
+    InvoicePaid = event_cls
+
+    invoice_paid = InvoicePaid(invoice_number="1004")
+
+    async def main() -> None:
+        await backend.event_store.append(
+            invoice_paid, stream_id=StreamId(name="invoices/1004")
+        )
+        # --8<-- [start:subscriptions_01_async]
+        subscription = (
+            backend.subscriber.start_from(0)  # read from position 0...
+            .to_events([InvoicePaid])  # ...InvoicePaid events...
+            .build_iter(timelimit=1)  # ... iterate events one by one...
+            # ...and wait up to 1 second for a new event
+        )
+        # --8<-- [end:subscriptions_01_async]
+        # --8<-- [start:subscriptions_02_async]
+        async for recorded_event in subscription:
+            if recorded_event is None:  # no more events for now
+                break
+
+            # process the event
+            print(recorded_event.wrapped_event)
+            print(recorded_event.position)
+            print(recorded_event.tenant_id)
+        # --8<-- [end:subscriptions_02_async]
+        # --8<-- [start:subscriptions_03_async]
+        batch_subscription = (
+            backend.subscriber.start_from(0)
+            .to_events([InvoicePaid])
+            .build_batch(size=10, timelimit=1)  # try getting 10 events at a time
+        )
+        # --8<-- [end:subscriptions_03_async]
+        # --8<-- [start:subscriptions_04_async]
+        async for batch in batch_subscription:
+            # process the batch
+            print(batch)
+            if len(batch) == 0:  # no more events at the moment
+                break
+        # --8<-- [end:subscriptions_04_async]
+
+    asyncio.run(main())
 
 
 def test_outbox(
@@ -237,6 +344,44 @@ def test_outbox(
     # --8<-- [end:outbox_04]
 
 
+def test_outbox_async(event_cls: type["Event"]) -> None:
+    import asyncio
+
+    from event_sourcery.async_.backend import AsyncInMemoryBackend
+
+    InvoicePaid = event_cls
+    published: list[str] = []
+
+    # --8<-- [start:outbox_01_async]
+    backend = (
+        AsyncInMemoryBackend().configure().with_outbox()  # enable outbox
+    )
+    # --8<-- [end:outbox_01_async]
+
+    async def main() -> None:
+        invoice_paid = InvoicePaid(invoice_number="an_invoice_number_outbox")
+        await backend.event_store.append(
+            invoice_paid, stream_id=StreamId(name="invoices/1004")
+        )
+
+        # --8<-- [start:outbox_02_pika2_async]
+        async def publish(recorded: Recorded) -> None:
+            published.append(recorded.wrapped_event.event.model_dump_json())
+
+        # --8<-- [end:outbox_02_pika2_async]
+
+        # --8<-- [start:outbox_03_async]
+        await backend.outbox.run(publisher=publish)
+        # --8<-- [end:outbox_03_async]
+
+        # --8<-- [start:outbox_03a_async]
+        await backend.outbox.run(publisher=publish, limit=50)
+        # --8<-- [end:outbox_03a_async]
+
+    asyncio.run(main())
+    assert "an_invoice_number_outbox" in published[0]
+
+
 @pytest.fixture()
 def sqlite_in_memory_backend(base_with_configured_es_models):
     from sqlalchemy import create_engine
@@ -301,6 +446,62 @@ def test_event_sourcing(sqlite_in_memory_backend) -> None:
     assert len(events) == 1
 
 
+def test_event_sourcing_async() -> None:
+    from event_sourcery.async_.backend import AsyncInMemoryBackend
+
+    backend = AsyncInMemoryBackend()
+    from event_sourcery.event import Event
+    from event_sourcery.event_sourcing import Aggregate
+
+    class SwitchedOn(Event):
+        pass
+
+    class LightSwitch(Aggregate):
+        category = "light_switch"
+
+        def __init__(self) -> None:
+            self._switched_on = False
+
+        def __apply__(self, event: Event) -> None:
+            match event:
+                case SwitchedOn():
+                    self._switched_on = True
+                case _:
+                    raise NotImplementedError(f"Unexpected event {type(event)}")
+
+        def switch_on(self) -> None:
+            if self._switched_on:
+                return  # no op
+            self._emit(SwitchedOn())
+
+    import asyncio
+
+    from event_sourcery import StreamId
+    from event_sourcery.event_sourcing import AsyncRepository
+
+    # --8<-- [start:event_sourcing_02_repo_async]
+    repository = AsyncRepository[LightSwitch](backend.event_store)
+    # --8<-- [end:event_sourcing_02_repo_async]
+
+    async def main() -> None:
+        # --8<-- [start:event_sourcing_03_async]
+        from event_sourcery import StreamUUID
+
+        stream_id = StreamUUID(name="light_switch/1")
+        async with repository.aggregate(stream_id, LightSwitch()) as wrapped:
+            wrapped.aggregate.switch_on()
+            wrapped.aggregate.switch_on()
+        # --8<-- [end:event_sourcing_03_async]
+
+        events = await backend.event_store.load_stream(
+            StreamId(name="light_switch/1", category=LightSwitch.category)
+        )
+        return events
+
+    events = asyncio.run(main())
+    assert len(events) == 1
+
+
 def test_multitenancy(sqlite_in_memory_backend, event_cls) -> None:
     InvoicePaid = event_cls
 
@@ -343,6 +544,22 @@ def test_multitenancy(sqlite_in_memory_backend, event_cls) -> None:
     assert repository is not None
 
 
+def test_multitenancy_async() -> None:
+    class ExampleAggregate(Aggregate):
+        pass
+
+    # --8<-- [start:multitenancy_04_async]
+    from event_sourcery.async_.backend import AsyncInMemoryBackend
+    from event_sourcery.event_sourcing import AsyncRepository
+
+    scoped_backend = AsyncInMemoryBackend().in_tenant_mode("tenant123")
+
+    repository = AsyncRepository[ExampleAggregate](scoped_backend.event_store)
+    # --8<-- [end:multitenancy_04_async]
+
+    assert repository is not None
+
+
 def test_snapshots(sqlite_in_memory_backend) -> None:
     event_store = sqlite_in_memory_backend.event_store
 
@@ -374,7 +591,8 @@ def test_snapshots(sqlite_in_memory_backend) -> None:
     last_event = loaded_events[-1].event
 
     snapshot = TemperatureSensorSnapshot(
-        readings_so_far=100, last_reading_in_celsius=last_event.reading_in_celsius
+        readings_so_far=100,
+        last_reading_in_celsius=last_event.reading_in_celsius,
     )
     wrapped_snapshot = WrappedEvent.wrap(snapshot, last_version)
 
@@ -388,6 +606,58 @@ def test_snapshots(sqlite_in_memory_backend) -> None:
     # --8<-- [end:snapshots_04]
 
     assert len(loaded_events) == 1
+
+
+def test_snapshots_async() -> None:
+    import asyncio
+
+    from event_sourcery.async_.backend import AsyncInMemoryBackend
+
+    backend = AsyncInMemoryBackend()
+    event_store = backend.event_store
+
+    from event_sourcery.event import Event
+
+    class TemperatureSensorSnapshot(Event):
+        readings_so_far: int
+        last_reading_in_celsius: int
+
+    async def main() -> None:
+        # --8<-- [start:snapshots_01_async]
+        class TemperatureChanged(Event):
+            reading_in_celsius: int
+
+        stream_id = StreamId(name="temperature_sensor/1")
+        events = [
+            TemperatureChanged(reading_in_celsius=reading) for reading in range(100)
+        ]
+        await event_store.append(*events, stream_id=stream_id)
+
+        loaded_events = await event_store.load_stream(stream_id)
+        # --8<-- [end:snapshots_01_async]
+
+        # --8<-- [start:snapshots_03_async]
+        last_version = loaded_events[-1].version
+        last_event = loaded_events[-1].event
+
+        snapshot = TemperatureSensorSnapshot(
+            readings_so_far=100,
+            last_reading_in_celsius=last_event.reading_in_celsius,
+        )
+        wrapped_snapshot = WrappedEvent.wrap(snapshot, last_version)
+
+        await event_store.save_snapshot(stream_id, wrapped_snapshot)
+        # --8<-- [end:snapshots_03_async]
+
+        # --8<-- [start:snapshots_04_async]
+        loaded_events = await event_store.load_stream(stream_id)
+        print(len(loaded_events))  # 1
+        assert isinstance(loaded_events[-1].event, TemperatureSensorSnapshot)
+        # --8<-- [end:snapshots_04_async]
+
+        return len(loaded_events)
+
+    assert asyncio.run(main()) == 1
 
 
 def test_versioning(sqlite_in_memory_backend, event_cls) -> None:
@@ -420,10 +690,9 @@ def test_versioning(sqlite_in_memory_backend, event_cls) -> None:
     )
     # --8<-- [end:versioning_03]
 
-    # --8<-- [start:versioning_01]
+    # --8<-- [start:versioning_04]
     from event_sourcery import NO_VERSIONING
 
-    # --8<-- [start:versioning_04]
     stream_id = StreamId(name="invoices/123")
 
     an_event = InvoicePaid(invoice_number="1111")
@@ -434,6 +703,61 @@ def test_versioning(sqlite_in_memory_backend, event_cls) -> None:
         another_event, stream_id=stream_id, expected_version=NO_VERSIONING
     )
     # --8<-- [end:versioning_04]
+
+
+def test_versioning_async(event_cls: type["Event"]) -> None:
+    import asyncio
+
+    from event_sourcery.async_.backend import AsyncInMemoryBackend
+
+    backend = AsyncInMemoryBackend()
+    event_store = backend.event_store
+    InvoicePaid = event_cls
+
+    async def main() -> None:
+        # --8<-- [start:versioning_01_async]
+        stream_id = StreamId(name="invoices/1111")
+        an_event = InvoicePaid(invoice_number="1111")
+        await event_store.append(
+            an_event, stream_id=stream_id
+        )  # no `expected_version` argument given
+        # --8<-- [end:versioning_01_async]
+
+        # --8<-- [start:versioning_02_async]
+        another_event = InvoicePaid(invoice_number="1112")
+        # 👇 this would raise an exception
+        # await event_store.append(another_event, stream_id=stream_id)
+        # --8<-- [end:versioning_02_async]
+
+        # --8<-- [start:versioning_03_async]
+        present_events = await event_store.load_stream(stream_id)
+        last_version = present_events[-1].version
+
+        # ... some logic
+
+        another_event = InvoicePaid(invoice_number="1112")
+        await event_store.append(
+            another_event, stream_id=stream_id, expected_version=last_version
+        )
+        # --8<-- [end:versioning_03_async]
+
+        # --8<-- [start:versioning_04_async]
+        from event_sourcery import NO_VERSIONING
+
+        stream_id = StreamId(name="invoices/123")
+
+        an_event = InvoicePaid(invoice_number="1111")
+        await event_store.append(
+            an_event, stream_id=stream_id, expected_version=NO_VERSIONING
+        )
+
+        another_event = InvoicePaid(invoice_number="1112")
+        await event_store.append(
+            another_event, stream_id=stream_id, expected_version=NO_VERSIONING
+        )
+        # --8<-- [end:versioning_04_async]
+
+    asyncio.run(main())
 
 
 if __name__ == "__main__":

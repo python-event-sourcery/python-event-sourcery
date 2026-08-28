@@ -8,15 +8,24 @@ import pytest
 from django.core.management import call_command as django_command
 
 from event_sourcery import StreamId
+from event_sourcery.async_.backend import AsyncInMemoryBackend
 from event_sourcery.backend import Backend, InMemoryBackend, InMemoryConfig
 from event_sourcery.event import WrappedEvent
 from event_sourcery_django import DjangoBackend, DjangoConfig
 from event_sourcery_kurrentdb import KurrentDBBackend, KurrentDBConfig
+from event_sourcery_kurrentdb.async_ import AsyncKurrentDBBackend
 from event_sourcery_sqlalchemy import SQLAlchemyBackend, SQLAlchemyConfig
+from event_sourcery_sqlalchemy.async_ import AsyncSQLAlchemyBackend
+from tests.adapter import BackendFacade
 from tests.backend.kurrentdb import kurrentdb_client
+from tests.backend.kurrentdb_async import async_kurrentdb_client
 from tests.backend.sqlalchemy import (
     sqlalchemy_postgres_session,
     sqlalchemy_sqlite_session,
+)
+from tests.backend.sqlalchemy_async import (
+    sqlalchemy_async_postgres_session,
+    sqlalchemy_async_sqlite_session,
 )
 
 
@@ -39,6 +48,22 @@ def kurrentdb_backend(max_attempts: int) -> Generator[KurrentDBBackend, None, No
 
 
 @pytest.fixture()
+def kurrentdb_async_backend(max_attempts: int) -> Iterator[Backend]:
+    with async_kurrentdb_client() as (client, runner):
+        yield BackendFacade(
+            AsyncKurrentDBBackend().configure(
+                client,
+                KurrentDBConfig(
+                    timeout=1,
+                    outbox_name=f"pyes-outbox-test-{uuid4().hex}",
+                    outbox_attempts=max_attempts,
+                ),
+            ),
+            runner,
+        )
+
+
+@pytest.fixture()
 def django_backend(transactional_db: None, max_attempts: int) -> DjangoBackend:
     django_framework.setup()
     django_command("migrate")
@@ -48,6 +73,15 @@ def django_backend(transactional_db: None, max_attempts: int) -> DjangoBackend:
 @pytest.fixture()
 def in_memory_backend(max_attempts: int) -> Backend:
     return InMemoryBackend().configure(InMemoryConfig(outbox_attempts=max_attempts))
+
+
+@pytest.fixture()
+def in_memory_async_backend(max_attempts: int) -> Iterator[Backend]:
+    facade = BackendFacade(
+        AsyncInMemoryBackend().configure(InMemoryConfig(outbox_attempts=max_attempts))
+    )
+    yield facade
+    facade.close()
 
 
 @pytest.fixture()
@@ -66,6 +100,31 @@ def sqlalchemy_postgres_backend(max_attempts: int) -> Iterator[SQLAlchemyBackend
     with sqlalchemy_postgres_session() as session:
         yield SQLAlchemyBackend().configure(
             session, SQLAlchemyConfig(outbox_attempts=max_attempts)
+        )
+
+
+@pytest.fixture()
+def sqlalchemy_async_sqlite_backend(
+    tmp_path: Path,
+    max_attempts: int,
+) -> Iterator[Backend]:
+    with sqlalchemy_async_sqlite_session(tmp_path) as (session, runner):
+        yield BackendFacade(
+            AsyncSQLAlchemyBackend().configure(
+                session(), SQLAlchemyConfig(outbox_attempts=max_attempts)
+            ),
+            runner,
+        )
+
+
+@pytest.fixture()
+def sqlalchemy_async_postgres_backend(max_attempts: int) -> Iterator[Backend]:
+    with sqlalchemy_async_postgres_session() as (session, runner):
+        yield BackendFacade(
+            AsyncSQLAlchemyBackend().configure(
+                session(), SQLAlchemyConfig(outbox_attempts=max_attempts)
+            ),
+            runner,
         )
 
 
