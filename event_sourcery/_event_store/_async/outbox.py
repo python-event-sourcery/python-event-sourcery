@@ -1,11 +1,11 @@
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import AbstractAsyncContextManager
 
+from event_sourcery._event_store._async.serde import AsyncSerde
 from event_sourcery._event_store.event.dto import (
     Recorded,
     RecordedRaw,
 )
-from event_sourcery._event_store.event.serde import Serde
 
 
 class AsyncOutboxStorageStrategy:
@@ -44,10 +44,10 @@ class AsyncOutbox:
     Args:
         strategy (AsyncOutboxStorageStrategy):
             The backend strategy for outbox storage and entry management.
-        serde (Serde): The serializer/deserializer for event records.
+        serde (AsyncSerde): The serializer/deserializer for event records.
     """
 
-    def __init__(self, strategy: AsyncOutboxStorageStrategy, serde: Serde) -> None:
+    def __init__(self, strategy: AsyncOutboxStorageStrategy, serde: AsyncSerde) -> None:
         self._strategy = strategy
         self._serde = serde
 
@@ -73,7 +73,7 @@ class AsyncOutbox:
         stream = self._strategy.outbox_entries(limit=limit)
         async for entry in stream:
             async with entry as raw_record:
-                event = self._serde.deserialize(raw_record.entry)
+                event = await self._serde.deserialize(raw_record.entry)
                 record = Recorded(
                     wrapped_event=event,
                     stream_id=raw_record.entry.stream_id,

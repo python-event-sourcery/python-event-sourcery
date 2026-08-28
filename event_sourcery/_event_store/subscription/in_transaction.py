@@ -12,7 +12,7 @@ __all__ = ["Dispatcher", "Listener", "Listeners"]
 from collections import defaultdict
 from collections.abc import Iterator
 from itertools import chain
-from typing import Protocol
+from typing import Protocol, cast
 
 from event_sourcery._event_store.event.dto import (
     Event,
@@ -134,14 +134,24 @@ class Dispatcher:
         """
         Dispatches one or more raw event records to all registered listeners.
 
+        Deserialization is deferred until matching listeners are found, so
+        that no-listener hits on encryption-enabled backends do not engage
+        the (possibly stubbed) serde.
+
         Args:
             *raws (RecordedRaw): One or more events to dispatch.
         """
         for raw in raws:
-            record = self._serde.deserialize_record(raw)
-            event = record.wrapped_event.event.__class__
-            category = record.stream_id.category or ""
+            event = cast(
+                type[Event],
+                self._serde.registry.type_for_name(raw.entry.name),
+            )
+            category = raw.entry.stream_id.category or ""
             listeners = set(self._listeners[event]) | set(self._listeners[category])
+            if not listeners:
+                continue
+
+            record = self._serde.deserialize_record(raw)
             for listener in listeners:
                 listener(
                     record.wrapped_event,

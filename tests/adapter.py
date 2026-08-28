@@ -8,20 +8,31 @@ dedicated, persistent event loop, exposing the synchronous `Backend` API.
 
 import asyncio
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator, Sequence
+from contextlib import contextmanager
 from datetime import timedelta
-from typing import TypeVar, cast
+from typing import Generic, TypeVar, cast
 
 from typing_extensions import Self
 
-from event_sourcery import EventStore, Outbox, StreamCategory, StreamId
+from event_sourcery import EventStore, Outbox, StreamCategory, StreamId, StreamUUID
 from event_sourcery._event_store.backend import _Provider
 from event_sourcery._event_store.subscription.interfaces import Seconds
 from event_sourcery.async_ import AsyncBackend, AsyncEventStore, AsyncOutbox
+from event_sourcery.async_.encryption import AsyncEncryption
+from event_sourcery.async_.interfaces import AsyncEncryptionKeyStorageStrategy
 from event_sourcery.async_.outbox import no_filter
 from event_sourcery.async_.subscription import AsyncSubscriptionBuilder
 from event_sourcery.backend import TransactionalBackend
-from event_sourcery.event import Event, Position, Recorded, WrappedEvent
-from event_sourcery.interfaces import OutboxFiltererStrategy, Versioning
+from event_sourcery.encryption import Encryption as EncryptionService
+from event_sourcery.event import Context, Event, Position, Recorded, WrappedEvent
+from event_sourcery.event_sourcing import Aggregate, AsyncRepository
+from event_sourcery.event_sourcing.aggregate import WrappedAggregate
+from event_sourcery.interfaces import (
+    EncryptionKeyStorageStrategy,
+    EncryptionStrategy,
+    OutboxFiltererStrategy,
+    Versioning,
+)
 from event_sourcery.subscription import BuildPhase, FilterPhase, PositionPhase
 
 T = TypeVar("T")
@@ -147,6 +158,67 @@ class SubscriptionBuilderFacade(PositionPhase, FilterPhase, BuildPhase):
         return self._runner.iterate(self._builder.build_batch(size, timelimit))
 
 
+TAggregate = TypeVar("TAggregate", bound=Aggregate)
+
+
+class RepositoryFacade(Generic[TAggregate]):
+    """
+    Synchronous facade over `AsyncRepository`, draining its coroutines on a
+    runner, used to run the shared event-sourcing tests against async backends.
+    """
+
+    def __init__(self, repo: AsyncRepository[TAggregate], runner: Runner) -> None:
+        self._repo = repo
+        self._runner = runner
+
+    @contextmanager
+    def aggregate(
+        self,
+        uuid: StreamUUID,
+        aggregate: TAggregate,
+        context: Context | None = None,
+    ) -> Iterator[WrappedAggregate[TAggregate]]:
+        cm = self._repo.aggregate(uuid, aggregate, context)
+        wrapped = self._runner.run(cm.__aenter__())
+        try:
+            yield wrapped
+        finally:
+            self._runner.run(cm.__aexit__(None, None, None))
+
+
+class EncryptionFacade:
+    """
+    Sync view of `AsyncEncryption/`AsyncEncryptionKeyStorageStrategy`, for
+    BDD-like helpers draining key operations on the facade's runner.
+    """
+
+    def __init__(self, encryption: AsyncEncryption, runner: Runner) -> None:
+        self._encryption = encryption
+        self.key_storage = self.KeyStorageFacade(encryption.key_storage, runner)
+        self.strategy = encryption.strategy
+
+    class KeyStorageFacade:
+        def __init__(
+            self,
+            storage: AsyncEncryptionKeyStorageStrategy,
+            runner: Runner,
+        ) -> None:
+            self._storage = storage
+            self._runner = runner
+
+        def get(self, subject_id: str) -> bytes | None:
+            return self._runner.run(self._storage.get(subject_id))
+
+        def store(self, subject_id: str, key: bytes) -> None:
+            self._runner.run(self._storage.store(subject_id, key))
+
+        def delete(self, subject_id: str) -> None:
+            self._runner.run(self._storage.delete(subject_id))
+
+    def shred(self, subject_id: str) -> None:
+        self.key_storage.delete(subject_id)
+
+
 class BackendFacade(TransactionalBackend):
     """
     Synchronous facade over an async backend.
@@ -194,6 +266,14 @@ class BackendFacade(TransactionalBackend):
             return cast(T, self.outbox)
         if _type is PositionPhase:
             return cast(T, self.subscriber)
+        if _type is EncryptionService:
+            return cast(
+                T,
+                EncryptionFacade(
+                    cast(AsyncEncryption, self._async[AsyncEncryption]),
+                    self._runner,
+                ),
+            )
         return self._async[_type]
 
     def __setitem__(self, _type: type[T], value: T | _Provider[T]) -> None:
@@ -210,6 +290,14 @@ class BackendFacade(TransactionalBackend):
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         self._async.with_outbox(filterer)
+        return self
+
+    def with_encryption(
+        self,
+        strategy: EncryptionStrategy,
+        key_storage: EncryptionKeyStorageStrategy | AsyncEncryptionKeyStorageStrategy,
+    ) -> Self:
+        self._async.with_encryption(strategy, key_storage)
         return self
 
     def close(self) -> None:

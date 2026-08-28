@@ -33,20 +33,34 @@ class UserRegistered(Event):
 
 Configure backend with encryption:
 
-```python
-factory = (
-    SQLAlchemyBackendFactory(session)
-    .with_encryption(
-        key_storage=InMemoryKeyStorage(),
+=== "Synchronous"
+    ```python
+    factory = (
+        SQLAlchemyBackendFactory(session)
+        .with_encryption(
+            key_storage=InMemoryKeyStorage(),
+            strategy=FernetEncryptionStrategy(),
+        )
+    )
+
+    # Usage (automatic through serialization)
+    encryption = Encryption(strategy=strategy, key_storage=key_storage)
+    encrypted_data = encryption.encrypt(user_event, stream_id)  # Returns dict with encrypted fields
+    decrypted_data = encryption.decrypt(UserRegistered, encrypted_data, stream_id)  # Returns dict with decrypted fields
+    ```
+
+=== "Asynchronous"
+    For async backends, use an `AsyncEncryptionKeyStorageStrategy` implementation
+    (e.g. `AsyncInMemoryKeyStorage` from `event_sourcery.async_.backend`). The
+    pipeline (`AsyncEncryption` / `AsyncSerde`) then runs asynchronously. The
+    encryption strategy itself stays a sync implementation:
+
+    ```python
+    backend = AsyncSQLAlchemyBackend().configure(session).with_encryption(
+        key_storage=AsyncInMemoryKeyStorage(),
         strategy=FernetEncryptionStrategy(),
     )
-)
-
-# Usage (automatic through serialization)
-encryption = Encryption(strategy=strategy, key_storage=key_storage)
-encrypted_data = encryption.encrypt(user_event, stream_id)  # Returns dict with encrypted fields
-decrypted_data = encryption.decrypt(UserRegistered, encrypted_data, stream_id)  # Returns dict with decrypted fields
-```
+    ```
 
 ## Validation: DataSubject Required
 
@@ -105,10 +119,11 @@ Crypto-shredding in this framework is based on three main concepts:
    - Each event must have exactly one [DataSubject] field. [Encrypted] fields will be associated with this subject by default.
    - You can specify a different subject for an [Encrypted] field using the `subject_field` parameter.
 
-2. **Automatic Encryption & Decryption:**
-   - When events are serialized, fields marked as [Encrypted] are automatically encrypted using the [EncryptionStrategy] and [EncryptionKeyStorage].
-   - When events are deserialized, [Encrypted] fields are automatically decrypted if the key is available.
-   - If the key is shredded, the field will return its `mask_value` instead of the original data.
+ 2. **Automatic Encryption & Decryption:**
+    - When events are serialized, fields marked as [Encrypted] are automatically encrypted using the [EncryptionStrategy] and [EncryptionKeyStorage].
+    - When events are deserialized, [Encrypted] fields are automatically decrypted if the key is available.
+    - If the key is shredded, the field will return its `mask_value` instead of the original data.
+    - Async backends plug an `AsyncEncryptionKeyStorageStrategy`; all (de)serialization happens on the event loop.
 
 3. **Shredding:**
    - Shredding is performed by deleting the encryption key for a given subject.

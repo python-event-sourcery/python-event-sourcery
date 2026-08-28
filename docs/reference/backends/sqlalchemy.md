@@ -36,3 +36,6 @@
 
 # AsyncSqlAlchemyOutboxStorageStrategy
 ::: event_sourcery_sqlalchemy.async_.AsyncSqlAlchemyOutboxStorageStrategy
+
+# AsyncSqlAlchemyCursorsDao
+::: event_sourcery_sqlalchemy.async_.cursors_dao.AsyncSqlAlchemyCursorsDao

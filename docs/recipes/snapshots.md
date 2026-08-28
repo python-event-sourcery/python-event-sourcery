@@ -18,26 +18,43 @@ docs/code/test_recipes.py:snapshots_02
 --8<--
 ```
 
-Now we can save a snapshot, using dedicated [EventStore] method:
+Now we can save a snapshot, using dedicated [EventStore] (or [AsyncEventStore]) method:
 
-```python
---8<--
-docs/code/test_recipes.py:snapshots_03
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:snapshots_03
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:snapshots_03_async
+    --8<--
+    ```
 
 Note that version of the snapshot must **equal** to the version of the last event.
 
 Now when you'll try to load the stream you'll notice the method only returns a single event and this will be our snapshot:
 
-```python
---8<--
-docs/code/test_recipes.py:snapshots_04
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:snapshots_04
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:snapshots_04_async
+    --8<--
+    ```
 
 !!! warning
 
     Long streams are usually a sign of a poor stream design. Snapshots are an optimization that should be used only for a good reason. Use with caution!
 
 [EventStore]: ../reference/event_store/EventStore.md
+[AsyncEventStore]: ../reference/event_store/AsyncEventStore.md

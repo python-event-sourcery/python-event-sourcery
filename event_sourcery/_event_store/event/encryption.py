@@ -1,5 +1,6 @@
 import json
 from collections import UserDict
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any
 
@@ -172,16 +173,12 @@ class Encryption:
             NoSubjectIdFound: If the subject id cannot be determined for encryption.
             KeyNotFoundError: If the encryption key for a subject is missing.
         """
-        event_type = type(event)
         data = NestedDict(event.model_dump(mode="json"))
-        for field_name in self.registry.encrypted_fields(of=event_type).keys():
-            subject_field = self.registry.subject_filed(field_name, of=event_type)
-            subject_id = (
-                subject_field and getattr(event, subject_field)
-            ) or stream_id.name
-
-            if subject_id is None:
-                raise NoSubjectIdFound(stream_id)
+        for field_name, subject_id in _fields_with_subjects(
+            self.registry,
+            event,
+            stream_id,
+        ):
             data[field_name] = self._encrypt_value(data[field_name], subject_id)
         return data.data
 
@@ -203,14 +200,16 @@ class Encryption:
             dict[str, Any]: The event data with decrypted fields (or masked if no key).
         """
         data = NestedDict(raw)
-        encrypted_fields = self.registry.encrypted_fields(of=event_type)
-        for field_name, encrypted_config in encrypted_fields.items():
-            subject_field = self.registry.subject_filed(field_name, of=event_type)
-            subject_id = data[subject_field] if subject_field else stream_id.name or ""
+        for field_name, subject_id, mask_value in _fields_with_subjects_in_data(
+            self.registry,
+            event_type,
+            data,
+            stream_id,
+        ):
             data[field_name] = self._decrypt_value(
                 data[field_name],
                 subject_id,
-                encrypted_config.mask_value,
+                mask_value,
             )
         return data.data
 
@@ -244,3 +243,46 @@ class Encryption:
             subject_id (str): The subject identifier whose key should be deleted.
         """
         self.key_storage.delete(subject_id)
+
+
+def _fields_with_subjects(
+    registry: EventRegistry,
+    event: BaseModel,
+    stream_id: StreamId,
+) -> Iterator[tuple[str, str]]:
+    """
+    Yields (field name, subject id) pairs for all encrypted fields of the event.
+
+    Shared by `Encryption` and its async counterpart.
+
+    Raises:
+        NoSubjectIdFound: If the subject id cannot be determined for encryption.
+    """
+    event_type = type(event)
+    for field_name in registry.encrypted_fields(of=event_type).keys():
+        subject_field = registry.subject_filed(field_name, of=event_type)
+        subject_id = (subject_field and getattr(event, subject_field)) or stream_id.name
+
+        if subject_id is None:
+            raise NoSubjectIdFound(stream_id)
+        yield field_name, subject_id
+
+
+def _fields_with_subjects_in_data(
+    registry: EventRegistry,
+    event_type: type[BaseModel],
+    data: NestedDict,
+    stream_id: StreamId,
+) -> Iterator[tuple[str, str, Any]]:
+    """
+    Yields (field name, subject id, mask value) triples for all encrypted fields
+    of the event type, resolving subjects against raw event data.
+
+    Shared by `Encryption` and its async counterpart.
+    """
+    for field_name, encrypted_config in registry.encrypted_fields(
+        of=event_type
+    ).items():
+        subject_field = registry.subject_filed(field_name, of=event_type)
+        subject_id = data[subject_field] if subject_field else stream_id.name or ""
+        yield field_name, subject_id, encrypted_config.mask_value

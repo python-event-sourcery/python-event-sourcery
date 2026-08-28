@@ -4,13 +4,13 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from functools import partial
 
+from event_sourcery._event_store._async.serde import AsyncSerde
 from event_sourcery._event_store.event.dto import (
     Event,
     Position,
     Recorded,
     RecordedRaw,
 )
-from event_sourcery._event_store.event.serde import Serde
 from event_sourcery._event_store.stream_id import StreamCategory
 from event_sourcery._event_store.subscription.builder import SubscriptionBuilder
 from event_sourcery._event_store.subscription.interfaces import Seconds
@@ -139,7 +139,7 @@ class AsyncSubscriptionBuilder(AsyncPositionPhase, AsyncFilterPhase, AsyncBuildP
     event subscriptions.
     """
 
-    _serde: Serde
+    _serde: AsyncSerde
     _strategy: AsyncSubscriptionStrategy
     _position: Position = field(init=False, default=sys.maxsize)
     _build: Callable[..., AsyncIterator[list[RecordedRaw]]] = field(init=False)
@@ -181,7 +181,7 @@ class AsyncSubscriptionBuilder(AsyncPositionPhase, AsyncFilterPhase, AsyncBuildP
     ) -> AsyncIterator[Recorded | None]:
         while True:
             batch = await anext(subscription)
-            yield self._serde.deserialize_record(batch[0]) if batch else None
+            yield await self._serde.deserialize_record(batch[0]) if batch else None
 
     def build_batch(
         self,
@@ -199,4 +199,4 @@ class AsyncSubscriptionBuilder(AsyncPositionPhase, AsyncFilterPhase, AsyncBuildP
         async for (
             batch
         ) in subscription:  # pragma: no cover  # subscriptions are infinite
-            yield [self._serde.deserialize_record(e) for e in batch]
+            yield [await self._serde.deserialize_record(e) for e in batch]

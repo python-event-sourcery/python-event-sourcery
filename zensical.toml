@@ -26,6 +26,7 @@ nav = [
     ] },
     { "Event Sourcing" = [
       { "Aggregate" = "reference/event_sourcing/Aggregate.md" },
+      { "AsyncRepository" = "reference/event_sourcing/AsyncRepository.md" },
       { "Repository" = "reference/event_sourcing/Repository.md" },
       { "WrappedAggregate" = "reference/event_sourcing/WrappedAggregate.md" },
     ] },
@@ -48,6 +49,8 @@ nav = [
         { "TransactionalBackend" = "reference/event_store/backend/TransactionalBackend.md" },
       ] },
       { "encryption" = [
+        { "AsyncEncryption" = "reference/event_store/encryption/AsyncEncryption.md" },
+        { "AsyncNoKeyStorageStrategy" = "reference/event_store/encryption/AsyncNoKeyStorageStrategy.md" },
         { "DataSubject" = "reference/event_store/encryption/DataSubject.md" },
         { "Encrypted" = "reference/event_store/encryption/Encrypted.md" },
         { "Encryption" = "reference/event_store/encryption/Encryption.md" },
@@ -70,6 +73,7 @@ nav = [
         { "Listeners" = "reference/event_store/in_transaction/Listeners.md" },
       ] },
       { "interfaces" = [
+        { "AsyncEncryptionKeyStorageStrategy" = "reference/event_store/interfaces/AsyncEncryptionKeyStorageStrategy.md" },
         { "AsyncOutboxStorageStrategy" = "reference/event_store/interfaces/AsyncOutboxStorageStrategy.md" },
         { "AsyncStorageStrategy" = "reference/event_store/interfaces/AsyncStorageStrategy.md" },
         { "AsyncSubscriptionStrategy" = "reference/event_store/interfaces/AsyncSubscriptionStrategy.md" },
@@ -86,6 +90,14 @@ nav = [
         { "NoOutboxStorageStrategy" = "reference/event_store/outbox/NoOutboxStorageStrategy.md" },
         { "no_filter" = "reference/event_store/outbox/no_filter.md" },
         { "Outbox" = "reference/event_store/outbox/Outbox.md" },
+      ] },
+      { "read_model" = [
+        { "AsyncCursorsDao" = "reference/read_model/AsyncCursorsDao.md" },
+        { "AsyncProjector" = "reference/read_model/AsyncProjector.md" },
+        { "AsyncReadModel" = "reference/read_model/AsyncReadModel.md" },
+        { "CursorsDao" = "reference/read_model/CursorsDao.md" },
+        { "Projector" = "reference/read_model/Projector.md" },
+        { "ReadModel" = "reference/read_model/ReadModel.md" },
       ] },
       { "subscription" = [
         { "AsyncBuildPhase" = "reference/event_store/subscription/AsyncBuildPhase.md" },

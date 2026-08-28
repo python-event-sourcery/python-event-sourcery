@@ -9,6 +9,9 @@ from operator import getitem
 from typing_extensions import Self
 
 from event_sourcery._event_store._async.backend import AsyncTransactionalBackend
+from event_sourcery._event_store._async.encryption import (
+    AsyncEncryptionKeyStorageStrategy,
+)
 from event_sourcery._event_store._async.event_store import AsyncStorageStrategy
 from event_sourcery._event_store._async.outbox import AsyncOutboxStorageStrategy
 from event_sourcery._event_store._async.subscription import AsyncSubscriptionStrategy
@@ -303,3 +306,28 @@ class AsyncInMemoryBackend(AsyncTransactionalBackend):
             AsyncInMemoryOutboxStorageStrategy
         ]
         return self
+
+
+@dataclass
+class AsyncInMemoryKeyStorage(AsyncEncryptionKeyStorageStrategy):
+    """
+    In-memory implementation of the async encryption key storage strategy.
+
+    Async counterpart of `InMemoryKeyStorage`. Stores encryption keys for data
+    subjects in memory; suitable for testing and development.
+    """
+
+    _keys: dict[tuple[TenantId, str], bytes] = field(default_factory=dict)
+    _tenant_id: TenantId = DEFAULT_TENANT
+
+    async def get(self, subject_id: str) -> bytes | None:
+        return self._keys.get((self._tenant_id, subject_id))
+
+    async def store(self, subject_id: str, key: bytes) -> None:
+        self._keys[(self._tenant_id, subject_id)] = key
+
+    async def delete(self, subject_id: str) -> None:
+        self._keys.pop((self._tenant_id, subject_id), None)
+
+    def scoped_for_tenant(self, tenant_id: TenantId) -> "AsyncInMemoryKeyStorage":
+        return AsyncInMemoryKeyStorage(self._keys, tenant_id)

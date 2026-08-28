@@ -2,6 +2,10 @@
 
 ## Unreleased
 ### Added
+- Feature parity wrap-up: `AsyncRepository`, `AsyncProjector` /
+  `AsyncCursorsDao` / async read-model callable, `AsyncEncryption` +
+  `AsyncInMemoryKeyStorage`, `AsyncEncryptionKeyStorageStrategy`,
+  `AsyncSerde` pipeline — completion of the async event sourcing surface
 - Async SQLAlchemy backend: `AsyncSQLAlchemyBackend` with async storage,
   subscriptions and outbox strategies, available via a new `sqlalchemy-async`
   extra (`SQLAlchemy[asyncio]`); async drivers (`asyncpg`, `aiosqlite`) are
