@@ -19,7 +19,8 @@ Crypto-shredding lets you irreversibly remove access to privacy-sensitive data i
 
 ```python
 from typing import Annotated
-from event_sourcery.event_store.event import Event, Encrypted, DataSubject
+from event_sourcery.event import Event
+from event_sourcery.encryption import Encrypted, DataSubject
 
 class UserRegistered(Event):
     user_id: Annotated[str, DataSubject]
