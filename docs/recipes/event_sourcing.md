@@ -20,21 +20,37 @@ docs/code/test_recipes.py:event_sourcing_01
 --8<--
 ```
 
-To work with aggregate, you need to create repository. You need an instance of [EventStore] to do so:
+To work with aggregate, you need to create a repository. You need an instance of [EventStore] (or [AsyncEventStore]) to do so:
 
-```python
---8<--
-docs/code/test_recipes.py:event_sourcing_02_repo
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:event_sourcing_02_repo
+    --8<--
+    ```
 
-From now on, regardless if you want to work with a given aggregate for the first time or load existing one, you should use `repository.aggregate` context manager. It returns a [WrappedAggregate] — a wrapper that provides the aggregate instance along with stream metadata such as `version`, `is_new`, `created_at`, and `updated_at`:
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:event_sourcing_02_repo_async
+    --8<--
+    ```
 
-```python
---8<--
-docs/code/test_recipes.py:event_sourcing_03
---8<--
-```
+From now on, regardless if you want to work with a given aggregate for the first time or load existing one, you should use `repository.aggregate` context manager — an async context manager in the async variant. It returns a [WrappedAggregate] — a wrapper that provides the aggregate instance along with stream metadata such as `version`, `is_new`, `created_at`, and `updated_at`:
+
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:event_sourcing_03
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:event_sourcing_03_async
+    --8<--
+    ```
 
 The aggregate itself is accessed via `wrapped.aggregate`. The wrapper also exposes useful properties:
 
@@ -45,5 +61,7 @@ The aggregate itself is accessed via `wrapped.aggregate`. The wrapper also expos
 
 [Aggregate]: ../reference/event_sourcing/Aggregate.md
 [Repository]: ../reference/event_sourcing/Repository.md
+[AsyncRepository]: ../reference/event_sourcing/AsyncRepository.md
 [WrappedAggregate]: ../reference/event_sourcing/WrappedAggregate.md
 [EventStore]: ../reference/event_store/EventStore.md
+[AsyncEventStore]: ../reference/event_store/AsyncEventStore.md

@@ -13,11 +13,19 @@ Outbox is a pattern that ensures a message is reliably sent from the system. It 
 
 To use outbox, you have to add `with_outbox` method call on factory while [setting up Event Sourcery](integrate.md):
 
-```python
---8<--
-docs/code/test_recipes.py:outbox_01
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:outbox_01
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:outbox_01_async
+    --8<--
+    ```
 
 ### Write publishing function
 
@@ -40,13 +48,21 @@ docs/code/test_recipes.py:outbox_02_pika2
 
 ### Run outbox
 
-Now you can run outbox: 
+Now you can run outbox (in the async variant, the publisher must be an async callable and `outbox.run` is awaited):
 
-```python
---8<--
-docs/code/test_recipes.py:outbox_03
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:outbox_03
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:outbox_03_async
+    --8<--
+    ```
 
 This will loop over events and will try to call publishing function for each one of them.
 

@@ -4,13 +4,13 @@ from typing import cast
 
 from typing_extensions import Self
 
+from event_sourcery._event_store._async.serde import AsyncSerde
 from event_sourcery._event_store.event.dto import (
     Event,
     Position,
     RawEvent,
     WrappedEvent,
 )
-from event_sourcery._event_store.event.serde import Serde
 from event_sourcery._event_store.stream_id import StreamId
 from event_sourcery._event_store.versioning import (
     NO_VERSIONING,
@@ -111,7 +111,9 @@ class AsyncEventStore:
     must be awaited.
     """
 
-    def __init__(self, storage_strategy: AsyncStorageStrategy, serde: Serde) -> None:
+    def __init__(
+        self, storage_strategy: AsyncStorageStrategy, serde: AsyncSerde
+    ) -> None:
         self._storage_strategy = storage_strategy
         self._serde = serde
 
@@ -134,7 +136,7 @@ class AsyncEventStore:
         events = await self._storage_strategy.fetch_events(
             stream_id, start=start, stop=stop
         )
-        return self._serde.deserialize_many(events)
+        return await self._serde.deserialize_many(events)
 
     @singledispatchmethod
     async def append(
@@ -214,7 +216,7 @@ class AsyncEventStore:
         await self._storage_strategy.insert_events(
             stream_id=stream_id,
             versioning=versioning,
-            events=self._serde.serialize_many(events, stream_id),
+            events=await self._serde.serialize_many(events, stream_id),
         )
 
     async def delete_stream(self, stream_id: StreamId) -> None:
@@ -240,7 +242,7 @@ class AsyncEventStore:
         Returns:
             None
         """
-        serialized = self._serde.serialize(event=snapshot, stream_id=stream_id)
+        serialized = await self._serde.serialize(event=snapshot, stream_id=stream_id)
         await self._storage_strategy.save_snapshot(serialized)
 
     async def position(self) -> Position | None:
