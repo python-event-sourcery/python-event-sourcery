@@ -1,20 +1,36 @@
 ## Basic usage
 
-Once you have an [EventStore] instance after [integrating with your application](integrate.md) and some [events defined](defining_events.md), you can persist them:
+Once you have an [EventStore] (or [AsyncEventStore]) instance after [integrating with your application](integrate.md) and some [events defined](defining_events.md), you can persist them:
 
-```python
---8<--
-docs/code/test_recipes.py:saving_events_01
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:saving_events_01
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:saving_events_01_async
+    --8<--
+    ```
 
 Events can be later retrieved by using `load_stream` method:
 
-```python
---8<--
-docs/code/test_recipes.py:saving_events_02
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:saving_events_02
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:saving_events_02_async
+    --8<--
+    ```
 
 `load_stream` returns a list of [WrappedEvent] objects. They contain a saved event under `.event` attribute with its metadata in other attributes.
 
@@ -28,21 +44,37 @@ You have a choice whether you want to check for versions conflict or not.
 
 There is no need to add an expected version when adding some events to the stream for the first time, i.e. creating the stream:
 
-```python
---8<--
-docs/code/test_recipes.py:versioning_01
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:versioning_01
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:versioning_01_async
+    --8<--
+    ```
 
 However, when you add events to the stream for the second and subsequent times, you need to pass the expected version explicitly.
 
 Otherwise, appending will fail with an exception:
 
-```python
---8<--
-docs/code/test_recipes.py:versioning_02
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:versioning_02
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:versioning_02_async
+    --8<--
+    ```
 
 Hence, it is assumed that you will use the events versioning and protection against concurrent writes.
 
@@ -52,26 +84,43 @@ Hence, it is assumed that you will use the events versioning and protection agai
 
 In a typical flow, you'll first load a stream, perform some logic, then try to append new events. You'll then get the latest version from the last event loaded:
 
-```python
---8<--
-docs/code/test_recipes.py:versioning_03
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:versioning_03
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:versioning_03_async
+    --8<--
+    ```
 
 ### No versioning
 
 In case when you don't need protection against concurrent writes, you can disable versioning. [NO_VERSIONING] must be used consistently for every append to such a stream.
 
-```python
---8<--
-docs/code/test_recipes.py:versioning_04
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:versioning_04
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:versioning_04_async
+    --8<--
+    ```
 
 !!! info
 
     Once a stream has been created with disabled versioning, you cannot enable it. It is also forbidden the other way around. You can always create a new stream and delete the old one.
 
 [EventStore]: ../reference/event_store/EventStore.md
+[AsyncEventStore]: ../reference/event_store/AsyncEventStore.md
 [WrappedEvent]: ../reference/event_store/event/WrappedEvent.md
 [NO_VERSIONING]: ../reference/event_store/NO_VERSIONING.md

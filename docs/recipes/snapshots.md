@@ -4,11 +4,19 @@ Snapshots are a way to optimize loading a long stream of events. When a snapshot
 
 Let's say we have a stream with 100 events:
 
-```python
---8<--
-docs/code/test_recipes.py:snapshots_01
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:snapshots_01
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:snapshots_01_async
+    --8<--
+    ```
 
 We could define a snapshot event that will capture all information relevant for us:
 
