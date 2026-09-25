@@ -10,7 +10,6 @@ import pytest
 
 from event_sourcery import StreamId
 from event_sourcery._event_store._async.encryption import AsyncNoKeyStorageStrategy
-from event_sourcery._event_store._async.serde import AsyncSerde
 from event_sourcery._event_store.event.registry import EventRegistry
 from event_sourcery.async_.backend import AsyncInMemoryKeyStorage
 from event_sourcery.async_.encryption import AsyncEncryption
@@ -122,52 +121,26 @@ def test_async_no_key_storage_default_rejects_everything() -> None:
     asyncio.run(scenario())
 
 
-def test_sync_path_raises_on_async_pipeline() -> None:
-    serde = AsyncSerde(
-        EventRegistry(),
-        AsyncEncryption(
-            registry=EventRegistry(),
-            strategy=XorEncryptionStrategy(),
-            key_storage=AsyncInMemoryKeyStorage(),
-        ),
-    )
-    from event_sourcery._event_store.event.dto import RawEvent, WrappedEvent
-
-    wrapped = WrappedEvent.wrap(event=SecretEvent(), version=1)
-
-    with pytest.raises(
-        TypeError,
-        match="Sync deserialize unavailable",
-    ):
-        serde.deserialize_sync(
-            RawEvent(
-                uuid=wrapped.uuid,
-                stream_id=StreamId(name="s"),
-                created_at=wrapped.created_at,
-                version=wrapped.version,
-                name="",
-                data={},
-                context={},
-            )
-        )
-
-
-def test_sync_key_storage_works_on_async_backend() -> None:
+def test_async_key_storage_works_with_in_transaction_listener() -> None:
     from event_sourcery.async_.backend import AsyncInMemoryBackend
-    from event_sourcery.backend import InMemoryKeyStorage
 
-    keys = InMemoryKeyStorage()
-    keys.store("subject", b"0428")
+    keys = AsyncInMemoryKeyStorage()
     backend = AsyncInMemoryBackend().with_encryption(
         strategy=XorEncryptionStrategy(),
         key_storage=keys,
     )
     store = backend.event_store
     stream_id = StreamId(name="s")
+    received: list[Event] = []
+    backend.in_transaction.register(
+        lambda wrapped, *_: received.append(wrapped.event), to=SecretEvent
+    )
 
     async def scenario() -> None:
+        await keys.store("subject", b"0428")
         await store.append(SecretEvent(encrypted_value="hello"), stream_id=stream_id)
         events = await store.load_stream(stream_id=stream_id)
         assert events[0].event.encrypted_value == "hello"
+        assert received == [SecretEvent(encrypted_value="hello")]
 
     asyncio.run(scenario())

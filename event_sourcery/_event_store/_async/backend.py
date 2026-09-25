@@ -2,6 +2,7 @@ from typing import cast
 
 from typing_extensions import Self
 
+from event_sourcery._event_store._async.dispatcher import AsyncDispatcher
 from event_sourcery._event_store._async.encryption import (
     AsyncEncryption,
     AsyncEncryptionKeyStorageStrategy,
@@ -28,18 +29,12 @@ from event_sourcery._event_store.backend import (
     not_configured,
     singleton,
 )
-from event_sourcery._event_store.event.dto import Recorded, RecordedRaw
 from event_sourcery._event_store.event.encryption import (
-    Encryption,
-    EncryptionKeyStorageStrategy,
     EncryptionStrategy,
-    NoKeyStorageStrategy,
 )
 from event_sourcery._event_store.event.registry import EventRegistry
-from event_sourcery._event_store.event.serde import Serde
 from event_sourcery._event_store.outbox import OutboxFiltererStrategy, no_filter
 from event_sourcery._event_store.subscription.in_transaction import (
-    Dispatcher,
     Listeners,
 )
 from event_sourcery._event_store.tenant_id import TenantId
@@ -57,15 +52,10 @@ class AsyncBackend(_BackendContainer):
 
     def __init__(self) -> None:
         super().__init__()
-        # AsyncSerde uses the sync pipeline when async key storage is not
-        # configured, preserving support for synchronous key stores.
-        self[EncryptionKeyStorageStrategy] = (
-            lambda c: NoKeyStorageStrategy().scoped_for_tenant(c[TenantId])
-        )
-        self[Encryption] = lambda c: Encryption(
+        self[AsyncEncryption] = lambda c: AsyncEncryption(
             registry=c[EventRegistry],
             strategy=c[EncryptionStrategy],
-            key_storage=c[EncryptionKeyStorageStrategy],
+            key_storage=c[AsyncEncryptionKeyStorageStrategy],
         )
         self[AsyncEncryptionKeyStorageStrategy] = (
             lambda c: AsyncNoKeyStorageStrategy().scoped_for_tenant(c[TenantId])
@@ -88,14 +78,9 @@ class AsyncBackend(_BackendContainer):
 
     @staticmethod
     def _serde_for(container: _Container) -> AsyncSerde:
-        """
-        Builds an AsyncSerde over the (default, sync) encryption pipeline unless
-        `with_encryption` activated a real async-encryption pipeline.
-        """
-        encryption = container.get(AsyncEncryption) or container[Encryption]
         return AsyncSerde(
             registry=container[EventRegistry],
-            encryption=encryption,
+            encryption=container[AsyncEncryption],
         )
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
@@ -107,33 +92,17 @@ class AsyncBackend(_BackendContainer):
     def with_encryption(
         self,
         strategy: EncryptionStrategy,
-        key_storage: EncryptionKeyStorageStrategy | AsyncEncryptionKeyStorageStrategy,
+        key_storage: AsyncEncryptionKeyStorageStrategy,
     ) -> Self:
         """
         Configures event encryption with the provided strategy and key storage.
 
-        Sync key storages plug into the sync encryption pipeline used by
-        AsyncSerde. Async key storages activate the async-encryption pipeline;
-        in-transaction listeners cannot await that pipeline.
+        Key storage operations are asynchronous.
         """
         self[EncryptionStrategy] = strategy
-        if isinstance(key_storage, AsyncEncryptionKeyStorageStrategy):
-            self[EncryptionKeyStorageStrategy] = (
-                lambda c: NoKeyStorageStrategy().scoped_for_tenant(c[TenantId])
-            )
-            self[AsyncEncryptionKeyStorageStrategy] = (
-                lambda c: key_storage.scoped_for_tenant(c[TenantId])
-            )
-            self[AsyncEncryption] = lambda c: AsyncEncryption(
-                registry=c[EventRegistry],
-                strategy=c[EncryptionStrategy],
-                key_storage=c[AsyncEncryptionKeyStorageStrategy],
-            )
-        else:
-            self[EncryptionKeyStorageStrategy] = (
-                lambda c: key_storage.scoped_for_tenant(c[TenantId])
-            )
-            self.providers.pop(AsyncEncryption, None)
+        self[AsyncEncryptionKeyStorageStrategy] = (
+            lambda c: key_storage.scoped_for_tenant(c[TenantId])
+        )
         return self
 
     @property
@@ -170,8 +139,8 @@ class AsyncTransactionalBackend(AsyncBackend):
     def __init__(self) -> None:
         super().__init__()
         self[Listeners] = singleton(lambda _: Listeners())
-        self[Dispatcher] = lambda c: Dispatcher(
-            _SyncDispatcherSerde(AsyncBackend._serde_for(c)),
+        self[AsyncDispatcher] = lambda c: AsyncDispatcher(
+            AsyncBackend._serde_for(c),
             c[Listeners],
         )
 
@@ -181,17 +150,3 @@ class AsyncTransactionalBackend(AsyncBackend):
         Returns the current instance of `Listeners` for transactional event handling.
         """
         return cast(Listeners, self[Listeners])
-
-
-class _SyncDispatcherSerde(Serde):
-    """
-    Wraps `AsyncSerde`, delegating the sync (de)serialization methods used by
-    the in-transaction dispatcher.
-    """
-
-    def __init__(self, serde: AsyncSerde) -> None:
-        super().__init__(serde.registry, serde.encryption)
-        self._serde = serde
-
-    def deserialize_record(self, record: RecordedRaw) -> Recorded:
-        return self._serde.deserialize_record_sync(record)

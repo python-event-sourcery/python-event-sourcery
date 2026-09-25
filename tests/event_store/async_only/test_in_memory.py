@@ -106,7 +106,16 @@ def test_in_transaction_listener_receives_dispatched_events() -> None:
     asyncio.run(scenario())
 
 
-def test_async_encryption_dispatch_failure_does_not_persist_append() -> None:
+def test_async_encryption_dispatch_failure_does_not_persist_append(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from event_sourcery._event_store._async.encryption import AsyncEncryption
+
+    async def fail_decrypt(*args: object, **kwargs: object) -> None:
+        raise ValueError("deserialization failed")
+
+    monkeypatch.setattr(AsyncEncryption, "decrypt", fail_decrypt)
+
     async def scenario() -> None:
         backend = (
             AsyncInMemoryBackend()
@@ -121,7 +130,7 @@ def test_async_encryption_dispatch_failure_does_not_persist_append() -> None:
         store = backend.event_store
         stream_id = StreamId(name="async-encryption-dispatch")
 
-        with pytest.raises(TypeError, match="Sync deserialize unavailable"):
+        with pytest.raises(ValueError, match="deserialization failed"):
             await store.append(an_event(), stream_id=stream_id)
 
         assert (DEFAULT_TENANT, stream_id) not in backend[Storage]
