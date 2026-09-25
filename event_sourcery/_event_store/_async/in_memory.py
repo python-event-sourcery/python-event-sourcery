@@ -190,10 +190,11 @@ class AsyncInMemoryStorageStrategy(AsyncStorageStrategy):
         start: int | None = None,
         stop: int | None = None,
     ) -> list[RawEvent]:
-        if stream_id not in self._storage:
+        key = self._tenant_id, stream_id
+        if key not in self._storage:
             return []
         stream = getitem(
-            self._storage.read(stream_id),
+            self._storage.read(self._tenant_id, stream_id),
             slice(start and start - 1, stop and stop - 1),
         )
         return [r.entry for r in stream if r.tenant_id == self._tenant_id]
@@ -221,15 +222,18 @@ class AsyncInMemoryStorageStrategy(AsyncStorageStrategy):
         self._storage.replace(with_snapshot=record)
 
     def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
-        if stream_id not in self._storage:
-            self._storage.create(stream_id, versioning)
+        key = self._tenant_id, stream_id
+        if key not in self._storage:
+            self._storage.create(self._tenant_id, stream_id, versioning)
 
-        versioning.validate_if_compatible(self._storage.get_version(stream_id))
+        versioning.validate_if_compatible(
+            self._storage.get_version(self._tenant_id, stream_id)
+        )
 
         if versioning is not NO_VERSIONING and versioning.expected_version:
             last_version = (
-                self._storage.get_version(stream_id)
-                if stream_id in self._storage
+                self._storage.get_version(self._tenant_id, stream_id)
+                if key in self._storage
                 else None
             )
             if last_version != versioning.expected_version:
@@ -239,8 +243,9 @@ class AsyncInMemoryStorageStrategy(AsyncStorageStrategy):
                 )
 
     async def delete_stream(self, stream_id: StreamId) -> None:
-        if stream_id in self._storage:
-            self._storage.delete(stream_id)
+        key = self._tenant_id, stream_id
+        if key in self._storage:
+            self._storage.delete(self._tenant_id, stream_id)
 
     async def current_position(self) -> Position | None:
         current_position = self._storage.current_position

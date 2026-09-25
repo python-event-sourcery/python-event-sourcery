@@ -216,7 +216,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         )
         stream = (
             self._session.query(self._stream_model)
-            .filter_by(stream_id=snapshot.stream_id)
+            .filter_by(stream_id=snapshot.stream_id, tenant_id=self._tenant_id)
             .one()
         )
         stream.snapshots.append(entry)
@@ -225,10 +225,12 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
     def delete_stream(self, stream_id: StreamId) -> None:
         delete_events_stmt = delete(self._event_model).where(
             self._event_model.stream_id == stream_id,
+            self._event_model.tenant_id == self._tenant_id,
         )
         self._session.execute(delete_events_stmt)
         delete_stream_stmt = delete(self._stream_model).where(
             self._stream_model.stream_id == stream_id,
+            self._stream_model.tenant_id == self._tenant_id,
         )
         self._session.execute(delete_stream_stmt)
 
