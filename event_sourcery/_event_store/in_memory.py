@@ -43,43 +43,52 @@ from event_sourcery.exceptions import ConcurrentStreamWriteError
 @dataclass
 class Storage:
     records: list[RecordedRaw] = field(default_factory=list, init=False)
-    _data: dict[StreamId, list[RecordedRaw]] = field(default_factory=dict, init=False)
-    _versions: dict[StreamId, int | None] = field(default_factory=dict, init=False)
+    _data: dict[tuple[TenantId, StreamId], list[RecordedRaw]] = field(
+        default_factory=dict, init=False
+    )
+    _versions: dict[tuple[TenantId, StreamId], int | None] = field(
+        default_factory=dict, init=False
+    )
 
     @property
     def current_position(self) -> int | None:
         return self.records[-1].position if self.records else None
 
-    def __contains__(self, stream_id: object) -> bool:
-        return stream_id in self._data
+    def __contains__(self, key: tuple[TenantId, StreamId]) -> bool:
+        return key in self._data
 
-    def create(self, stream_id: StreamId, version: Versioning) -> None:
-        self._data[stream_id] = []
+    def create(
+        self, tenant_id: TenantId, stream_id: StreamId, version: Versioning
+    ) -> None:
+        key = tenant_id, stream_id
+        self._data[key] = []
         if version is NO_VERSIONING:
-            self._versions[stream_id] = None
+            self._versions[key] = None
         else:
-            self._versions[stream_id] = 0
+            self._versions[key] = 0
 
     def append(self, records: list[RecordedRaw]) -> None:
         self.records.extend(records)
         for record in records:
-            stream_id = record.entry.stream_id
-            self._data[stream_id].append(record)
-            self._versions[stream_id] = record.entry.version
+            key = record.tenant_id, record.entry.stream_id
+            self._data[key].append(record)
+            self._versions[key] = record.entry.version
 
     def replace(self, with_snapshot: RecordedRaw) -> None:
-        stream_id = with_snapshot.entry.stream_id
-        self._data[stream_id] = [with_snapshot]
-        self._versions[stream_id] = with_snapshot.entry.version
+        key = with_snapshot.tenant_id, with_snapshot.entry.stream_id
+        self._data[key] = [with_snapshot]
+        self._versions[key] = with_snapshot.entry.version
 
-    def read(self, stream_id: StreamId) -> list[RecordedRaw]:
-        return copy(self._data[stream_id])
+    def read(self, tenant_id: TenantId, stream_id: StreamId) -> list[RecordedRaw]:
+        return copy(self._data[(tenant_id, stream_id)])
 
-    def delete(self, stream_id: StreamId) -> None:
-        del self._data[stream_id]
+    def delete(self, tenant_id: TenantId, stream_id: StreamId) -> None:
+        key = tenant_id, stream_id
+        del self._data[key]
+        del self._versions[key]
 
-    def get_version(self, stream_id: StreamId) -> int | None:
-        return self._versions[stream_id]
+    def get_version(self, tenant_id: TenantId, stream_id: StreamId) -> int | None:
+        return self._versions[(tenant_id, stream_id)]
 
 
 @dataclass
@@ -238,10 +247,11 @@ class InMemoryStorageStrategy(StorageStrategy):
         start: int | None = None,
         stop: int | None = None,
     ) -> list[RawEvent]:
-        if stream_id not in self._storage:
+        key = self._tenant_id, stream_id
+        if key not in self._storage:
             return []
         stream = getitem(
-            self._storage.read(stream_id),
+            self._storage.read(self._tenant_id, stream_id),
             slice(start and start - 1, stop and stop - 1),
         )
         return [r.entry for r in stream if r.tenant_id == self._tenant_id]
@@ -269,15 +279,18 @@ class InMemoryStorageStrategy(StorageStrategy):
         self._storage.replace(with_snapshot=record)
 
     def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
-        if stream_id not in self._storage:
-            self._storage.create(stream_id, versioning)
+        key = self._tenant_id, stream_id
+        if key not in self._storage:
+            self._storage.create(self._tenant_id, stream_id, versioning)
 
-        versioning.validate_if_compatible(self._storage.get_version(stream_id))
+        versioning.validate_if_compatible(
+            self._storage.get_version(self._tenant_id, stream_id)
+        )
 
         if versioning is not NO_VERSIONING and versioning.expected_version:
             last_version = (
-                self._storage.get_version(stream_id)
-                if stream_id in self._storage
+                self._storage.get_version(self._tenant_id, stream_id)
+                if key in self._storage
                 else None
             )
             if last_version != versioning.expected_version:
@@ -287,8 +300,9 @@ class InMemoryStorageStrategy(StorageStrategy):
                 )
 
     def delete_stream(self, stream_id: StreamId) -> None:
-        if stream_id in self._storage:
-            self._storage.delete(stream_id)
+        key = self._tenant_id, stream_id
+        if key in self._storage:
+            self._storage.delete(self._tenant_id, stream_id)
 
     @property
     def current_position(self) -> Position | None:
