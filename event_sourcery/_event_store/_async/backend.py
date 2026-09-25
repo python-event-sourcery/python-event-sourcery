@@ -23,7 +23,7 @@ from event_sourcery._event_store._async.subscription import (
     AsyncSubscriptionStrategy,
 )
 from event_sourcery._event_store.backend import (
-    Backend,
+    _BackendContainer,
     _Container,
     not_configured,
     singleton,
@@ -33,9 +33,11 @@ from event_sourcery._event_store.event.encryption import (
     Encryption,
     EncryptionKeyStorageStrategy,
     EncryptionStrategy,
+    NoKeyStorageStrategy,
 )
 from event_sourcery._event_store.event.registry import EventRegistry
 from event_sourcery._event_store.event.serde import Serde
+from event_sourcery._event_store.outbox import OutboxFiltererStrategy, no_filter
 from event_sourcery._event_store.subscription.in_transaction import (
     Dispatcher,
     Listeners,
@@ -45,7 +47,7 @@ from event_sourcery._event_store.tenant_id import TenantId
 DEFAULT_SAS = "Use one of pyES async backends: SQLAlchemy, KurrentDB or In-Memory"
 
 
-class AsyncBackend(Backend):
+class AsyncBackend(_BackendContainer):
     """
     Dependency Injection container for async Event Sourcery components.
 
@@ -55,6 +57,16 @@ class AsyncBackend(Backend):
 
     def __init__(self) -> None:
         super().__init__()
+        # AsyncSerde uses the sync pipeline when async key storage is not
+        # configured, preserving support for synchronous key stores.
+        self[EncryptionKeyStorageStrategy] = (
+            lambda c: NoKeyStorageStrategy().scoped_for_tenant(c[TenantId])
+        )
+        self[Encryption] = lambda c: Encryption(
+            registry=c[EventRegistry],
+            strategy=c[EncryptionStrategy],
+            key_storage=c[EncryptionKeyStorageStrategy],
+        )
         self[AsyncEncryptionKeyStorageStrategy] = (
             lambda c: AsyncNoKeyStorageStrategy().scoped_for_tenant(c[TenantId])
         )
@@ -86,6 +98,12 @@ class AsyncBackend(Backend):
             encryption=encryption,
         )
 
+    def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
+        """
+        Configure the outbox with a custom filter.
+        """
+        raise NotImplementedError()
+
     def with_encryption(
         self,
         strategy: EncryptionStrategy,
@@ -94,14 +112,15 @@ class AsyncBackend(Backend):
         """
         Configures event encryption with the provided strategy and key storage.
 
-        Sync key storages plug into the (default) sync serde pipeline used by
-        AsyncSerde as well. Async key storages activate the async-encryption
-        pipeline; inherited sync operations of `AsyncSerde` then raise at call
-        time (only reachable via in-transaction listeners, which cannot
-        await).
+        Sync key storages plug into the sync encryption pipeline used by
+        AsyncSerde. Async key storages activate the async-encryption pipeline;
+        in-transaction listeners cannot await that pipeline.
         """
-        super().with_encryption(strategy, key_storage)  # type: ignore[arg-type]
+        self[EncryptionStrategy] = strategy
         if isinstance(key_storage, AsyncEncryptionKeyStorageStrategy):
+            self[EncryptionKeyStorageStrategy] = (
+                lambda c: NoKeyStorageStrategy().scoped_for_tenant(c[TenantId])
+            )
             self[AsyncEncryptionKeyStorageStrategy] = (
                 lambda c: key_storage.scoped_for_tenant(c[TenantId])
             )
@@ -110,24 +129,29 @@ class AsyncBackend(Backend):
                 strategy=c[EncryptionStrategy],
                 key_storage=c[AsyncEncryptionKeyStorageStrategy],
             )
+        else:
+            self[EncryptionKeyStorageStrategy] = (
+                lambda c: key_storage.scoped_for_tenant(c[TenantId])
+            )
+            self.providers.pop(AsyncEncryption, None)
         return self
 
     @property
-    def event_store(self) -> AsyncEventStore:  # type: ignore[override]
+    def event_store(self) -> AsyncEventStore:
         """
         Returns the current instance of `AsyncEventStore`.
         """
         return self[AsyncEventStore]
 
     @property
-    def outbox(self) -> AsyncOutbox:  # type: ignore[override]
+    def outbox(self) -> AsyncOutbox:
         """
         Returns the current instance of `AsyncOutbox`.
         """
         return self[AsyncOutbox]
 
     @property
-    def subscriber(self) -> AsyncPositionPhase:  # type: ignore[override]
+    def subscriber(self) -> AsyncPositionPhase:
         """
         Returns the current instance of `AsyncSubscriptionBuilder`
         (as `AsyncPositionPhase`).
