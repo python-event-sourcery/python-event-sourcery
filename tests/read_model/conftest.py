@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session
 
 from event_sourcery import StreamId
-from event_sourcery.backend import Backend
 from event_sourcery.event import Event, WrappedEvent
 from event_sourcery.read_model import AsyncCursorsDao, CursorsDao
 from event_sourcery_sqlalchemy.async_.cursors_dao import AsyncSqlAlchemyCursorsDao
@@ -30,6 +29,7 @@ from tests.backend.sqlalchemy_async import (  # noqa: F401
     sqlalchemy_async_sqlite_backend,
 )
 from tests.event_store.conftest import backend, selected_backends  # noqa: F401
+from tests.protocols import SyncBackend
 
 
 class AccountCreated(Event):
@@ -99,7 +99,7 @@ def async_cursors_dao(tmp_path: Path) -> Iterator[AsyncCursorsDao]:
 
 
 @pytest.fixture()
-def async_backend(backend: Backend) -> BackendFacade:  # noqa: F811
+def async_backend(backend: SyncBackend) -> BackendFacade:  # noqa: F811
     if not isinstance(backend, BackendFacade):
         pytest.skip("Runs only on async backends")
     return backend

@@ -14,15 +14,15 @@ from typing import Generic, TypeVar, cast
 
 from typing_extensions import Self
 
-from event_sourcery import EventStore, Outbox, StreamCategory, StreamId, StreamUUID
+from event_sourcery import Outbox, StreamCategory, StreamId, StreamUUID, TenantId
 from event_sourcery._event_store.backend import _Provider
+from event_sourcery._event_store.subscription.in_transaction import Listeners
 from event_sourcery._event_store.subscription.interfaces import Seconds
 from event_sourcery.async_ import AsyncBackend, AsyncEventStore, AsyncOutbox
 from event_sourcery.async_.encryption import AsyncEncryption
 from event_sourcery.async_.interfaces import AsyncEncryptionKeyStorageStrategy
 from event_sourcery.async_.outbox import no_filter
 from event_sourcery.async_.subscription import AsyncSubscriptionBuilder
-from event_sourcery.backend import TransactionalBackend
 from event_sourcery.encryption import Encryption as EncryptionService
 from event_sourcery.event import Context, Event, Position, Recorded, WrappedEvent
 from event_sourcery.event_sourcing import Aggregate, AsyncRepository
@@ -63,7 +63,7 @@ class Runner:
         self._loop.close()
 
 
-class EventStoreFacade(EventStore):
+class EventStoreFacade:
     """Synchronous facade over `AsyncEventStore`."""
 
     def __init__(self, store: AsyncEventStore, runner: Runner) -> None:
@@ -80,10 +80,10 @@ class EventStoreFacade(EventStore):
             self._async.load_stream(stream_id, start=start, stop=stop)
         )
 
-    def append(  # type: ignore[override]  # singledispatchmethod on supertype
+    def append(
         self,
-        first: WrappedEvent,
-        *events: WrappedEvent,
+        first: WrappedEvent | Event,
+        *events: WrappedEvent | Event,
         stream_id: StreamId,
         expected_version: int | Versioning = 0,
     ) -> None:
@@ -219,7 +219,7 @@ class EncryptionFacade:
         self.key_storage.delete(subject_id)
 
 
-class BackendFacade(TransactionalBackend):
+class BackendFacade:
     """
     Synchronous facade over an async backend.
 
@@ -247,7 +247,7 @@ class BackendFacade(TransactionalBackend):
         return self._runner
 
     @property
-    def event_store(self) -> EventStore:
+    def event_store(self) -> EventStoreFacade:
         return EventStoreFacade(self._async.event_store, self._runner)
 
     @property
@@ -260,8 +260,6 @@ class BackendFacade(TransactionalBackend):
         return SubscriptionBuilderFacade(builder, self._runner)
 
     def __getitem__(self, _type: type[T]) -> T:
-        if _type is EventStore:
-            return cast(T, self.event_store)
         if _type is Outbox:
             return cast(T, self.outbox)
         if _type is PositionPhase:
@@ -284,6 +282,13 @@ class BackendFacade(TransactionalBackend):
             return self[_type]
         except KeyError:
             return default
+
+    @property
+    def in_transaction(self) -> Listeners:
+        return self._async[Listeners]
+
+    def in_tenant_mode(self, tenant_id: TenantId) -> Self:
+        return type(self)(self._async.in_tenant_mode(tenant_id), self._runner)
 
     def copy(self) -> Self:
         return type(self)(self._async.copy(), self._runner)

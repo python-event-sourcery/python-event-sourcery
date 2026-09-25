@@ -2,16 +2,17 @@ from unittest.mock import call
 
 import pytest
 
-from event_sourcery import Backend, StreamId
+from event_sourcery import StreamId
 from tests.bdd import Given
 from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import an_event
 from tests.matchers import any_record
+from tests.protocols import SyncBackend
 
 
 def test_receives_events_from_all_tenants(
     publisher: PublisherMock,
-    backend: Backend,
+    backend: SyncBackend,
     given: Given,
 ) -> None:
     given.in_tenant_mode("first").event(first := an_event(), on=StreamId())
@@ -28,5 +29,5 @@ def test_receives_events_from_all_tenants(
 
 
 @pytest.fixture()
-def backend(backend: Backend) -> Backend:
+def backend(backend: SyncBackend) -> SyncBackend:
     return backend.with_outbox()

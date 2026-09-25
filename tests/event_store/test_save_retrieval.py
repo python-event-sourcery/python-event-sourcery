@@ -1,11 +1,12 @@
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
-from event_sourcery import EventStore, StreamId
+from event_sourcery import StreamId
 from event_sourcery.event import Context, WrappedEvent
 from tests.bdd import Given, Then, When
 from tests.factories import NastyEventWithJsonUnfriendlyTypes, an_event
 from tests.matchers import any_wrapped_event
+from tests.protocols import SyncEventStore
 
 
 def test_save_retrieve(given: Given, when: When, then: Then) -> None:
@@ -36,7 +37,7 @@ def test_save_retrieve_part_of_stream(given: Given, then: Then) -> None:
 
 
 def test_loading_not_existing_stream_returns_empty_list(
-    event_store: EventStore,
+    event_store: SyncEventStore,
 ) -> None:
     assert event_store.load_stream(stream_id=StreamId()) == []
 
@@ -77,7 +78,7 @@ def test_is_able_to_handle_non_trivial_formats(
 
 def test_is_able_to_handle_bare_events(
     given: Given,
-    event_store: EventStore,
+    event_store: SyncEventStore,
     then: Then,
 ) -> None:
     given.stream(stream_id := StreamId())

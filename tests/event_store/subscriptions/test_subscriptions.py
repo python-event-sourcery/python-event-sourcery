@@ -2,10 +2,11 @@ from datetime import timedelta
 
 import pytest
 
-from event_sourcery import Backend, StreamId
+from event_sourcery import StreamId
 from tests.bdd import Given, Then, When
 from tests.factories import an_event
 from tests.matchers import any_record
+from tests.protocols import SyncBackend
 
 
 def test_no_events_when_none_is_provided(given: Given, then: Then) -> None:
@@ -57,7 +58,7 @@ def test_stop_iterating_after_given_timeout(given: Given, then: Then) -> None:
     ],
 )
 def test_wont_accept_timebox_shorten_than_100_milliseconds(
-    backend: Backend,
+    backend: SyncBackend,
     timelimit: int | float | timedelta,
 ) -> None:
     with pytest.raises(ValueError):

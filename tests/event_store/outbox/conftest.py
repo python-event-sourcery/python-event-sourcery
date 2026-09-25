@@ -9,7 +9,7 @@ from django.core.management import call_command as django_command
 
 from event_sourcery import StreamId
 from event_sourcery.async_.backend import AsyncInMemoryBackend
-from event_sourcery.backend import Backend, InMemoryBackend, InMemoryConfig
+from event_sourcery.backend import InMemoryBackend, InMemoryConfig
 from event_sourcery.event import WrappedEvent
 from event_sourcery_django import DjangoBackend, DjangoConfig
 from event_sourcery_kurrentdb import KurrentDBBackend, KurrentDBConfig
@@ -27,6 +27,7 @@ from tests.backend.sqlalchemy_async import (
     sqlalchemy_async_postgres_session,
     sqlalchemy_async_sqlite_session,
 )
+from tests.protocols import SyncBackend, sync_backend
 
 
 @pytest.fixture()
@@ -48,7 +49,7 @@ def kurrentdb_backend(max_attempts: int) -> Generator[KurrentDBBackend, None, No
 
 
 @pytest.fixture()
-def kurrentdb_async_backend(max_attempts: int) -> Iterator[Backend]:
+def kurrentdb_async_backend(max_attempts: int) -> Iterator[SyncBackend]:
     with async_kurrentdb_client() as (client, runner):
         yield BackendFacade(
             AsyncKurrentDBBackend().configure(
@@ -71,12 +72,14 @@ def django_backend(transactional_db: None, max_attempts: int) -> DjangoBackend:
 
 
 @pytest.fixture()
-def in_memory_backend(max_attempts: int) -> Backend:
-    return InMemoryBackend().configure(InMemoryConfig(outbox_attempts=max_attempts))
+def in_memory_backend(max_attempts: int) -> SyncBackend:
+    return sync_backend(
+        InMemoryBackend().configure(InMemoryConfig(outbox_attempts=max_attempts))
+    )
 
 
 @pytest.fixture()
-def in_memory_async_backend(max_attempts: int) -> Iterator[Backend]:
+def in_memory_async_backend(max_attempts: int) -> Iterator[SyncBackend]:
     facade = BackendFacade(
         AsyncInMemoryBackend().configure(InMemoryConfig(outbox_attempts=max_attempts))
     )
@@ -107,7 +110,7 @@ def sqlalchemy_postgres_backend(max_attempts: int) -> Iterator[SQLAlchemyBackend
 def sqlalchemy_async_sqlite_backend(
     tmp_path: Path,
     max_attempts: int,
-) -> Iterator[Backend]:
+) -> Iterator[SyncBackend]:
     with sqlalchemy_async_sqlite_session(tmp_path) as (session, runner):
         yield BackendFacade(
             AsyncSQLAlchemyBackend().configure(
@@ -118,7 +121,7 @@ def sqlalchemy_async_sqlite_backend(
 
 
 @pytest.fixture()
-def sqlalchemy_async_postgres_backend(max_attempts: int) -> Iterator[Backend]:
+def sqlalchemy_async_postgres_backend(max_attempts: int) -> Iterator[SyncBackend]:
     with sqlalchemy_async_postgres_session() as (session, runner):
         yield BackendFacade(
             AsyncSQLAlchemyBackend().configure(
@@ -129,7 +132,7 @@ def sqlalchemy_async_postgres_backend(max_attempts: int) -> Iterator[Backend]:
 
 
 @pytest.fixture()
-def backend(backend: Backend) -> Backend:
+def backend(backend: SyncBackend) -> SyncBackend:
     return backend.with_outbox()
 
 

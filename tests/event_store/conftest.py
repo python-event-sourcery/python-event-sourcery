@@ -2,7 +2,6 @@ from typing import cast
 
 import pytest
 
-from event_sourcery.backend import Backend
 from tests import mark
 from tests.backend.django import django_backend
 from tests.backend.in_memory import in_memory_backend
@@ -17,6 +16,7 @@ from tests.backend.sqlalchemy_async import (
     sqlalchemy_async_postgres_backend,
     sqlalchemy_async_sqlite_backend,
 )
+from tests.protocols import SyncBackend
 
 _BACKEND_FIXTURES = [
     django_backend,
@@ -69,9 +69,11 @@ def skip_if_not_selected_backend(
         sqlalchemy_async_postgres_backend,
     ]
 )
-def backend(request: pytest.FixtureRequest, selected_backends: list[str]) -> Backend:
+def backend(
+    request: pytest.FixtureRequest, selected_backends: list[str]
+) -> SyncBackend:
     fixture_name = request.param.__name__
     skip_if_not_selected_backend(fixture_name, request)
     mark.xfail_if_not_implemented_yet(request, fixture_name)
     mark.skip_backend(request, fixture_name)
-    return cast(Backend, request.getfixturevalue(fixture_name))
+    return cast(SyncBackend, request.getfixturevalue(fixture_name))

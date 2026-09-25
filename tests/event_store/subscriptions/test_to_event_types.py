@@ -1,6 +1,7 @@
-from event_sourcery import Event, EventStore, StreamId
+from event_sourcery import Event, StreamId
 from tests.bdd import Given, Then, When
 from tests.matchers import any_record
+from tests.protocols import SyncEventStore
 
 
 class FirstType(Event):
@@ -53,7 +54,7 @@ def test_receives_subscribed_types_from_multiple_streams(
 
 
 def test_receives_events_after_passed_position(
-    event_store: EventStore,
+    event_store: SyncEventStore,
     given: Given,
     when: When,
     then: Then,

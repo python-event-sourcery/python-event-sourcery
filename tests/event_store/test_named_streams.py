@@ -2,13 +2,14 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery import Backend, StreamId
+from event_sourcery import StreamId
 from event_sourcery.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     IllegalCategoryName,
 )
 from tests.bdd import Given, Then, When
 from tests.factories import AnEvent
+from tests.protocols import SyncBackend
 
 
 def test_can_append_then_load_with_named_stream(given: Given, then: Then) -> None:
@@ -65,7 +66,7 @@ def test_blocks_new_stream_uuid_with_same_name_as_other(
 
 
 def test_kurrentdb_cant_use_category_with_dash(
-    kurrentdb_backend: Backend,
+    kurrentdb_backend: SyncBackend,
     request: pytest.FixtureRequest,
 ) -> None:
     when = When(kurrentdb_backend, request)
