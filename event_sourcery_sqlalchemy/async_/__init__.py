@@ -9,13 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing_extensions import Self
 
 from event_sourcery import TenantId
+from event_sourcery._event_store._async.dispatcher import AsyncDispatcher
 from event_sourcery.async_.backend import AsyncTransactionalBackend, not_configured
 from event_sourcery.async_.interfaces import (
     AsyncOutboxStorageStrategy,
     AsyncStorageStrategy,
     AsyncSubscriptionStrategy,
 )
-from event_sourcery.in_transaction import Dispatcher
 from event_sourcery.interfaces import OutboxFiltererStrategy
 from event_sourcery.outbox import no_filter
 from event_sourcery_sqlalchemy import Models, SQLAlchemyConfig
@@ -53,7 +53,7 @@ class AsyncSQLAlchemyBackend(AsyncTransactionalBackend):
         self[SQLAlchemyConfig] = not_configured(self.UNCONFIGURED_MESSAGE)
         self[AsyncStorageStrategy] = lambda c: AsyncSqlAlchemyStorageStrategy(
             c[AsyncSession],
-            c[Dispatcher],
+            c[AsyncDispatcher],
             c.get(AsyncSqlAlchemyOutboxStorageStrategy, None),
             c[Models].event_model,
             c[Models].snapshot_model,

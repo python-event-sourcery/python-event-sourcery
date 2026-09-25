@@ -53,7 +53,9 @@ Configure backend with encryption:
 === "Asynchronous"
     For async backends, use an `AsyncEncryptionKeyStorageStrategy` implementation
     (e.g. `AsyncInMemoryKeyStorage` from `event_sourcery.async_.backend`). The
-    pipeline (`AsyncEncryption` / `AsyncSerde`) then runs asynchronously. The
+    pipeline (`AsyncEncryption` / `AsyncSerde`) always runs asynchronously;
+    synchronous key storage is not accepted. In-transaction dispatch awaits
+    decryption before invoking synchronous listeners. The
     encryption strategy itself stays a sync implementation:
 
     ```python

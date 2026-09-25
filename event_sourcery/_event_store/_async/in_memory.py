@@ -9,6 +9,7 @@ from operator import getitem
 from typing_extensions import Self
 
 from event_sourcery._event_store._async.backend import AsyncTransactionalBackend
+from event_sourcery._event_store._async.dispatcher import AsyncDispatcher
 from event_sourcery._event_store._async.encryption import (
     AsyncEncryptionKeyStorageStrategy,
 )
@@ -27,7 +28,6 @@ from event_sourcery._event_store.outbox import (
     no_filter,
 )
 from event_sourcery._event_store.stream_id import StreamId
-from event_sourcery._event_store.subscription.in_transaction import Dispatcher
 from event_sourcery._event_store.tenant_id import DEFAULT_TENANT, TenantId
 from event_sourcery._event_store.versioning import NO_VERSIONING, Versioning
 from event_sourcery.exceptions import ConcurrentStreamWriteError
@@ -176,7 +176,7 @@ class AsyncInMemoryStorageStrategy(AsyncStorageStrategy):
     def __init__(
         self,
         storage: Storage,
-        dispatcher: Dispatcher,
+        dispatcher: AsyncDispatcher,
         outbox_strategy: AsyncInMemoryOutboxStorageStrategy | None,
     ) -> None:
         self._storage = storage
@@ -207,7 +207,7 @@ class AsyncInMemoryStorageStrategy(AsyncStorageStrategy):
             RecordedRaw(entry=raw, position=position, tenant_id=self._tenant_id)
             for position, raw in enumerate(events, start=position + 1)
         ]
-        prepared_dispatch = self._dispatcher.prepare(*records)
+        prepared_dispatch = await self._dispatcher.prepare(*records)
         self._ensure_stream(stream_id=stream_id, versioning=versioning)
         self._storage.append(records)
         if self._outbox:
@@ -284,7 +284,7 @@ class AsyncInMemoryBackend(AsyncTransactionalBackend):
         self[Storage] = Storage()
         self[AsyncStorageStrategy] = lambda c: AsyncInMemoryStorageStrategy(
             c[Storage],
-            c[Dispatcher],
+            c[AsyncDispatcher],
             outbox_strategy=c.get(AsyncInMemoryOutboxStorageStrategy),
         ).scoped_for_tenant(c[TenantId])
         self[AsyncSubscriptionStrategy] = lambda c: AsyncInMemorySubscriptionStrategy(

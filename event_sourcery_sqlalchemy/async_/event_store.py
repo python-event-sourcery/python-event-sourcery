@@ -12,13 +12,13 @@ from sqlalchemy.orm import selectinload
 from typing_extensions import Self
 
 from event_sourcery import DEFAULT_TENANT, NO_VERSIONING, StreamId, TenantId
+from event_sourcery._event_store._async.dispatcher import AsyncDispatcher
 from event_sourcery.async_.interfaces import AsyncStorageStrategy
 from event_sourcery.event import Position, RawEvent, RecordedRaw
 from event_sourcery.exceptions import (
     AnotherStreamWithThisNameButOtherIdExists,
     ConcurrentStreamWriteError,
 )
-from event_sourcery.in_transaction import Dispatcher
 from event_sourcery.interfaces import Versioning
 from event_sourcery_sqlalchemy.async_.outbox import AsyncSqlAlchemyOutboxStorageStrategy
 from event_sourcery_sqlalchemy.models.base import BaseEvent, BaseSnapshot, BaseStream
@@ -37,7 +37,7 @@ class AsyncSqlAlchemyStorageStrategy(AsyncStorageStrategy):
     """
 
     _session: AsyncSession
-    _dispatcher: Dispatcher
+    _dispatcher: AsyncDispatcher
     _outbox: AsyncSqlAlchemyOutboxStorageStrategy | None
     _event_model: type[BaseEvent]
     _snapshot_model: type[BaseSnapshot]
@@ -247,7 +247,7 @@ class AsyncSqlAlchemyStorageStrategy(AsyncStorageStrategy):
         if self._outbox:
             await self._outbox.put_into_outbox(records)
         await self._session.flush()
-        self._dispatcher.dispatch(*records)
+        await self._dispatcher.dispatch(*records)
 
     async def save_snapshot(self, snapshot: RawEvent) -> None:
         stream = (

@@ -297,6 +297,8 @@ class BackendFacade(TransactionalBackend):
         strategy: EncryptionStrategy,
         key_storage: EncryptionKeyStorageStrategy | AsyncEncryptionKeyStorageStrategy,
     ) -> Self:
+        if not isinstance(key_storage, AsyncEncryptionKeyStorageStrategy):
+            raise TypeError("Async backends require async key storage")
         self._async.with_encryption(strategy, key_storage)
         return self
 
