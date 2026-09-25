@@ -1,9 +1,10 @@
 import pytest
 
-from event_sourcery import Backend, StreamId
+from event_sourcery import StreamId
 from event_sourcery.exceptions import IllegalTenantId
 from tests.bdd import Given, Then
 from tests.factories import AnEvent, an_event
+from tests.protocols import SyncBackend
 
 
 def test_stream_created_in_default_context_cannot_be_accessed_from_tenant_context(
@@ -69,7 +70,7 @@ def test_saving_snapshot_resolves_stream_in_current_tenant(
     then.in_tenant_mode("second").stream(with_id=stream_id).loads_only([second_event])
 
 
-def test_kurrentdb_cant_use_tenant_id_with_dash(kurrentdb_backend: Backend) -> None:
+def test_kurrentdb_cant_use_tenant_id_with_dash(kurrentdb_backend: SyncBackend) -> None:
     illegal_tenant = kurrentdb_backend.in_tenant_mode("illegal-tenant-id")
     illegal_tenant_event_store = illegal_tenant.event_store
 

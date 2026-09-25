@@ -4,9 +4,9 @@ from contextlib import contextmanager
 import pytest
 from kurrentdbclient import AsyncKurrentDBClient, KurrentDBClient, StreamState
 
-from event_sourcery.backend import Backend
 from event_sourcery_kurrentdb.async_ import AsyncKurrentDBBackend
 from tests.adapter import BackendFacade, Runner
+from tests.protocols import SyncBackend
 
 
 @contextmanager
@@ -35,6 +35,6 @@ def async_kurrentdb_client() -> Iterator[tuple[AsyncKurrentDBClient, Runner]]:
 
 
 @pytest.fixture()
-def kurrentdb_async_backend() -> Iterator[Backend]:
+def kurrentdb_async_backend() -> Iterator[SyncBackend]:
     with async_kurrentdb_client() as (client, runner):
         yield BackendFacade(AsyncKurrentDBBackend().configure(client), runner)

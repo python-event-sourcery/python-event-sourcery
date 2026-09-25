@@ -1,6 +1,6 @@
 import pytest
 
-from event_sourcery.backend import Backend
+from event_sourcery import Backend
 from event_sourcery.event_sourcing import AsyncRepository, Repository
 from tests.adapter import BackendFacade, RepositoryFacade
 from tests.backend.django import django_backend  # noqa: F401
@@ -18,15 +18,17 @@ from tests.backend.sqlalchemy_async import (  # noqa: F401
 )
 from tests.event_sourcing.light_switch import LightSwitch
 from tests.event_store.conftest import backend, selected_backends  # noqa: F401
+from tests.protocols import SyncBackend
 
 
 @pytest.fixture()
 def repo(
-    backend: Backend,  # noqa: F811
+    backend: SyncBackend,  # noqa: F811
 ) -> Repository[LightSwitch] | RepositoryFacade[LightSwitch]:
     if isinstance(backend, BackendFacade):
         return RepositoryFacade(
             AsyncRepository[LightSwitch](backend._async.event_store),
             backend.runner,
         )
+    assert isinstance(backend, Backend)
     return Repository[LightSwitch](backend.event_store)

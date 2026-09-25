@@ -13,11 +13,11 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from event_sourcery.backend import Backend
 from event_sourcery_sqlalchemy import SQLAlchemyConfig
 from event_sourcery_sqlalchemy.async_ import AsyncSQLAlchemyBackend
 from tests.adapter import BackendFacade, Runner
 from tests.backend.sqlalchemy import DeclarativeBase
+from tests.protocols import SyncBackend
 
 
 @contextmanager
@@ -99,7 +99,7 @@ def sqlalchemy_async_sqlite_session(
 
 
 @pytest.fixture()
-def sqlalchemy_async_sqlite_backend(tmp_path: Path) -> Iterator[Backend]:
+def sqlalchemy_async_sqlite_backend(tmp_path: Path) -> Iterator[SyncBackend]:
     with sqlalchemy_async_sqlite_session(tmp_path) as (session, runner):
         yield BackendFacade(
             AsyncSQLAlchemyBackend().configure(
@@ -124,7 +124,7 @@ def sqlalchemy_async_postgres_session(
 
 
 @pytest.fixture()
-def sqlalchemy_async_postgres_backend() -> Iterator[Backend]:
+def sqlalchemy_async_postgres_backend() -> Iterator[SyncBackend]:
     with sqlalchemy_async_postgres_session() as (session, runner):
         yield BackendFacade(
             AsyncSQLAlchemyBackend().configure(
@@ -159,7 +159,7 @@ def sqlalchemy_async_session_transaction(
 @contextmanager
 def sqlalchemy_async_other_client(
     session_factory: Callable[[], AsyncSession], runner: Runner
-) -> Iterator[tuple[Backend, Callable[[], AbstractContextManager[None]]]]:
+) -> Iterator[tuple[SyncBackend, Callable[[], AbstractContextManager[None]]]]:
     """
     Builds an async SQLAlchemy backend wrapped in a sync facade, together with
     a transaction-beginning callable, for the other-client subscription tests.
@@ -169,7 +169,7 @@ def sqlalchemy_async_other_client(
     fixture setup and teardown) — never concurrently.
     """
     session = session_factory()
-    backend: Backend = BackendFacade(
+    backend: SyncBackend = BackendFacade(
         AsyncSQLAlchemyBackend().configure(session),
         runner,
     )

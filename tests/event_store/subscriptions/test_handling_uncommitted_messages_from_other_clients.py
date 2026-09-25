@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from django.db import transaction as django_transaction
 
-from event_sourcery import Backend, StreamId
+from event_sourcery import StreamId
 from event_sourcery_django import DjangoBackend
 from event_sourcery_sqlalchemy import SQLAlchemyBackend
 from tests import mark
@@ -27,6 +27,7 @@ from tests.event_store.conftest import skip_if_not_selected_backend
 from tests.event_store.subscriptions.other_client import OtherClient
 from tests.factories import OtherEvent, an_event
 from tests.matchers import any_record
+from tests.protocols import SyncBackend
 
 
 @pytest.fixture(
@@ -46,9 +47,9 @@ from tests.matchers import any_record
 def clients(
     request: pytest.FixtureRequest,
     tmp_path: Path,
-) -> Iterator[tuple[Backend, OtherClient]]:
+) -> Iterator[tuple[SyncBackend, OtherClient]]:
     backend_name: str = request.param.__name__
-    backend: Backend = request.getfixturevalue(backend_name)
+    backend: SyncBackend = request.getfixturevalue(backend_name)
     mark.skip_backend(request, backend_name)
     skip_if_not_selected_backend(backend_name, request)
 
@@ -98,12 +99,12 @@ def clients(
 
 
 @pytest.fixture()
-def backend(clients: tuple[Backend, OtherClient]) -> Backend:
+def backend(clients: tuple[SyncBackend, OtherClient]) -> SyncBackend:
     return clients[0]
 
 
 @pytest.fixture()
-def other_client(clients: tuple[Backend, OtherClient]) -> Iterator[OtherClient]:
+def other_client(clients: tuple[SyncBackend, OtherClient]) -> Iterator[OtherClient]:
     other = clients[1]
     yield other
     other.stop()

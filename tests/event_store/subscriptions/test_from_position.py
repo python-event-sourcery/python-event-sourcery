@@ -1,11 +1,11 @@
-from event_sourcery import EventStore
 from tests.bdd import Given, Then, When
 from tests.factories import an_event
 from tests.matchers import any_record
+from tests.protocols import SyncEventStore
 
 
 def test_receives_all_events_from_selected_position(
-    event_store: EventStore,
+    event_store: SyncEventStore,
     given: Given,
     when: When,
     then: Then,
@@ -21,7 +21,7 @@ def test_receives_all_events_from_selected_position(
 
 
 def test_receives_events_after_passed_position(
-    event_store: EventStore,
+    event_store: SyncEventStore,
     given: Given,
     when: When,
     then: Then,
@@ -35,7 +35,7 @@ def test_receives_events_after_passed_position(
 
 
 def test_receives_events_from_multiple_streams_after_passed_position(
-    event_store: EventStore,
+    event_store: SyncEventStore,
     given: Given,
     when: When,
     then: Then,
@@ -60,7 +60,7 @@ def test_receives_events_from_multiple_streams_after_passed_position(
 
 
 def test_receives_events_from_all_tenants(
-    event_store: EventStore,
+    event_store: SyncEventStore,
     given: Given,
     when: When,
     then: Then,
