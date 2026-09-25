@@ -107,7 +107,23 @@ class _Container:
         return new
 
 
-class Backend(_Container):
+class _BackendContainer(_Container):
+    """Common tenant and event configuration shared by sync and async backends."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self[TenantId] = DEFAULT_TENANT
+        self[EventRegistry] = EventRegistry()
+        self[EncryptionStrategy] = NoEncryptionStrategy()
+
+    def in_tenant_mode(self, tenant_id: TenantId) -> Self:
+        """Returns a copy of the backend configured for the specified tenant."""
+        in_tenant_mode = self.copy()
+        in_tenant_mode[TenantId] = tenant_id
+        return in_tenant_mode
+
+
+class Backend(_BackendContainer):
     """
     Dependency Injection container for Event Sourcery components.
 
@@ -122,9 +138,6 @@ class Backend(_Container):
 
     def __init__(self) -> None:
         super().__init__()
-        self[TenantId] = DEFAULT_TENANT
-        self[EventRegistry] = EventRegistry()
-        self[EncryptionStrategy] = NoEncryptionStrategy()
         self[EncryptionKeyStorageStrategy] = (
             lambda c: NoKeyStorageStrategy().scoped_for_tenant(c[TenantId])
         )
@@ -177,14 +190,6 @@ class Backend(_Container):
         Returns the current instance of `SubscriptionBuilder` (as `PositionPhase`).
         """
         return self[PositionPhase]
-
-    def in_tenant_mode(self, tenant_id: TenantId) -> Self:
-        """
-        Returns a copy of the backend with the specified tenant ID set.
-        """
-        in_tenant_mode = self.copy()
-        in_tenant_mode[TenantId] = tenant_id
-        return in_tenant_mode
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         """
