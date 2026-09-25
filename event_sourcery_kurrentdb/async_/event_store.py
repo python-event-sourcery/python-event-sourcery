@@ -2,10 +2,11 @@ from dataclasses import dataclass, replace
 from typing import cast
 
 from kurrentdbclient import AsyncKurrentDBClient, StreamState
-from kurrentdbclient.exceptions import NotFoundError
+from kurrentdbclient.exceptions import NotFoundError, WrongCurrentVersionError
 from typing_extensions import Self
 
-from event_sourcery import DEFAULT_TENANT, NO_VERSIONING, StreamId, TenantId
+from event_sourcery import DEFAULT_TENANT, StreamId, TenantId
+from event_sourcery._event_store.versioning import ExplicitVersioning
 from event_sourcery.async_.interfaces import AsyncStorageStrategy
 from event_sourcery.event import Position, RawEvent
 from event_sourcery.exceptions import ConcurrentStreamWriteError
@@ -69,27 +70,40 @@ class AsyncKurrentDBStorageStrategy(AsyncStorageStrategy):
     async def insert_events(
         self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
     ) -> None:
+        expectation: int | StreamState = StreamState.ANY
+        if isinstance(versioning, ExplicitVersioning):
+            if versioning.expected_version == 0:
+                expectation = StreamState.NO_STREAM
+            else:
+                expectation = cast(int, versioning.expected_version) - 1
+
         if self._outbox_strategy is not None:
             # the outbox persistent subscription must exist before the first
             # append, otherwise events would never reach the outbox
             await self._outbox_strategy.ensure_subscription_created()
 
         for sid in {e.stream_id for e in events}:
-            await self._ensure_stream(stream_id=sid, versioning=versioning)
             stream_name = stream.Name(self._tenant_id, sid)
             stream_events = [e for e in events if e.stream_id == sid]
-            await self._append_events(stream_name, events=stream_events)
+            await self._append_events(
+                stream_name, events=stream_events, expectation=expectation
+            )
 
-    async def _append_events(self, name: stream.Name, events: list[RawEvent]) -> int:
-        return cast(
-            int,
-            await self._client.append_events(
-                str(name),
-                current_version=StreamState.ANY,
-                events=(dto.new_entry(e) for e in events),
-                timeout=self._timeout,
-            ),
-        )
+    async def _append_events(
+        self, name: stream.Name, events: list[RawEvent], expectation: int | StreamState
+    ) -> int:
+        try:
+            return cast(
+                int,
+                await self._client.append_events(
+                    str(name),
+                    current_version=expectation,
+                    events=(dto.new_entry(e) for e in events),
+                    timeout=self._timeout,
+                ),
+            )
+        except WrongCurrentVersionError as err:
+            raise ConcurrentStreamWriteError from err
 
     async def save_snapshot(self, snapshot: RawEvent) -> None:
         name = stream.Name(self._tenant_id, snapshot.stream_id)
@@ -100,29 +114,6 @@ class AsyncKurrentDBStorageStrategy(AsyncStorageStrategy):
             events=[dto.new_entry(snapshot, stream_position=stream_position)],
             timeout=self._timeout,
         )
-
-    async def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
-        name = stream.Name(self._tenant_id, stream_id)
-
-        if versioning is not NO_VERSIONING and versioning.expected_version:
-            expected = stream.Position.from_version(versioning.expected_version)
-            position = await self._get_stream_position(name)
-            if position != expected:
-                raise ConcurrentStreamWriteError(position, expected)
-
-    async def _get_stream_position(self, name: stream.Name) -> stream.Position | None:
-        try:
-            last = (
-                await self._client.get_stream(
-                    str(name),
-                    backwards=True,
-                    limit=1,
-                    timeout=self._timeout,
-                )
-            )[0]
-            return stream.Position(last.stream_position)
-        except NotFoundError:
-            return None
 
     async def delete_stream(self, stream_id: StreamId) -> None:
         name = stream.Name(self._tenant_id, stream_id)

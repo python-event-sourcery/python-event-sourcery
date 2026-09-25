@@ -52,11 +52,7 @@ class Event(models.Model):
     stream = models.ForeignKey(Stream, related_name="events", on_delete=models.CASCADE)
 
     class Meta:
-        indexes = [
-            models.Index(
-                fields=["stream", "version"], name="ix_events_stream_id_version"
-            ),
-        ]
+        unique_together = ("stream", "version")
 
 
 class Snapshot(models.Model):

@@ -674,8 +674,12 @@ def test_versioning(sqlite_in_memory_backend, event_cls) -> None:
 
     # --8<-- [start:versioning_02]
     another_event = InvoicePaid(invoice_number="1112")
+
     # 👇 this would raise an exception
-    # _event_store.append(another_event, stream_id=stream_id)
+    # event_store.append(another_event, stream_id=stream_id)
+
+    # 👇 this works perfectly; note `expected_version`
+    event_store.append(another_event, stream_id=stream_id, expected_version=1)
     # --8<-- [end:versioning_02]
 
     # --8<-- [start:versioning_03]
@@ -725,8 +729,12 @@ def test_versioning_async(event_cls: type["Event"]) -> None:
 
         # --8<-- [start:versioning_02_async]
         another_event = InvoicePaid(invoice_number="1112")
+
         # 👇 this would raise an exception
         # await event_store.append(another_event, stream_id=stream_id)
+
+        #👇 this works perfectly; note `expected_version`
+        await event_store.append(another_event, stream_id=stream_id, expected_version=1)
         # --8<-- [end:versioning_02_async]
 
         # --8<-- [start:versioning_03_async]

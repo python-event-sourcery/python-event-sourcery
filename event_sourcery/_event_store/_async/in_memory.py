@@ -224,14 +224,22 @@ class AsyncInMemoryStorageStrategy(AsyncStorageStrategy):
 
     def _ensure_stream(self, stream_id: StreamId, versioning: Versioning) -> None:
         key = self._tenant_id, stream_id
+        just_inserted = False
         if key not in self._storage:
+            if versioning is not NO_VERSIONING and versioning.expected_version != 0:
+                raise ConcurrentStreamWriteError
             self._storage.create(self._tenant_id, stream_id, versioning)
+            just_inserted = True
 
         versioning.validate_if_compatible(
             self._storage.get_version(self._tenant_id, stream_id)
         )
 
-        if versioning is not NO_VERSIONING and versioning.expected_version:
+        if (
+            not just_inserted
+            and versioning is not NO_VERSIONING
+            and versioning.expected_version is not None
+        ):
             last_version = (
                 self._storage.get_version(self._tenant_id, stream_id)
                 if key in self._storage

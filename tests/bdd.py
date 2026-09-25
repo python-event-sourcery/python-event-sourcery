@@ -34,8 +34,9 @@ class Stream:
 
     @singledispatchmethod
     def receives(self, *events: WrappedEvent) -> Self:
+        expected_version = self.current_version
         self.autoversion(*events)
-        self.store.append(*events, stream_id=self.id)
+        self.store.append(*events, stream_id=self.id, expected_version=expected_version)
         return self
 
     @receives.register
