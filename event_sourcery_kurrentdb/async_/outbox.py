@@ -112,6 +112,8 @@ class AsyncKurrentDBOutboxStorageStrategy(AsyncOutboxStorageStrategy):
                     record = dto.raw_record(entry)
                     if self._filterer(record.entry):
                         yield self._publish_context(entry, record)
+                    else:
+                        await self.active_subscription.ack(entry.id)
             except DeadlineExceededError:
                 pass
 

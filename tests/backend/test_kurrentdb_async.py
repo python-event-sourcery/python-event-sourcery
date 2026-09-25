@@ -1,12 +1,51 @@
 """Unit tests for defensive branches of the async KurrentDB outbox."""
 
 import asyncio
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
+from uuid import uuid4
 
+import pytest
+from kurrentdbclient import RecordedEvent
 from kurrentdbclient.exceptions import NotFoundError
 
 from event_sourcery.outbox import no_filter
 from event_sourcery_kurrentdb.async_.outbox import AsyncKurrentDBOutboxStorageStrategy
+
+
+@pytest.mark.parametrize("included", [False, True])
+def test_outbox_acknowledges_records_even_when_filtered_out(included: bool) -> None:
+    async def scenario() -> None:
+        entry = Mock(
+            spec=RecordedEvent,
+            id=uuid4(),
+            stream_name=f"-default-{uuid4().hex}",
+            stream_position=0,
+            commit_position=1,
+            type="AnEvent",
+            data=b"{}",
+            metadata=b'{"created_at": "2026-01-01T00:00:00+00:00"}',
+        )
+        subscription = AsyncMock()
+        subscription.__anext__.side_effect = [entry, StopAsyncIteration]
+        client = AsyncMock()
+        client.get_subscription_info.return_value = Mock(live_buffer_count=1)
+        client.read_subscription_to_all.return_value = subscription
+        strategy = AsyncKurrentDBOutboxStorageStrategy(
+            client, lambda _: included, "an-outbox", 3, None
+        )
+
+        published = []
+        async for context in strategy.outbox_entries(limit=2):
+            async with context as record:
+                subscription.ack.assert_not_awaited()
+                published.append(record.entry.uuid)
+
+        assert published == ([entry.id] if included else [])
+        subscription.ack.assert_awaited_once_with(entry.id)
+        subscription.nack.assert_not_awaited()
+        subscription.stop.assert_awaited_once()
+
+    asyncio.run(scenario())
 
 
 def test_ensure_subscription_created_is_safe_under_concurrency() -> None:

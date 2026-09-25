@@ -131,6 +131,8 @@ Sometimes you want only specific events to be sent. You can pass an optional `fi
 
 It should be a callable (e.g. a function) that accepts an event instance and returns True if an event should be published. False otherwise.
 
+The KurrentDB outbox (synchronous and asynchronous) acknowledges excluded records without publishing them, so the persistent subscription does not retry them. The events remain in the event store.
+
 ```python
 --8<--
 docs/code/test_recipes.py:outbox_01_filterer
