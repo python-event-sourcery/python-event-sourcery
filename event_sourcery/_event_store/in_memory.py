@@ -260,15 +260,16 @@ class InMemoryStorageStrategy(StorageStrategy):
         self, stream_id: StreamId, versioning: Versioning, events: list[RawEvent]
     ) -> None:
         position = self.current_position or 0
-        self._ensure_stream(stream_id=stream_id, versioning=versioning)
         records = [
             RecordedRaw(entry=raw, position=position, tenant_id=self._tenant_id)
             for position, raw in enumerate(events, start=position + 1)
         ]
+        prepared_dispatch = self._dispatcher.prepare(*records)
+        self._ensure_stream(stream_id=stream_id, versioning=versioning)
         self._storage.append(records)
         if self._outbox:
             self._outbox.put_into_outbox(records)
-        self._dispatcher.dispatch(*records)
+        self._dispatcher.dispatch_prepared(prepared_dispatch)
 
     def save_snapshot(self, snapshot: RawEvent) -> None:
         record = RecordedRaw(

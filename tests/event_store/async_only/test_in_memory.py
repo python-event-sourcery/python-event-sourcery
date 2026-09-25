@@ -6,13 +6,17 @@ composable, beyond the mirrored suite run via the sync facade.
 import asyncio
 from datetime import timedelta
 
-from event_sourcery import Event, StreamId, TenantId
-from event_sourcery.async_.backend import AsyncInMemoryBackend
+import pytest
+
+from event_sourcery import DEFAULT_TENANT, Event, StreamId, TenantId
+from event_sourcery._event_store.in_memory import Storage
+from event_sourcery.async_.backend import AsyncInMemoryBackend, AsyncInMemoryKeyStorage
 from event_sourcery.async_.interfaces import (
     AsyncOutboxStorageStrategy,
     AsyncStorageStrategy,
     AsyncSubscriptionStrategy,
 )
+from event_sourcery.encryption import NoEncryptionStrategy
 from event_sourcery.event import Position, Recorded, WrappedEvent
 from tests.factories import an_event
 
@@ -98,6 +102,37 @@ def test_in_transaction_listener_receives_dispatched_events() -> None:
         await store.append(an_event(version=1), stream_id=StreamId())
 
         assert len(received) == 1
+
+    asyncio.run(scenario())
+
+
+def test_async_encryption_dispatch_failure_does_not_persist_append() -> None:
+    async def scenario() -> None:
+        backend = (
+            AsyncInMemoryBackend()
+            .configure()
+            .with_outbox()
+            .with_encryption(
+                strategy=NoEncryptionStrategy(),
+                key_storage=AsyncInMemoryKeyStorage(),
+            )
+        )
+        backend.in_transaction.register(lambda *_: None, to=Event)
+        store = backend.event_store
+        stream_id = StreamId(name="async-encryption-dispatch")
+
+        with pytest.raises(TypeError, match="Sync deserialize unavailable"):
+            await store.append(an_event(), stream_id=stream_id)
+
+        assert (DEFAULT_TENANT, stream_id) not in backend[Storage]
+        assert await store.load_stream(stream_id) == []
+        published: list[Recorded] = []
+
+        async def publisher(record: Recorded) -> None:
+            published.append(record)
+
+        await backend.outbox.run(publisher)
+        assert published == []
 
     asyncio.run(scenario())
 

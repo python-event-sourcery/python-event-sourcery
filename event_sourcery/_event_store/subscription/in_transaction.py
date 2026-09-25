@@ -17,6 +17,7 @@ from typing import Protocol, cast
 from event_sourcery._event_store.event.dto import (
     Event,
     Position,
+    Recorded,
     RecordedRaw,
     WrappedEvent,
 )
@@ -141,6 +142,11 @@ class Dispatcher:
         Args:
             *raws (RecordedRaw): One or more events to dispatch.
         """
+        self.dispatch_prepared(self.prepare(*raws))
+
+    def prepare(self, *raws: RecordedRaw) -> list[tuple[Recorded, set[Listener]]]:
+        """Deserializes records with matching listeners without invoking them."""
+        prepared: list[tuple[Recorded, set[Listener]]] = []
         for raw in raws:
             event = cast(
                 type[Event],
@@ -152,6 +158,15 @@ class Dispatcher:
                 continue
 
             record = self._serde.deserialize_record(raw)
+            prepared.append((record, listeners))
+        return prepared
+
+    @staticmethod
+    def dispatch_prepared(
+        prepared: list[tuple[Recorded, set[Listener]]],
+    ) -> None:
+        """Invokes listeners for records that were already deserialized."""
+        for record, listeners in prepared:
             for listener in listeners:
                 listener(
                     record.wrapped_event,
