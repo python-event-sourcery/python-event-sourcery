@@ -45,6 +45,7 @@ class AsyncSqlAlchemyOutboxStorageStrategy(AsyncOutboxStorageStrategy):
             as_dict["created_at"] = created_at.isoformat()
             as_dict["uuid"] = str(as_dict["uuid"])
             as_dict["stream_id"] = str(stream_id)
+            as_dict["stream_category"] = stream_id.category
             as_dict["tenant_id"] = str(record.tenant_id)
             rows.append(
                 {
@@ -84,6 +85,7 @@ class AsyncSqlAlchemyOutboxStorageStrategy(AsyncOutboxStorageStrategy):
             stream_id=StreamId(
                 from_hex=entry.data["stream_id"],
                 name=entry.stream_name,
+                category=entry.data.get("stream_category"),
             ),
             created_at=datetime.fromisoformat(entry.data["created_at"]),
             version=entry.data["version"],

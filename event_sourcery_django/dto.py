@@ -53,6 +53,7 @@ def outbox_entry(from_raw: RecordedRaw, max_attempts: int) -> OutboxEntry:
             "created_at": from_raw.entry.created_at.isoformat(),
             "uuid": str(from_raw.entry.uuid),
             "stream_id": str(from_raw.entry.stream_id),
+            "stream_category": from_raw.entry.stream_id.category,
             "version": from_raw.entry.version,
             "name": from_raw.entry.name,
             "data": from_raw.entry.data,
@@ -72,6 +73,7 @@ def raw_outbox(from_entry: OutboxEntry) -> RecordedRaw:
             stream_id=StreamId(
                 from_hex=from_entry.data["stream_id"],
                 name=from_entry.stream_name,
+                category=from_entry.data.get("stream_category"),
             ),
             created_at=datetime.fromisoformat(from_entry.data["created_at"]),
             version=from_entry.data["version"],
