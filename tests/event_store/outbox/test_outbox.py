@@ -1,5 +1,7 @@
 from uuid import uuid4
 
+import pytest
+
 from event_sourcery import Backend, StreamId
 from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import an_event
@@ -57,6 +59,27 @@ def test_sends_only_once_in_case_of_success(
         backend.outbox.run(publisher)
 
     publisher.assert_called_once_with(any_record(event, stream_id))
+
+
+@pytest.mark.parametrize("category", ["orders", None])
+@pytest.mark.parametrize("named", [False, True])
+def test_preserves_stream_category(
+    publisher: PublisherMock,
+    backend: Backend,
+    category: str | None,
+    named: bool,
+) -> None:
+    stream_id = StreamId(
+        name=f"orders-{uuid4().hex}" if named else None, category=category
+    )
+    backend.event_store.append(an_event(version=1), stream_id=stream_id)
+
+    backend.outbox.run(publisher)
+
+    publisher.assert_called_once()
+    published = publisher.call_args.args[0]
+    assert published.stream_id.category == category
+    assert published.stream_id == stream_id
 
 
 def test_tries_to_send_up_to_three_times(
