@@ -12,7 +12,7 @@ from event_sourcery._event_store.event.dto import (
     RecordedRaw,
 )
 from event_sourcery._event_store.stream_id import StreamCategory
-from event_sourcery._event_store.subscription.builder import SubscriptionBuilder
+from event_sourcery._event_store.subscription.helpers import to_timedelta
 from event_sourcery._event_store.subscription.interfaces import Seconds
 
 
@@ -172,7 +172,7 @@ class AsyncSubscriptionBuilder(AsyncPositionPhase, AsyncFilterPhase, AsyncBuildP
         self,
         timelimit: Seconds | timedelta,
     ) -> AsyncIterator[Recorded | None]:
-        timelimit = SubscriptionBuilder._to_timedelta(timelimit)
+        timelimit = to_timedelta(timelimit)
         return self._single_event_unpack(self._build(batch_size=1, timelimit=timelimit))
 
     async def _single_event_unpack(
@@ -188,7 +188,7 @@ class AsyncSubscriptionBuilder(AsyncPositionPhase, AsyncFilterPhase, AsyncBuildP
         size: int,
         timelimit: Seconds | timedelta,
     ) -> AsyncIterator[list[Recorded]]:
-        seconds = SubscriptionBuilder._to_timedelta(timelimit)
+        seconds = to_timedelta(timelimit)
         subscription = self._build(batch_size=size, timelimit=seconds)
         return self._batch_unpack(subscription)
 
