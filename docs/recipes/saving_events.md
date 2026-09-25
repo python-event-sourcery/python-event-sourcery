@@ -116,9 +116,12 @@ In case when you don't need protection against concurrent writes, you can disabl
     --8<--
     ```
 
-!!! info
+!!! warning
 
-    Once a stream has been created with disabled versioning, you cannot enable it. It is also forbidden the other way around. You can always create a new stream and delete the old one.
+    Once a stream has been created with disabled versioning, you cannot enable it. It is also forbidden the other way around. You can always create a new stream and delete the old one. 
+
+    This limitation above does not apply to KurrentDB backend because it automatically versions streams internally.
+
 
 [EventStore]: ../reference/event_store/EventStore.md
 [AsyncEventStore]: ../reference/event_store/AsyncEventStore.md

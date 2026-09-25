@@ -137,6 +137,7 @@ class AsyncSqlAlchemyStorageStrategy(AsyncStorageStrategy):
         matching_streams = (
             (await self._session.execute(matching_streams_stmt)).scalars().all()
         )
+        just_inserted = False
         if not matching_streams:
             ensure_stream_stmt = (
                 postgresql_insert(self._stream_model)
@@ -149,7 +150,8 @@ class AsyncSqlAlchemyStorageStrategy(AsyncStorageStrategy):
                 )
                 .on_conflict_do_nothing()
             )
-            await self._session.execute(ensure_stream_stmt)
+            insert_result = await self._session.execute(ensure_stream_stmt)
+            just_inserted = insert_result.rowcount == 1  # type: ignore[attr-defined]
             matching_streams = (
                 (await self._session.execute(matching_streams_stmt)).scalars().all()
             )
@@ -175,7 +177,24 @@ class AsyncSqlAlchemyStorageStrategy(AsyncStorageStrategy):
 
         versioning.validate_if_compatible(stream.version)
 
-        if versioning.expected_version and versioning is not NO_VERSIONING:
+        if (
+            just_inserted
+            and versioning is not NO_VERSIONING
+            and versioning.expected_version != 0
+        ):
+            (newly_inserted_stream_id,) = insert_result.inserted_primary_key  # type: ignore[attr-defined]
+            await self._session.execute(
+                delete(self._stream_model).filter(
+                    self._stream_model.id == newly_inserted_stream_id
+                )
+            )
+            raise ConcurrentStreamWriteError
+
+        if (
+            not just_inserted
+            and versioning.expected_version is not None
+            and versioning is not NO_VERSIONING
+        ):
             bump_version_stmt = (
                 update(self._stream_model)
                 .where(
