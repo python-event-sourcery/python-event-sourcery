@@ -114,7 +114,19 @@ class DjangoStorageStrategy(StorageStrategy):
 
         versioning.validate_if_compatible(model.version)
 
-        if versioning.expected_version and versioning is not NO_VERSIONING:
+        if (
+            created
+            and versioning is not NO_VERSIONING
+            and versioning.expected_version != 0
+        ):
+            model.delete()
+            raise ConcurrentStreamWriteError
+
+        if (
+            not created
+            and versioning.expected_version is not None
+            and versioning is not NO_VERSIONING
+        ):
             result = models.Stream.objects.filter(
                 id=model.id, version=versioning.expected_version
             ).update(version=versioning.initial_version)

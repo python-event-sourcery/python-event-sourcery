@@ -5,7 +5,7 @@ By default, [EventStore] works in so-called default context, tenant-less.
 
 ## Switching tenant
 
-To switch context to specific tenant, one should call `scoped_for_tenant` method:
+To switch context to specific tenant, one should call `in_tenant_mode` method:
 
 ```python
 --8<--
@@ -60,16 +60,26 @@ docs/code/test_recipes.py:multitenancy_03
 
 ## Event Sourcing
 
-In case of [Event Sourcing](event_sourcing.md), whenever you construct a [Repository] make sure you pass a scoped [EventStore] instance:
+In case of [Event Sourcing](event_sourcing.md), whenever you construct a [Repository] (or [AsyncRepository]) make sure you pass a scoped [EventStore] (or [AsyncEventStore]) instance:
 
-```python
---8<--
-docs/code/test_recipes.py:multitenancy_04
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:multitenancy_04
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:multitenancy_04_async
+    --8<--
+    ```
 
 [EventStore]: ../reference/event_store/EventStore.md
+[AsyncEventStore]: ../reference/event_store/AsyncEventStore.md
 [Recorded]: ../reference/event_store/event/Recorded.md
 [TenantId]: ../reference/event_store/TenantId.md
 [DEFAULT_TENANT]: ../reference/event_store/DEFAULT_TENANT.md
 [Repository]: ../reference/event_sourcing/Repository.md
+[AsyncRepository]: ../reference/event_sourcing/AsyncRepository.md

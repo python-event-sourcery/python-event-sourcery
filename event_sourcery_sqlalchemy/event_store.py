@@ -115,6 +115,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
             )
         matching_streams_stmt = select(self._stream_model).where(condition)
         matching_streams = self._session.execute(matching_streams_stmt).scalars().all()
+        just_inserted = False
         if not matching_streams:
             ensure_stream_stmt = (
                 postgresql_insert(self._stream_model)
@@ -127,7 +128,8 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 )
                 .on_conflict_do_nothing()
             )
-            self._session.execute(ensure_stream_stmt)
+            insert_result = self._session.execute(ensure_stream_stmt)
+            just_inserted = insert_result.rowcount == 1  # type: ignore[attr-defined]
             matching_streams = (
                 self._session.execute(matching_streams_stmt).scalars().all()
             )
@@ -153,7 +155,24 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
 
         versioning.validate_if_compatible(stream.version)
 
-        if versioning.expected_version and versioning is not NO_VERSIONING:
+        if (
+            just_inserted
+            and versioning is not NO_VERSIONING
+            and versioning.expected_version != 0
+        ):
+            (newly_inserted_stream_id,) = insert_result.inserted_primary_key  # type: ignore[attr-defined]
+            self._session.execute(
+                delete(self._stream_model).filter(
+                    self._stream_model.id == newly_inserted_stream_id
+                )
+            )
+            raise ConcurrentStreamWriteError
+
+        if (
+            not just_inserted
+            and versioning.expected_version is not None
+            and versioning is not NO_VERSIONING
+        ):
             bump_version_stmt = (
                 update(self._stream_model)
                 .where(
@@ -216,7 +235,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
         )
         stream = (
             self._session.query(self._stream_model)
-            .filter_by(stream_id=snapshot.stream_id)
+            .filter_by(stream_id=snapshot.stream_id, tenant_id=self._tenant_id)
             .one()
         )
         stream.snapshots.append(entry)
@@ -225,10 +244,12 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
     def delete_stream(self, stream_id: StreamId) -> None:
         delete_events_stmt = delete(self._event_model).where(
             self._event_model.stream_id == stream_id,
+            self._event_model.tenant_id == self._tenant_id,
         )
         self._session.execute(delete_events_stmt)
         delete_stream_stmt = delete(self._stream_model).where(
             self._stream_model.stream_id == stream_id,
+            self._stream_model.tenant_id == self._tenant_id,
         )
         self._session.execute(delete_stream_stmt)
 

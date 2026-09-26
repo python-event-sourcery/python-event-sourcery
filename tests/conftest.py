@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from event_sourcery import EventStore
-from event_sourcery.backend import Backend, InMemoryBackend
+from event_sourcery.backend import InMemoryBackend
 from tests import bdd
+from tests.protocols import SyncBackend, SyncEventStore, sync_backend
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -23,25 +23,25 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 @pytest.fixture()
-def backend() -> Backend:
-    return InMemoryBackend()
+def backend() -> SyncBackend:
+    return sync_backend(InMemoryBackend())
 
 
 @pytest.fixture()
-def event_store(backend: Backend) -> EventStore:
+def event_store(backend: SyncBackend) -> SyncEventStore:
     return backend.event_store
 
 
 @pytest.fixture()
-def given(backend: Backend, request: pytest.FixtureRequest) -> bdd.Given:
+def given(backend: SyncBackend, request: pytest.FixtureRequest) -> bdd.Given:
     return bdd.Given(backend, request)
 
 
 @pytest.fixture()
-def when(backend: Backend, request: pytest.FixtureRequest) -> bdd.When:
+def when(backend: SyncBackend, request: pytest.FixtureRequest) -> bdd.When:
     return bdd.When(backend, request)
 
 
 @pytest.fixture()
-def then(backend: Backend, request: pytest.FixtureRequest) -> bdd.Then:
+def then(backend: SyncBackend, request: pytest.FixtureRequest) -> bdd.Then:
     return bdd.Then(backend, request)

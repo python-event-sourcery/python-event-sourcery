@@ -12,30 +12,27 @@ from deepdiff import DeepDiff
 from pytest import approx
 from typing_extensions import Self
 
-from event_sourcery import (
-    DEFAULT_TENANT,
-    Backend,
-    EventStore,
-    StreamCategory,
-    StreamId,
-    TenantId,
-    TransactionalBackend,
-)
+from event_sourcery import DEFAULT_TENANT, StreamCategory, StreamId, TenantId
 from event_sourcery.encryption import Encryption as EncryptionService
 from event_sourcery.event import Entry, Event, Position, Recorded, WrappedEvent
 from event_sourcery.subscription import BuildPhase, PositionPhase
 from tests.matchers import any_wrapped_event
+from tests.protocols import SyncBackend, SyncEventStore, SyncTransactionalBackend
 
 
 @dataclass
 class Stream:
-    store: EventStore
+    store: SyncEventStore
     id: StreamId = field(default_factory=StreamId)
 
     @singledispatchmethod
     def receives(self, *events: WrappedEvent) -> Self:
+        expected_version = self.current_version
+        assert expected_version is not None, (
+            "Versioned append requires a stream version"
+        )
         self.autoversion(*events)
-        self.store.append(*events, stream_id=self.id)
+        self.store.append(*events, stream_id=self.id, expected_version=expected_version)
         return self
 
     @receives.register
@@ -177,7 +174,7 @@ class Encryption:
 
 @dataclass
 class Step:
-    backend: Backend | TransactionalBackend
+    backend: SyncBackend
     request: pytest.FixtureRequest
 
     def in_tenant_mode(self, for_tenant: TenantId) -> Self:
@@ -187,7 +184,7 @@ class Step:
         return self.in_tenant_mode(DEFAULT_TENANT)
 
     @property
-    def store(self) -> EventStore:
+    def store(self) -> SyncEventStore:
         return self.backend.event_store
 
     @property
@@ -242,7 +239,7 @@ class Step:
         self,
         to: type[Event] | StreamCategory = Event,
     ) -> InTransactionListener:
-        backend = cast(TransactionalBackend, self.backend)
+        backend = cast(SyncTransactionalBackend, self.backend)
         backend.in_transaction.register(listener := InTransactionListener(), to=to)
         self.request.addfinalizer(
             lambda: backend.in_transaction.remove(listener, to=to)
@@ -257,7 +254,7 @@ class Step:
         listener: InTransactionListener,
         to: type[Event] | StreamCategory,
     ) -> InTransactionListener:
-        backend = cast(TransactionalBackend, self.backend)
+        backend = cast(SyncTransactionalBackend, self.backend)
         backend.in_transaction.register(listener, to=to)
         self.request.addfinalizer(
             lambda: backend.in_transaction.remove(listener, to=to)

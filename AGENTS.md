@@ -5,7 +5,7 @@ Event sourcing library for Python with pluggable backends.
 ## Layout
 
 - `event_sourcery/` — core library
-- `event_sourcery_sqlalchemy/`, `event_sourcery_django/`, `event_sourcery_kurrentdb/` — backends (optional extras: `sqlalchemy`, `django`, `kurrentdb`)
+- `event_sourcery_sqlalchemy/`, `event_sourcery_django/`, `event_sourcery_kurrentdb/` — backends (optional extras: `sqlalchemy`, `sqlalchemy-async`, `django`, `kurrentdb`)
 - `tests/` — shared test suite run against every backend
 - `docs/` — documentation (zensical)
 

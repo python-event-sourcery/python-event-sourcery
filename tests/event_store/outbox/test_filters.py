@@ -3,10 +3,10 @@ from uuid import uuid4
 import pytest
 
 from event_sourcery import StreamId
-from event_sourcery.backend import Backend
 from event_sourcery.interfaces import OutboxFiltererStrategy
 from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import an_event
+from tests.protocols import SyncBackend
 
 
 @pytest.fixture()
@@ -17,14 +17,14 @@ def filter_everything() -> OutboxFiltererStrategy:
 @pytest.fixture()
 def backend(
     filter_everything: OutboxFiltererStrategy,
-    backend: Backend,
-) -> Backend:
+    backend: SyncBackend,
+) -> SyncBackend:
     return backend.with_outbox(filterer=filter_everything)
 
 
 def test_no_entries_when_everything_was_filtered(
     publisher: PublisherMock,
-    backend: Backend,
+    backend: SyncBackend,
 ) -> None:
     backend.event_store.append(an_event(version=1), stream_id=StreamId(uuid4()))
     backend.outbox.run(publisher)

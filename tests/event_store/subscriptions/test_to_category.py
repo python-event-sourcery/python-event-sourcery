@@ -1,7 +1,8 @@
-from event_sourcery import EventStore, StreamId
+from event_sourcery import StreamId
 from tests.bdd import Given, Then, When
 from tests.factories import an_event
 from tests.matchers import any_record
+from tests.protocols import SyncEventStore
 
 
 def test_receives_only_events_from_selected_category(
@@ -46,7 +47,7 @@ def test_receives_all_events_from_selected_category(
 
 
 def test_receives_events_after_passed_position(
-    event_store: EventStore,
+    event_store: SyncEventStore,
     given: Given,
     when: When,
     then: Then,

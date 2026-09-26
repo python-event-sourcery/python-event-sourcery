@@ -11,6 +11,7 @@ from typing_extensions import Protocol
 
 from event_sourcery import Backend, StreamId
 from event_sourcery.event import WrappedEvent
+from tests.protocols import SyncBackend, sync_backend
 
 
 class Command(enum.Enum):
@@ -71,12 +72,14 @@ class Inbox:
 class Agent(Thread):
     def __init__(
         self,
-        backend: Backend,
+        backend: Backend | SyncBackend,
         transaction: Callable[[], AbstractContextManager],
         inbox: Inbox,
     ) -> None:
         super().__init__(daemon=True)
-        self._backend = backend
+        self._backend = (
+            sync_backend(backend) if isinstance(backend, Backend) else backend
+        )
         self._transaction = transaction
         self._inbox = inbox
         self.exception: Exception | None = None
@@ -87,7 +90,12 @@ class Agent(Thread):
 
             while True:
                 match self._inbox.get():
-                    case (Command.APPEND, event, stream_id, _Handle() as sync):
+                    case (
+                        Command.APPEND,
+                        WrappedEvent() as event,
+                        StreamId() as stream_id,
+                        _Handle() as sync,
+                    ):
                         with self._transaction():
                             event_store.append(event, stream_id=stream_id)
                             sync.wait_to_commit()
@@ -102,7 +110,7 @@ class Agent(Thread):
 class OtherClient:
     def __init__(
         self,
-        backend: Backend,
+        backend: Backend | SyncBackend,
         transaction: Callable[[], AbstractContextManager],
     ) -> None:
         self._inbox = Inbox()
@@ -120,6 +128,9 @@ class OtherClient:
 
     def stop(self) -> None:
         self._inbox.put_stop()
+        # wait for the agent to finish, so no in-flight operation races
+        # with fixture teardown (e.g. closing sessions or dropping tables)
+        self._thread.join()
         self._raise_thread_exception()
 
     def _raise_thread_exception(self) -> None:

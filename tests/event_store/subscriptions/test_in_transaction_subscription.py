@@ -2,15 +2,20 @@ from unittest.mock import ANY
 
 import pytest
 
-from event_sourcery import StreamId
-from event_sourcery.backend import TransactionalBackend
+from event_sourcery import DEFAULT_TENANT, StreamId
+from event_sourcery._event_store.event.dto import Recorded, RecordedRaw
+from event_sourcery._event_store.event.serde import Serde
+from event_sourcery._event_store.in_memory import Storage
+from event_sourcery.backend import InMemoryBackend
 from event_sourcery.event import Event
 from tests.bdd import Given, Then, When
 from tests.factories import AnEvent, OtherEvent, an_event
 from tests.matchers import any_record
+from tests.protocols import SyncTransactionalBackend
 
 pytestmark = pytest.mark.skip_backend(
-    backend="kurrentdb_backend", reason="KurrentDB don't have transactions"
+    backend=["kurrentdb_backend", "kurrentdb_async_backend"],
+    reason="KurrentDB don't have transactions",
 )
 
 
@@ -113,7 +118,7 @@ def test_receives_events_from_all_tenants(
 
 
 def test_listener_is_registered_to_event_only_once(
-    backend: TransactionalBackend,
+    backend: SyncTransactionalBackend,
     given: Given,
     when: When,
     then: Then,
@@ -129,7 +134,7 @@ def test_listener_is_registered_to_event_only_once(
 
 
 def test_receives_all_events_from_category(
-    backend: TransactionalBackend,
+    backend: SyncTransactionalBackend,
     given: Given,
     when: When,
     then: Then,
@@ -147,7 +152,7 @@ def test_receives_all_events_from_category(
 
 
 def test_receives_events_only_from_category_subscribed_to(
-    backend: TransactionalBackend,
+    backend: SyncTransactionalBackend,
     given: Given,
     when: When,
     then: Then,
@@ -170,7 +175,7 @@ def test_receives_events_only_from_category_subscribed_to(
 
 
 def test_receives_event_once_when_subscribed_to_both_event_type_and_category(
-    backend: TransactionalBackend,
+    backend: SyncTransactionalBackend,
     given: Given,
     when: When,
     then: Then,
@@ -183,3 +188,24 @@ def test_receives_event_once_when_subscribed_to_both_event_type_and_category(
 
     then(listener).next_received_record_is(any_record(event))
     then(listener).received_no_new_records()
+
+
+def test_in_memory_deserialization_failure_does_not_persist_append() -> None:
+    class FailingDeserializeSerde(Serde):
+        def deserialize_record(self, record: RecordedRaw) -> Recorded:
+            raise TypeError("test deserialization failure")
+
+    backend = InMemoryBackend().configure().with_outbox()
+    serde = backend[Serde]
+    backend[Serde] = FailingDeserializeSerde(serde.registry, serde.encryption)
+    backend.in_transaction.register(lambda *_: None, to=Event)
+    stream_id = StreamId(name="sync-dispatch-failure")
+
+    with pytest.raises(TypeError, match="test deserialization failure"):
+        backend.event_store.append(an_event(), stream_id=stream_id)
+
+    assert (DEFAULT_TENANT, stream_id) not in backend[Storage]
+    assert backend[Storage].records == []
+    published: list[Recorded] = []
+    backend.outbox.run(published.append)
+    assert published == []

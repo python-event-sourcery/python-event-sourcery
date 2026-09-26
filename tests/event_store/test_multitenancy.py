@@ -1,9 +1,10 @@
 import pytest
 
-from event_sourcery import Backend, StreamId
+from event_sourcery import StreamId
 from event_sourcery.exceptions import IllegalTenantId
 from tests.bdd import Given, Then
 from tests.factories import AnEvent, an_event
+from tests.protocols import SyncBackend
 
 
 def test_stream_created_in_default_context_cannot_be_accessed_from_tenant_context(
@@ -36,7 +37,40 @@ def test_streams_with_same_id_or_name_can_coexist(
     then.in_tenant_mode("second").stream(with_id=stream_id).loads_only([tenant_2_event])
 
 
-def test_kurrentdb_cant_use_tenant_id_with_dash(kurrentdb_backend: Backend) -> None:
+def test_deleting_stream_only_deletes_current_tenant(
+    given: Given,
+    then: Then,
+) -> None:
+    stream_id = StreamId()
+    first_event = an_event()
+    second_event = an_event()
+    given.in_tenant_mode("first").event(first_event, on=stream_id)
+    given.in_tenant_mode("second").event(second_event, on=stream_id)
+
+    given.in_tenant_mode("first").store.delete_stream(stream_id)
+
+    then.in_tenant_mode("first").stream(with_id=stream_id).is_empty()
+    then.in_tenant_mode("second").stream(with_id=stream_id).loads_only([second_event])
+
+
+def test_saving_snapshot_resolves_stream_in_current_tenant(
+    given: Given,
+    then: Then,
+) -> None:
+    stream_id = StreamId()
+    first_event = an_event()
+    second_event = an_event()
+    snapshot = an_event(version=2)
+    given.in_tenant_mode("first").event(first_event, on=stream_id)
+    given.in_tenant_mode("second").event(second_event, on=stream_id)
+
+    given.in_tenant_mode("first").snapshot(snapshot, on=stream_id)
+
+    then.in_tenant_mode("first").stream(with_id=stream_id).loads_only([snapshot])
+    then.in_tenant_mode("second").stream(with_id=stream_id).loads_only([second_event])
+
+
+def test_kurrentdb_cant_use_tenant_id_with_dash(kurrentdb_backend: SyncBackend) -> None:
     illegal_tenant = kurrentdb_backend.in_tenant_mode("illegal-tenant-id")
     illegal_tenant_event_store = illegal_tenant.event_store
 

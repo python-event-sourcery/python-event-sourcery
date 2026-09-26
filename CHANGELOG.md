@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+### Added
+- Feature parity wrap-up: `AsyncRepository`, `AsyncProjector` /
+  `AsyncCursorsDao` / async read-model callable, `AsyncEncryption` +
+  `AsyncInMemoryKeyStorage`, `AsyncEncryptionKeyStorageStrategy`,
+  `AsyncSerde` pipeline — completion of the async event sourcing surface
+- Async SQLAlchemy backend: `AsyncSQLAlchemyBackend` with async storage,
+  subscriptions and outbox strategies, available via a new `sqlalchemy-async`
+  extra (`SQLAlchemy[asyncio]`); async drivers (`asyncpg`, `aiosqlite`) are
+  installed by the user, same as in the sync variant
+- Async KurrentDB backend: `AsyncKurrentDBBackend` with async storage,
+  subscriptions and outbox strategies (outbox persistent subscription created
+  lazily before the first append or outbox run)
+
 ## 0.5.2
 ### Changed
 - **Breaking:** `Repository.aggregate()` yields `WrappedAggregate` instead of `Aggregate` directly
