@@ -1,10 +1,11 @@
 import dataclasses
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Generic, TypeAlias, TypeVar
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, cast
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, PrivateAttr
+from typing_extensions import Self
 
 from event_sourcery._event_store.stream_id import StreamId
 from event_sourcery._event_store.tenant_id import DEFAULT_TENANT, TenantId
@@ -76,23 +77,66 @@ TEvent = TypeVar("TEvent", bound=Event)
 TContext = TypeVar("TContext", bound=BaseModel)
 
 
-class Context(BaseModel, extra="allow"):
-    """
-    Extensible context object for event metadata.
+class ContextComponent(BaseModel):
+    """A typed, independently owned part of an event context."""
 
-    Designed to carry correlation and causation identifiers, and can be extended
-    with additional metadata fields as needed. This allows for flexible propagation
-    of context information throughout event processing and handling pipelines.
+    __context_name__: ClassVar[str]
 
-    Attributes:
-        correlation_id (UUID | None): Identifier for correlating related events.
-        causation_id (UUID | None): Identifier for the cause of the event.
 
-    Additional fields can be added dynamically due to `extra="allow"`.
+TContextComponent = TypeVar("TContextComponent", bound=ContextComponent)
+
+
+class EventCorrelation(ContextComponent):
+    """Typed view of the root correlation and causation fields."""
+
+    correlation_id: UUID | None = None
+    causation_id: UUID | None = None
+
+
+class Context(BaseModel, extra="forbid"):
+    """Event metadata with fixed fields and independently typed components.
+
+    New writes may contain root correlation fields and registered component payloads.
+    Extra root fields in historical events are retained by the deserialization path
+    for backwards-compatible reads.
     """
 
     correlation_id: UUID | None = None
     causation_id: UUID | None = None
+    components: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    _legacy_fields: dict[str, Any] = PrivateAttr(default_factory=dict)
+
+    def get(self, component_type: type[TContextComponent]) -> TContextComponent | None:
+        """Return a component validated as ``component_type`` when present."""
+        if component_type is EventCorrelation:
+            return cast(
+                TContextComponent,
+                EventCorrelation(
+                    correlation_id=self.correlation_id,
+                    causation_id=self.causation_id,
+                ),
+            )
+        payload = self.components.get(component_type.__context_name__)
+        return component_type.model_validate(payload) if payload is not None else None
+
+    def with_component(self, component: ContextComponent) -> Self:
+        """Return a copy with ``component`` added without mutating this context."""
+        if isinstance(component, EventCorrelation):
+            return self.model_copy(
+                update={
+                    "correlation_id": component.correlation_id,
+                    "causation_id": component.causation_id,
+                }
+            )
+
+        return self.model_copy(
+            update={
+                "components": {
+                    **self.components,
+                    component.__context_name__: component.model_dump(mode="json"),
+                }
+            }
+        )
 
 
 @dataclasses.dataclass()
@@ -139,7 +183,9 @@ class WrappedEvent(Generic[TEvent]):
         )
 
     def get_context(self, context_type: type[TContext]) -> TContext:
-        return context_type.model_validate(self.context.model_dump())
+        exclude = set() if "components" in context_type.model_fields else {"components"}
+        context = self.context.model_dump(exclude=exclude)
+        return context_type.model_validate({**context, **self.context._legacy_fields})
 
 
 @dataclasses.dataclass(frozen=True)

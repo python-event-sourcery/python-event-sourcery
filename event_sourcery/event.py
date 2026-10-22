@@ -1,7 +1,9 @@
 __all__ = [
     "Context",
+    "ContextComponent",
     "Entry",
     "Event",
+    "EventCorrelation",
     "EventRegistry",
     "Position",
     "RawEvent",
@@ -14,8 +16,10 @@ __all__ = [
 
 from event_sourcery._event_store.event.dto import (
     Context,
+    ContextComponent,
     Entry,
     Event,
+    EventCorrelation,
     Position,
     RawEvent,
     Recorded,
