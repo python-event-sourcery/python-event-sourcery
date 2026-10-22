@@ -100,6 +100,7 @@ nav = [
     { "Privacy Data Encryption And Shredding" = "adr/20250729-privacy-data-encryption-and-shredding.md" },
     { "Packaging Of The Event Store Package" = "adr/20251004-packaging-of-the-event_store-package.md" },
     { "Aggregate Metadata" = "adr/20260314-aggregate-metadata.md" },
+    { "Typed Event Context Components And Enrichers" = "adr/20260926-typed-event-context-components-and-enrichers.md" },
   ] },
 ]
 
