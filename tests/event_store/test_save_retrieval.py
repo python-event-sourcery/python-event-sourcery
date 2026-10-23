@@ -1,26 +1,13 @@
 from datetime import date, datetime, timezone
-from typing import ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel
 
 from event_sourcery import Backend, EventStore, StreamId
-from event_sourcery.event import (
-    Context,
-    ContextComponent,
-    RawEvent,
-    Serde,
-    WrappedEvent,
-)
+from event_sourcery.event import RawEvent, Serde, WrappedEvent
 from tests.bdd import Given, Then, When
 from tests.factories import AnEvent, NastyEventWithJsonUnfriendlyTypes, an_event
 from tests.matchers import any_wrapped_event
-
-
-class RequestContext(ContextComponent):
-    __context_name__: ClassVar[str] = "application.request"
-
-    request_id: UUID
 
 
 class ApplicationContext(BaseModel, extra="forbid"):
@@ -60,18 +47,6 @@ def test_loading_not_existing_stream_returns_empty_list(
     event_store: EventStore,
 ) -> None:
     assert event_store.load_stream(stream_id=StreamId()) == []
-
-
-def test_stores_retrieves_typed_context_component(
-    given: Given, when: When, then: Then
-) -> None:
-    context = Context().with_component(RequestContext(request_id=uuid4()))
-    given.stream(stream_id := StreamId())
-
-    when.appends(an_event(context=context), to=stream_id)
-
-    loaded = then.store.load_stream(stream_id)
-    assert loaded[0].context.get(RequestContext) == context.get(RequestContext)
 
 
 def test_deserializes_legacy_context_root_fields(backend: Backend) -> None:

@@ -53,6 +53,9 @@ nav = [
       ] },
       { "event" = [
         { "Context" = "reference/event_store/event/Context.md" },
+        { "ContextComponent" = "reference/event_store/event/ContextComponent.md" },
+        { "EventContextEnricher" = "reference/event_store/event/EventContextEnricher.md" },
+        { "EventCorrelation" = "reference/event_store/event/EventCorrelation.md" },
         { "Entry" = "reference/event_store/event/Entry.md" },
         { "Event" = "reference/event_store/event/Event.md" },
         { "Position" = "reference/event_store/event/Position.md" },

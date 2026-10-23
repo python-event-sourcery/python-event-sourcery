@@ -14,6 +14,7 @@ from event_sourcery._event_store.event.encryption import (
 from event_sourcery._event_store.event.registry import EventRegistry
 from event_sourcery._event_store.event.serde import Serde
 from event_sourcery._event_store.event_store import (
+    EventContextEnricher,
     EventStore,
     StorageStrategy,
 )
@@ -36,7 +37,7 @@ from event_sourcery._event_store.subscription.interfaces import (
     SubscriptionStrategy,
 )
 from event_sourcery._event_store.tenant_id import DEFAULT_TENANT, TenantId
-from event_sourcery.exceptions import NoProviderConfigured
+from event_sourcery.exceptions import ConflictingContextComponent, NoProviderConfigured
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
@@ -107,6 +108,10 @@ class _Container:
         return new
 
 
+class ContextEnrichers(tuple[EventContextEnricher, ...]):
+    pass
+
+
 class Backend(_Container):
     """
     Dependency Injection container for Event Sourcery components.
@@ -140,9 +145,11 @@ class Backend(_Container):
         self[StorageStrategy] = not_configured(
             "Use one of pyES backends: SQLAlchemy, Django or KurrentDB",
         )
+        self[ContextEnrichers] = ContextEnrichers()
         self[EventStore] = lambda c: EventStore(
             storage_strategy=c[StorageStrategy],
             serde=c[Serde],
+            context_enrichers=c[ContextEnrichers],
         )
         self[Outbox] = lambda c: Outbox(
             strategy=c[OutboxStorageStrategy],
@@ -204,6 +211,16 @@ class Backend(_Container):
         self[EncryptionKeyStorageStrategy] = lambda c: key_storage.scoped_for_tenant(
             c[TenantId],
         )
+        return self
+
+    def with_context_enrichers(self, *enrichers: EventContextEnricher) -> Self:
+        names = set[str]()
+        for enricher in enrichers:
+            name = enricher.component_type.__context_name__
+            if name in names:
+                raise ConflictingContextComponent(name)
+            names.add(name)
+        self[ContextEnrichers] = ContextEnrichers(enrichers)
         return self
 
 

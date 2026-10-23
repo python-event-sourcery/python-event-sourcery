@@ -3,6 +3,7 @@ __all__ = [
     "ContextComponent",
     "Entry",
     "Event",
+    "EventContextEnricher",
     "EventCorrelation",
     "EventRegistry",
     "Position",
@@ -28,3 +29,4 @@ from event_sourcery._event_store.event.dto import (
 )
 from event_sourcery._event_store.event.registry import EventRegistry
 from event_sourcery._event_store.event.serde import Serde
+from event_sourcery._event_store.event_store import EventContextEnricher

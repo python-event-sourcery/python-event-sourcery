@@ -10,6 +10,11 @@ class ConcurrentStreamWriteError(EventStoreException):
     pass
 
 
+@dataclass
+class ConflictingContextComponent(EventStoreException):
+    name: str
+
+
 class AnotherStreamWithThisNameButOtherIdExists(EventStoreException):
     pass
 
