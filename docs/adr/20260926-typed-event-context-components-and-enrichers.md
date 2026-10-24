@@ -89,10 +89,13 @@ install that integration.
 
 ### Context enrichers
 
-Introduce an explicit enricher contract:
+An enricher declares the component type it owns and produces that component for an
+event when applicable:
 
 ```python
 class EventContextEnricher(Protocol):
+    component_type: type[ContextComponent]
+
     def enrich(
         self,
         context: Context,
@@ -103,8 +106,9 @@ class EventContextEnricher(Protocol):
         ...
 ```
 
-Enrichers run in `EventStore._append()` after a `WrappedEvent` and its `Context`
-already exist, but before `Serde.serialize_many()`:
+Enrichers are configured through `Backend.with_context_enrichers()` and run in
+`EventStore._append()` after a `WrappedEvent` and its `Context` already exist, but
+before serialization:
 
 ```text
 existing Context
@@ -118,8 +122,8 @@ complete context. Enrichment happens once when a new event is written; it does n
 run during loading, replay, subscription processing, or outbox retries.
 
 A component already present on the incoming context is explicit and takes
-precedence over enricher output. If two enrichers attempt to add the same missing
-component during one append, the append fails rather than silently choosing one.
+precedence over enricher output. Two enrichers declaring the same component are
+rejected by `with_context_enrichers()` before events can be appended.
 
 ## Backward compatibility
 
@@ -133,45 +137,46 @@ They are exposed through the component API as a special built-in
 correlation = context.get(EventCorrelation)
 ```
 
-`EventCorrelation` is a typed view over the existing root fields. If an enricher
-returns `EventCorrelation`, its values are written to those fields rather than to a
-nested component key.
+`EventCorrelation` is a typed view over the existing root fields.
+`Context.with_component(EventCorrelation(...))` updates those root fields rather
+than adding a nested component key.
 
 ### Existing API and stored events
 
-The existing API remains valid:
+New `Context` values accept the root correlation fields and typed components. New
+integration data is added with `Context.with_component()` rather than arbitrary
+root fields:
 
 ```python
-Context(
-    correlation_id=...,
-    causation_id=...,
-    custom_field=...,
-)
+context = Context(correlation_id=...)
+context = context.with_component(RequestContext(user_id="123"))
 ```
 
-Existing stored events remain readable without data migration. Existing
-whole-context validation also remains available:
+Existing stored events remain readable without data migration. Historical root
+fields are retained when an event is deserialized, and existing whole-context
+validation remains available:
 
 ```python
 wrapped_event.get_context(ApplicationContext)
 ```
 
-Root-level extra fields pass through only for backward compatibility with legacy
-stored contexts. They are not a supported API for adding new context data. Unknown
-keys within `components` remain opaque raw payloads, allowing processes without an
-optional integration to read and round-trip their events.
+If `ApplicationContext` declares `components`, it receives their raw payloads;
+otherwise `components` are excluded for compatibility with models using
+`extra="forbid"`. Unknown keys within persisted `components` remain opaque raw
+payloads, allowing processes without an optional integration to read and
+round-trip their events.
 
 This gives two compatible views:
 
 ```text
-Legacy: validate the complete Context as an application model
+Legacy: validate the complete historical context as an application model
 Typed:  retrieve an independent component by its class
 ```
 
 ## OpenTelemetry application
 
-The optional OpenTelemetry package can define an `OpenTelemetryCarrier` and an
-enricher without adding an OpenTelemetry dependency to the core package:
+The optional `event_sourcery_otel` package defines an `OpenTelemetryCarrier` and
+an enricher without adding an OpenTelemetry dependency to the core package:
 
 ```text
 current OpenTelemetry Context
@@ -180,9 +185,10 @@ current OpenTelemetry Context
     -> persisted event Context
 ```
 
-The enricher only snapshots the active propagation context. Restoring the carrier,
-creating spans, and activating OpenTelemetry context at asynchronous boundaries are
-separate integration concerns and are not part of this ADR.
+The enricher only snapshots the active propagation context. Consumers can
+explicitly obtain or activate a persisted parent context through
+`get_parent_context()` and `use_parent_context()`. Creating spans and deciding
+their lifecycle remain application concerns.
 
 
 ## Consequences

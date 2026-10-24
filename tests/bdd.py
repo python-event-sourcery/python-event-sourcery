@@ -57,6 +57,9 @@ class Stream:
     def events(self) -> list[WrappedEvent]:
         return list(self.store.load_stream(self.id))
 
+    def recorded(self, event: WrappedEvent) -> WrappedEvent:
+        return next(loaded for loaded in self.events if loaded.uuid == event.uuid)
+
     def loads_only(self, events: Sequence[WrappedEvent]) -> None:
         expected = list(events)
         assert expected == self.events, pformat(

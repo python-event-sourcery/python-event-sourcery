@@ -19,6 +19,9 @@ dependencies = [
 sqlalchemy = ["SQLAlchemy>=2.0"]
 kurrentdb = ["kurrentdbclient>=1.0.6"]
 django = ["django>=4,<6"]
+otel = [
+    "opentelemetry-api>=1,<2",
+]
 
 [dependency-groups]
 dev = [
@@ -139,16 +142,17 @@ packages = [
     "event_sourcery",
     "event_sourcery_django",
     "event_sourcery_kurrentdb",
+    "event_sourcery_otel",
     "event_sourcery_sqlalchemy",
 ]
 
 [tool.poe.executor]
 type = "uv"
-extra = ["sqlalchemy", "kurrentdb", "django"]
+extra = ["sqlalchemy", "kurrentdb", "django", "otel"]
 
 [tool.poe.env]
-SRC_DIRS = "./event_sourcery_sqlalchemy ./event_sourcery ./event_sourcery_django ./event_sourcery_kurrentdb"
-COV_ARGS = "--cov ./event_sourcery_sqlalchemy --cov ./event_sourcery --cov ./event_sourcery_django --cov ./event_sourcery_kurrentdb"
+SRC_DIRS = "./event_sourcery_sqlalchemy ./event_sourcery ./event_sourcery_django ./event_sourcery_kurrentdb ./event_sourcery_otel"
+COV_ARGS = "--cov ./event_sourcery_sqlalchemy --cov ./event_sourcery --cov ./event_sourcery_django --cov ./event_sourcery_kurrentdb --cov ./event_sourcery_otel"
 
 [tool.poe.tasks.docs-test]
 cmd = "pytest docs/code/"

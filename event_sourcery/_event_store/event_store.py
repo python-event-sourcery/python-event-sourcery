@@ -23,6 +23,8 @@ from event_sourcery._event_store.versioning import (
 
 
 class EventContextEnricher(Protocol):
+    component_type: type[ContextComponent]
+
     def enrich(
         self,
         context: Context,

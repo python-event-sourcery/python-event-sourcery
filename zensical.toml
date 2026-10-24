@@ -10,6 +10,8 @@ nav = [
     { "Defining events" = "recipes/defining_events.md" },
     { "Integrate with your app" = "recipes/integrate.md" },
     { "Save and read events" = "recipes/saving_events.md" },
+    { "OpenTelemetry context propagation" = "recipes/opentelemetry.md" },
+    { "Enrich event context" = "recipes/context_enrichment.md" },
     { "React to events - subscriptions" = "recipes/subscriptions.md" },
     { "Publish events - outbox" = "recipes/outbox.md" },
     { "Event Sourcing" = "recipes/event_sourcing.md" },
@@ -23,6 +25,12 @@ nav = [
       { "Django" = "reference/backends/django.md" },
       { "KurrentDB" = "reference/backends/kurrentdb.md" },
       { "SQLAlchemy" = "reference/backends/sqlalchemy.md" },
+    ] },
+    { "OpenTelemetry" = [
+      { "OpenTelemetryCarrier" = "reference/otel/OpenTelemetryCarrier.md" },
+      { "OpenTelemetryContextEnricher" = "reference/otel/OpenTelemetryContextEnricher.md" },
+      { "get_parent_context" = "reference/otel/get_parent_context.md" },
+      { "use_parent_context" = "reference/otel/use_parent_context.md" },
     ] },
     { "Event Sourcing" = [
       { "Aggregate" = "reference/event_sourcing/Aggregate.md" },
