@@ -35,6 +35,10 @@ Run single tools via `uv run --all-extras <tool>`, e.g. `uv run --all-extras pyt
 - New backend functionality goes through the shared test suite in `tests/`; use `not_implemented` / `skip_backend` markers for unsupported features.
 - Version bumps: `uv version --bump alpha` (CI autopublishes prereleases on push to main).
 
+## Tests
+
+See [`tests/AGENTS.md`](tests/AGENTS.md) for required TDD workflow and test style.
+
 ## Docs
 
 Changing public API or behavior **requires** updating `docs/` and running docs tests —
