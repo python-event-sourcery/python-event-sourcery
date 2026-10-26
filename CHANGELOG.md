@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1
+### Fixes
+- Include the `py.typed` marker in the `event_sourcery_otel` package.
+
 ## 0.6.0
 ### Added
 - Typed, independently owned event context components with lazy access through `Context.get()`.
