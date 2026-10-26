@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0
+### Added
+- Typed, independently owned event context components with lazy access through `Context.get()`.
+- Context enrichers configured through `Backend.with_context_enrichers()`.
+- Optional `event_sourcery_otel` package for OpenTelemetry context propagation and parent-context activation.
+
+### Changed
+- **Breaking:** New `Context` values reject arbitrary root fields; add new context data with typed components.
+
 ## 0.5.2
 ### Changed
 - **Breaking:** `Repository.aggregate()` yields `WrappedAggregate` instead of `Aggregate` directly

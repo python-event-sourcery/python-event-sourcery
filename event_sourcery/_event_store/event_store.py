@@ -1,10 +1,13 @@
+import dataclasses
 from collections.abc import Sequence
 from functools import singledispatchmethod
-from typing import cast
+from typing import Protocol, cast
 
 from typing_extensions import Self
 
 from event_sourcery._event_store.event.dto import (
+    Context,
+    ContextComponent,
     Event,
     Position,
     RawEvent,
@@ -17,6 +20,18 @@ from event_sourcery._event_store.versioning import (
     ExplicitVersioning,
     Versioning,
 )
+
+
+class EventContextEnricher(Protocol):
+    component_type: type[ContextComponent]
+
+    def enrich(
+        self,
+        context: Context,
+        *,
+        event: WrappedEvent,
+        stream_id: StreamId,
+    ) -> ContextComponent | None: ...
 
 
 class StorageStrategy:
@@ -104,9 +119,15 @@ class StorageStrategy:
 class EventStore:
     """API for working with events."""
 
-    def __init__(self, storage_strategy: StorageStrategy, serde: Serde) -> None:
+    def __init__(
+        self,
+        storage_strategy: StorageStrategy,
+        serde: Serde,
+        context_enrichers: tuple[EventContextEnricher, ...] = (),
+    ) -> None:
         self._storage_strategy = storage_strategy
         self._serde = serde
+        self._context_enrichers = context_enrichers
 
     def load_stream(
         self,
@@ -133,7 +154,7 @@ class EventStore:
             A sequence of events or empty list if the stream doesn't exist.
         """
         events = self._storage_strategy.fetch_events(stream_id, start=start, stop=stop)
-        return self._serde.deserialize_many(events)
+        return [self._serde.deserialize(event) for event in events]
 
     @singledispatchmethod
     def append(
@@ -216,11 +237,30 @@ class EventStore:
         else:
             versioning = NO_VERSIONING
 
+        serialized_events = [
+            self._serde.serialize(self._enrich(event, stream_id), stream_id)
+            for event in events
+        ]
         self._storage_strategy.insert_events(
             stream_id=stream_id,
             versioning=versioning,
-            events=self._serde.serialize_many(events, stream_id),
+            events=serialized_events,
         )
+
+    def _enrich(self, event: WrappedEvent, stream_id: StreamId) -> WrappedEvent:
+        context = event.context
+        for enricher in self._context_enrichers:
+            component = enricher.enrich(
+                context,
+                event=event,
+                stream_id=stream_id,
+            )
+            if (
+                component is not None
+                and component.__context_name__ not in context.components
+            ):
+                context = context.with_component(component)
+        return dataclasses.replace(event, context=context)
 
     def delete_stream(self, stream_id: StreamId) -> None:
         """Deletes a stream with a given ID.

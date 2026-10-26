@@ -1,10 +1,17 @@
 import dataclasses
+from collections.abc import Sequence
 from typing import Any, TypeVar
 from unittest.mock import ANY
 from uuid import UUID
 
 from event_sourcery import StreamId, TenantId
-from event_sourcery.event import Event, Recorded, WrappedEvent
+from event_sourcery.event import (
+    Context,
+    ContextComponent,
+    Event,
+    Recorded,
+    WrappedEvent,
+)
 
 TEvent = TypeVar("TEvent", bound=Event)
 
@@ -14,13 +21,31 @@ class AnyUUID:
         return isinstance(other, UUID)
 
 
-def any_wrapped_event(for_event: TEvent) -> WrappedEvent[TEvent]:
+@dataclasses.dataclass(frozen=True)
+class AnyContext:
+    components: Sequence[ContextComponent]
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, Context) and all(
+            other.get(type(component)) == component for component in self.components
+        )
+
+
+def any_context(*, having_components: Sequence[ContextComponent]) -> AnyContext:
+    return AnyContext(components=having_components)
+
+
+def any_wrapped_event(
+    for_event: TEvent,
+    *,
+    context: Context | Any = ANY,
+) -> WrappedEvent[TEvent]:
     return WrappedEvent[TEvent](
         event=for_event,
         version=ANY,
         uuid=ANY,
         created_at=ANY,
-        context=ANY,
+        context=context,
     )
 
 

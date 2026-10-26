@@ -10,6 +10,8 @@ nav = [
     { "Defining events" = "recipes/defining_events.md" },
     { "Integrate with your app" = "recipes/integrate.md" },
     { "Save and read events" = "recipes/saving_events.md" },
+    { "OpenTelemetry context propagation" = "recipes/opentelemetry.md" },
+    { "Enrich event context" = "recipes/context_enrichment.md" },
     { "React to events - subscriptions" = "recipes/subscriptions.md" },
     { "Publish events - outbox" = "recipes/outbox.md" },
     { "Event Sourcing" = "recipes/event_sourcing.md" },
@@ -23,6 +25,12 @@ nav = [
       { "Django" = "reference/backends/django.md" },
       { "KurrentDB" = "reference/backends/kurrentdb.md" },
       { "SQLAlchemy" = "reference/backends/sqlalchemy.md" },
+    ] },
+    { "OpenTelemetry" = [
+      { "OpenTelemetryCarrier" = "reference/otel/OpenTelemetryCarrier.md" },
+      { "OpenTelemetryContextEnricher" = "reference/otel/OpenTelemetryContextEnricher.md" },
+      { "get_parent_context" = "reference/otel/get_parent_context.md" },
+      { "use_parent_context" = "reference/otel/use_parent_context.md" },
     ] },
     { "Event Sourcing" = [
       { "Aggregate" = "reference/event_sourcing/Aggregate.md" },
@@ -53,6 +61,9 @@ nav = [
       ] },
       { "event" = [
         { "Context" = "reference/event_store/event/Context.md" },
+        { "ContextComponent" = "reference/event_store/event/ContextComponent.md" },
+        { "EventContextEnricher" = "reference/event_store/event/EventContextEnricher.md" },
+        { "EventCorrelation" = "reference/event_store/event/EventCorrelation.md" },
         { "Entry" = "reference/event_store/event/Entry.md" },
         { "Event" = "reference/event_store/event/Event.md" },
         { "Position" = "reference/event_store/event/Position.md" },
@@ -100,6 +111,7 @@ nav = [
     { "Privacy Data Encryption And Shredding" = "adr/20250729-privacy-data-encryption-and-shredding.md" },
     { "Packaging Of The Event Store Package" = "adr/20251004-packaging-of-the-event_store-package.md" },
     { "Aggregate Metadata" = "adr/20260314-aggregate-metadata.md" },
+    { "Typed Event Context Components And Enrichers" = "adr/20260926-typed-event-context-components-and-enrichers.md" },
   ] },
 ]
 

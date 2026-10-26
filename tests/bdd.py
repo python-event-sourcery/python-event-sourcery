@@ -21,6 +21,7 @@ from event_sourcery import (
     TenantId,
     TransactionalBackend,
 )
+from event_sourcery._event_store.event_store import EventContextEnricher
 from event_sourcery.encryption import Encryption as EncryptionService
 from event_sourcery.event import Entry, Event, Position, Recorded, WrappedEvent
 from event_sourcery.subscription import BuildPhase, PositionPhase
@@ -56,9 +57,12 @@ class Stream:
     def events(self) -> list[WrappedEvent]:
         return list(self.store.load_stream(self.id))
 
+    def recorded(self, event: WrappedEvent) -> WrappedEvent:
+        return next(loaded for loaded in self.events if loaded.uuid == event.uuid)
+
     def loads_only(self, events: Sequence[WrappedEvent]) -> None:
         expected = list(events)
-        assert self.events == expected, pformat(
+        assert expected == self.events, pformat(
             DeepDiff(self.events, expected, exclude_types=[type(ANY)])
         )
 
@@ -189,6 +193,10 @@ class Step:
     @property
     def store(self) -> EventStore:
         return self.backend.event_store
+
+    def context_enrichers(self, *enrichers: EventContextEnricher) -> Self:
+        self.backend.with_context_enrichers(*enrichers)
+        return self
 
     @property
     def subscriber(self) -> PositionPhase:

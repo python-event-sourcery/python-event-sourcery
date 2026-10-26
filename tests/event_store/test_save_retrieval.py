@@ -1,11 +1,19 @@
 from datetime import date, datetime, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
-from event_sourcery import EventStore, StreamId
-from event_sourcery.event import Context, WrappedEvent
+from pydantic import BaseModel
+
+from event_sourcery import Backend, EventStore, StreamId
+from event_sourcery.event import RawEvent, Serde, WrappedEvent
 from tests.bdd import Given, Then, When
-from tests.factories import NastyEventWithJsonUnfriendlyTypes, an_event
+from tests.factories import AnEvent, NastyEventWithJsonUnfriendlyTypes, an_event
 from tests.matchers import any_wrapped_event
+
+
+class ApplicationContext(BaseModel, extra="forbid"):
+    correlation_id: UUID | None = None
+    causation_id: UUID | None = None
+    legacy_field: str
 
 
 def test_save_retrieve(given: Given, when: When, then: Then) -> None:
@@ -41,17 +49,23 @@ def test_loading_not_existing_stream_returns_empty_list(
     assert event_store.load_stream(stream_id=StreamId()) == []
 
 
-def test_stores_retrieves_extra_contextual_metadata(
-    given: Given, when: When, then: Then
-) -> None:
-    extra_metadata = {"correlation_id": uuid4().hex, "ip": "127.0.0.1"}
-    context = Context(extra_metadata=extra_metadata)  # type: ignore[call-arg]
-    given.stream(stream_id := StreamId())
-    when.appends(
-        event := an_event(context=context),
-        to=stream_id,
+def test_deserializes_legacy_context_root_fields(backend: Backend) -> None:
+    serde = backend[Serde]
+    raw_event = RawEvent(
+        uuid=uuid4(),
+        stream_id=StreamId(),
+        created_at=datetime.now(timezone.utc),
+        version=1,
+        name=serde.registry.name_for_type(AnEvent),
+        data={},
+        context={"legacy_field": "legacy"},
     )
-    then.stream(stream_id).loads_only([event])
+
+    loaded = serde.deserialize(raw_event)
+
+    assert loaded.get_context(ApplicationContext) == ApplicationContext(
+        legacy_field="legacy"
+    )
 
 
 def test_is_able_to_handle_non_trivial_formats(

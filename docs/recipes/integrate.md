@@ -61,6 +61,7 @@ docs/code/test_recipes.py:integrate_sql_02
 
 You can now use [EventStore] to load events from a stream or append new events.
 
+
 [Backend]: ../reference/event_store/backend/Backend.md
 [EventStore]: ../reference/event_store/EventStore.md
 [SQLAlchemy]: ../reference/backends/sqlalchemy.md
