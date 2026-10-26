@@ -1,6 +1,6 @@
 [project]
 name = "python-event-sourcery"
-version = "0.6.2a0"
+version = "0.6.2a1"
 requires-python = ">=3.10"
 description = "A library for event-based systems in Python."
 readme = "README.md"
