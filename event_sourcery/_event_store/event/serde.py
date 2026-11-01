@@ -1,5 +1,5 @@
 import dataclasses
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Any, cast
 
 from event_sourcery._event_store.event.dto import (
@@ -57,11 +57,6 @@ class Serde:
             name=self.registry.name_for_type(type(event.event)),
             data=self.encryption.encrypt(event.event, stream_id),
         )
-
-    def serialize_many(
-        self, events: Sequence[WrappedEvent], stream_id: StreamId
-    ) -> list[RawEvent]:
-        return [self.serialize(event, stream_id) for event in events]
 
 
 def _deserialize_context(context: Mapping[str, Any]) -> Context:

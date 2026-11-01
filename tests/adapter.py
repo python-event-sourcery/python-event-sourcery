@@ -15,7 +15,9 @@ from typing import Generic, TypeVar, cast
 from typing_extensions import Self
 
 from event_sourcery import Outbox, StreamCategory, StreamId, StreamUUID, TenantId
+from event_sourcery._event_store._async.serde import AsyncSerde
 from event_sourcery._event_store.backend import _Provider
+from event_sourcery._event_store.event_store import EventContextEnricher
 from event_sourcery._event_store.subscription.in_transaction import Listeners
 from event_sourcery._event_store.subscription.interfaces import Seconds
 from event_sourcery.async_ import AsyncBackend, AsyncEventStore, AsyncOutbox
@@ -24,7 +26,15 @@ from event_sourcery.async_.interfaces import AsyncEncryptionKeyStorageStrategy
 from event_sourcery.async_.outbox import no_filter
 from event_sourcery.async_.subscription import AsyncSubscriptionBuilder
 from event_sourcery.encryption import Encryption as EncryptionService
-from event_sourcery.event import Context, Event, Position, Recorded, WrappedEvent
+from event_sourcery.event import (
+    Context,
+    Event,
+    Position,
+    RawEvent,
+    Recorded,
+    Serde,
+    WrappedEvent,
+)
 from event_sourcery.event_sourcing import Aggregate, AsyncRepository
 from event_sourcery.event_sourcing.aggregate import WrappedAggregate
 from event_sourcery.interfaces import (
@@ -186,6 +196,18 @@ class RepositoryFacade(Generic[TAggregate]):
             self._runner.run(cm.__aexit__(None, None, None))
 
 
+class SerdeFacade:
+    """Sync view of `AsyncSerde`, draining its coroutines on the facade's runner."""
+
+    def __init__(self, serde: AsyncSerde, runner: Runner) -> None:
+        self._serde = serde
+        self._runner = runner
+        self.registry = serde.registry
+
+    def deserialize(self, event: RawEvent) -> WrappedEvent:
+        return self._runner.run(self._serde.deserialize(event))
+
+
 class EncryptionFacade:
     """
     Sync view of `AsyncEncryption/`AsyncEncryptionKeyStorageStrategy`, for
@@ -259,11 +281,23 @@ class BackendFacade:
         builder = cast(AsyncSubscriptionBuilder, self._async.subscriber)
         return SubscriptionBuilderFacade(builder, self._runner)
 
+    def with_context_enrichers(self, *enrichers: EventContextEnricher) -> Self:
+        self._async.with_context_enrichers(*enrichers)
+        return self
+
     def __getitem__(self, _type: type[T]) -> T:
         if _type is Outbox:
             return cast(T, self.outbox)
         if _type is PositionPhase:
             return cast(T, self.subscriber)
+        if _type is Serde:
+            return cast(
+                T,
+                SerdeFacade(
+                    AsyncBackend._serde_for(self._async),
+                    self._runner,
+                ),
+            )
         if _type is EncryptionService:
             return cast(
                 T,

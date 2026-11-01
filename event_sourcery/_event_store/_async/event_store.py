@@ -11,6 +11,10 @@ from event_sourcery._event_store.event.dto import (
     RawEvent,
     WrappedEvent,
 )
+from event_sourcery._event_store.event_store import (
+    EventContextEnricher,
+    enrich_event,
+)
 from event_sourcery._event_store.stream_id import StreamId
 from event_sourcery._event_store.versioning import (
     NO_VERSIONING,
@@ -112,10 +116,14 @@ class AsyncEventStore:
     """
 
     def __init__(
-        self, storage_strategy: AsyncStorageStrategy, serde: AsyncSerde
+        self,
+        storage_strategy: AsyncStorageStrategy,
+        serde: AsyncSerde,
+        context_enrichers: tuple[EventContextEnricher, ...] = (),
     ) -> None:
         self._storage_strategy = storage_strategy
         self._serde = serde
+        self._context_enrichers = context_enrichers
 
     async def load_stream(
         self,
@@ -136,7 +144,7 @@ class AsyncEventStore:
         events = await self._storage_strategy.fetch_events(
             stream_id, start=start, stop=stop
         )
-        return await self._serde.deserialize_many(events)
+        return [await self._serde.deserialize(event) for event in events]
 
     @singledispatchmethod
     async def append(
@@ -216,7 +224,13 @@ class AsyncEventStore:
         await self._storage_strategy.insert_events(
             stream_id=stream_id,
             versioning=versioning,
-            events=await self._serde.serialize_many(events, stream_id),
+            events=[
+                await self._serde.serialize(
+                    enrich_event(event, stream_id, self._context_enrichers),
+                    stream_id,
+                )
+                for event in events
+            ],
         )
 
     async def delete_stream(self, stream_id: StreamId) -> None:

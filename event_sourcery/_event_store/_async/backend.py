@@ -24,6 +24,7 @@ from event_sourcery._event_store._async.subscription import (
     AsyncSubscriptionStrategy,
 )
 from event_sourcery._event_store.backend import (
+    ContextEnrichers,
     _BackendContainer,
     _Container,
     not_configured,
@@ -66,6 +67,7 @@ class AsyncBackend(_BackendContainer):
         self[AsyncEventStore] = lambda c: AsyncEventStore(
             storage_strategy=c[AsyncStorageStrategy],
             serde=self._serde_for(c),
+            context_enrichers=c[ContextEnrichers],
         )
         self[AsyncOutbox] = lambda c: AsyncOutbox(
             strategy=c[AsyncOutboxStorageStrategy],

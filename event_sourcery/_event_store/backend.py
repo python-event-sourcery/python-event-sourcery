@@ -120,12 +120,23 @@ class _BackendContainer(_Container):
         self[TenantId] = DEFAULT_TENANT
         self[EventRegistry] = EventRegistry()
         self[EncryptionStrategy] = NoEncryptionStrategy()
+        self[ContextEnrichers] = ContextEnrichers()
 
     def in_tenant_mode(self, tenant_id: TenantId) -> Self:
         """Returns a copy of the backend configured for the specified tenant."""
         in_tenant_mode = self.copy()
         in_tenant_mode[TenantId] = tenant_id
         return in_tenant_mode
+
+    def with_context_enrichers(self, *enrichers: EventContextEnricher) -> Self:
+        names = set[str]()
+        for enricher in enrichers:
+            name = enricher.component_type.__context_name__
+            if name in names:
+                raise ConflictingContextComponent(name)
+            names.add(name)
+        self[ContextEnrichers] = ContextEnrichers(enrichers)
+        return self
 
 
 class Backend(_BackendContainer):
@@ -158,7 +169,6 @@ class Backend(_BackendContainer):
         self[StorageStrategy] = not_configured(
             "Use one of pyES backends: SQLAlchemy, Django or KurrentDB",
         )
-        self[ContextEnrichers] = ContextEnrichers()
         self[EventStore] = lambda c: EventStore(
             storage_strategy=c[StorageStrategy],
             serde=c[Serde],
@@ -216,16 +226,6 @@ class Backend(_BackendContainer):
         self[EncryptionKeyStorageStrategy] = lambda c: key_storage.scoped_for_tenant(
             c[TenantId],
         )
-        return self
-
-    def with_context_enrichers(self, *enrichers: EventContextEnricher) -> Self:
-        names = set[str]()
-        for enricher in enrichers:
-            name = enricher.component_type.__context_name__
-            if name in names:
-                raise ConflictingContextComponent(name)
-            names.add(name)
-        self[ContextEnrichers] = ContextEnrichers(enrichers)
         return self
 
 

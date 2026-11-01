@@ -11,6 +11,7 @@ from typing_extensions import Self
 
 from event_sourcery import Backend, Outbox, StreamId, TenantId
 from event_sourcery._event_store.backend import _Provider
+from event_sourcery._event_store.event_store import EventContextEnricher
 from event_sourcery._event_store.subscription.in_transaction import Listeners
 from event_sourcery.event import Event, Position, WrappedEvent
 from event_sourcery.interfaces import (
@@ -62,6 +63,8 @@ class SyncBackend(Protocol):
     def in_tenant_mode(self, tenant_id: TenantId) -> Self: ...
 
     def with_outbox(self, filterer: OutboxFiltererStrategy = ...) -> Self: ...
+
+    def with_context_enrichers(self, *enrichers: EventContextEnricher) -> Self: ...
 
     def with_encryption(
         self, strategy: EncryptionStrategy, key_storage: EncryptionKeyStorageStrategy

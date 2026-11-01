@@ -1,5 +1,3 @@
-from collections.abc import Sequence
-
 from event_sourcery._event_store._async.encryption import AsyncEncryption
 from event_sourcery._event_store.event.dto import (
     RawEvent,
@@ -46,12 +44,6 @@ class AsyncSerde:
             event=event_type(**processed_data),
         )
 
-    async def deserialize_many(self, events: Sequence[RawEvent]) -> list[WrappedEvent]:
-        result: list[WrappedEvent] = []
-        for event in events:
-            result.append(await self.deserialize(event))
-        return result
-
     async def deserialize_record(self, record: RecordedRaw) -> Recorded:
         return Recorded(
             wrapped_event=await self.deserialize(record.entry),
@@ -76,11 +68,3 @@ class AsyncSerde:
             name=name,
             data=encrypted_data,
         )
-
-    async def serialize_many(
-        self, events: Sequence[WrappedEvent], stream_id: StreamId
-    ) -> list[RawEvent]:
-        result: list[RawEvent] = []
-        for event in events:
-            result.append(await self.serialize(event, stream_id))
-        return result
