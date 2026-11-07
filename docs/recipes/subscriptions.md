@@ -6,19 +6,35 @@ Having [Backend] object after [integrating with your application](integrate.md),
 
 Let's say we want to know about all paid invoices and we have an event for that - `InvoicePaid`.
 
-```python
---8<--
-docs/code/test_recipes.py:subscriptions_01
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:subscriptions_01
+    --8<--
+    ```
 
-`subscription` is an iterable. Thus, it can be used with for loop:
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:subscriptions_01_async
+    --8<--
+    ```
 
-```python
---8<--
-docs/code/test_recipes.py:subscriptions_02
---8<--
-```
+`subscription` is an iterable. Thus, it can be used with for loop (or `async for` in the async variant):
+
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:subscriptions_02
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:subscriptions_02_async
+    --8<--
+    ```
 
 With every iteration we're getting an instance of [Recorded] or `None` if there are no new events available.
 
@@ -33,19 +49,35 @@ When we have to process a bigger amount of events it makes sense to do it in bat
 
 To do it, we need to slightly alter code responsible for building our `subscription`. Instead of `build_iter` we call `build_batch`:
 
-```python
---8<--
-docs/code/test_recipes.py:subscriptions_03
---8<--
-```
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:subscriptions_03
+    --8<--
+    ```
 
-Then we can pass `subscritpion` to for loop:
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:subscriptions_03_async
+    --8<--
+    ```
 
-```python
---8<--
-docs/code/test_recipes.py:subscriptions_04
---8<--
-```
+Then we can pass `subscritpion` to for loop (`async for` in the async variant):
+
+=== "Synchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:subscriptions_04
+    --8<--
+    ```
+
+=== "Asynchronous"
+    ```python
+    --8<--
+    docs/code/test_recipes.py:subscriptions_04_async
+    --8<--
+    ```
 
 In this example, batch is a list of [Recorded].
 

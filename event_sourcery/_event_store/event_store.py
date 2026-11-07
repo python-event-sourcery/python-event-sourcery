@@ -116,6 +116,26 @@ class StorageStrategy:
         raise NotImplementedError()
 
 
+def enrich_event(
+    event: WrappedEvent,
+    stream_id: StreamId,
+    enrichers: tuple[EventContextEnricher, ...],
+) -> WrappedEvent:
+    """Adds components produced by enrichers to the event context.
+
+    Shared by `EventStore` and `AsyncEventStore`.
+    """
+    context = event.context
+    for enricher in enrichers:
+        component = enricher.enrich(context, event=event, stream_id=stream_id)
+        if (
+            component is not None
+            and component.__context_name__ not in context.components
+        ):
+            context = context.with_component(component)
+    return dataclasses.replace(event, context=context)
+
+
 class EventStore:
     """API for working with events."""
 
@@ -238,7 +258,9 @@ class EventStore:
             versioning = NO_VERSIONING
 
         serialized_events = [
-            self._serde.serialize(self._enrich(event, stream_id), stream_id)
+            self._serde.serialize(
+                enrich_event(event, stream_id, self._context_enrichers), stream_id
+            )
             for event in events
         ]
         self._storage_strategy.insert_events(
@@ -246,21 +268,6 @@ class EventStore:
             versioning=versioning,
             events=serialized_events,
         )
-
-    def _enrich(self, event: WrappedEvent, stream_id: StreamId) -> WrappedEvent:
-        context = event.context
-        for enricher in self._context_enrichers:
-            component = enricher.enrich(
-                context,
-                event=event,
-                stream_id=stream_id,
-            )
-            if (
-                component is not None
-                and component.__context_name__ not in context.components
-            ):
-                context = context.with_component(component)
-        return dataclasses.replace(event, context=context)
 
     def delete_stream(self, stream_id: StreamId) -> None:
         """Deletes a stream with a given ID.

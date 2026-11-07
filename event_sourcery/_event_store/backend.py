@@ -112,7 +112,34 @@ class ContextEnrichers(tuple[EventContextEnricher, ...]):
     pass
 
 
-class Backend(_Container):
+class _BackendContainer(_Container):
+    """Common tenant and event configuration shared by sync and async backends."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self[TenantId] = DEFAULT_TENANT
+        self[EventRegistry] = EventRegistry()
+        self[EncryptionStrategy] = NoEncryptionStrategy()
+        self[ContextEnrichers] = ContextEnrichers()
+
+    def in_tenant_mode(self, tenant_id: TenantId) -> Self:
+        """Returns a copy of the backend configured for the specified tenant."""
+        in_tenant_mode = self.copy()
+        in_tenant_mode[TenantId] = tenant_id
+        return in_tenant_mode
+
+    def with_context_enrichers(self, *enrichers: EventContextEnricher) -> Self:
+        names = set[str]()
+        for enricher in enrichers:
+            name = enricher.component_type.__context_name__
+            if name in names:
+                raise ConflictingContextComponent(name)
+            names.add(name)
+        self[ContextEnrichers] = ContextEnrichers(enrichers)
+        return self
+
+
+class Backend(_BackendContainer):
     """
     Dependency Injection container for Event Sourcery components.
 
@@ -127,9 +154,6 @@ class Backend(_Container):
 
     def __init__(self) -> None:
         super().__init__()
-        self[TenantId] = DEFAULT_TENANT
-        self[EventRegistry] = EventRegistry()
-        self[EncryptionStrategy] = NoEncryptionStrategy()
         self[EncryptionKeyStorageStrategy] = (
             lambda c: NoKeyStorageStrategy().scoped_for_tenant(c[TenantId])
         )
@@ -145,7 +169,6 @@ class Backend(_Container):
         self[StorageStrategy] = not_configured(
             "Use one of pyES backends: SQLAlchemy, Django or KurrentDB",
         )
-        self[ContextEnrichers] = ContextEnrichers()
         self[EventStore] = lambda c: EventStore(
             storage_strategy=c[StorageStrategy],
             serde=c[Serde],
@@ -185,14 +208,6 @@ class Backend(_Container):
         """
         return self[PositionPhase]
 
-    def in_tenant_mode(self, tenant_id: TenantId) -> Self:
-        """
-        Returns a copy of the backend with the specified tenant ID set.
-        """
-        in_tenant_mode = self.copy()
-        in_tenant_mode[TenantId] = tenant_id
-        return in_tenant_mode
-
     def with_outbox(self, filterer: OutboxFiltererStrategy = no_filter) -> Self:
         """
         Configure the outbox with a custom filter.
@@ -211,16 +226,6 @@ class Backend(_Container):
         self[EncryptionKeyStorageStrategy] = lambda c: key_storage.scoped_for_tenant(
             c[TenantId],
         )
-        return self
-
-    def with_context_enrichers(self, *enrichers: EventContextEnricher) -> Self:
-        names = set[str]()
-        for enricher in enrichers:
-            name = enricher.component_type.__context_name__
-            if name in names:
-                raise ConflictingContextComponent(name)
-            names.add(name)
-        self[ContextEnrichers] = ContextEnrichers(enrichers)
         return self
 
 

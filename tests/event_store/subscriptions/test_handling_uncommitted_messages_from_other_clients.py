@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from django.db import transaction as django_transaction
 
-from event_sourcery import Backend, StreamId
+from event_sourcery import StreamId
 from event_sourcery_django import DjangoBackend
 from event_sourcery_sqlalchemy import SQLAlchemyBackend
 from tests import mark
@@ -15,11 +15,19 @@ from tests.backend.sqlalchemy import (
     sqlalchemy_sqlite_backend,
     sqlalchemy_sqlite_session,
 )
+from tests.backend.sqlalchemy_async import (
+    sqlalchemy_async_other_client,
+    sqlalchemy_async_postgres_backend,
+    sqlalchemy_async_postgres_session,
+    sqlalchemy_async_sqlite_backend,
+    sqlalchemy_async_sqlite_session,
+)
 from tests.bdd import Given, Then, When
 from tests.event_store.conftest import skip_if_not_selected_backend
 from tests.event_store.subscriptions.other_client import OtherClient
 from tests.factories import OtherEvent, an_event
 from tests.matchers import any_record
+from tests.protocols import SyncBackend
 
 
 @pytest.fixture(
@@ -32,14 +40,16 @@ from tests.matchers import any_record
         ),
         sqlalchemy_postgres_backend,
         sqlalchemy_sqlite_backend,
+        sqlalchemy_async_postgres_backend,
+        sqlalchemy_async_sqlite_backend,
     ],
 )
 def clients(
     request: pytest.FixtureRequest,
     tmp_path: Path,
-) -> Iterator[tuple[Backend, OtherClient]]:
+) -> Iterator[tuple[SyncBackend, OtherClient]]:
     backend_name: str = request.param.__name__
-    backend: Backend = request.getfixturevalue(backend_name)
+    backend: SyncBackend = request.getfixturevalue(backend_name)
     mark.skip_backend(request, backend_name)
     skip_if_not_selected_backend(backend_name, request)
 
@@ -60,15 +70,41 @@ def clients(
                     other = OtherClient(SQLAlchemyBackend().configure(s), s.begin)
                     yield backend, other
                     other.stop()
+        case "sqlalchemy_async_postgres_backend":
+            # schema is managed by the main backend fixture; dropping it here
+            # would deadlock on the main session's open transaction
+            with sqlalchemy_async_postgres_session(manage_tables=False) as (
+                session,
+                runner,
+            ):
+                with sqlalchemy_async_other_client(session, runner) as (
+                    other_backend,
+                    begin,
+                ):
+                    other = OtherClient(other_backend, begin)
+                    yield backend, other
+                    other.stop()
+        case "sqlalchemy_async_sqlite_backend":
+            with sqlalchemy_async_sqlite_session(tmp_path, manage_tables=False) as (
+                session,
+                runner,
+            ):
+                with sqlalchemy_async_other_client(session, runner) as (
+                    other_backend,
+                    begin,
+                ):
+                    other = OtherClient(other_backend, begin)
+                    yield backend, other
+                    other.stop()
 
 
 @pytest.fixture()
-def backend(clients: tuple[Backend, OtherClient]) -> Backend:
+def backend(clients: tuple[SyncBackend, OtherClient]) -> SyncBackend:
     return clients[0]
 
 
 @pytest.fixture()
-def other_client(clients: tuple[Backend, OtherClient]) -> Iterator[OtherClient]:
+def other_client(clients: tuple[SyncBackend, OtherClient]) -> Iterator[OtherClient]:
     other = clients[1]
     yield other
     other.stop()
@@ -173,9 +209,13 @@ class TestIgnoresEventsFromPendingTransactions:
 
 
 @pytest.mark.skip_backend(
-    backend=["in_memory_backend", "sqlalchemy_sqlite_backend"],
+    backend=[
+        "in_memory_backend",
+        "sqlalchemy_sqlite_backend",
+        "sqlalchemy_async_sqlite_backend",
+    ],
     reason="Required only for SQL-based backends with transactions. "
-    "For 'sqlalchemy_sqlite_backend' tests raise 'database table is locked'",
+    "For sqlite backends tests raise 'database table is locked'",
 )
 class TestMissesEventsThatWereNotCommittedWithinSpecifiedTimeout:
     def test_no_filtering(

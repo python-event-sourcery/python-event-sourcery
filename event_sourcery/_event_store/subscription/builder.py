@@ -12,6 +12,7 @@ from event_sourcery._event_store.event.dto import (
 )
 from event_sourcery._event_store.event.serde import Serde
 from event_sourcery._event_store.stream_id import StreamCategory
+from event_sourcery._event_store.subscription.helpers import to_timedelta
 from event_sourcery._event_store.subscription.interfaces import (
     BuildPhase,
     FilterPhase,
@@ -52,22 +53,8 @@ class SubscriptionBuilder(PositionPhase, FilterPhase, BuildPhase):
         )
         return self
 
-    @staticmethod
-    def _to_timedelta(timelimit: Seconds | timedelta) -> timedelta:
-        seconds = (
-            timelimit
-            if isinstance(timelimit, timedelta)
-            else timedelta(seconds=timelimit)
-        )
-        if seconds.total_seconds() < 0.1:
-            raise ValueError(
-                f"Timebox must be at least 100 milliseconds. Received: "
-                f"{seconds.total_seconds():.02f}",
-            )
-        return seconds
-
     def build_iter(self, timelimit: Seconds | timedelta) -> Iterator[Recorded | None]:
-        timelimit = self._to_timedelta(timelimit)
+        timelimit = to_timedelta(timelimit)
         return self._single_event_unpack(self._build(batch_size=1, timelimit=timelimit))
 
     def _single_event_unpack(
@@ -83,7 +70,7 @@ class SubscriptionBuilder(PositionPhase, FilterPhase, BuildPhase):
         size: int,
         timelimit: Seconds | timedelta,
     ) -> Iterator[list[Recorded]]:
-        seconds = self._to_timedelta(timelimit)
+        seconds = to_timedelta(timelimit)
         subscription = self._build(batch_size=size, timelimit=seconds)
         return (  # pragma: no cover  # apparently, bug in coverage.py
             [self._serde.deserialize_record(e) for e in batch] for batch in subscription

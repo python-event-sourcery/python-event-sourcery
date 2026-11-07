@@ -2,10 +2,11 @@ from uuid import uuid4
 
 import pytest
 
-from event_sourcery import EventStore, StreamId, StreamUUID
+from event_sourcery import StreamId, StreamUUID
 from event_sourcery.event import Context
 from event_sourcery.event_sourcing import Repository
 from event_sourcery.exceptions import ConcurrentStreamWriteError
+from tests.protocols import SyncEventStore
 
 from .light_switch import LightSwitch, TurnedOff, TurnedOn
 
@@ -56,7 +57,7 @@ def test_light_switch_changes_are_preserved_by_repository(
 
 def test_nothing_when_no_changes_on_aggregate(
     repo: Repository[LightSwitch],
-    event_store: EventStore,
+    event_store: SyncEventStore,
 ) -> None:
     uuid = StreamUUID()
     with repo.aggregate(uuid, LightSwitch()):
@@ -84,7 +85,7 @@ def test_repository_supports_optimistic_locking(
 
 def test_context_is_attached_to_events_saved_by_repository(
     repo: Repository[LightSwitch],
-    event_store: EventStore,
+    event_store: SyncEventStore,
 ) -> None:
     class RequestContext(Context):
         user_id: str

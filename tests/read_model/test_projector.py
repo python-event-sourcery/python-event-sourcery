@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from typing import cast
 from uuid import uuid4
 
 import pytest
@@ -11,6 +12,7 @@ from event_sourcery.read_model import CursorsDao, Projector
 from event_sourcery_sqlalchemy.cursors_dao import SqlAlchemyCursorsDao
 from event_sourcery_sqlalchemy.models.default import DefaultProjectorCursor
 from tests.backend.sqlalchemy import DeclarativeBase
+from tests.protocols import SyncEventStore
 
 
 class AccountCreated(Event):
@@ -63,10 +65,13 @@ def cursors_dao() -> Generator[CursorsDao, None, None]:
     engine.dispose()
 
 
-def test_projects_the_events(event_store: EventStore, cursors_dao: CursorsDao) -> None:
+def test_projects_the_events(
+    event_store: SyncEventStore, cursors_dao: CursorsDao
+) -> None:
     read_model = AllEventsReadModel()
     projector = Projector(
-        event_store=event_store,
+        # Projector consumes load_stream, but its public annotation is concrete.
+        event_store=cast(EventStore, event_store),
         name=test_projects_the_events.__name__,
         cursors_dao=cursors_dao,
         read_model=read_model,
@@ -96,11 +101,11 @@ def test_projects_the_events(event_store: EventStore, cursors_dao: CursorsDao) -
 
 
 def test_is_able_to_load_up_events_from_untracked_stream(
-    event_store: EventStore, cursors_dao: CursorsDao
+    event_store: SyncEventStore, cursors_dao: CursorsDao
 ) -> None:
     read_model = AllEventsReadModel()
     projector = Projector(
-        event_store=event_store,
+        event_store=cast(EventStore, event_store),
         name=test_is_able_to_load_up_events_from_untracked_stream.__name__,
         cursors_dao=cursors_dao,
         read_model=read_model,
@@ -129,11 +134,11 @@ def test_is_able_to_load_up_events_from_untracked_stream(
 
 
 def test_is_able_to_load_up_events_from_tracked_stream(
-    event_store: EventStore, cursors_dao: CursorsDao
+    event_store: SyncEventStore, cursors_dao: CursorsDao
 ) -> None:
     read_model = AllEventsReadModel()
     projector = Projector(
-        event_store=event_store,
+        event_store=cast(EventStore, event_store),
         name=test_is_able_to_load_up_events_from_untracked_stream.__name__,
         cursors_dao=cursors_dao,
         read_model=read_model,
@@ -163,11 +168,11 @@ def test_is_able_to_load_up_events_from_tracked_stream(
 
 
 def test_ignores_duplicated_events_from_the_middle(
-    event_store: EventStore, cursors_dao: CursorsDao
+    event_store: SyncEventStore, cursors_dao: CursorsDao
 ) -> None:
     read_model = AllEventsReadModel()
     projector = Projector(
-        event_store=event_store,
+        event_store=cast(EventStore, event_store),
         name=test_is_able_to_load_up_events_from_untracked_stream.__name__,
         cursors_dao=cursors_dao,
         read_model=read_model,
@@ -199,11 +204,11 @@ def test_ignores_duplicated_events_from_the_middle(
 
 
 def test_ignores_duplicated_events_from_the_beginning(
-    event_store: EventStore, cursors_dao: CursorsDao
+    event_store: SyncEventStore, cursors_dao: CursorsDao
 ) -> None:
     read_model = AllEventsReadModel()
     projector = Projector(
-        event_store=event_store,
+        event_store=cast(EventStore, event_store),
         name=test_is_able_to_load_up_events_from_untracked_stream.__name__,
         cursors_dao=cursors_dao,
         read_model=read_model,
@@ -232,11 +237,11 @@ def test_ignores_duplicated_events_from_the_beginning(
 
 
 def test_raises_exception_when_trying_to_project_unversioned_event(
-    event_store: EventStore, cursors_dao: CursorsDao
+    event_store: SyncEventStore, cursors_dao: CursorsDao
 ) -> None:
     read_model = AllEventsReadModel()
     projector = Projector(
-        event_store=event_store,
+        event_store=cast(EventStore, event_store),
         name=test_is_able_to_load_up_events_from_untracked_stream.__name__,
         cursors_dao=cursors_dao,
         read_model=read_model,

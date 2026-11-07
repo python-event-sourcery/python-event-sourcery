@@ -4,13 +4,14 @@ from uuid import uuid4
 import pytest
 from pydantic import BaseModel
 
-from event_sourcery import Backend, EventStore, StreamId
+from event_sourcery import StreamId
 from event_sourcery.event import (
     Event,
     EventRegistry,
     WrappedEvent,
 )
 from event_sourcery.exceptions import DuplicatedEvent
+from tests.protocols import SyncBackend
 
 
 @pytest.fixture()
@@ -41,7 +42,7 @@ def test_detects_duplicates_event_names_from_custom_registry(
 
 
 def test_can_work_with_custom_events_with_custom_registry(
-    backend: Backend,
+    backend: SyncBackend,
     registry: EventRegistry,
 ) -> None:
     @registry.add
@@ -49,7 +50,7 @@ def test_can_work_with_custom_events_with_custom_registry(
         __event_name__: ClassVar[str] = "SomeDummyEvent"
 
     backend[EventRegistry] = registry
-    event_store = backend[EventStore]
+    event_store = backend.event_store
 
     stream_id = StreamId(uuid4())
     event_store.append(

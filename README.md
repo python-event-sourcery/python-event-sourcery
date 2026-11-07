@@ -70,7 +70,7 @@ from event_sourcery import (
 
 # Set up your DB and application as you would normally do
 engine = create_engine(
-    "postgresql://event_sourcery:event_sourcery@localhost:5432/event_sourcery"
+    "postgresql+psycopg://event_sourcery:event_sourcery@localhost:5432/event_sourcery"
 )
 
 

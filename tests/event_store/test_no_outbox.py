@@ -1,10 +1,11 @@
-from event_sourcery import Backend, StreamId
+from event_sourcery import StreamId
 from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import an_event
+from tests.protocols import SyncBackend
 
 
 def test_nothing_when_using_outbox_on_eventstore_without_outbox(
-    backend: Backend,
+    backend: SyncBackend,
 ) -> None:
     backend.event_store.append(an_event(version=1), stream_id=StreamId())
     backend.outbox.run(publisher := PublisherMock())
