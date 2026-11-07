@@ -1,18 +1,37 @@
 # Changelog
 
-## Unreleased
+## 0.7.0
 ### Added
-- Feature parity wrap-up: `AsyncRepository`, `AsyncProjector` /
-  `AsyncCursorsDao` / async read-model callable, `AsyncEncryption` +
-  `AsyncInMemoryKeyStorage`, `AsyncEncryptionKeyStorageStrategy`,
-  `AsyncSerde` pipeline — completion of the async event sourcing surface
-- Async SQLAlchemy backend: `AsyncSQLAlchemyBackend` with async storage,
-  subscriptions and outbox strategies, available via a new `sqlalchemy-async`
-  extra (`SQLAlchemy[asyncio]`); async drivers (`asyncpg`, `aiosqlite`) are
-  installed by the user, same as in the sync variant
-- Async KurrentDB backend: `AsyncKurrentDBBackend` with async storage,
-  subscriptions and outbox strategies (outbox persistent subscription created
-  lazily before the first append or outbox run)
+- Async API mirroring the sync one: `AsyncEventStore`, `AsyncBackend`, `AsyncOutbox`,
+  `AsyncRepository`, `AsyncProjector`, `AsyncEncryption` and friends.
+- Async backends: in-memory, `AsyncSQLAlchemyBackend` (new `sqlalchemy-async` extra)
+  and `AsyncKurrentDBBackend`.
+
+### Changed
+- **Breaking:** `expected_version` is enforced on every append. The default `0` now
+  means "stream must not exist", so appending to an existing stream requires its
+  current version (or `NO_VERSIONING`); a non-zero version on a new stream is rejected.
+  Previously both cases were silently accepted.
+- **Breaking:** KurrentDB checks `expected_version` server-side, closing the race
+  between version check and append.
+- **Breaking (Django):** migration `0002` adds a unique constraint on
+  `(stream, version)`. Duplicates, possible under the previous lenient versioning,
+  make it stop with a list of affected streams; nothing is changed until they are
+  resolved. Find them with:
+  `SELECT stream_id, version FROM event_sourcery_django_event
+  GROUP BY stream_id, version HAVING COUNT(*) > 1;`
+  Resolve per stream as your domain requires: renumber the events (and the stream's
+  `version`) in insertion order, or delete the duplicates. Building the index blocks
+  writes to the events table for its duration.
+
+### Fixes
+- Tenant isolation: in-memory streams are scoped per tenant; SQLAlchemy
+  `delete_stream` and `save_snapshot` no longer touch other tenants.
+- Outbox preserves stream category (SQLAlchemy, Django).
+- KurrentDB outbox acknowledges events rejected by the filter instead of leaving
+  them to be redelivered.
+- In-memory backend no longer persists events whose deserialization fails;
+  in-transaction dispatcher deserializes only events with matching listeners.
 
 ## 0.6.1
 ### Fixes
