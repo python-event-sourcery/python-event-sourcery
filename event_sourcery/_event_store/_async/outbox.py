@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable
 from contextlib import AbstractAsyncContextManager
 
 from event_sourcery._event_store._async.serde import AsyncSerde
@@ -71,16 +71,20 @@ class AsyncOutbox:
                 Maximum number of entries to process in one run. Defaults to 100.
         """
         stream = self._strategy.outbox_entries(limit=limit)
-        async for entry in stream:
-            async with entry as raw_record:
-                event = await self._serde.deserialize(raw_record.entry)
-                record = Recorded(
-                    wrapped_event=event,
-                    stream_id=raw_record.entry.stream_id,
-                    position=raw_record.position,
-                    tenant_id=raw_record.tenant_id,
-                )
-                await publisher(record)
+        try:
+            async for entry in stream:
+                async with entry as raw_record:
+                    event = await self._serde.deserialize(raw_record.entry)
+                    record = Recorded(
+                        wrapped_event=event,
+                        stream_id=raw_record.entry.stream_id,
+                        position=raw_record.position,
+                        tenant_id=raw_record.tenant_id,
+                    )
+                    await publisher(record)
+        finally:
+            if isinstance(stream, AsyncGenerator):
+                await stream.aclose()
 
 
 class _NoEntries(AsyncIterator[AbstractAsyncContextManager[RecordedRaw]]):

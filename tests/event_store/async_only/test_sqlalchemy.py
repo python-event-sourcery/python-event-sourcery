@@ -9,6 +9,7 @@ from datetime import timedelta
 from uuid import uuid4
 
 import pytest
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from event_sourcery import StreamId, TenantId
@@ -147,6 +148,101 @@ def test_outbox_run_with_async_publisher() -> None:
 
             await backend.outbox.run(publisher)
             assert len(published) == 1
+
+        runner.run(scenario())
+
+
+def test_outbox_retries_event_whose_publishing_was_cancelled() -> None:
+    with sqlalchemy_async_postgres_session() as (session, runner):
+        backend = (
+            AsyncSQLAlchemyBackend()
+            .configure(session(), SQLAlchemyConfig(outbox_attempts=1))
+            .with_outbox()
+        )
+
+        async def scenario() -> None:
+            await backend.event_store.append(
+                an_event(version=1), stream_id=StreamId(uuid4())
+            )
+            await backend[AsyncSession].commit()
+            publishing = asyncio.Event()
+
+            async def hanging_publisher(record: Recorded) -> None:
+                publishing.set()
+                await asyncio.Event().wait()
+
+            run = asyncio.create_task(backend.outbox.run(hanging_publisher))
+            await publishing.wait()
+            run.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await run
+            await backend[AsyncSession].rollback()
+
+            published: list[Recorded] = []
+
+            async def publisher(record: Recorded) -> None:
+                published.append(record)
+
+            await backend.outbox.run(publisher)
+            assert len(published) == 1
+
+        runner.run(scenario())
+
+
+def test_session_is_usable_after_rollback_following_cancelled_subscription() -> None:
+    with sqlalchemy_async_postgres_session() as (session, runner):
+        backend = AsyncSQLAlchemyBackend().configure(
+            session(),
+            SQLAlchemyConfig(gap_retry_interval=timedelta(seconds=0.05)),
+        )
+
+        async def scenario() -> None:
+            store = backend.event_store
+            stream_id = StreamId(uuid4())
+            await store.append(an_event(version=1), stream_id=stream_id)
+            await backend[AsyncSession].commit()
+            received = asyncio.Event()
+
+            async def listen() -> None:
+                subscription = backend.subscriber.start_from(Position(0)).build_iter(
+                    timedelta(seconds=0.2)
+                )
+                async for record in subscription:
+                    if record is not None:
+                        received.set()
+
+            listener = asyncio.create_task(listen())
+            await asyncio.wait_for(received.wait(), timeout=10)
+            listener.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await listener
+            await backend[AsyncSession].rollback()
+
+            await store.append(
+                an_event(version=2), stream_id=stream_id, expected_version=1
+            )
+            await backend[AsyncSession].commit()
+            assert len(await store.load_stream(stream_id)) == 2
+
+        runner.run(scenario())
+
+
+def test_concurrent_appends_sharing_one_session_fail_loudly() -> None:
+    with sqlalchemy_async_postgres_session() as (session, runner):
+        backend = AsyncSQLAlchemyBackend().configure(session())
+
+        async def scenario() -> None:
+            results = await asyncio.gather(
+                backend.event_store.append(
+                    an_event(version=1), stream_id=StreamId(uuid4())
+                ),
+                backend.event_store.append(
+                    an_event(version=1), stream_id=StreamId(uuid4())
+                ),
+                return_exceptions=True,
+            )
+
+            assert any(isinstance(result, SQLAlchemyError) for result in results)
 
         runner.run(scenario())
 

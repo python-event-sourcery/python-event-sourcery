@@ -8,6 +8,8 @@ import asyncio
 from datetime import timedelta
 from uuid import uuid4
 
+import pytest
+
 from event_sourcery import StreamId
 from event_sourcery.async_.interfaces import (
     AsyncOutboxStorageStrategy,
@@ -116,6 +118,82 @@ def test_outbox_run_with_async_publisher() -> None:
 
             await backend.outbox.run(publisher)
             assert len(published) == 1
+
+        runner.run(scenario())
+
+
+def test_outbox_retries_event_whose_publishing_was_cancelled() -> None:
+    with async_kurrentdb_client() as (client, runner):
+        backend = (
+            AsyncKurrentDBBackend()
+            .configure(
+                client,
+                KurrentDBConfig(
+                    timeout=1,
+                    outbox_attempts=1,
+                    outbox_name=f"pyes-outbox-test-{uuid4().hex}",
+                ),
+            )
+            .with_outbox()
+        )
+
+        async def scenario() -> None:
+            await backend.event_store.append(
+                an_event(version=1), stream_id=StreamId(uuid4())
+            )
+            publishing = asyncio.Event()
+
+            async def hanging_publisher(record: Recorded) -> None:
+                publishing.set()
+                await asyncio.Event().wait()
+
+            run = asyncio.create_task(backend.outbox.run(hanging_publisher))
+            await publishing.wait()
+            run.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await run
+
+            published: list[Recorded] = []
+
+            async def publisher(record: Recorded) -> None:
+                published.append(record)
+
+            await backend.outbox.run(publisher)
+            assert len(published) == 1
+
+        runner.run(scenario())
+
+
+def test_cancelled_subscription_leaves_client_usable() -> None:
+    with async_kurrentdb_client() as (client, runner):
+        backend = AsyncKurrentDBBackend().configure(client)
+
+        async def scenario() -> None:
+            store = backend.event_store
+            stream_id = StreamId(uuid4(), category="asynccanceltest")
+            await store.append(an_event(version=1), stream_id=stream_id)
+            received = asyncio.Event()
+
+            async def listen() -> None:
+                subscription = (
+                    backend.subscriber.start_from(Position(0))
+                    .to_category(stream_id.category or "")
+                    .build_iter(timedelta(seconds=1))
+                )
+                async for record in subscription:
+                    if record is not None:
+                        received.set()
+
+            listener = asyncio.create_task(listen())
+            await asyncio.wait_for(received.wait(), timeout=10)
+            listener.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await listener
+
+            await store.append(
+                an_event(version=2), stream_id=stream_id, expected_version=1
+            )
+            assert len(await store.load_stream(stream_id)) == 2
 
         runner.run(scenario())
 

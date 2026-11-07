@@ -9,7 +9,7 @@ from datetime import timedelta
 import pytest
 
 from event_sourcery import DEFAULT_TENANT, Event, StreamId, TenantId
-from event_sourcery._event_store.in_memory import Storage
+from event_sourcery._event_store.in_memory import InMemoryConfig, Storage
 from event_sourcery.async_.backend import AsyncInMemoryBackend, AsyncInMemoryKeyStorage
 from event_sourcery.async_.interfaces import (
     AsyncOutboxStorageStrategy,
@@ -153,6 +153,37 @@ def test_outbox_run_with_async_publisher() -> None:
         stream_id = StreamId(name="orders-1")
 
         await store.append(an_event(version=1), stream_id=stream_id)
+
+        published: list[Recorded] = []
+
+        async def publisher(record: Recorded) -> None:
+            published.append(record)
+
+        await backend.outbox.run(publisher)
+        assert len(published) == 1
+
+    asyncio.run(scenario())
+
+
+def test_outbox_retries_event_whose_publishing_was_cancelled() -> None:
+    async def scenario() -> None:
+        backend = (
+            AsyncInMemoryBackend()
+            .configure(InMemoryConfig(outbox_attempts=1))
+            .with_outbox()
+        )
+        await backend.event_store.append(an_event(version=1), stream_id=StreamId())
+        publishing = asyncio.Event()
+
+        async def hanging_publisher(record: Recorded) -> None:
+            publishing.set()
+            await asyncio.Event().wait()
+
+        run = asyncio.create_task(backend.outbox.run(hanging_publisher))
+        await publishing.wait()
+        run.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await run
 
         published: list[Recorded] = []
 

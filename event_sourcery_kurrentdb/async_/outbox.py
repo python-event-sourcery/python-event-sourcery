@@ -76,9 +76,11 @@ class AsyncKurrentDBOutboxStorageStrategy(AsyncOutboxStorageStrategy):
             self._outbox_name,
             timeout=self._timeout,
         )
-        yield self._take(self._active_subscription, limit or 100)
-        await self._active_subscription.stop()
-        delattr(self, "_active_subscription")
+        try:
+            yield self._take(self._active_subscription, limit or 100)
+        finally:
+            await self._active_subscription.stop()
+            delattr(self, "_active_subscription")
 
     @staticmethod
     async def _take(
