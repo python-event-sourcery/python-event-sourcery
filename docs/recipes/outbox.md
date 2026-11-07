@@ -91,6 +91,10 @@ Optionally, you can specify a number of events to be processed in a single run:
     ```
 
 By default, `outbox.run` will try to process 100 events.
+It processes only events that are pending when it starts and returns right after,
+without waiting for new ones. To keep publishing, call it periodically - e.g. from
+a scheduled job, or in a loop with a pause between runs (`time.sleep(...)` /
+`await asyncio.sleep(...)`), so an empty outbox does not turn into a busy loop.
 
 ### Transactional outbox
 

@@ -3,6 +3,7 @@ from uuid import uuid4
 import pytest
 
 from event_sourcery import StreamId
+from tests.bdd import Given
 from tests.event_store.outbox.conftest import PublisherMock
 from tests.factories import an_event
 from tests.matchers import any_record
@@ -97,3 +98,29 @@ def test_tries_to_send_up_to_three_times(
         backend.outbox.run(publisher)
 
     assert len(publisher.mock_calls) == max_attempts
+
+
+def test_run_does_not_wait_when_all_events_were_already_published(
+    publisher: PublisherMock,
+    backend: SyncBackend,
+    given: Given,
+) -> None:
+    backend.event_store.append(an_event(version=1), stream_id=StreamId(uuid4()))
+    backend.outbox.run(publisher)
+
+    with given.execution_within(seconds=0.5):
+        backend.outbox.run(publisher)
+
+
+def test_run_does_not_wait_after_publishing_pending_events(
+    publisher: PublisherMock,
+    backend: SyncBackend,
+    given: Given,
+) -> None:
+    stream_id = StreamId(uuid4())
+    backend.event_store.append(event := an_event(version=1), stream_id=stream_id)
+
+    with given.execution_within(seconds=0.5):
+        backend.outbox.run(publisher)
+
+    publisher.assert_called_once_with(any_record(event, stream_id))
