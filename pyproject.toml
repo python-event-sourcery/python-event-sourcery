@@ -38,6 +38,7 @@ dev = [
     "deepdiff",
     "asyncpg",
     "aiosqlite",
+    "psycopg[binary]>=3",
 ]
 
 [tool.pytest.ini_options]

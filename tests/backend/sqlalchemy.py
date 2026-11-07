@@ -79,7 +79,9 @@ def sqlalchemy_sqlite_backend(tmp_path: Path) -> Iterator[SQLAlchemyBackend]:
 
 @contextmanager
 def sqlalchemy_postgres_session() -> Iterator[Session]:
-    with sqlalchemy_session_factory("postgresql://es:es@localhost:5432/es") as session:
+    with sqlalchemy_session_factory(
+        "postgresql+psycopg://es:es@localhost:5432/es"
+    ) as session:
         yield session()
 
 

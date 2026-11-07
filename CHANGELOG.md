@@ -33,6 +33,7 @@
   them to be redelivered.
 - In-memory backend no longer persists events whose deserialization fails;
   in-transaction dispatcher deserializes only events with matching listeners.
+- `event_sourcery_sqlalchemy` imports on SQLAlchemy 2.1.
 
 ## 0.6.1
 ### Fixes
