@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import Connection, create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import (
     DeclarativeBase as Declarative,
@@ -30,22 +30,52 @@ class DeclarativeBase(Declarative):
 
 configure_models(DeclarativeBase)
 
+_shared_schema_tables: dict[str, set[str]] = {}
+
+
+def reset_shared_schema(connection: Connection) -> None:
+    """
+    Prepares a schema shared by all tests of a run, instead of recreating it.
+
+    DDL dominates per-test setup on a database server, while deleting rows
+    from a handful of tables is ~50x cheaper. The schema is recreated once per
+    run, so leftovers of previous runs or outdated models do not leak in.
+    Tables registered later (e.g. custom models) are created on first use.
+    """
+    metadata = DeclarativeBase.metadata
+    url = connection.engine.url.render_as_string()
+    created = _shared_schema_tables.get(url)
+    if created is None:
+        metadata.drop_all(bind=connection)
+    if created is None or not created.issuperset(metadata.tables):
+        metadata.create_all(bind=connection)
+    for table in reversed(metadata.sorted_tables):
+        connection.execute(table.delete())
+    _shared_schema_tables[url] = set(metadata.tables)
+
 
 @contextmanager
 def sqlalchemy_session_factory(
-    url: str, connect_args: dict[str, Any] | None = None
+    url: str,
+    connect_args: dict[str, Any] | None = None,
+    shared_schema: bool = False,
 ) -> Iterator[sessionmaker]:
     if connect_args is None:
         connect_args = {}
     engine = create_engine(url, connect_args=connect_args, future=True)
     try:
-        DeclarativeBase.metadata.create_all(bind=engine)
+        if shared_schema:
+            with engine.begin() as connection:
+                reset_shared_schema(connection)
+        else:
+            DeclarativeBase.metadata.create_all(bind=engine)
     except OperationalError:
         pytest.skip(f"{engine.url.drivername} test database not available, skipping")
     else:
         yield sessionmaker(engine)
         close_all_sessions()
-        DeclarativeBase.metadata.drop_all(bind=engine)
+        if not shared_schema:
+            DeclarativeBase.metadata.drop_all(bind=engine)
         engine.dispose()
 
 
@@ -80,7 +110,8 @@ def sqlalchemy_sqlite_backend(tmp_path: Path) -> Iterator[SQLAlchemyBackend]:
 @contextmanager
 def sqlalchemy_postgres_session() -> Iterator[Session]:
     with sqlalchemy_session_factory(
-        "postgresql+psycopg://es:es@localhost:5432/es"
+        "postgresql+psycopg://es:es@localhost:5432/es",
+        shared_schema=True,
     ) as session:
         yield session()
 

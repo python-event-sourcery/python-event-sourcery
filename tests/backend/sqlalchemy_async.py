@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import (
 from event_sourcery_sqlalchemy import SQLAlchemyConfig
 from event_sourcery_sqlalchemy.async_ import AsyncSQLAlchemyBackend
 from tests.adapter import BackendFacade, Runner
-from tests.backend.sqlalchemy import DeclarativeBase
+from tests.backend.sqlalchemy import DeclarativeBase, reset_shared_schema
 from tests.protocols import SyncBackend
 
 
@@ -25,6 +25,7 @@ def sqlalchemy_async_session_factory(
     url: str,
     connect_args: dict[str, object] | None = None,
     manage_tables: bool = True,
+    shared_schema: bool = False,
 ) -> Iterator[tuple[Callable[[], AsyncSession], Runner]]:
     if connect_args is None:
         connect_args = {}
@@ -38,7 +39,9 @@ def sqlalchemy_async_session_factory(
         return session
 
     try:
-        if manage_tables:
+        if manage_tables and shared_schema:
+            _reset_shared_schema(engine, runner)
+        elif manage_tables:
             _create_tables(engine, runner)
     except OperationalError:
         pytest.skip(f"{engine.url.drivername} test database not available, skipping")
@@ -50,7 +53,7 @@ def sqlalchemy_async_session_factory(
         # which would block DROP TABLE on the database
         for session in sessions:
             runner.run(session.close())
-        if manage_tables:
+        if manage_tables and not shared_schema:
             _drop_tables(engine, runner)
         _dispose_engine(engine, runner)
     runner.close()
@@ -62,6 +65,14 @@ def _create_tables(engine: AsyncEngine, runner: Runner) -> None:
             await conn.run_sync(DeclarativeBase.metadata.create_all)
 
     runner.run(create())
+
+
+def _reset_shared_schema(engine: AsyncEngine, runner: Runner) -> None:
+    async def reset() -> None:
+        async with engine.begin() as conn:
+            await conn.run_sync(reset_shared_schema)
+
+    runner.run(reset())
 
 
 def _drop_tables(engine: AsyncEngine, runner: Runner) -> None:
@@ -119,6 +130,7 @@ def sqlalchemy_async_postgres_session(
     with sqlalchemy_async_session_factory(
         "postgresql+asyncpg://es:es@localhost:5432/es",
         manage_tables=manage_tables,
+        shared_schema=True,
     ) as session:
         yield session
 
