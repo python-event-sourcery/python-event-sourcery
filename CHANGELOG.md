@@ -26,7 +26,8 @@
 
 ### Fixes
 - Tenant isolation: in-memory streams are scoped per tenant; SQLAlchemy
-  `delete_stream` and `save_snapshot` no longer touch other tenants.
+  `delete_stream`, `save_snapshot` and versioned appends no longer touch other
+  tenants' streams with the same ID.
 - Outbox preserves stream category (SQLAlchemy, Django).
 - KurrentDB outbox acknowledges events rejected by the filter instead of leaving
   them to be redelivered.

@@ -2,7 +2,7 @@ import pytest
 
 from event_sourcery import StreamId
 from event_sourcery.exceptions import IllegalTenantId
-from tests.bdd import Given, Then
+from tests.bdd import Given, Then, When
 from tests.factories import AnEvent, an_event
 from tests.protocols import SyncBackend
 
@@ -68,6 +68,28 @@ def test_saving_snapshot_resolves_stream_in_current_tenant(
 
     then.in_tenant_mode("first").stream(with_id=stream_id).loads_only([snapshot])
     then.in_tenant_mode("second").stream(with_id=stream_id).loads_only([second_event])
+
+
+def test_versioned_append_only_affects_current_tenant(
+    given: Given,
+    when: When,
+    then: Then,
+) -> None:
+    stream_id = StreamId()
+    given.in_tenant_mode("first").event(first_event := an_event(), on=stream_id)
+    given.in_tenant_mode("second").event(second_event := an_event(), on=stream_id)
+
+    when.in_tenant_mode("first").stream(stream_id).receives(next_event := an_event())
+    when.in_tenant_mode("second").stream(stream_id).receives(
+        second_next_event := an_event()
+    )
+
+    then.in_tenant_mode("first").stream(with_id=stream_id).loads_only(
+        [first_event, next_event]
+    )
+    then.in_tenant_mode("second").stream(with_id=stream_id).loads_only(
+        [second_event, second_next_event]
+    )
 
 
 def test_kurrentdb_cant_use_tenant_id_with_dash(kurrentdb_backend: SyncBackend) -> None:

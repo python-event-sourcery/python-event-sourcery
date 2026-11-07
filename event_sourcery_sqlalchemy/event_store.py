@@ -177,6 +177,7 @@ class SqlAlchemyStorageStrategy(StorageStrategy):
                 update(self._stream_model)
                 .where(
                     self._stream_model.stream_id == stream_id,
+                    self._stream_model.tenant_id == self._tenant_id,
                     self._stream_model.version == versioning.expected_version,
                 )
                 .values(version=versioning.initial_version)
