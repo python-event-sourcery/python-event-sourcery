@@ -61,10 +61,14 @@ class KurrentDBOutboxStorageStrategy(OutboxStorageStrategy):
             self._outbox_name,
             timeout=self._timeout,
         )
-        if info.live_buffer_count == 0:
+        # Entries waiting for delivery: buffered ones and those nacked for retry.
+        # Reading stops after that many, instead of waiting for new events
+        # until the deadline (or indefinitely, when no timeout is configured).
+        pending = info.read_buffer_count + info.retry_buffer_count
+        if pending == 0:
             return
 
-        with self._context(limit) as subscription:
+        with self._context(min(limit, pending)) as subscription:
             try:
                 for entry in subscription:
                     record = dto.raw_record(entry)
@@ -73,6 +77,7 @@ class KurrentDBOutboxStorageStrategy(OutboxStorageStrategy):
                     else:
                         self.active_subscription.ack(entry.id)
             except DeadlineExceededError:
+                # a concurrent run took some of the entries reported as pending
                 pass
 
     @contextmanager

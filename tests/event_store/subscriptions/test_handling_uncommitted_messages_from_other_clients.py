@@ -218,6 +218,26 @@ class TestIgnoresEventsFromPendingTransactions:
     "For sqlite backends tests raise 'database table is locked'",
 )
 class TestMissesEventsThatWereNotCommittedWithinSpecifiedTimeout:
+    def test_waits_for_timelimit_before_skipping_uncommitted_position(
+        self,
+        given: Given,
+        then: Then,
+        when: When,
+        other_client: OtherClient,
+    ) -> None:
+        given.stream(stream_id := StreamId()).receives(an_event())
+        subscription = given.subscription(timelimit=0.5)
+
+        other_transaction = other_client.appends_in_transaction(
+            an_event(version=1), StreamId()
+        )
+        other_transaction.process_up_to_commit()
+        when.stream(stream_id).receives(event := an_event())
+
+        with given.expected_execution(seconds=0.5):
+            then(subscription).next_received_record_is(any_record(event, stream_id))
+        other_transaction.commit()
+
     def test_no_filtering(
         self,
         given: Given,

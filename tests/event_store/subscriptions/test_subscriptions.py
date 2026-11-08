@@ -26,6 +26,21 @@ def test_receives_all_events(given: Given, when: When, then: Then) -> None:
     then(subscription).next_received_record_is(any_record(third_event, first_stream))
 
 
+def test_receives_stored_events_without_waiting_for_timelimit(
+    given: Given,
+    when: When,
+    then: Then,
+) -> None:
+    given.stream(stream_id := StreamId()).receives(an_event())
+    subscription = given.subscription(timelimit=1)
+
+    when.stream(stream_id).receives(first := an_event(), second := an_event())
+
+    with given.execution_within(seconds=0.5):
+        then(subscription).next_received_record_is(any_record(first, stream_id))
+        then(subscription).next_received_record_is(any_record(second, stream_id))
+
+
 def test_multiple_subscriptions_receives_events(
     given: Given,
     when: When,

@@ -295,6 +295,13 @@ class Given(Step):
             f"Expected timing {seconds:.02f}s, got {took:.02f}s"
         )
 
+    @contextmanager
+    def execution_within(self, seconds: float) -> Generator:
+        start = time.monotonic()
+        yield
+        took = time.monotonic() - start
+        assert took < seconds, f"Expected under {seconds:.02f}s, got {took:.02f}s"
+
 
 class When(Step):
     def snapshots(self, with_: WrappedEvent, on: StreamId) -> Self:

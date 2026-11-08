@@ -2,10 +2,11 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 
 import pytest
-from kurrentdbclient import AsyncKurrentDBClient, KurrentDBClient, StreamState
+from kurrentdbclient import AsyncKurrentDBClient, KurrentDBClient
 
 from event_sourcery_kurrentdb.async_ import AsyncKurrentDBBackend
 from tests.adapter import BackendFacade, Runner
+from tests.backend.kurrentdb import clean_up_after
 from tests.protocols import SyncBackend
 
 
@@ -20,16 +21,7 @@ def async_kurrentdb_client() -> Iterator[tuple[AsyncKurrentDBClient, Runner]]:
         # drain remaining streams and subscriptions with a sync client,
         # to keep the cleanup logic in one place with the sync fixture
         sync_client = KurrentDBClient(uri="kurrentdb://localhost:2113?Tls=false")
-        for event in sync_client._connection.streams.read(
-            commit_position=commit_position
-        ):
-            if not event.stream_name.startswith("$"):
-                sync_client.delete_stream(
-                    event.stream_name,
-                    current_version=StreamState.ANY,
-                )
-        for sub in sync_client.list_subscriptions():
-            sync_client.delete_subscription(sub.group_name)
+        clean_up_after(sync_client, commit_position)
         runner.run(client.close())
         runner.close()
 

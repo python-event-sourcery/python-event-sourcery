@@ -6,29 +6,40 @@ from uuid import uuid4
 
 import pytest
 from kurrentdbclient import RecordedEvent
-from kurrentdbclient.exceptions import NotFoundError
+from kurrentdbclient.exceptions import DeadlineExceededError, NotFoundError
 
 from event_sourcery.outbox import no_filter
 from event_sourcery_kurrentdb.async_.outbox import AsyncKurrentDBOutboxStorageStrategy
 
 
+def an_entry() -> Mock:
+    return Mock(
+        spec=RecordedEvent,
+        id=uuid4(),
+        stream_name=f"-default-{uuid4().hex}",
+        stream_position=0,
+        commit_position=1,
+        type="AnEvent",
+        data=b"{}",
+        metadata=b'{"created_at": "2026-01-01T00:00:00+00:00"}',
+    )
+
+
+def subscription_info(pending: int) -> Mock:
+    return Mock(
+        read_buffer_count=pending,
+        retry_buffer_count=0,
+    )
+
+
 @pytest.mark.parametrize("included", [False, True])
 def test_outbox_acknowledges_records_even_when_filtered_out(included: bool) -> None:
     async def scenario() -> None:
-        entry = Mock(
-            spec=RecordedEvent,
-            id=uuid4(),
-            stream_name=f"-default-{uuid4().hex}",
-            stream_position=0,
-            commit_position=1,
-            type="AnEvent",
-            data=b"{}",
-            metadata=b'{"created_at": "2026-01-01T00:00:00+00:00"}',
-        )
+        entry = an_entry()
         subscription = AsyncMock()
         subscription.__anext__.side_effect = [entry, StopAsyncIteration]
         client = AsyncMock()
-        client.get_subscription_info.return_value = Mock(live_buffer_count=1)
+        client.get_subscription_info.return_value = subscription_info(pending=1)
         client.read_subscription_to_all.return_value = subscription
         strategy = AsyncKurrentDBOutboxStorageStrategy(
             client, lambda _: included, "an-outbox", 3, None
@@ -93,5 +104,31 @@ def test_take_stops_when_underlying_subscription_is_exhausted() -> None:
             )
         ]
         assert taken == []
+
+    asyncio.run(scenario())
+
+
+def test_outbox_stops_at_deadline_when_fewer_entries_arrive_than_reported() -> None:
+    """A concurrent outbox run may take entries reported as pending."""
+
+    async def scenario() -> None:
+        entry = an_entry()
+        subscription = AsyncMock()
+        subscription.__anext__.side_effect = [entry, DeadlineExceededError()]
+        client = AsyncMock()
+        client.get_subscription_info.return_value = subscription_info(pending=2)
+        client.read_subscription_to_all.return_value = subscription
+        strategy = AsyncKurrentDBOutboxStorageStrategy(
+            client, no_filter, "an-outbox", 3, 1
+        )
+
+        published = []
+        async for context in strategy.outbox_entries(limit=5):
+            async with context as record:
+                published.append(record.entry.uuid)
+
+        assert published == [entry.id]
+        subscription.ack.assert_awaited_once_with(entry.id)
+        subscription.stop.assert_awaited_once()
 
     asyncio.run(scenario())

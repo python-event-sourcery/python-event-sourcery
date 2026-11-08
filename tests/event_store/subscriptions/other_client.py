@@ -25,6 +25,7 @@ class _Handle:
     def __init__(self) -> None:
         self._commit_event = ThreadingEvent()
         self._got_until_commit = ThreadingEvent()
+        self._finished = ThreadingEvent()
 
     def wait_to_commit(self) -> None:
         self._got_until_commit.set()
@@ -34,7 +35,18 @@ class _Handle:
         self._got_until_commit.wait(timeout=self.TIMEOUT)
 
     def commit(self) -> None:
+        """
+        Commits and waits until the transaction ends, so the event is visible
+        to the next read even when the agent thread is slow to resume (CPU load).
+        """
+        self.release()
+        self._finished.wait(timeout=self.TIMEOUT)
+
+    def release(self) -> None:
         self._commit_event.set()
+
+    def finished(self) -> None:
+        self._finished.set()
 
 
 Message = (
@@ -59,7 +71,7 @@ class Inbox:
 
     def put_stop(self) -> None:
         for handle in self._pending_handles:
-            handle.commit()
+            handle.release()
         self._in_queue.put(Command.STOP)
 
     def put_event_to_append(self, event: WrappedEvent, stream_id: StreamId) -> Handle:
@@ -96,9 +108,12 @@ class Agent(Thread):
                         StreamId() as stream_id,
                         _Handle() as sync,
                     ):
-                        with self._transaction():
-                            event_store.append(event, stream_id=stream_id)
-                            sync.wait_to_commit()
+                        try:
+                            with self._transaction():
+                                event_store.append(event, stream_id=stream_id)
+                                sync.wait_to_commit()
+                        finally:
+                            sync.finished()
                     case Command.STOP:
                         break
                     case _:

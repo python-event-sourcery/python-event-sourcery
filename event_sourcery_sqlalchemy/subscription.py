@@ -194,7 +194,10 @@ class GapDetectingIterator(Iterator[list[RecordedRaw]]):
         start = time.monotonic()
         while True:
             batch = self._get_batch(self._cursor.position)
-            if self._is_continuous(batch) and len(batch) == self._batch_size:
+            if (
+                self._is_continuous(batch, after=self._cursor.position)
+                and len(batch) == self._batch_size
+            ):
                 self._cursor.advance(batch)
                 return self._batch_to_recorded_raw(batch)
             elif time.monotonic() - start > self._timelimit.total_seconds():
@@ -204,10 +207,12 @@ class GapDetectingIterator(Iterator[list[RecordedRaw]]):
                 time.sleep(self._gap_retry_interval.total_seconds())
 
     @staticmethod
-    def _is_continuous(batch: list[BaseEvent]) -> bool:
-        if len(batch) < 2:
+    def _is_continuous(batch: list[BaseEvent], after: Position) -> bool:
+        if not batch:
             return False
-
+        if len(batch) == 1:
+            # a lone event has no gap inside, so it must directly follow the cursor
+            return cast(bool, batch[0].id == after + 1)
         return cast(bool, batch[-1].id - batch[0].id + 1 == len(batch))
 
     @staticmethod

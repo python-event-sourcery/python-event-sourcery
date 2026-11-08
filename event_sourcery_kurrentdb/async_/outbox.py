@@ -105,10 +105,14 @@ class AsyncKurrentDBOutboxStorageStrategy(AsyncOutboxStorageStrategy):
             self._outbox_name,
             timeout=self._timeout,
         )
-        if info.live_buffer_count == 0:
+        # Server-side stats may be stale: messages abandoned by a consumer that
+        # has just disconnected are still in flight until the server requeues
+        # them, so they are picked up by the next run, not this one.
+        pending = info.read_buffer_count + info.retry_buffer_count
+        if pending == 0:
             return
 
-        async with self._context(limit) as subscription:
+        async with self._context(min(limit, pending)) as subscription:
             try:
                 async for entry in subscription:
                     record = dto.raw_record(entry)
@@ -117,6 +121,7 @@ class AsyncKurrentDBOutboxStorageStrategy(AsyncOutboxStorageStrategy):
                     else:
                         await self.active_subscription.ack(entry.id)
             except DeadlineExceededError:
+                # a concurrent run took some of the entries reported as pending
                 pass
 
     @asynccontextmanager
