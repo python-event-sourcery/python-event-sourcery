@@ -16,7 +16,11 @@ from sqlalchemy.ext.asyncio import (
 from event_sourcery_sqlalchemy import SQLAlchemyConfig
 from event_sourcery_sqlalchemy.async_ import AsyncSQLAlchemyBackend
 from tests.adapter import BackendFacade, Runner
-from tests.backend.sqlalchemy import DeclarativeBase, reset_shared_schema
+from tests.backend.sqlalchemy import (
+    DeclarativeBase,
+    postgres_url,
+    reset_shared_schema,
+)
 from tests.protocols import SyncBackend
 
 
@@ -128,7 +132,7 @@ def sqlalchemy_async_postgres_session(
     manage_tables: bool = True,
 ) -> Iterator[tuple[Callable[[], AsyncSession], Runner]]:
     with sqlalchemy_async_session_factory(
-        "postgresql+asyncpg://es:es@localhost:5432/es",
+        postgres_url("asyncpg"),
         manage_tables=manage_tables,
         shared_schema=True,
     ) as session:

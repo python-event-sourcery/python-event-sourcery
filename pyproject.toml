@@ -39,6 +39,7 @@ dev = [
     "asyncpg",
     "aiosqlite",
     "psycopg[binary]>=3",
+    "pytest-xdist>=3.8.0",
 ]
 
 [tool.pytest.ini_options]
@@ -156,6 +157,7 @@ extra = ["sqlalchemy", "sqlalchemy-async", "kurrentdb", "django", "otel"]
 
 [tool.poe.env]
 SRC_DIRS = "./event_sourcery_sqlalchemy ./event_sourcery ./event_sourcery_django ./event_sourcery_kurrentdb ./event_sourcery_otel"
+XDIST_ARGS = "-n auto --dist loadgroup"
 COV_ARGS = "--cov ./event_sourcery_sqlalchemy --cov ./event_sourcery --cov ./event_sourcery_django --cov ./event_sourcery_kurrentdb --cov ./event_sourcery_otel"
 
 [tool.poe.tasks.docs-test]
@@ -205,22 +207,22 @@ sequence = ["fmt", "lint", "typecheck"]
 ref = "test-py314"
 
 [tool.poe.tasks.test-py314]
-cmd = "pytest ${COV_ARGS} tests/"
+cmd = "pytest ${XDIST_ARGS} ${COV_ARGS} tests/"
 
 [tool.poe.tasks.test-py313]
-cmd = "pytest ${COV_ARGS} tests/"
+cmd = "pytest ${XDIST_ARGS} ${COV_ARGS} tests/"
 executor = {isolated = true, python = "3.13"}
 
 [tool.poe.tasks.test-py312]
-cmd = "pytest ${COV_ARGS} tests/"
+cmd = "pytest ${XDIST_ARGS} ${COV_ARGS} tests/"
 executor = {isolated = true, python = "3.12"}
 
 [tool.poe.tasks.test-py311]
-cmd = "pytest ${COV_ARGS} tests/"
+cmd = "pytest ${XDIST_ARGS} ${COV_ARGS} tests/"
 executor = {isolated = true, python = "3.11"}
 
 [tool.poe.tasks.test-py310]
-cmd = "pytest ${COV_ARGS} tests/"
+cmd = "pytest ${XDIST_ARGS} ${COV_ARGS} tests/"
 executor = {isolated = true, python = "3.10"}
 
 [tool.poe.tasks.test-all]

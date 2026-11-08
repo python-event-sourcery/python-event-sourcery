@@ -21,11 +21,14 @@ uv sync --all-extras   # install all deps (dev group is included by default)
 
 ```bash
 docker compose up -d   # required before tests (postgres, kurrentdb, rabbitmq)
-poe test              # pytest with coverage (fail_under = 100)
+poe test              # pytest with coverage (fail_under = 100), parallel via pytest-xdist
 poe lint-fix              # ruff format + ruff check + mypy (must pass clean)
 poe docs-test         # pytest docs/code/ — snippets embedded in docs must pass
 poe docs-serve        # docs live preview
 ```
+
+`poe test` runs `-n auto --dist loadgroup`: each worker gets its own Postgres database,
+and all KurrentDB tests run on one worker (shared server, see `tests/conftest.py`).
 
 Run single tools via `uv run --all-extras <tool>`, e.g. `uv run --all-extras pytest tests/event_store -k django`.
 

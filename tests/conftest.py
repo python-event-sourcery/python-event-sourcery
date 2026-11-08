@@ -45,3 +45,17 @@ def when(backend: SyncBackend, request: pytest.FixtureRequest) -> bdd.When:
 @pytest.fixture()
 def then(backend: SyncBackend, request: pytest.FixtureRequest) -> bdd.Then:
     return bdd.Then(backend, request)
+
+
+@pytest.hookimpl(tryfirst=True)  # xdist reads the groups in its own hook
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """
+    Runs all KurrentDB tests on a single pytest-xdist worker (`--dist loadgroup`).
+
+    Workers share one KurrentDB server: tests reuse fixed stream names, subscribe
+    to `$all` and clean up every stream and persistent subscription afterwards,
+    so concurrent KurrentDB tests would see and delete each other's data.
+    """
+    for item in items:
+        if "kurrentdb" in item.nodeid:
+            item.add_marker(pytest.mark.xdist_group("kurrentdb"))
