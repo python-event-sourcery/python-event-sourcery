@@ -105,6 +105,9 @@ class AsyncKurrentDBOutboxStorageStrategy(AsyncOutboxStorageStrategy):
             self._outbox_name,
             timeout=self._timeout,
         )
+        # Server-side stats may be stale: messages abandoned by a consumer that
+        # has just disconnected are still in flight until the server requeues
+        # them, so they are picked up by the next run, not this one.
         pending = info.read_buffer_count + info.retry_buffer_count
         if pending == 0:
             return

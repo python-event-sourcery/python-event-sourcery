@@ -124,6 +124,7 @@ def test_outbox_run_with_async_publisher() -> None:
 
 def test_outbox_retries_event_whose_publishing_was_cancelled() -> None:
     with async_kurrentdb_client() as (client, runner):
+        outbox_name = f"pyes-outbox-test-{uuid4().hex}"
         backend = (
             AsyncKurrentDBBackend()
             .configure(
@@ -131,7 +132,7 @@ def test_outbox_retries_event_whose_publishing_was_cancelled() -> None:
                 KurrentDBConfig(
                     timeout=1,
                     outbox_attempts=1,
-                    outbox_name=f"pyes-outbox-test-{uuid4().hex}",
+                    outbox_name=outbox_name,
                 ),
             )
             .with_outbox()
@@ -152,6 +153,14 @@ def test_outbox_retries_event_whose_publishing_was_cancelled() -> None:
             run.cancel()
             with pytest.raises(asyncio.CancelledError):
                 await run
+
+            # the server requeues the abandoned message only after it processes
+            # the disconnect, which happens asynchronously
+            for _ in range(100):
+                info = await client.get_subscription_info(outbox_name)
+                if info.total_in_flight_messages == 0:
+                    break
+                await asyncio.sleep(0.01)
 
             published: list[Recorded] = []
 
